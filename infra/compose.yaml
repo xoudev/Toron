@@ -4,7 +4,7 @@
 
 services:
   db:
-    image: postgres:16.11-alpine3.22
+    image: postgres:16.14-alpine3.23
     environment:
       POSTGRES_DB: toron
       POSTGRES_USER: toron_local

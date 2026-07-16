@@ -2,13 +2,13 @@
 # Multi-stage, versions épinglées, utilisateur non-root.
 # Contexte de build : la racine du monorepo (docker build -f infra/web.Dockerfile .)
 
-FROM node:22.21.0-alpine3.22 AS base
+FROM node:24.18.0-alpine3.23 AS base
 RUN corepack enable pnpm
 
 # ── Dépendances + build ──────────────────────────────────────────────
 FROM base AS build
 WORKDIR /repo
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/web/package.json apps/web/
 COPY apps/site/package.json apps/site/
 COPY packages/core/package.json packages/core/
@@ -25,7 +25,7 @@ COPY workers workers
 RUN pnpm --filter @toron/web build
 
 # ── Image d'exécution minimale ───────────────────────────────────────
-FROM node:22.21.0-alpine3.22 AS run
+FROM node:24.18.0-alpine3.23 AS run
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup -S toron && adduser -S toron -G toron

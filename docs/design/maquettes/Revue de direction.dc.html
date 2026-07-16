@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"></link>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"></link>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></link>
+<style>
+body{margin:0;background:#F2F3F3}
+#toron-app{--bg:#F2F3F3;--srf:#FFFFFF;--srf2:#F7F7F6;--bd:#E4E5E3;--tx:#1C1E1D;--tx2:#5B605D;--ac:#CB4E0A;--acTx:#FFFFFF;--ok:#2E7D4F;--warn:#946200;--dgr:#B23327}
+#toron-app[data-theme="sombre"]{--bg:#151412;--srf:#1C1B18;--srf2:#22211D;--bd:#2C2A25;--tx:#ECEAE3;--tx2:#A6A198;--ac:#EF7A32;--acTx:#151412;--ok:#5FB582;--warn:#D8A23E;--dgr:#E0685A}
+#toron-app a{color:var(--ac);text-decoration:none}
+#toron-app a:hover{text-decoration:underline}
+#toron-app input::placeholder{color:var(--tx2);opacity:.65}
+#toron-app ::selection{background:rgba(203,78,10,.18)}
+#toron-app *::-webkit-scrollbar{width:10px;height:10px}
+#toron-app *::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:3px solid var(--srf)}
+</style>
+</helmet>
+<div id="toron-app" data-theme="{{ theme }}" data-screen-label="Revue de direction" style="display:flex;height:100vh;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;overflow:hidden">
+  <div style="width:236px;flex-shrink:0;height:100%;display:flex">
+    <dc-import name="Sidebar" active="revue" hint-size="236px,100%"></dc-import>
+  </div>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <span style="font-size:14px;font-weight:600">Revue de direction</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;height:20px;padding:0 9px;border:1px solid color-mix(in srgb,var(--ac) 40%,var(--bd));border-radius:5px;background:color-mix(in srgb,var(--ac) 7%,transparent);color:var(--ac);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;font-weight:600"><span style="width:5px;height:5px;border-radius:50%;background:var(--ac)"></span>SMSI + QMS</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.09em;color:var(--tx2)">CLAUSE 9.3 · 27001 &amp; 9001 · UNE SEULE REVUE</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2)">SÉANCE DU 24/07/2026</span>
+        <div style="width:28px;height:28px;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500">CM</div>
+      </div>
+    </header>
+
+    <sc-if value="{{ prete }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="flex:1;min-width:0;overflow-y:auto;background:var(--bg);padding:18px 22px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--tx2)">ORDRE DU JOUR — AUTO-GÉNÉRÉ (CLAUSE 9.3)</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;height:18px;padding:0 7px;border:1px solid var(--bd);border-radius:4px;background:var(--srf2);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.04em"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5 13h6l-1 8 8-10h-6z"></path></svg>DONNÉES INJECTÉES</span>
+          <div style="flex:1;height:1px;background:var(--bd)"></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ sections }}" as="s" hint-placeholder-count="7">
+            <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:11px;padding:12px 15px;border-bottom:1px solid var(--bd)">
+                <span style="width:24px;height:24px;flex-shrink:0;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ s.n }}</span>
+                <span style="font-size:13px;font-weight:600;flex:1;min-width:0">{{ s.titre }}</span>
+                <sc-if value="{{ s.hasTag }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;height:20px;padding:0 9px;border:1px solid {{ s.tagBd }};border-radius:5px;background:{{ s.tagBg }};color:{{ s.tagFg }};font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;white-space:nowrap">{{ s.tag }}</span></sc-if>
+              </div>
+              <div style="padding:14px 15px">
+                <sc-if value="{{ s.isActions }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div style="position:relative;width:44px;height:44px;flex-shrink:0"><svg viewBox="0 0 44 44" width="44" height="44" style="transform:rotate(-90deg)"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--bd)" stroke-width="5"></circle><circle cx="22" cy="22" r="18" fill="none" stroke="var(--ok)" stroke-width="5" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="25"></circle></svg><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">7/9</div></div>
+                      <div style="font-size:12.5px;color:var(--tx2);line-height:1.5;text-wrap:pretty"><span style="color:var(--tx);font-weight:500">7 des 9 actions</span> décidées lors de la revue du 18/12/2025 sont soldées. 2 restent en cours, sans dérive d'échéance.</div>
+                    </div>
+                    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-left:auto">
+                      <span style="display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx2);border:1px solid var(--bd);border-radius:5px;padding:3px 8px">ACT-0091 <span style="color:var(--ok)">soldée</span></span>
+                      <span style="display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx2);border:1px solid var(--bd);border-radius:5px;padding:3px 8px">ACT-0104 <span style="color:var(--warn)">en cours</span></span>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ s.isKpi }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+                    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+                      <div style="border:1px solid var(--bd);border-radius:7px;padding:11px 12px">
+                        <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.06em;color:var(--tx2)">{{ k.label }}</div>
+                        <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600">{{ k.val }}</span><span style="font-size:11px;font-weight:600;color:{{ k.trendColor }}">{{ k.trend }}</span></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ s.isBullets }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <sc-for list="{{ s.bullets }}" as="b" hint-placeholder-count="3">
+                      <div style="display:flex;gap:9px;align-items:flex-start">
+                        <span style="width:6px;height:6px;border-radius:50%;background:{{ b.dot }};flex-shrink:0;margin-top:6px"></span>
+                        <div style="font-size:12.5px;line-height:1.5;text-wrap:pretty"><span style="font-weight:500">{{ b.head }}</span> <span style="color:var(--tx2)">{{ b.body }}</span></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="width:352px;flex-shrink:0;border-left:1px solid var(--bd);background:var(--srf);display:flex;flex-direction:column;min-height:0">
+        <div style="flex-shrink:0;padding:14px 16px 11px;border-bottom:1px solid var(--bd)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:7px;height:7px;border-radius:50%;background:var(--dgr)"></span>
+            <span style="font-size:13px;font-weight:600">Zone de séance</span>
+            <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.07em;color:var(--tx2)">EN DIRECT · 24/07</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--tx2);margin-top:5px;line-height:1.45;text-wrap:pretty">Saisissez les décisions. Chacune est convertible en action tracée.</div>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 16px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:9px">DÉCISIONS ({{ decisionCount }})</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ decisions }}" as="d" hint-placeholder-count="3">
+              <div style="border:1px solid {{ d.bd }};border-radius:7px;padding:11px 12px;background:{{ d.bg }}">
+                <div style="font-size:12.5px;line-height:1.45;text-wrap:pretty">{{ d.text }}</div>
+                <sc-if value="{{ d.converted }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;border-top:1px solid var(--bd)">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:var(--ac)">{{ d.actId }}</span>
+                    <div style="width:20px;height:20px;border-radius:5px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:500">{{ d.respInit }}</div>
+                    <span style="font-size:11px;color:var(--tx2)">{{ d.resp }}</span>
+                    <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2)">{{ d.ech }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ d.open }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ d.convert }}" style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;margin-top:9px;border:1px solid color-mix(in srgb,var(--ac) 40%,var(--bd));border-radius:6px;background:color-mix(in srgb,var(--ac) 7%,transparent);color:var(--ac);font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer" style-hover="background:color-mix(in srgb,var(--ac) 12%,transparent)"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>Convertir en action</button>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:12px;border:1px solid var(--bd);border-radius:7px;padding:9px 10px;background:var(--bg)">
+            <textarea value="{{ draft }}" onChange="{{ onDraft }}" placeholder="Nouvelle décision…" style="width:100%;border:none;outline:none;background:transparent;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;resize:none;min-height:38px;line-height:1.4;padding:0"></textarea>
+            <div style="display:flex;justify-content:flex-end;margin-top:6px">
+              <button onClick="{{ addDecision }}" style="height:28px;padding:0 13px;border:none;border-radius:6px;background:var(--ac);color:var(--acTx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">Ajouter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex-shrink:0;display:flex;align-items:center;gap:16px;padding:11px 22px;background:var(--srf);border-top:1px solid var(--bd);flex-wrap:wrap">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">PARTICIPANTS</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ participants }}" as="p" hint-placeholder-count="4">
+          <span style="display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 10px 0 4px;border:1px solid var(--bd);border-radius:16px;background:var(--srf2)">
+            <span style="width:20px;height:20px;border-radius:50%;background:var(--srf);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:500">{{ p.init }}</span>
+            <span style="font-size:11.5px;font-weight:500">{{ p.name }}</span>
+            <span title="{{ p.state }}" style="width:15px;height:15px;border-radius:50%;background:{{ p.dotBg }};display:flex;align-items:center;justify-content:center"><sc-if value="{{ p.signed }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg></sc-if></span>
+          </span>
+        </sc-for>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:6px;color:var(--tx2)">
+          <svg viewBox="0 0 24 24" width="12" height="12" style="flex-shrink:0"><path d="M12 3.6 19.4 11 12 18.4 4.6 11Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path><rect x="2.4" y="10" width="19.2" height="2" rx="1" fill="var(--ac)"></rect></svg>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.06em">PV SCELLÉ · POINÇON</span>
+        </div>
+        <button style="height:34px;padding:0 16px;display:flex;align-items:center;gap:8px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(.92)">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20V4a.5.5 0 0 1 .5-.5z"></path><path d="M13.5 3.5V8h4M9.5 13h5M9.5 16h3"></path></svg>
+          Générer le procès-verbal
+        </button>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ avant }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;min-height:0;overflow-y:auto;background:var(--bg);padding:20px 22px">
+      <div style="max-width:520px;margin:6vh auto 22px;text-align:center;display:flex;flex-direction:column;align-items:center">
+        <div style="width:52px;height:52px;border-radius:10px;border:1px solid var(--bd);background:var(--srf);display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--tx2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="15" rx="2"></rect><path d="M4 10h16M8 3v4M16 3v4"></path></svg>
+        </div>
+        <div style="font-size:17px;font-weight:600;margin-top:16px">Prochaine revue le 24 juillet 2026</div>
+        <div style="font-size:13px;color:var(--tx2);line-height:1.6;margin-top:8px;text-wrap:pretty">Les entrées de l'ordre du jour se rempliront automatiquement à partir de vos données (actions, audits, risques, KPI). Une seule revue couvre le SMSI et le QMS au titre de la clause 9.3.</div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button style="height:32px;padding:0 16px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">Préparer la revue</button>
+          <button style="height:32px;padding:0 16px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:var(--srf2)">Voir la revue précédente</button>
+        </div>
+      </div>
+      <div style="max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px;opacity:.5;filter:grayscale(.4)">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);text-align:center;margin-bottom:2px">APERÇU DE L'ORDRE DU JOUR</div>
+        <sc-for list="{{ ghost }}" as="g" hint-placeholder-count="7">
+          <div style="display:flex;align-items:center;gap:11px;background:var(--srf);border:1px solid var(--bd);border-radius:8px;padding:13px 15px">
+            <span style="width:24px;height:24px;flex-shrink:0;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ g.n }}</span>
+            <span style="font-size:13px;font-weight:500">{{ g.titre }}</span>
+            <span style="margin-left:auto;width:120px;height:8px;background:var(--srf2);border-radius:4px"></span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clair&quot;,&quot;sombre&quot;],&quot;default&quot;:&quot;clair&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Apparence&quot;},&quot;etatAvant&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;États&quot;}}">
+class Component extends DCLogic {
+  state = { decisions:null, draft:'', nextAct:167 };
+
+  seed(){
+    return [
+      {text:'Valider la Déclaration d\u2019applicabilité v3 (27001) et le plan d\u2019action du T3.', converted:true, actId:'ACT-0158', resp:'Claire Morel', respInit:'CM', ech:'échéance 30/09'},
+      {text:'Renforcer le budget du déploiement MFA — priorité P1 sur les accès distants.', converted:false},
+      {text:'Acter l\u2019acceptation formelle du risque RSK-036 (dépendance SaaS) jusqu\u2019à la prochaine revue.', converted:false}
+    ];
+  }
+  decisions(){ return this.state.decisions || this.seed(); }
+
+  onDraft(e){ this.setState({draft:e.target.value}); }
+  addDecision(){
+    const t = (this.state.draft||'').trim();
+    if(!t) return;
+    const list = this.decisions().slice();
+    list.push({text:t, converted:false});
+    this.setState({decisions:list, draft:''});
+  }
+  convert(i){
+    const list = this.decisions().slice();
+    const id = 'ACT-0' + this.state.nextAct;
+    list[i] = Object.assign({}, list[i], {converted:true, actId:id, resp:'Claire Morel', respInit:'CM', ech:'échéance +30 j'});
+    this.setState({decisions:list, nextAct:this.state.nextAct+1});
+  }
+
+  renderVals(){
+    const avant = (this.props.etatAvant ?? false) === true;
+    const sections = [
+      {n:1, titre:'Suivi des actions des revues précédentes', kind:'actions', tag:'7/9 SOLDÉES', tagFg:'var(--ok)', tagBg:'color-mix(in srgb,var(--ok) 9%,transparent)', tagBd:'color-mix(in srgb,var(--ok) 40%,var(--bd))'},
+      {n:2, titre:'Évolution des enjeux internes et externes', kind:'bullets', bullets:[
+        ['Externe —','entrée en application de NIS 2 / ReCyF : entité importante, enregistrement MonEspaceNIS2 effectué.','var(--warn)'],
+        ['Externe —','tensions sur la chaîne d\u2019approvisionnement logistique (fournisseur T2 à surveiller).','var(--tx2)'],
+        ['Interne —','ouverture d\u2019un second site logistique : extension du périmètre SMSI et QMS.','var(--tx2)']
+      ]},
+      {n:3, titre:'Performance — indicateurs et tendances', kind:'kpi'},
+      {n:4, titre:'Résultats d\u2019audits et état des non-conformités', kind:'bullets', bullets:[
+        ['Audit interne 27001 (RH) —','clôturé : 2 écarts mineurs soldés, 1 point fort.','var(--ok)'],
+        ['Audit interne 27001 (logistique) —','en cours (34/93 exigences couvertes).','var(--warn)'],
+        ['Non-conformités —','3 ouvertes, 2 clôturées en vérification d\u2019efficacité (J+90).','var(--tx2)']
+      ]},
+      {n:5, titre:'Évolution des risques et opportunités', kind:'bullets', bullets:[
+        ['Risque net global —','en baisse : 14 → 13 risques élevés après traitement.','var(--ok)'],
+        ['Nouveau —','RSK-023 (rançongiciel) coté critique en brut, réduit à élevé.','var(--dgr)'],
+        ['Opportunité —','mutualisation de 38 contrôles entre référentiels (moins d\u2019effort d\u2019audit).','var(--ok)']
+      ]},
+      {n:6, titre:'Retours des parties intéressées', kind:'bullets', bullets:[
+        ['Clients —','réclamations qualité en baisse de 12 % sur le semestre.','var(--ok)'],
+        ['Régulateur —','ANSSI : enregistrement NIS 2 confirmé, aucune demande en cours.','var(--tx2)'],
+        ['Salariés —','taux de sensibilisation à 78 % (objectif 90 %).','var(--warn)']
+      ]},
+      {n:7, titre:'Opportunités d\u2019amélioration', kind:'bullets', bullets:[
+        ['Automatiser','la collecte de preuves via connecteurs (feuille de route).','var(--tx2)'],
+        ['Étendre','le pack QMS au nouveau site logistique.','var(--tx2)'],
+        ['Renforcer','la sécurité de la chaîne fournisseurs (campagne d\u2019évaluation en cours).','var(--tx2)']
+      ]}
+    ].map(s => ({
+      n:s.n, titre:s.titre,
+      isActions: s.kind==='actions', isKpi: s.kind==='kpi', isBullets: s.kind==='bullets',
+      bullets: (s.bullets||[]).map(b => ({head:b[0], body:b[1], dot:b[2]})),
+      hasTag: !!s.tag, tag:s.tag, tagFg:s.tagFg, tagBg:s.tagBg, tagBd:s.tagBd
+    }));
+
+    const kpis = [
+      {label:'COUVERTURE 27001', val:'72 %', trend:'▲ +6', trendColor:'var(--ok)'},
+      {label:'ÉCARTS OUVERTS', val:'23', trend:'▼ −4', trendColor:'var(--ok)'},
+      {label:'INCIDENTS NIS 2', val:'1', trend:'▲ +1', trendColor:'var(--warn)'},
+      {label:'TAUX SERVICE QMS', val:'96,2 %', trend:'▼ −1,8', trendColor:'var(--warn)'}
+    ];
+
+    const decisions = this.decisions().map((d,i) => ({
+      text:d.text, converted:d.converted, open: !d.converted,
+      actId:d.actId, resp:d.resp, respInit:d.respInit, ech:d.ech,
+      bd: d.converted ? 'color-mix(in srgb,var(--ac) 34%,var(--bd))' : 'var(--bd)',
+      bg: d.converted ? 'color-mix(in srgb,var(--ac) 5%,transparent)' : 'var(--srf)',
+      convert: () => this.convert(i)
+    }));
+
+    return {
+      theme: this.props.theme ?? 'clair',
+      prete: !avant, avant,
+      sections, kpis,
+      decisions, decisionCount: decisions.length,
+      draft: this.state.draft, onDraft:(e)=>this.onDraft(e), addDecision:()=>this.addDecision(),
+      participants: [
+        {name:'V. Lasserre', init:'VL', signed:true, state:'Émargé', dotBg:'var(--ok)'},
+        {name:'C. Morel', init:'CM', signed:true, state:'Émargé', dotBg:'var(--ok)'},
+        {name:'Y. Prévost', init:'YP', signed:true, state:'Émargé', dotBg:'var(--ok)'},
+        {name:'T. Renaud', init:'TR', signed:false, state:'En attente', dotBg:'var(--tx2)'},
+        {name:'A. Fontaine', init:'AF', signed:false, state:'En attente', dotBg:'var(--tx2)'}
+      ],
+      ghost: sections.map(s => ({n:s.n, titre:s.titre}))
+    };
+  }
+}
+</script>
+</body>
+</html>

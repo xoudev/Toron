@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"></link>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"></link>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></link>
+<style>
+body{margin:0;background:#F2F3F3}
+#toron-app{--bg:#F2F3F3;--srf:#FFFFFF;--srf2:#F7F7F6;--bd:#E4E5E3;--tx:#1C1E1D;--tx2:#5B605D;--ac:#CB4E0A;--acTx:#FFFFFF;--ok:#2E7D4F;--warn:#946200;--dgr:#B23327}
+#toron-app[data-theme="sombre"]{--bg:#151412;--srf:#1C1B18;--srf2:#22211D;--bd:#2C2A25;--tx:#ECEAE3;--tx2:#A6A198;--ac:#EF7A32;--acTx:#151412;--ok:#5FB582;--warn:#D8A23E;--dgr:#E0685A}
+#toron-app a{color:var(--ac);text-decoration:none}
+#toron-app a:hover{text-decoration:underline}
+#toron-app input::placeholder{color:var(--tx2);opacity:.65}
+#toron-app select{appearance:none;-webkit-appearance:none}
+#toron-app ::selection{background:rgba(203,78,10,.18)}
+#toron-app *::-webkit-scrollbar{width:10px;height:10px}
+#toron-app *::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:3px solid var(--srf)}
+</style>
+</helmet>
+<div id="toron-app" data-theme="{{ theme }}" data-screen-label="Paramètres" style="display:flex;height:100vh;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;overflow:hidden">
+  <div style="width:236px;flex-shrink:0;height:100%;display:flex">
+    <dc-import name="Sidebar" active="parametres" hint-size="236px,100%" style="flex:1;height:100%"></dc-import>
+  </div>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <span style="font-size:14px;font-weight:600">Paramètres</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">MERIDIANE LOGISTICS SAS</span>
+    </header>
+
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="width:212px;flex-shrink:0;border-right:1px solid var(--bd);background:var(--srf);padding:14px 10px;overflow-y:auto">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);padding:2px 9px 8px">CONFIGURATION</div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ nav }}" as="n" hint-placeholder-count="6">
+            <div onClick="{{ n.onClick }}" style="position:relative;display:flex;align-items:center;gap:9px;height:32px;padding:0 9px;border-radius:6px;cursor:pointer;background:{{ n.bg }};color:{{ n.fg }};font-weight:{{ n.weight }};font-size:12.5px" style-hover="background:var(--srf2)">
+              <span style="position:absolute;left:0;top:7px;bottom:7px;width:2px;border-radius:1px;background:{{ n.bar }}"></span>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.icon }}"></path></svg>
+              {{ n.label }}
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:0;overflow-y:auto;background:var(--bg);padding:20px 24px 28px">
+        <sc-if value="{{ isOrg }}" hint-placeholder-val="{{ true }}">
+          <div style="max-width:820px">
+            <div style="font-size:15px;font-weight:600">Organisation</div>
+            <div style="font-size:12.5px;color:var(--tx2);margin-top:4px;line-height:1.5;text-wrap:pretty">Entités juridiques, sites et rattachements couverts par vos systèmes de management.</div>
+            <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;padding:16px 18px;margin-top:16px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:40px;height:40px;flex-shrink:0;border-radius:8px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">ML</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14px;font-weight:600">Meridiane Logistics SAS</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--tx2);margin-top:3px">SIREN 842 517 209 · SAS · SIÈGE : LYON (69)</div>
+                </div>
+                <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border:1px solid var(--bd);border-radius:6px;background:var(--srf2);font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx2)">ENTITÉ MÈRE</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin:14px 0 10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">SITES (3)</span><div style="flex:1;height:1px;background:var(--bd)"></div></div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ sites }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--bd);border-radius:7px">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--tx2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 21c4-4 7-7.5 7-11a7 7 0 1 0-14 0c0 3.5 3 7 7 11z"></path><circle cx="12" cy="10" r="2.4"></circle></svg>
+                    <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:500">{{ s.name }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;color:var(--tx2);margin-top:2px">{{ s.role }}</div></div>
+                    <div style="display:flex;gap:5px">
+                      <sc-for list="{{ s.tags }}" as="t" hint-placeholder-count="2">
+                        <span style="display:inline-flex;align-items:center;height:19px;padding:0 7px;border:1px solid var(--bd);border-radius:5px;background:var(--srf2);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:9px">{{ t }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isPerimetres }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:820px">
+            <div style="font-size:15px;font-weight:600">Périmètres</div>
+            <div style="font-size:12.5px;color:var(--tx2);margin-top:4px;line-height:1.5;text-wrap:pretty">Domaines d'application déclarés pour chaque système de management.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+              <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;padding:15px 16px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--ac)"></span><span style="font-size:13px;font-weight:600">SMSI — ISO 27001</span></div>
+                <div style="font-size:12px;color:var(--tx2);line-height:1.55;margin-top:8px;text-wrap:pretty">Système d'information des activités logistiques et support, sur les 3 sites. Exclusions documentées dans la SoA v3.</div>
+              </div>
+              <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;padding:15px 16px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--tx)"></span><span style="font-size:13px;font-weight:600">QMS — ISO 9001</span></div>
+                <div style="font-size:12px;color:var(--tx2);line-height:1.55;margin-top:8px;text-wrap:pretty">Prestations de préparation, transport et livraison. Site de Lyon et Marseille ; extension au site de Lille planifiée.</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:940px">
+            <div style="display:flex;align-items:center;gap:10px"><div style="font-size:15px;font-weight:600">Utilisateurs &amp; rôles</div><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2)">7 MEMBRES · 7 RÔLES</span><button style="margin-left:auto;height:30px;padding:0 13px;display:flex;align-items:center;gap:7px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Inviter</button></div>
+            <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-top:14px">
+              <sc-for list="{{ members }}" as="m" hint-placeholder-count="6">
+                <div style="display:grid;grid-template-columns:minmax(180px,1fr) 180px 88px 120px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd)">
+                  <div style="display:flex;align-items:center;gap:10px;min-width:0"><div style="width:28px;height:28px;flex-shrink:0;border-radius:7px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:500">{{ m.init }}</div><div style="min-width:0"><div style="font-size:12.5px;font-weight:500">{{ m.name }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx2)">{{ m.email }}</div></div></div>
+                  <div><span style="display:inline-flex;align-items:center;height:21px;padding:0 9px;border:1px solid var(--bd);border-radius:5px;background:var(--srf2);font-size:11.5px;font-weight:500">{{ m.role }}</span></div>
+                  <div><span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--tx2)"><span style="width:6px;height:6px;border-radius:50%;background:{{ m.stDot }}"></span>{{ m.statut }}</span></div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx2)">{{ m.last }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;margin:20px 0 12px"><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--tx2)">MATRICE DES PERMISSIONS PAR MODULE</span><div style="flex:1;height:1px;background:var(--bd)"></div></div>
+            <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;overflow:hidden">
+              <div style="overflow-x:auto"><div style="min-width:720px">
+                <div style="display:grid;grid-template-columns:170px repeat(6,1fr);background:var(--srf2);border-bottom:1px solid var(--bd)">
+                  <div style="padding:9px 12px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--tx2)">RÔLE \ MODULE</div>
+                  <sc-for list="{{ modules }}" as="mod" hint-placeholder-count="6">
+                    <div style="padding:9px 6px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.03em;color:var(--tx2)">{{ mod }}</div>
+                  </sc-for>
+                </div>
+                <sc-for list="{{ matrix }}" as="row" hint-placeholder-count="7">
+                  <div style="display:grid;grid-template-columns:170px repeat(6,1fr);border-bottom:1px solid var(--bd);align-items:center;background:{{ row.bg }}">
+                    <div style="padding:9px 12px;font-size:12px;font-weight:500">{{ row.role }}</div>
+                    <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="6">
+                      <div style="padding:8px 6px;display:flex;justify-content:center">
+                        <span title="{{ c.title }}" style="display:inline-flex;align-items:center;gap:4px;min-width:24px;height:22px;padding:0 7px;border:1px solid {{ c.bd }};border-radius:5px;background:{{ c.bg }};color:{{ c.fg }};font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;justify-content:center;cursor:default">
+                          <sc-if value="{{ c.lock }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="1.6"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></sc-if>
+                          {{ c.label }}
+                        </span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;margin-top:10px;flex-wrap:wrap">
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:18px;height:18px;border-radius:4px;background:var(--tx);color:var(--acTx);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600">A</span>Administration</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:18px;height:18px;border-radius:4px;border:1px solid color-mix(in srgb,var(--ok) 40%,var(--bd));background:color-mix(in srgb,var(--ok) 10%,transparent);color:var(--ok);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600">E</span>Édition</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:18px;height:18px;border-radius:4px;border:1px solid var(--bd);background:var(--srf2);color:var(--tx2);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600">L</span>Lecture</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:18px;height:18px;border-radius:4px;color:var(--tx2);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px">—</span>Aucun accès</span>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:14px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--warn) 34%,var(--bd));border-radius:8px;background:color-mix(in srgb,var(--warn) 6%,transparent)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--warn)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><rect x="5" y="11" width="14" height="9" rx="1.6"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+              <div style="font-size:12px;color:var(--tx2);line-height:1.5;text-wrap:pretty"><span style="color:var(--tx);font-weight:500">Séparation des tâches.</span> Un Auditeur dispose d'un accès en lecture seule aux Contrôles : il ne peut pas éditer les contrôles qu'il audite (règle verrouillée, non modifiable par un administrateur). Il pilote en revanche le module Audits.</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSecurite }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:720px">
+            <div style="font-size:15px;font-weight:600">Sécurité</div>
+            <div style="font-size:12.5px;color:var(--tx2);margin-top:4px;line-height:1.5;text-wrap:pretty">Authentification et gestion des sessions de la plateforme.</div>
+            <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-top:16px">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--bd)">
+                <div style="flex:1"><div style="font-size:13px;font-weight:500">Authentification unique (SSO)</div><div style="font-size:11.5px;color:var(--tx2);margin-top:3px">SAML 2.0 / OpenID Connect · fédération avec votre annuaire</div></div>
+                <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border:1px solid color-mix(in srgb,var(--ok) 40%,var(--bd));border-radius:6px;background:color-mix(in srgb,var(--ok) 9%,transparent);color:var(--ok);font-size:11px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:var(--ok)"></span>Activé</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--bd)">
+                <div style="flex:1"><div style="font-size:13px;font-weight:500">MFA obligatoire</div><div style="font-size:11.5px;color:var(--tx2);margin-top:3px">Second facteur exigé pour tous les comptes</div></div>
+                <div onClick="{{ toggleMfa }}" style="width:40px;height:22px;border-radius:11px;background:{{ mfaBg }};position:relative;cursor:pointer;transition:background .15s"><span style="position:absolute;top:2px;left:{{ mfaX }};width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s"></span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px">
+                <div style="flex:1"><div style="font-size:13px;font-weight:500">Durée de session</div><div style="font-size:11.5px;color:var(--tx2);margin-top:3px">Déconnexion automatique après inactivité</div></div>
+                <div style="position:relative;display:flex;align-items:center"><select style="height:30px;padding:0 28px 0 11px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;cursor:pointer"><option>30 minutes</option><option selected="selected">1 heure</option><option>8 heures</option></select><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:9px;pointer-events:none"><path d="M6 9.5 12 15.5 18 9.5"></path></svg></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isJournal }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:920px">
+            <div style="display:flex;align-items:center;gap:10px"><div style="font-size:15px;font-weight:600">Journal d'audit</div><span style="display:inline-flex;align-items:center;gap:5px;height:19px;padding:0 7px;border:1px solid var(--bd);border-radius:5px;background:var(--srf2);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.05em"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9" rx="1.4"></rect><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"></path></svg>FLUX IMMUABLE</span><button style="margin-left:auto;height:30px;padding:0 13px;display:flex;align-items:center;gap:7px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="background:var(--srf2)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v9M8.8 10 12 13.2 15.2 10M5 15.5v2.9c0 .6.5 1.1 1.1 1.1h11.8c.6 0 1.1-.5 1.1-1.1v-2.9"></path></svg>Exporter (CSV / JSON)</button></div>
+            <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+              <div style="position:relative;display:flex;align-items:center"><select style="height:28px;padding:0 26px 0 10px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;cursor:pointer"><option>Tous les acteurs</option><option>c.morel</option><option>j.durand</option></select><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:8px;pointer-events:none"><path d="M6 9.5 12 15.5 18 9.5"></path></svg></div>
+              <div style="position:relative;display:flex;align-items:center"><select style="height:28px;padding:0 26px 0 10px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;cursor:pointer"><option>Tous les objets</option><option>Risques</option><option>Incidents</option><option>Documents</option></select><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:8px;pointer-events:none"><path d="M6 9.5 12 15.5 18 9.5"></path></svg></div>
+              <div style="position:relative;display:flex;align-items:center"><select style="height:28px;padding:0 26px 0 10px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;cursor:pointer"><option>7 derniers jours</option><option>30 jours</option><option>Depuis le début</option></select><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:8px;pointer-events:none"><path d="M6 9.5 12 15.5 18 9.5"></path></svg></div>
+            </div>
+            <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-top:12px">
+              <sc-for list="{{ journal }}" as="j" hint-placeholder-count="10">
+                <div style="display:flex;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid var(--bd);font-family:'IBM Plex Mono',monospace;font-size:10.5px">
+                  <span style="color:var(--tx2);flex-shrink:0;width:96px">{{ j.ts }}</span>
+                  <span style="color:var(--tx);flex-shrink:0;width:96px;font-weight:500">{{ j.actor }}</span>
+                  <span style="color:var(--tx2);flex-shrink:0;width:130px">{{ j.action }}</span>
+                  <span style="color:var(--tx);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ j.object }}</span>
+                </div>
+              </sc-for>
+              <div style="padding:10px 14px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--tx2)">HORODATAGE QUALIFIÉ · ENTRÉES NON MODIFIABLES · CONSERVATION 24 MOIS</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isDonnees }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:720px">
+            <div style="font-size:15px;font-weight:600">Données</div>
+            <div style="font-size:12.5px;color:var(--tx2);margin-top:4px;line-height:1.5;text-wrap:pretty">Portabilité, conservation et localisation de vos données.</div>
+            <div style="display:flex;gap:11px;margin-top:16px;padding:14px 16px;border:1px solid color-mix(in srgb,var(--ac) 30%,var(--bd));border-radius:8px;background:color-mix(in srgb,var(--ac) 5%,transparent)">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--ac)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M12 3v12M8.5 11.5 12 15l3.5-3.5"></path><path d="M4.5 15.5v3A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-3"></path></svg>
+              <div style="flex:1"><div style="font-size:13px;font-weight:600">Vos données vous appartiennent</div><div style="font-size:12px;color:var(--tx2);line-height:1.5;margin-top:4px;text-wrap:pretty">Exportez l'intégralité de vos référentiels, preuves, risques et journaux à tout moment, dans un format ouvert. Aucun verrouillage propriétaire.</div><button style="height:30px;padding:0 14px;margin-top:11px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">Exporter toutes mes données</button></div>
+            </div>
+            <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-top:12px">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--bd)"><div style="flex:1"><div style="font-size:13px;font-weight:500">Durée de conservation</div><div style="font-size:11.5px;color:var(--tx2);margin-top:3px">Preuves et journaux après clôture</div></div><div style="position:relative;display:flex;align-items:center"><select style="height:30px;padding:0 28px 0 11px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;cursor:pointer"><option>3 ans</option><option selected="selected">5 ans</option><option>10 ans</option></select><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:9px;pointer-events:none"><path d="M6 9.5 12 15.5 18 9.5"></path></svg></div></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px"><div style="flex:1"><div style="font-size:13px;font-weight:500">Région d'hébergement</div><div style="font-size:11.5px;color:var(--tx2);margin-top:3px">Localisation physique de vos données</div></div><span style="display:inline-flex;align-items:center;gap:7px;height:24px;padding:0 10px;border:1px solid var(--bd);border-radius:6px;background:var(--srf2);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:var(--ok)"></span>FRANCE · SECNUMCLOUD · UE</span></div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clair&quot;,&quot;sombre&quot;],&quot;default&quot;:&quot;clair&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Apparence&quot;}}">
+class Component extends DCLogic {
+  state = { section:'organisation', mfa:true };
+
+  setSection(s){ this.setState({section:s}); }
+  toggleMfa(){ this.setState({mfa:!this.state.mfa}); }
+
+  PC(v){
+    const m = {
+      'A':{label:'A',title:'Administration',fg:'var(--acTx)',bg:'var(--tx)',bd:'var(--tx)'},
+      'E':{label:'E',title:'Édition',fg:'var(--ok)',bg:'color-mix(in srgb,var(--ok) 10%,transparent)',bd:'color-mix(in srgb,var(--ok) 40%,var(--bd))'},
+      'L':{label:'L',title:'Lecture',fg:'var(--tx2)',bg:'var(--srf2)',bd:'var(--bd)'},
+      '-':{label:'—',title:'Aucun accès',fg:'var(--tx2)',bg:'transparent',bd:'transparent'},
+      'L*':{label:'L',title:'Lecture seule — séparation des tâches (audit)',fg:'var(--warn)',bg:'color-mix(in srgb,var(--warn) 11%,transparent)',bd:'color-mix(in srgb,var(--warn) 42%,var(--bd))',lock:true}
+    };
+    return m[v];
+  }
+
+  renderVals(){
+    const sec = this.state.section;
+    const navDefs = [
+      ['organisation','Organisation','M4 20V9l8-5 8 5v11 M9 20v-6h6v6'],
+      ['perimetres','Périmètres','M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M3.5 12h17 M12 3.5c2.5 2.4 2.5 14.6 0 17 M12 3.5c-2.5 2.4-2.5 14.6 0 17'],
+      ['users','Utilisateurs & rôles','M8.5 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z M2.5 19.5c.5-3.4 3-5.2 6-5.2s5.5 1.8 6 5.2 M16 11.2a2.6 2.6 0 1 0 0-5.2 M17 14.5c2.2.5 3.7 1.9 4.2 4.4'],
+      ['securite','Sécurité','M12 3.2 19.5 6.2v5.3c0 4.4-3.2 7.5-7.5 8.8-4.3-1.3-7.5-4.4-7.5-8.8V6.2z'],
+      ['journal','Journal d\u2019audit','M7 3.5h10v17H7z M9.5 8h5M9.5 12h5M9.5 16h3'],
+      ['donnees','Données','M12 4c4 0 7 1.1 7 2.5S16 9 12 9 5 7.9 5 6.5 8 4 12 4z M5 6.5v11c0 1.4 3 2.5 7 2.5s7-1.1 7-2.5v-11 M5 12c0 1.4 3 2.5 7 2.5s7-1.1 7-2.5']
+    ];
+    const nav = navDefs.map(n => {
+      const on = n[0] === sec;
+      return { label:n[1], icon:n[2], onClick:()=>this.setSection(n[0]),
+        bg: on?'var(--srf2)':'transparent', bar: on?'var(--ac)':'transparent', fg: on?'var(--tx)':'var(--tx2)', weight: on?'500':'400' };
+    });
+
+    const modules = ['Référ.','Contrôles','Risques','Plan','Docs','Audits'];
+    const rawMatrix = [
+      ['Direction',       ['A','L','A','A','A','L']],
+      ['RSSI',            ['A','A','A','A','E','E']],
+      ['Responsable qualité',['E','E','E','E','A','E']],
+      ['Pilote de processus',['L','E','L','E','E','L']],
+      ['Auditeur',        ['L','L*','L','L','L','A']],
+      ['Contributeur',    ['L','E','L','E','E','-']],
+      ['Lecteur',         ['L','L','L','L','L','-']]
+    ];
+    const matrix = rawMatrix.map(r => ({
+      role:r[0], bg: r[0]==='Auditeur' ? 'color-mix(in srgb,var(--warn) 4%,transparent)' : 'transparent',
+      cells: r[1].map(v => { const p = this.PC(v); return {label:p.label, title:p.title, fg:p.fg, bg:p.bg, bd:p.bd, lock:!!p.lock}; })
+    }));
+
+    return {
+      theme: this.props.theme ?? 'clair',
+      nav,
+      isOrg: sec==='organisation', isPerimetres: sec==='perimetres', isUsers: sec==='users',
+      isSecurite: sec==='securite', isJournal: sec==='journal', isDonnees: sec==='donnees',
+      sites: [
+        {name:'Lyon — Siège & entrepôt principal', role:'RATTACHÉ À L\u2019ENTITÉ MÈRE', tags:['SMSI','QMS']},
+        {name:'Marseille — Plateforme logistique', role:'ÉTABLISSEMENT SECONDAIRE', tags:['SMSI','QMS']},
+        {name:'Lille — Entrepôt régional', role:'ÉTABLISSEMENT SECONDAIRE', tags:['SMSI']}
+      ],
+      members: [
+        {name:'Valérie Lasserre', email:'v.lasserre@meridiane.fr', init:'VL', role:'Direction', statut:'Actif', stDot:'var(--ok)', last:'il y a 2 h'},
+        {name:'Claire Morel', email:'c.morel@meridiane.fr', init:'CM', role:'RSSI', statut:'Actif', stDot:'var(--ok)', last:'à l\u2019instant'},
+        {name:'Yann Prévost', email:'y.prevost@meridiane.fr', init:'YP', role:'Responsable qualité', statut:'Actif', stDot:'var(--ok)', last:'il y a 1 j'},
+        {name:'Sofia Nguyen', email:'s.nguyen@meridiane.fr', init:'SN', role:'Pilote de processus', statut:'Actif', stDot:'var(--ok)', last:'il y a 3 h'},
+        {name:'Julien Blanc', email:'j.blanc@meridiane.fr', init:'JB', role:'Auditeur', statut:'Actif', stDot:'var(--ok)', last:'il y a 5 j'},
+        {name:'Marc Aubert', email:'m.aubert@meridiane.fr', init:'MA', role:'Contributeur', statut:'Invité', stDot:'var(--warn)', last:'—'},
+        {name:'Léa Dubois', email:'l.dubois@meridiane.fr', init:'LD', role:'Lecteur', statut:'Actif', stDot:'var(--ok)', last:'il y a 8 j'}
+      ],
+      modules, matrix,
+      journal: [
+        {ts:'16/07 14:02', actor:'j.durand', action:'Statut modifié', object:'RSK-023 : Net 12 → 8'},
+        {ts:'16/07 11:40', actor:'c.morel', action:'Preuve déposée', object:'PRV — Scan T2 (SHA-256 scellé)'},
+        {ts:'16/07 09:15', actor:'c.morel', action:'Connexion', object:'MFA validé · 88.x.x.x'},
+        {ts:'15/07 17:22', actor:'y.prevost', action:'NC créée', object:'NC-031 — Composants hors spéc.'},
+        {ts:'15/07 16:03', actor:'j.blanc', action:'Constat saisi', object:'A.5.19 : Écart majeur (audit S2)'},
+        {ts:'15/07 10:48', actor:'système', action:'Relance auto', object:'ACT-0142 — échéance dépassée'},
+        {ts:'14/07 14:20', actor:'c.morel', action:'Incident qualifié', object:'INC-007 — Important NIS 2'},
+        {ts:'14/07 08:40', actor:'système', action:'Alerte générée', object:'INC-007 — alerte 24 h ANSSI'},
+        {ts:'12/07 09:05', actor:'k.benali', action:'Document publié', object:'Politique fournisseurs v1.1'},
+        {ts:'10/07 15:30', actor:'v.lasserre', action:'Risque accepté', object:'RSK-036 — signé (direction)'}
+      ],
+      toggleMfa: () => this.toggleMfa(),
+      mfaBg: this.state.mfa ? 'var(--ac)' : 'var(--bd)',
+      mfaX: this.state.mfa ? '20px' : '2px'
+    };
+  }
+}
+</script>
+</body>
+</html>

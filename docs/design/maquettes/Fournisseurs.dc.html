@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"></link>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"></link>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></link>
+<style>
+body{margin:0;background:#F2F3F3}
+#toron-app{--bg:#F2F3F3;--srf:#FFFFFF;--srf2:#F7F7F6;--bd:#E4E5E3;--tx:#1C1E1D;--tx2:#5B605D;--ac:#CB4E0A;--acTx:#FFFFFF;--ok:#2E7D4F;--warn:#946200;--dgr:#B23327}
+#toron-app[data-theme="sombre"]{--bg:#151412;--srf:#1C1B18;--srf2:#22211D;--bd:#2C2A25;--tx:#ECEAE3;--tx2:#A6A198;--ac:#EF7A32;--acTx:#151412;--ok:#5FB582;--warn:#D8A23E;--dgr:#E0685A}
+#toron-app a{color:var(--ac);text-decoration:none}
+#toron-app a:hover{text-decoration:underline}
+#toron-app input::placeholder{color:var(--tx2);opacity:.65}
+#toron-app ::selection{background:rgba(203,78,10,.18)}
+#toron-app *::-webkit-scrollbar{width:10px;height:10px}
+#toron-app *::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:3px solid var(--srf)}
+</style>
+</helmet>
+<div id="toron-app" data-theme="{{ theme }}" data-screen-label="Fournisseurs" style="display:flex;height:100vh;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;overflow:hidden">
+  <div style="width:236px;flex-shrink:0;height:100%;display:flex">
+    <dc-import name="Sidebar" active="fournisseurs" hint-size="236px,100%"></dc-import>
+  </div>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <span style="font-size:14px;font-weight:600">Fournisseurs</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">{{ compteur }}</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px;padding:0 12px 0 4px">
+          <sc-for list="{{ tiers }}" as="t" hint-placeholder-count="3">
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--tx2)"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:18px;border:1px solid {{ t.bd }};border-radius:4px;background:{{ t.bg }};color:{{ t.fg }};font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600">{{ t.id }}</span>{{ t.n }}</span>
+          </sc-for>
+        </div>
+        <button style="height:30px;padding:0 14px;display:flex;align-items:center;gap:7px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12h13M12 6.5 17.5 12 12 17.5"></path></svg>Lancer une campagne d'évaluation</button>
+      </div>
+    </header>
+
+    <div style="flex-shrink:0;display:flex;align-items:center;gap:9px;padding:9px 12px 9px 20px;background:color-mix(in srgb,var(--ac) 5%,var(--srf));border-bottom:1px solid var(--bd)">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--ac)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 3.2 19.5 6.2v5.3c0 4.4-3.2 7.5-7.5 8.8-4.3-1.3-7.5-4.4-7.5-8.8V6.2z"></path></svg>
+      <span style="font-size:12px;color:var(--tx2);line-height:1.4;text-wrap:pretty"><span style="color:var(--tx);font-weight:500">NIS 2 · art. 21</span> — la sécurité de votre chaîne d'approvisionnement relève de votre responsabilité. Ce registre est votre preuve que vous maîtrisez vos tiers.</span>
+    </div>
+
+    <div style="flex-shrink:0;display:flex;align-items:center;gap:12px;padding:9px 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <div style="display:flex;gap:2px;border:1px solid var(--bd);border-radius:7px;padding:2px;background:var(--bg)">
+        <button onClick="{{ setRegistre }}" style="display:flex;align-items:center;gap:7px;height:28px;padding:0 13px;border:none;border-radius:5px;background:{{ regBg }};color:{{ regFg }};font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 6.4h16M4 12h16M4 17.6h16"></path></svg>Registre <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.75">9</span></button>
+        <button onClick="{{ setCampagne }}" style="display:flex;align-items:center;gap:7px;height:28px;padding:0 13px;border:none;border-radius:5px;background:{{ campBg }};color:{{ campFg }};font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12h13M12 6.5 17.5 12 12 17.5"></path></svg>Campagne <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.75">2026</span></button>
+      </div>
+      <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2)">{{ tabHint }}</span>
+    </div>
+
+    <sc-if value="{{ isRegistre }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="flex:1;min-width:0;overflow:auto;background:var(--bg)">
+        <div style="min-width:1080px">
+          <div style="position:sticky;top:0;z-index:1;display:grid;grid-template-columns:minmax(210px,1fr) 76px 180px 190px 138px 120px 118px;align-items:center;background:var(--srf);border-bottom:1px solid var(--bd);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2);height:34px">
+            <div style="padding:0 16px">FOURNISSEUR</div>
+            <div style="padding:0 8px">CRITICITÉ</div>
+            <div style="padding:0 8px">SERVICES</div>
+            <div style="padding:0 8px">DONNÉES ACCÉDÉES</div>
+            <div style="padding:0 8px">CLAUSES SSI</div>
+            <div style="padding:0 8px">SCORE ÉVAL.</div>
+            <div style="padding:0 8px">PROCH. CAMPAGNE</div>
+          </div>
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="9">
+            <div onClick="{{ r.open }}" style="display:grid;grid-template-columns:minmax(210px,1fr) 76px 180px 190px 138px 120px 118px;align-items:center;border-bottom:1px solid var(--bd);cursor:pointer;background:{{ r.rowBg }};min-height:54px" style-hover="background:var(--srf2)">
+              <div style="padding:9px 16px;min-width:0;display:flex;align-items:center;gap:10px">
+                <div style="width:28px;height:28px;flex-shrink:0;border-radius:7px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600">{{ r.mono }}</div>
+                <span style="font-size:12.5px;font-weight:500;line-height:1.3;min-width:0;text-wrap:pretty">{{ r.name }}</span>
+              </div>
+              <div style="padding:0 8px"><span title="{{ r.critDef }}" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:20px;border:1px solid {{ r.critBd }};border-radius:5px;background:{{ r.critBg }};color:{{ r.critFg }};font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:help">{{ r.crit }}</span></div>
+              <div style="padding:0 8px;font-size:11.5px;color:var(--tx2);line-height:1.35;text-wrap:pretty">{{ r.services }}</div>
+              <div style="padding:8px;display:flex;gap:4px;flex-wrap:wrap;min-width:0">
+                <sc-for list="{{ r.data }}" as="d" hint-placeholder-count="2">
+                  <span style="display:inline-flex;align-items:center;height:18px;padding:0 6px;border:1px solid var(--bd);border-radius:4px;background:var(--srf2);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:9px;white-space:nowrap">{{ d }}</span>
+                </sc-for>
+                <sc-if value="{{ r.noData }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx2)">aucune</span></sc-if>
+              </div>
+              <div style="padding:0 8px"><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border:1px solid {{ r.clBd }};border-radius:5px;background:{{ r.clBg }};color:{{ r.clFg }};font-size:11px;font-weight:500;white-space:nowrap"><span style="width:6px;height:6px;border-radius:50%;background:{{ r.clDot }}"></span>{{ r.clauses }}</span></div>
+              <div style="padding:0 8px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:44px;height:6px;background:var(--srf2);border:1px solid var(--bd);border-radius:3px;overflow:hidden"><div style="width:{{ r.scorePct }};height:100%;background:{{ r.scoreCol }}"></div></div>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ r.score }}</span>
+                </div>
+              </div>
+              <div style="padding:0 8px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:{{ r.nextCol }}">{{ r.next }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <aside style="width:388px;flex-shrink:0;border-left:1px solid var(--bd);background:var(--srf);overflow-y:auto">
+        <div style="position:sticky;top:0;z-index:1;background:var(--srf);border-bottom:1px solid var(--bd);padding:14px 16px 13px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:34px;height:34px;flex-shrink:0;border-radius:8px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ sup.mono }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:600;line-height:1.3;text-wrap:pretty">{{ sup.name }}</div>
+              <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
+                <span style="display:inline-flex;align-items:center;height:18px;padding:0 7px;border:1px solid {{ sup.critBd }};border-radius:4px;background:{{ sup.critBg }};color:{{ sup.critFg }};font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600">{{ sup.crit }} · {{ sup.critLabel }}</span>
+                <span style="font-size:11px;color:var(--tx2)">{{ sup.services }}</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+            <div style="flex:1;display:flex;align-items:center;gap:8px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.07em;color:var(--tx2)">SCORE</span>
+              <div style="flex:1;height:6px;background:var(--srf2);border:1px solid var(--bd);border-radius:3px;overflow:hidden"><div style="width:{{ sup.scorePct }};height:100%;background:{{ sup.scoreCol }}"></div></div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ sup.score }}</span>
+            </div>
+            <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border:1px solid {{ sup.clBd }};border-radius:5px;background:{{ sup.clBg }};color:{{ sup.clFg }};font-size:11px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:{{ sup.clDot }}"></span>{{ sup.clauses }}</span>
+          </div>
+        </div>
+
+        <div style="padding:16px">
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:9px">ATTESTATIONS DÉPOSÉES</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ sup.att }}" as="a" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid {{ a.bd }};border-radius:6px;background:{{ a.bg }}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="{{ a.icon }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M7 3.5h10v17l-3-2-2 2-2-2-3 2z"></path><path d="M9.5 8h5M9.5 11h5"></path></svg>
+                  <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;line-height:1.3">{{ a.name }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;color:{{ a.frColor }};margin-top:2px">{{ a.fresh }}</div></div>
+                  <a href="#" style="font-size:11px;font-weight:500;flex-shrink:0">Voir</a>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:9px">INCIDENTS IMPLIQUANT CE TIERS</div>
+            <sc-if value="{{ sup.hasInc }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ sup.inc }}" as="i" hint-placeholder-count="1">
+                <a href="#" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--bd);border-radius:6px;text-decoration:none;color:var(--tx)" style-hover="background:var(--srf2)">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--ac);flex-shrink:0">{{ i.id }}</span>
+                  <span style="font-size:12px;flex:1;min-width:0;line-height:1.3">{{ i.title }}</span>
+                  <span style="display:inline-flex;align-items:center;height:18px;padding:0 6px;border:1px solid {{ i.bd }};border-radius:4px;color:{{ i.fg }};font-family:'IBM Plex Mono',monospace;font-size:8.5px;flex-shrink:0">{{ i.sev }}</span>
+                </a>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ sup.noInc }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--tx2);padding:2px 0">Aucun incident associé à ce tiers.</div></sc-if>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:9px">DEMANDES D'ACTIONS CORRECTIVES</div>
+            <sc-if value="{{ sup.hasCapa }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ sup.capa }}" as="c" hint-placeholder-count="1">
+                <div style="display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--bd);border-radius:6px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--tx2);flex-shrink:0">{{ c.id }}</span>
+                  <span style="font-size:12px;flex:1;min-width:0;line-height:1.3">{{ c.label }}</span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--tx2);flex-shrink:0"><span style="width:6px;height:6px;border-radius:50%;background:{{ c.dot }}"></span>{{ c.statut }}</span>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ sup.noCapa }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--tx2);padding:2px 0">Aucune demande en cours.</div></sc-if>
+          </div>
+
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:11px">HISTORIQUE DES ÉVALUATIONS</div>
+            <div style="border:1px solid var(--bd);border-radius:7px;padding:13px 14px 10px;margin-bottom:10px">
+              <div style="display:flex;align-items:flex-end;gap:12px;height:64px">
+                <sc-for list="{{ sup.trend }}" as="t" hint-placeholder-count="3">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:{{ t.color }}">{{ t.score }}</span>
+                    <div style="width:100%;max-width:30px;height:{{ t.h }};background:{{ t.color }};border-radius:3px 3px 0 0"></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:12px;margin-top:6px;padding-top:8px;border-top:1px solid var(--bd)">
+                <sc-for list="{{ sup.trend }}" as="t" hint-placeholder-count="3">
+                  <div style="flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--tx2)">{{ t.date }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <button style="width:100%;height:32px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="background:var(--srf2)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12h13M12 6.5 17.5 12 12 17.5"></path></svg>Envoyer un nouveau questionnaire</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isCampagne }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;min-height:0;overflow-y:auto;background:var(--bg);padding:18px 22px">
+      <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <div style="flex:1;min-width:240px">
+          <div style="font-size:15px;font-weight:600;letter-spacing:-.01em">Campagne d'évaluation annuelle 2026</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2);margin-top:5px">QUESTIONNAIRE SSI FOURNISSEURS · LANCÉE LE 24/06/2026 · CLÔTURE 31/07/2026</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;padding:9px 12px;border:1px solid var(--bd);border-radius:7px;background:var(--srf)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--tx2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"></path><path d="M20 4v3.4h-3.4"></path></svg>
+          <span style="font-size:12px;color:var(--tx2)">Relances automatiques <span style="color:var(--tx);font-weight:500">J+7 puis J+14</span> · prochaine le <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--tx)">22/07/2026</span></span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+          <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;padding:14px 16px">
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:{{ s.color }}">{{ s.n }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx2)">{{ s.sub }}</span></div>
+            <div style="font-size:12px;color:var(--tx2);margin-top:4px">{{ s.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;padding:15px 18px;margin-bottom:18px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--tx2)">TAUX DE RÉPONSE</span>
+          <span style="font-size:13px"><span style="font-family:'IBM Plex Mono',monospace;font-weight:600">14 / 23</span> <span style="color:var(--tx2)">fournisseurs · 61 %</span></span>
+        </div>
+        <div style="display:flex;height:12px;border-radius:4px;overflow:hidden;border:1px solid var(--bd)">
+          <div style="width:61%;background:var(--ok)"></div>
+          <div style="width:22%;background:var(--warn);opacity:.6"></div>
+          <div style="width:17%;background:var(--dgr);opacity:.55"></div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:9px">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:9px;height:9px;border-radius:2px;background:var(--ok)"></span>Répondu (14)</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:9px;height:9px;border-radius:2px;background:var(--warn);opacity:.6"></span>En attente (5)</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:9px;height:9px;border-radius:2px;background:var(--dgr);opacity:.55"></span>Sans réponse (4)</span>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:6px 2px 10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--tx2)">RÉPONSES EN ATTENTE DE REVUE (5)</span>
+        <div style="flex:1;height:1px;background:var(--bd)"></div>
+      </div>
+      <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;overflow:hidden">
+        <sc-for list="{{ pending }}" as="p" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--bd)">
+            <div style="width:28px;height:28px;flex-shrink:0;border-radius:7px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600">{{ p.mono }}</div>
+            <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:500">{{ p.name }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;color:var(--tx2);margin-top:2px">RÉPONDU LE {{ p.date }} · {{ p.crit }}</div></div>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--tx2)"><span style="width:6px;height:6px;border-radius:50%;background:var(--warn)"></span>À revoir</span>
+            <button style="height:28px;padding:0 13px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="background:var(--srf2)">Revoir</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clair&quot;,&quot;sombre&quot;],&quot;default&quot;:&quot;clair&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Apparence&quot;}}">
+class Component extends DCLogic {
+  state = { tab:'registre', sel:'s1' };
+
+  CRIT(t){
+    return {
+      T1:{fg:'var(--dgr)',bg:'color-mix(in srgb,var(--dgr) 10%,transparent)',bd:'color-mix(in srgb,var(--dgr) 42%,var(--bd))',label:'Critique',def:'T1 — Fournisseur critique : accès à des données sensibles ou service essentiel à l\u2019activité. Évaluation annuelle + clauses SSI obligatoires.'},
+      T2:{fg:'var(--warn)',bg:'color-mix(in srgb,var(--warn) 12%,transparent)',bd:'color-mix(in srgb,var(--warn) 42%,var(--bd))',label:'Important',def:'T2 — Fournisseur important : impact modéré sur la sécurité ou la continuité. Évaluation régulière.'},
+      T3:{fg:'var(--tx2)',bg:'var(--srf2)',bd:'var(--bd)',label:'Standard',def:'T3 — Fournisseur standard : impact faible. Suivi allégé, évaluation sur cycle long.'}
+    }[t];
+  }
+  CL(c){
+    return {
+      'Présentes':{fg:'var(--ok)',bg:'color-mix(in srgb,var(--ok) 9%,transparent)',bd:'color-mix(in srgb,var(--ok) 40%,var(--bd))',dot:'var(--ok)'},
+      'Manquantes':{fg:'var(--dgr)',bg:'color-mix(in srgb,var(--dgr) 9%,transparent)',bd:'color-mix(in srgb,var(--dgr) 40%,var(--bd))',dot:'var(--dgr)'},
+      'À renouveler':{fg:'var(--warn)',bg:'color-mix(in srgb,var(--warn) 11%,transparent)',bd:'color-mix(in srgb,var(--warn) 40%,var(--bd))',dot:'var(--warn)'}
+    }[c];
+  }
+  scoreCol(s){ return s >= 80 ? 'var(--ok)' : (s >= 65 ? 'var(--warn)' : 'var(--dgr)'); }
+
+  data(){
+    return [
+      {id:'s1',mono:'OVH',name:'OVHcloud',crit:'T1',services:'Hébergement & infogérance',data:['Client','Technique'],clauses:'Présentes',score:88,next:['09/2026',false],
+        att:[['Attestation ISO 27001 — hébergeur','over','Expirée depuis 12 j'],['Rapport SOC 2 Type II','ok','À jour · exp. 03/2027'],['Certificat HDS','ok','À jour · exp. 11/2026']],
+        inc:[['INC-031','Indisponibilité hébergeur (2 h)','Majeur','Majeur']],
+        capa:[['DAC-07','Fournir le plan de réversibilité à jour','En cours','var(--warn)']],
+        trend:[['2023',79],['2024',84],['2025',88]]},
+      {id:'s2',mono:'IFG',name:'InfoGérance Solutions',crit:'T1',services:'Infogérance postes & serveurs',data:['Client','Technique','RH'],clauses:'À renouveler',score:74,next:['10/2026',false],
+        att:[['Attestation ISO 27001','soon','Expire J-24'],['Charte d\u2019intervention signée','ok','À jour']],
+        inc:[],
+        capa:[['DAC-05','Renouveler les clauses SSI du contrat-cadre','En cours','var(--warn)'],['DAC-09','Restreindre les accès admin distants','Planifié','var(--tx2)']],
+        trend:[['2023',70],['2024',72],['2025',74]]},
+      {id:'s3',mono:'PAY',name:'PaieCo (SIRH & paie)',crit:'T1',services:'SIRH & paie (SaaS)',data:['RH','Paie','Santé'],clauses:'Présentes',score:81,next:['09/2026',false],
+        att:[['Attestation ISO 27001','ok','À jour · exp. 06/2027'],['Attestation RGPD sous-traitant','ok','À jour'],['Hébergement HDS','soon','Expire J-18']],
+        inc:[],
+        capa:[['DAC-11','Documenter la localisation des données de santé','En cours','var(--warn)']],
+        trend:[['2023',76],['2024',79],['2025',81]]},
+      {id:'s4',mono:'LOG',name:'LogiTrans (transport)',crit:'T2',services:'Transport & logistique',data:['Client'],clauses:'Manquantes',score:58,next:['en cours',true],
+        att:[['Aucune attestation déposée','none','Manquante']],
+        inc:[['INC-018','Colis égaré avec données client','Mineur','Mineur']],
+        capa:[['DAC-03','Faire signer les clauses SSI','En retard','var(--dgr)'],['DAC-12','Obtenir une attestation d\u2019assurance cyber','Planifié','var(--tx2)']],
+        trend:[['2023',62],['2024',60],['2025',58]]},
+      {id:'s5',mono:'CPT',name:'Cabinet Deloitte & Associés',crit:'T2',services:'Expertise comptable',data:['Paie','Client'],clauses:'Présentes',score:79,next:['11/2026',false],
+        att:[['Attestation confidentialité','ok','À jour'],['Attestation RGPD','ok','À jour']],
+        inc:[],
+        capa:[],
+        trend:[['2023',75],['2024',77],['2025',79]]},
+      {id:'s6',mono:'CVC',name:'ClimTech Maintenance',crit:'T3',services:'Maintenance technique (CVC)',data:[],clauses:'À renouveler',score:65,next:['2027',false],
+        att:[['Charte d\u2019accès sur site','soon','Expire J-40']],
+        inc:[],
+        capa:[],
+        trend:[['2023',64],['2024',66],['2025',65]]},
+      {id:'s7',mono:'MKT',name:'Studio Meraki (marketing)',crit:'T3',services:'Communication & site web',data:['Client'],clauses:'Manquantes',score:61,next:['2027',false],
+        att:[['Aucune attestation déposée','none','Manquante']],
+        inc:[],
+        capa:[['DAC-14','Faire signer une convention de confidentialité','Planifié','var(--tx2)']],
+        trend:[['2023',58],['2024',60],['2025',61]]},
+      {id:'s8',mono:'WMS',name:'Éditeur WMS (entrepôt)',crit:'T2',services:'Logiciel entrepôt (cloud)',data:['Client','Technique'],clauses:'Présentes',score:77,next:['10/2026',false],
+        att:[['Attestation ISO 27001','ok','À jour · exp. 05/2027'],['Journal de disponibilité','ok','À jour']],
+        inc:[],
+        capa:[['DAC-15','Activer la journalisation étendue','En cours','var(--warn)']],
+        trend:[['2023',72],['2024',75],['2025',77]]},
+      {id:'s9',mono:'ARC',name:'ArchiSecure (destruction)',crit:'T2',services:'Destruction d\u2019archives',data:['RH','Client','Santé'],clauses:'À renouveler',score:70,next:['12/2026',false],
+        att:[['Certificat de destruction','soon','Expire J-30'],['Attestation NF Z40-350','ok','À jour']],
+        inc:[],
+        capa:[['DAC-16','Renouveler l\u2019attestation de destruction','Planifié','var(--tx2)']],
+        trend:[['2023',68],['2024',69],['2025',70]]}
+    ];
+  }
+
+  attMeta(state){
+    if(state==='over') return {color:'var(--dgr)', bd:'color-mix(in srgb,var(--dgr) 34%,var(--bd))', bg:'color-mix(in srgb,var(--dgr) 5%,transparent)', icon:'var(--dgr)'};
+    if(state==='soon') return {color:'var(--warn)', bd:'var(--bd)', bg:'var(--srf)', icon:'var(--warn)'};
+    if(state==='none') return {color:'var(--dgr)', bd:'color-mix(in srgb,var(--dgr) 34%,var(--bd))', bg:'color-mix(in srgb,var(--dgr) 5%,transparent)', icon:'var(--dgr)'};
+    return {color:'var(--tx2)', bd:'var(--bd)', bg:'var(--srf)', icon:'var(--tx2)'};
+  }
+
+  setTab(t){ this.setState({tab:t}); }
+  open(id){ this.setState({sel:id}); }
+
+  buildSup(){
+    const d = this.data().find(x => x.id === this.state.sel) || this.data()[0];
+    const crit = this.CRIT(d.crit), cl = this.CL(d.clauses);
+    const maxS = 100;
+    return {
+      mono:d.mono, name:d.name, crit:d.crit, critLabel:crit.label, critFg:crit.fg, critBg:crit.bg, critBd:crit.bd,
+      services:d.services, score:d.score, scorePct:d.score+'%', scoreCol:this.scoreCol(d.score),
+      clauses:d.clauses, clFg:cl.fg, clBg:cl.bg, clBd:cl.bd, clDot:cl.dot,
+      att: d.att.map(a => { const m = this.attMeta(a[1]); return {name:a[0], fresh:a[2], frColor:m.color, bd:m.bd, bg:m.bg, icon:m.icon}; }),
+      hasInc:d.inc.length>0, noInc:d.inc.length===0,
+      inc: d.inc.map(i => ({id:i[0], title:i[1], sev:i[2], fg: i[3]==='Majeur'?'var(--warn)':(i[3]==='Critique'?'var(--dgr)':'var(--tx2)'), bd:'var(--bd)'})),
+      hasCapa:d.capa.length>0, noCapa:d.capa.length===0,
+      capa: d.capa.map(c => ({id:c[0], label:c[1], statut:c[2], dot:c[3]})),
+      trend: d.trend.map(t => ({date:t[0], score:t[1], color:this.scoreCol(t[1]), h: Math.round(t[1]/maxS*52) + 'px'}))
+    };
+  }
+
+  renderVals(){
+    const all = this.data();
+    const rows = all.map(d => {
+      const crit = this.CRIT(d.crit), cl = this.CL(d.clauses);
+      return {
+        id:d.id, mono:d.mono, name:d.name, services:d.services,
+        crit:d.crit, critFg:crit.fg, critBg:crit.bg, critBd:crit.bd, critDef:crit.def,
+        data:d.data, noData:d.data.length===0,
+        clauses:d.clauses, clFg:cl.fg, clBg:cl.bg, clBd:cl.bd, clDot:cl.dot,
+        score:d.score, scorePct:d.score+'%', scoreCol:this.scoreCol(d.score),
+        next:d.next[0], nextCol: d.next[1] ? 'var(--warn)' : 'var(--tx2)',
+        rowBg: d.id===this.state.sel ? 'var(--srf2)' : 'transparent',
+        open: () => this.open(d.id)
+      };
+    });
+
+    const tierCount = (t) => all.filter(d => d.crit === t).length;
+    const tiers = ['T1','T2','T3'].map(t => { const m = this.CRIT(t); return {id:t, n:tierCount(t), fg:m.fg, bg:m.bg, bd:m.bd}; });
+
+    const tab = this.state.tab;
+    return {
+      theme: this.props.theme ?? 'clair',
+      compteur: all.length + ' TIERS · 3 T1 CRITIQUES',
+      tiers,
+      isRegistre: tab==='registre', isCampagne: tab==='campagne',
+      setRegistre: () => this.setTab('registre'), setCampagne: () => this.setTab('campagne'),
+      regBg: tab==='registre'?'var(--srf)':'transparent', regFg: tab==='registre'?'var(--tx)':'var(--tx2)',
+      campBg: tab==='campagne'?'var(--srf)':'transparent', campFg: tab==='campagne'?'var(--tx)':'var(--tx2)',
+      tabHint: tab==='registre' ? 'CLIQUEZ UN FOURNISSEUR POUR LE DÉTAIL' : 'CAMPAGNE ANNUELLE 2026 · EN COURS',
+      rows,
+      sup: this.buildSup(),
+      stats: [
+        {n:'23', sub:'', label:'Questionnaires envoyés', color:'var(--tx)'},
+        {n:'14', sub:'61 %', label:'Réponses reçues', color:'var(--ok)'},
+        {n:'5', sub:'', label:'En attente de revue', color:'var(--warn)'},
+        {n:'4', sub:'relancés', label:'Sans réponse', color:'var(--dgr)'}
+      ],
+      pending: [
+        {mono:'LOG', name:'LogiTrans (transport)', date:'12/07/2026', crit:'T2 · Important'},
+        {mono:'WMS', name:'Éditeur WMS (entrepôt)', date:'10/07/2026', crit:'T2 · Important'},
+        {mono:'ARC', name:'ArchiSecure (destruction)', date:'09/07/2026', crit:'T2 · Important'},
+        {mono:'CVC', name:'ClimTech Maintenance', date:'05/07/2026', crit:'T3 · Standard'},
+        {mono:'MKT', name:'Studio Meraki (marketing)', date:'02/07/2026', crit:'T3 · Standard'}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

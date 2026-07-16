@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toron — Planche de concepts logo</title>
+<!--
+  TORON — Planche logo v0.1
+  4 pistes dessinées à la main en SVG (pas de génération d'image).
+  Chaque SVG est récupérable tel quel : copier le bloc <svg> dans Figma/Inkscape.
+  Couleurs : encre neutre + orange de la charte (CB4E0A clair / EF7A32 sombre).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:"IBM Plex Sans",-apple-system,sans-serif;font-size:13px;
+  background:#1A1917;color:#ECEAE3;line-height:1.5;
+  padding:36px 28px 60px;
+}
+.wrap{max-width:1060px;margin:0 auto}
+h1{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.lead{color:#A6A198;margin-top:4px;font-size:12.5px}
+.concept{
+  margin-top:26px;border:1px solid #2C2A25;border-radius:10px;
+  background:#1C1B18;padding:18px 20px 20px;
+}
+.concept header{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+.num{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;
+  color:#6F6C64;
+}
+.concept h2{font-size:14px;font-weight:600}
+.concept .why{color:#A6A198;font-size:12px;margin-left:auto;text-align:right;max-width:420px}
+.reco{
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  color:#EF7A32;border:1px solid rgba(239,122,50,.4);border-radius:3px;
+  padding:1px 6px;
+}
+.row{display:grid;grid-template-columns:150px 150px 1fr 1fr;gap:12px}
+.sw{
+  border-radius:8px;display:grid;place-items:center;min-height:120px;
+  border:1px solid #2C2A25;
+}
+.sw.light{background:#F4F4F3;--ink:#2B2D2C;--acc:#CB4E0A;--paper:#F4F4F3}
+.sw.dark{background:#161513;--ink:#ECEAE3;--acc:#EF7A32;--paper:#161513}
+.sw .cap{
+  font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.1em;
+  color:#8B908C;margin-top:8px;
+}
+.sw.light .cap{color:#8B8E8B}
+.cell{display:grid;place-items:center;align-content:center;gap:0}
+.sizes{display:flex;align-items:flex-end;gap:18px}
+.lockup{display:flex;align-items:center;gap:10px}
+.lockup .word{font-size:26px;font-weight:600;letter-spacing:.005em;color:var(--ink)}
+.lockup .word .t{color:var(--acc)}
+.note{
+  margin-top:26px;color:#6F6C64;font-family:"IBM Plex Mono",monospace;
+  font-size:10px;letter-spacing:.06em;text-align:center;
+}
+@media (max-width:900px){.row{grid-template-columns:1fr 1fr}.concept .why{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Toron — pistes de logo</h1>
+  <p class="lead">Quatre directions vectorielles. Chaque piste : fond clair, fond sombre, tailles réelles (32 / 20 / 16 px), et lockup avec le wordmark.</p>
+
+  <!-- ══════════ A · MONOGRAMME t-FIL ══════════ -->
+  <section class="concept">
+    <header>
+      <span class="num">A</span>
+      <h2>Le monogramme t-fil</h2>
+      <p class="why">Un « t » géométrique dont la barre est le fil orange — tirée vers la droite, comme un fil qu'on déroule. L'initiale et le concept en un seul geste.</p>
+    </header>
+    <div class="row">
+      <div class="sw light"><div class="cell">
+        <svg width="88" height="88" viewBox="0 0 24 24"><rect x="7.2" y="3" width="3.4" height="18" rx="1.7" fill="var(--ink)"/><rect x="3" y="7.4" width="18.4" height="3.4" rx="1.7" fill="var(--acc)"/></svg>
+        <span class="cap">CLAIR</span>
+      </div></div>
+      <div class="sw dark"><div class="cell">
+        <svg width="88" height="88" viewBox="0 0 24 24"><rect x="7.2" y="3" width="3.4" height="18" rx="1.7" fill="var(--ink)"/><rect x="3" y="7.4" width="18.4" height="3.4" rx="1.7" fill="var(--acc)"/></svg>
+        <span class="cap">SOMBRE</span>
+      </div></div>
+      <div class="sw light"><div class="cell">
+        <div class="sizes">
+          <svg width="32" height="32" viewBox="0 0 24 24"><rect x="7.2" y="3" width="3.4" height="18" rx="1.7" fill="var(--ink)"/><rect x="3" y="7.4" width="18.4" height="3.4" rx="1.7" fill="var(--acc)"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24"><rect x="7.2" y="3" width="3.4" height="18" rx="1.7" fill="var(--ink)"/><rect x="3" y="7.4" width="18.4" height="3.4" rx="1.7" fill="var(--acc)"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24"><rect x="7.2" y="3" width="3.4" height="18" rx="1.7" fill="var(--ink)"/><rect x="3" y="7.4" width="18.4" height="3.4" rx="1.7" fill="var(--acc)"/></svg>
+        </div>
+        <span class="cap">32 · 20 · 16 PX</span>
+      </div></div>
+      <div class="sw dark"><div class="cell">
+        <div class="lockup">
+          <svg width="30" height="30" viewBox="0 0 24 24"><rect x="7.2" y="3" width="3.4" height="18" rx="1.7" fill="var(--ink)"/><rect x="3" y="7.4" width="18.4" height="3.4" rx="1.7" fill="var(--acc)"/></svg>
+          <span class="word">toron</span>
+        </div>
+        <span class="cap">LOCKUP</span>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ══════════ B · LES STRATES ══════════ -->
+  <section class="concept">
+    <header>
+      <span class="num">B</span>
+      <h2>Les strates reliées</h2>
+      <span class="reco">RECOMMANDÉ</span>
+      <p class="why">Trois strates = les référentiels. Un fil orange les coud (dessus, dessous, dessus). C'est ton USP dessinée : plusieurs normes, un seul fil. Et ça évoque la marge rouge d'un registre.</p>
+    </header>
+    <div class="row">
+      <div class="sw light"><div class="cell">
+        <svg width="88" height="88" viewBox="0 0 24 24">
+          <rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/>
+          <rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/>
+          <rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/>
+          <rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="var(--acc)"/>
+          <rect x="7.6" y="10.4" width="2.8" height="3.2" fill="var(--ink)"/>
+        </svg>
+        <span class="cap">CLAIR</span>
+      </div></div>
+      <div class="sw dark"><div class="cell">
+        <svg width="88" height="88" viewBox="0 0 24 24">
+          <rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/>
+          <rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/>
+          <rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/>
+          <rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="var(--acc)"/>
+          <rect x="7.6" y="10.4" width="2.8" height="3.2" fill="var(--ink)"/>
+        </svg>
+        <span class="cap">SOMBRE</span>
+      </div></div>
+      <div class="sw light"><div class="cell">
+        <div class="sizes">
+          <svg width="32" height="32" viewBox="0 0 24 24"><rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="var(--acc)"/><rect x="7.6" y="10.4" width="2.8" height="3.2" fill="var(--ink)"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24"><rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="var(--acc)"/><rect x="7.6" y="10.4" width="2.8" height="3.2" fill="var(--ink)"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24"><rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="var(--acc)"/><rect x="7.6" y="10.4" width="2.8" height="3.2" fill="var(--ink)"/></svg>
+        </div>
+        <span class="cap">32 · 20 · 16 PX</span>
+      </div></div>
+      <div class="sw dark"><div class="cell">
+        <div class="lockup">
+          <svg width="30" height="30" viewBox="0 0 24 24"><rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="var(--ink)"/><rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="var(--acc)"/><rect x="7.6" y="10.4" width="2.8" height="3.2" fill="var(--ink)"/></svg>
+          <span class="word">toron</span>
+        </div>
+        <span class="cap">LOCKUP</span>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ══════════ C · LE POINÇON ══════════ -->
+  <section class="concept">
+    <header>
+      <span class="num">C</span>
+      <h2>Le poinçon</h2>
+      <p class="why">Le losange du poinçon de maître français — la marque de garantie frappée sur ce qui est certifié — traversé par le fil. Héritage « certification » très ancré, très souverain.</p>
+    </header>
+    <div class="row">
+      <div class="sw light"><div class="cell">
+        <svg width="88" height="88" viewBox="0 0 24 24"><path d="M12 2.6 L21 12 L12 21.4 L3 12 Z" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><rect x="0.6" y="10.7" width="22.8" height="2.6" rx="1.3" fill="var(--acc)"/></svg>
+        <span class="cap">CLAIR</span>
+      </div></div>
+      <div class="sw dark"><div class="cell">
+        <svg width="88" height="88" viewBox="0 0 24 24"><path d="M12 2.6 L21 12 L12 21.4 L3 12 Z" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><rect x="0.6" y="10.7" width="22.8" height="2.6" rx="1.3" fill="var(--acc)"/></svg>
+        <span class="cap">SOMBRE</span>
+      </div></div>
+      <div class="sw light"><div class="cell">
+        <div class="sizes">
+          <svg width="32" height="32" viewBox="0 0 24 24"><path d="M12 2.6 L21 12 L12 21.4 L3 12 Z" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><rect x="0.6" y="10.7" width="22.8" height="2.6" rx="1.3" fill="var(--acc)"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2.6 L21 12 L12 21.4 L3 12 Z" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><rect x="0.6" y="10.7" width="22.8" height="2.6" rx="1.3" fill="var(--acc)"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 2.6 L21 12 L12 21.4 L3 12 Z" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><rect x="0.6" y="10.7" width="22.8" height="2.6" rx="1.3" fill="var(--acc)"/></svg>
+        </div>
+        <span class="cap">32 · 20 · 16 PX</span>
+      </div></div>
+      <div class="sw dark"><div class="cell">
+        <div class="lockup">
+          <svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 2.6 L21 12 L12 21.4 L3 12 Z" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><rect x="0.6" y="10.7" width="22.8" height="2.6" rx="1.3" fill="var(--acc)"/></svg>
+          <span class="word">toron</span>
+        </div>
+        <span class="cap">LOCKUP</span>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ══════════ D · LOGOTYPE BICOLORE ══════════ -->
+  <section class="concept">
+    <header>
+      <span class="num">D</span>
+      <h2>Le logotype bicolore</h2>
+      <p class="why">Pas de pictogramme du tout : le mot, avec le « t » en orange. L'option la plus sobre et la plus SaaS. Favicon = le t seul sur tuile sombre.</p>
+    </header>
+    <div class="row">
+      <div class="sw light"><div class="cell">
+        <span class="word" style="font-size:34px"><span class="t">t</span>rame</span>
+        <span class="cap">CLAIR</span>
+      </div></div>
+      <div class="sw dark"><div class="cell">
+        <span class="word" style="font-size:34px"><span class="t">t</span>rame</span>
+        <span class="cap">SOMBRE</span>
+      </div></div>
+      <div class="sw light"><div class="cell">
+        <div class="sizes" style="align-items:center">
+          <svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1C1B18"/><text x="16" y="23" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-weight="600" font-size="21" fill="#EF7A32">t</text></svg>
+          <svg width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1C1B18"/><text x="16" y="23" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-weight="600" font-size="21" fill="#EF7A32">t</text></svg>
+          <svg width="16" height="16" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1C1B18"/><text x="16" y="23" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-weight="600" font-size="21" fill="#EF7A32">t</text></svg>
+        </div>
+        <span class="cap">FAVICON 32 · 20 · 16 PX</span>
+      </div></div>
+      <div class="sw dark"><div class="cell">
+        <span class="word" style="font-size:26px"><span class="t">t</span>rame<span style="color:#6F6C64;font-weight:400;font-size:13px">&nbsp;·&nbsp;Prouvez une fois. Couvrez tout.</span></span>
+        <span class="cap">AVEC SIGNATURE</span>
+      </div></div>
+    </div>
+  </section>
+
+  <p class="note">SVG VECTORIELS — COPIER LE BLOC &lt;SVG&gt; DIRECTEMENT DANS FIGMA · AUCUNE GÉNÉRATION D'IMAGE</p>
+</div>
+</body>
+</html>

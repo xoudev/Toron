@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toron — Système de marque</title>
+<!--
+  TORON — Système de marque v0.1
+  ──────────────────────────────
+  Principe : deux concepts, deux rôles. Pas de fusion.
+  · B « strates » = LA MARQUE : interface, favicon, icône d'app, avatars.
+  · C « poinçon » = LE SCEAU : frappé sur les livrables générés (rapports,
+    exports, attestations), accompagné de l'empreinte SHA-256 du document.
+    → le sceau n'est pas décoratif : c'est une fonctionnalité d'intégrité.
+  SVG vectoriels copiables tels quels dans Figma.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:"IBM Plex Sans",-apple-system,sans-serif;font-size:13px;
+  background:#1A1917;color:#ECEAE3;line-height:1.5;padding:36px 28px 60px;
+}
+.wrap{max-width:980px;margin:0 auto}
+h1{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.lead{color:#A6A198;margin-top:4px;font-size:12.5px;max-width:640px}
+h2{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:#6F6C64;
+  margin:30px 0 10px;
+}
+.panel{
+  border:1px solid #2C2A25;border-radius:10px;background:#1C1B18;
+  padding:18px 20px;
+}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.caption{font-size:11.5px;color:#A6A198;margin-top:10px}
+.caption b{color:#ECEAE3;font-weight:600}
+
+/* ─── Vignette : sidebar ─── */
+.ui-strip{
+  background:#161513;border:1px solid #2C2A25;border-radius:8px;
+  padding:14px;width:230px;
+}
+.brandrow{display:flex;align-items:center;gap:9px}
+.brandrow .word{font-weight:700;font-size:15px;letter-spacing:.06em}
+.navmini{margin-top:12px;display:grid;gap:2px}
+.navmini span{
+  padding:5px 9px;border-radius:5px;color:#A6A198;font-size:12px;position:relative;
+}
+.navmini span.on{
+  background:rgba(239,122,50,.1);color:#ECEAE3;font-weight:500;
+}
+.navmini span.on::before{
+  content:"";position:absolute;left:-8px;top:5px;bottom:5px;width:2px;
+  background:#EF7A32;border-radius:2px;
+}
+
+/* ─── Vignette : onglet navigateur + icônes ─── */
+.chrome{
+  background:#232119;border:1px solid #2C2A25;border-radius:8px 8px 0 0;
+  padding:8px 10px 0;display:flex;gap:6px;
+}
+.tab{
+  background:#161513;border:1px solid #2C2A25;border-bottom:none;
+  border-radius:7px 7px 0 0;padding:6px 12px;display:flex;align-items:center;gap:8px;
+  font-size:11.5px;color:#ECEAE3;min-width:210px;
+}
+.tab.dim{background:transparent;color:#6F6C64;min-width:120px}
+.chrome-body{height:10px;background:#161513;border:1px solid #2C2A25;border-top:none;border-radius:0 0 8px 8px}
+.appicons{display:flex;align-items:flex-end;gap:16px;margin-top:16px}
+
+/* ─── Vignette : livrable + poinçon ─── */
+.paper{
+  background:#F6F5F2;color:#22241F;border-radius:8px;
+  padding:26px 28px 22px;box-shadow:0 8px 30px rgba(0,0,0,.35);
+  max-width:560px;
+}
+.paper .top{display:flex;align-items:center;gap:9px}
+.paper .top .word{font-weight:700;font-size:13px;letter-spacing:.06em}
+.paper .tag{
+  margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:9px;
+  letter-spacing:.12em;color:#8B8A82;border:1px solid #D9D7CF;
+  border-radius:3px;padding:2px 6px;
+}
+.paper h3{font-size:19px;font-weight:600;letter-spacing:-.01em;margin-top:22px}
+.paper .sub{color:#5B5D56;font-size:12.5px;margin-top:2px}
+.paper .meta{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#7A7C73;
+  margin-top:14px;line-height:1.8;
+}
+.paper hr{border:none;border-top:1px solid #E2E0D8;margin:18px 0 14px}
+.sealrow{display:flex;align-items:center;gap:14px}
+.sealtxt b{display:block;font-size:12px;font-weight:600}
+.sealtxt .mono{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;color:#7A7C73;line-height:1.7;
+}
+.sealtxt .mono a{color:#CB4E0A;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Toron — le système de marque</h1>
+  <p class="lead">Deux concepts, deux rôles — sans fusion. <b>B « les strates »</b> est la marque : elle vit dans le produit. <b>C « le poinçon »</b> est le sceau : il est frappé sur ce que le produit génère, avec l'empreinte du document. Le sceau devient une fonctionnalité d'intégrité, pas un ornement.</p>
+
+  <h2>01 · La marque dans l'interface</h2>
+  <div class="grid">
+    <div class="panel">
+      <div class="ui-strip">
+        <div class="brandrow">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="#ECEAE3"/>
+            <rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="#ECEAE3"/>
+            <rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="#ECEAE3"/>
+            <rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="#EF7A32"/>
+            <rect x="7.6" y="10.4" width="2.8" height="3.2" fill="#ECEAE3"/>
+          </svg>
+          <span class="word">toron</span>
+        </div>
+        <div class="navmini">
+          <span class="on">Tableau de bord</span>
+          <span>Référentiels</span>
+          <span>Plan d’action</span>
+        </div>
+      </div>
+      <p class="caption"><b>Sidebar.</b> Le fil orange de la marque et celui de l'item actif sont le même geste — la marque se prolonge dans l'interface.</p>
+    </div>
+
+    <div class="panel">
+      <div class="chrome">
+        <div class="tab">
+          <svg width="14" height="14" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1C1B18"/><rect x="8" y="8.6" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="8" y="14.3" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="8" y="20" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="11.8" y="5.4" width="3" height="21.2" rx="1.5" fill="#EF7A32"/><rect x="11.8" y="14.3" width="3" height="3.4" fill="#ECEAE3"/></svg>
+          Toron — Tableau de bord
+        </div>
+        <div class="tab dim">MonEspaceNIS2</div>
+      </div>
+      <div class="chrome-body"></div>
+      <div class="appicons">
+        <svg width="56" height="56" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1C1B18"/><rect x="8" y="8.6" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="8" y="14.3" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="8" y="20" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="11.8" y="5.4" width="3" height="21.2" rx="1.5" fill="#EF7A32"/><rect x="11.8" y="14.3" width="3" height="3.4" fill="#ECEAE3"/></svg>
+        <svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1C1B18"/><rect x="8" y="8.6" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="8" y="14.3" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="8" y="20" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="11.8" y="5.4" width="3" height="21.2" rx="1.5" fill="#EF7A32"/><rect x="11.8" y="14.3" width="3" height="3.4" fill="#ECEAE3"/></svg>
+        <svg width="16" height="16" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1C1B18"/><rect x="8" y="8.6" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="8" y="14.3" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="8" y="20" width="17" height="3.4" rx="1.7" fill="#ECEAE3"/><rect x="11.8" y="5.4" width="3" height="21.2" rx="1.5" fill="#EF7A32"/><rect x="11.8" y="14.3" width="3" height="3.4" fill="#ECEAE3"/></svg>
+      </div>
+      <p class="caption"><b>Onglet & icône d'app</b> — 56, 32 et 16 px. Les aplats pleins restent nets là où un contour disparaîtrait.</p>
+    </div>
+  </div>
+
+  <h2>02 · Le poinçon sur les livrables</h2>
+  <div class="panel" style="display:grid;place-items:center;padding:30px 20px">
+    <div class="paper">
+      <div class="top">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="#22241F"/>
+          <rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="#22241F"/>
+          <rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="#22241F"/>
+          <rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="#CB4E0A"/>
+          <rect x="7.6" y="10.4" width="2.8" height="3.2" fill="#22241F"/>
+        </svg>
+        <span class="word">toron</span>
+        <span class="tag">CONFIDENTIEL · DIFFUSION RESTREINTE</span>
+      </div>
+
+      <h3>Rapport de conformité</h3>
+      <p class="sub">ISO/IEC 27001:2022 — Déclaration d'applicabilité v3</p>
+      <p class="meta">
+        ENTITÉ&nbsp;&nbsp;&nbsp;&nbsp;Meridiane Logistics SAS<br>
+        PÉRIMÈTRE&nbsp;&nbsp;SMSI Groupe · 3 sites<br>
+        GÉNÉRÉ LE&nbsp;&nbsp;16 juillet 2026 · 14:02 CEST
+      </p>
+
+      <hr>
+
+      <div class="sealrow">
+        <!-- Le poinçon : losange de garantie traversé par le fil -->
+        <svg width="46" height="46" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.6 L21 12 L12 21.4 L3 12 Z" fill="none" stroke="#22241F" stroke-width="2.2" stroke-linejoin="round"/>
+          <rect x="0.6" y="10.8" width="22.8" height="2.4" rx="1.2" fill="#CB4E0A"/>
+        </svg>
+        <div class="sealtxt">
+          <b>Document scellé par Toron</b>
+          <p class="mono">
+            SHA-256&nbsp;&nbsp;3F9A 71C4 8D02 E5B7 … 44AE 0C2E<br>
+            Vérifier l'intégrité&nbsp;&nbsp;<a href="#">toron.eu/verifier</a>
+          </p>
+        </div>
+      </div>
+    </div>
+    <p class="caption" style="max-width:560px"><b>Le sceau est une fonctionnalité.</b> Chaque export (rapport, SoA, attestation, livrable EBIOS RM) est frappé du poinçon avec l'empreinte SHA-256 du fichier et une URL de vérification — l'intégrité des preuves devient démontrable en audit.</p>
+  </div>
+</div>
+</body>
+</html>

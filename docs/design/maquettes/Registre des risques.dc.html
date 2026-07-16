@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"></link>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"></link>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></link>
+<style>
+body{margin:0;background:#F2F3F3}
+#toron-app{--bg:#F2F3F3;--srf:#FFFFFF;--srf2:#F7F7F6;--bd:#E4E5E3;--tx:#1C1E1D;--tx2:#5B605D;--ac:#CB4E0A;--acTx:#FFFFFF;--ok:#2E7D4F;--warn:#946200;--dgr:#B23327;--r1:#5F7E5A;--r2:#A8791F;--r3:#C56A2A;--r4:#A32820}
+#toron-app[data-theme="sombre"]{--bg:#151412;--srf:#1C1B18;--srf2:#22211D;--bd:#2C2A25;--tx:#ECEAE3;--tx2:#A6A198;--ac:#EF7A32;--acTx:#151412;--ok:#5FB582;--warn:#D8A23E;--dgr:#E0685A;--r1:#7FA07A;--r2:#CBA24A;--r3:#DD8A4C;--r4:#D9564A}
+#toron-app a{color:var(--ac);text-decoration:none}
+#toron-app a:hover{text-decoration:underline}
+#toron-app input::placeholder{color:var(--tx2);opacity:.65}
+#toron-app ::selection{background:rgba(203,78,10,.18)}
+#toron-app *::-webkit-scrollbar{width:10px;height:10px}
+#toron-app *::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:3px solid var(--srf)}
+</style>
+</helmet>
+<div id="toron-app" data-theme="{{ theme }}" data-screen-label="Registre des risques" style="display:flex;height:100vh;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;overflow:hidden">
+  <aside style="width:236px;flex-shrink:0;background:var(--srf);border-right:1px solid var(--bd);display:flex;flex-direction:column;min-height:0">
+    <div style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:9px;padding:0 16px;border-bottom:1px solid var(--bd)">
+      <svg viewBox="0 0 24 24" width="22" height="22" style="color:var(--tx);flex-shrink:0"><rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="currentColor"></rect><rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="currentColor"></rect><rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="currentColor"></rect><rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="var(--ac)"></rect><rect x="7.6" y="10.4" width="2.8" height="3.2" fill="currentColor"></rect></svg>
+      <span style="font-weight:600;font-size:13.5px;letter-spacing:.13em">TORON</span>
+    </div>
+    <nav style="flex:1;min-height:0;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);padding:2px 9px 6px">PILOTAGE</div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.2"></rect></svg>
+        Tableau de bord
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="1.6"></rect><path d="M3.5 9.5h17"></path><path d="M8 3v3M16 3v3"></path></svg>
+        Revue de direction
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);padding:14px 9px 6px">CONFORMITÉ</div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 6.4h16M4 12h16M4 17.6h16"></path></svg>
+        Référentiels
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"></circle><path d="M8.6 12.3l2.4 2.4 4.6-5"></path></svg>
+        Contrôles
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.2 20.6 19H3.4Z"></path><path d="M12 10v4"></path><path d="M12 16.4v.2"></path></svg>
+        Écarts &amp; plan d'action
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2)">23</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="1.6"></rect><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"></path></svg>
+        Preuves
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);padding:14px 9px 6px">OPÉRATIONS</div>
+      <div style="position:relative;display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;background:var(--srf2);color:var(--tx);font-size:12.5px;font-weight:500;cursor:pointer">
+        <span style="position:absolute;left:0;top:7px;bottom:7px;width:2px;background:var(--ac);border-radius:1px"></span>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3.4 20.6 12 12 20.6 3.4 12Z"></path></svg>
+        Risques · EBIOS RM
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.2"></circle><path d="M12 8v4.5"></path><path d="M12 15.6v.2"></path></svg>
+        Incidents
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2)">2</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4.4c0 .9.7 1.6 1.6 1.6h12.8c.9 0 1.6-.7 1.6-1.6V14"></path><path d="M12 4v9"></path><path d="M8.8 10 12 13.2 15.2 10"></path></svg>
+        Livrables
+      </div>
+    </nav>
+    <div style="flex-shrink:0;border-top:1px solid var(--bd);padding:10px;display:flex;flex-direction:column;gap:2px">
+      <div style="display:flex;align-items:center;gap:9px;padding:8px 9px 4px">
+        <div style="width:26px;height:26px;flex-shrink:0;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--tx)">CM</div>
+        <div style="min-width:0">
+          <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Claire Morel</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.08em;color:var(--tx2);margin-top:1px">RSSI · NEXIALIS SAS</div>
+        </div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.09em;color:var(--tx2);opacity:.75;padding:4px 9px 2px">DONNÉES HÉBERGÉES EN UE · SECNUMCLOUD</div>
+    </div>
+  </aside>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <span style="font-size:14px;font-weight:600">Registre des risques</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">{{ compteur }}</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 10px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);width:230px">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5 20.5 20.5"></path></svg>
+          <input style="border:none;outline:none;background:transparent;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;flex:1;min-width:0;padding:0" placeholder="Rechercher — RSK-023, actif, scénario"></input>
+        </div>
+        <button style="height:30px;padding:0 14px;display:flex;align-items:center;gap:7px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          Ajouter un risque
+        </button>
+      </div>
+    </header>
+
+    <div style="flex-shrink:0;display:flex;align-items:center;gap:14px;padding:11px 20px;background:var(--srf);border-bottom:1px solid var(--bd);flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:9px;padding:5px 11px;border:1px solid var(--bd);border-radius:7px;background:var(--srf2)">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.09em;color:var(--tx2)">APPÉTENCE</span>
+        <span style="font-size:12px;font-weight:600">Modérée</span>
+        <span style="width:1px;height:14px;background:var(--bd)"></span>
+        <span style="font-size:11.5px;color:var(--tx2)">seuil d'acceptation résiduel ≤ <span style="color:var(--r3);font-weight:600">Élevé</span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-left:2px">
+        <div style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:color-mix(in srgb,var(--r1) 40%,var(--srf));border:1px solid var(--r1)"></span><span style="font-size:11px;color:var(--tx2)">Faible</span></div>
+        <div style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:color-mix(in srgb,var(--r2) 40%,var(--srf));border:1px solid var(--r2)"></span><span style="font-size:11px;color:var(--tx2)">Modéré</span></div>
+        <div style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:color-mix(in srgb,var(--r3) 45%,var(--srf));border:1px solid var(--r3)"></span><span style="font-size:11px;color:var(--tx2)">Élevé</span></div>
+        <div style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:color-mix(in srgb,var(--r4) 50%,var(--srf));border:1px solid var(--r4)"></span><span style="font-size:11px;color:var(--tx2)">Critique</span></div>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">PÉRIMÈTRE</span>
+        <div style="display:flex;gap:2px;border:1px solid var(--bd);border-radius:7px;padding:2px;background:var(--bg)">
+          <sc-for list="{{ scopes }}" as="s" hint-placeholder-count="3">
+            <button onClick="{{ s.onClick }}" style="height:26px;padding:0 12px;border:none;border-radius:5px;background:{{ s.bg }};color:{{ s.fg }};font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">{{ s.label }} <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;opacity:.7">{{ s.count }}</span></button>
+          </sc-for>
+        </div>
+        <button style="height:30px;padding:0 13px;display:flex;align-items:center;gap:7px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="background:var(--srf2)">
+          <svg viewBox="0 0 24 24" width="13" height="13" style="flex-shrink:0"><path d="M12 3.6 19.4 11 12 18.4 4.6 11Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path><rect x="2.4" y="10" width="19.2" height="2" rx="1" fill="var(--ac)"></rect></svg>
+          Exporter le registre scellé
+        </button>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="flex:1;min-width:0;overflow:auto;background:var(--bg)">
+        <div style="padding:16px 18px 6px">
+          <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;padding:15px 18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--tx2)">MATRICE · COTATION BRUTE (G × V) · EBIOS RM</span>
+              <sc-if value="{{ cellActive }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ clearCell }}" style="display:flex;align-items:center;gap:6px;height:22px;padding:0 9px;border:1px solid color-mix(in srgb,var(--ac) 40%,var(--bd));border-radius:6px;background:color-mix(in srgb,var(--ac) 8%,transparent);color:var(--ac);font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"></path></svg>
+                  Filtre {{ cellLabel }} — réinitialiser
+                </button>
+              </sc-if>
+              <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2)">CLIQUEZ UNE CASE POUR FILTRER</span>
+            </div>
+            <div style="display:flex;gap:10px">
+              <div style="display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--tx2);padding:26px 0 0">GRAVITÉ</div>
+              <div style="flex:1;min-width:0;overflow-x:auto">
+                <div style="display:grid;grid-template-columns:88px repeat(4,minmax(58px,1fr));gap:6px;min-width:352px">
+                  <div></div>
+                  <sc-for list="{{ colHeaders }}" as="h" hint-placeholder-count="4">
+                    <div style="text-align:center;padding-bottom:2px">
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ h.id }}</div>
+                      <div style="font-size:9.5px;color:var(--tx2);margin-top:1px">{{ h.name }}</div>
+                    </div>
+                  </sc-for>
+                  <sc-for list="{{ matrixRows }}" as="row" hint-placeholder-count="4">
+                    <div style="display:contents">
+                      <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;text-align:right;padding-right:6px">
+                        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ row.id }}</div>
+                        <div style="font-size:9.5px;color:var(--tx2);margin-top:1px">{{ row.name }}</div>
+                      </div>
+                      <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="4">
+                        <div onClick="{{ c.onClick }}" style="position:relative;aspect-ratio:1.7;min-height:52px;border-radius:6px;background:{{ c.bg }};border:1px solid {{ c.bd }};box-shadow:{{ c.ring }};display:flex;align-items:center;justify-content:center;cursor:pointer">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;color:{{ c.numColor }}">{{ c.count }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--tx2);margin-top:9px;padding-left:92px">VRAISEMBLANCE</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:6px 18px 20px">
+          <div style="display:flex;align-items:center;gap:10px;margin:10px 2px 10px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--tx2)">{{ tableTitle }}</span>
+            <div style="flex:1;height:1px;background:var(--bd)"></div>
+          </div>
+          <div style="background:var(--srf);border:1px solid var(--bd);border-radius:8px;overflow:hidden">
+            <div style="overflow-x:auto">
+              <div style="min-width:1240px">
+                <div style="display:grid;grid-template-columns:78px minmax(210px,1fr) 148px 148px 86px 128px 86px 92px 132px 96px;align-items:center;background:var(--srf2);border-bottom:1px solid var(--bd);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2);height:34px">
+                  <div style="padding:0 12px">ID</div>
+                  <div style="padding:0 8px">RISQUE</div>
+                  <div style="padding:0 8px">VALEUR / ACTIF</div>
+                  <div style="padding:0 8px">SOURCE</div>
+                  <div style="padding:0 8px">BRUTE</div>
+                  <div style="padding:0 8px">TRAITEMENT</div>
+                  <div style="padding:0 8px">NETTE</div>
+                  <div style="padding:0 8px">CIBLE</div>
+                  <div style="padding:0 8px">PROPRIÉTAIRE</div>
+                  <div style="padding:0 8px">REVUE</div>
+                </div>
+                <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+                  <div onClick="{{ r.open }}" style="display:grid;grid-template-columns:78px minmax(210px,1fr) 148px 148px 86px 128px 86px 92px 132px 96px;align-items:center;border-bottom:1px solid var(--bd);cursor:pointer;background:{{ r.rowBg }};min-height:56px" style-hover="background:var(--srf2)">
+                    <div style="padding:0 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500">{{ r.id }}</div>
+                    <div style="padding:9px 8px;min-width:0;display:flex;flex-direction:column;gap:5px">
+                      <span style="font-size:12.5px;font-weight:500;line-height:1.35;text-wrap:pretty">{{ r.titre }}</span>
+                      <sc-if value="{{ r.accepted }}" hint-placeholder-val="{{ false }}">
+                        <span style="display:inline-flex;align-items:center;gap:5px;align-self:flex-start;height:18px;padding:0 7px;border:1px solid var(--tx2);border-radius:5px;background:var(--srf2);color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.05em">
+                          <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 19 6.2v4.8c0 4-3 6.8-7 8-4-1.2-7-4-7-8V6.2z"></path><path d="M9 11.2l2 2 4-4"></path></svg>
+                          ACCEPTÉ · {{ r.acceptedDate }}
+                        </span>
+                      </sc-if>
+                    </div>
+                    <div style="padding:0 8px;font-size:11.5px;color:var(--tx2);line-height:1.35;text-wrap:pretty">{{ r.asset }}</div>
+                    <div style="padding:0 8px;font-size:11px;color:var(--tx2);line-height:1.35;text-wrap:pretty">{{ r.source }}</div>
+                    <div style="padding:0 8px">
+                      <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:{{ r.bruteBg }};border:1px solid {{ r.bruteBd }};flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500">{{ r.bruteTxt }}</span></span>
+                    </div>
+                    <div style="padding:0 8px">
+                      <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid {{ r.treatBd }};border-radius:5px;background:{{ r.treatBg }};color:{{ r.treatFg }};font-size:11px;white-space:nowrap">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="{{ r.treatIcon }}"></path></svg>
+                        {{ r.treat }}
+                      </span>
+                    </div>
+                    <div style="padding:0 8px">
+                      <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:{{ r.netBg }};border:1px solid {{ r.netBd }};flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500">{{ r.netTxt }}</span></span>
+                    </div>
+                    <div style="padding:0 8px">
+                      <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:transparent;border:1.5px dashed {{ r.cibleBd }};flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx2)">{{ r.cibleTxt }}</span></span>
+                    </div>
+                    <div style="padding:0 8px;display:flex;align-items:center;gap:8px;min-width:0">
+                      <div title="{{ r.ownerName }}" style="width:24px;height:24px;flex-shrink:0;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">{{ r.ownerInit }}</div>
+                      <span style="font-size:11.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.ownerName }}</span>
+                    </div>
+                    <div style="padding:0 8px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx2)">{{ r.review }}</div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:26px;text-align:center;font-size:12.5px;color:var(--tx2)">Aucun risque dans cette case. <a href="#" onClick="{{ clearCell }}">Réinitialiser le filtre</a></div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ true }}">
+      <aside style="width:396px;flex-shrink:0;border-left:1px solid var(--bd);background:var(--srf);overflow-y:auto">
+        <div style="position:sticky;top:0;z-index:1;background:var(--srf);border-bottom:1px solid var(--bd);padding:14px 16px 13px">
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ rk.id }}</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;height:21px;padding:0 9px;border-radius:5px;background:{{ rk.netBg }};border:1px solid {{ rk.netBd }};color:{{ rk.netFg }};font-size:11px;font-weight:600">{{ rk.netLevel }} · net</span>
+            <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid var(--bd);border-radius:5px;background:var(--srf2);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em">{{ rk.scope }}</span>
+            <button onClick="{{ closeDrawer }}" style="margin-left:auto;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx2);cursor:pointer" style-hover="background:var(--srf2);color:var(--tx)">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"></path></svg>
+            </button>
+          </div>
+          <div style="font-size:14px;font-weight:600;margin-top:9px;line-height:1.35;text-wrap:pretty">{{ rk.titre }}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.08em;color:var(--tx2);margin-top:6px">{{ rk.asset }} · {{ rk.source }}</div>
+        </div>
+
+        <div style="padding:16px">
+          <sc-if value="{{ rk.accepted }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid var(--tx2);border-radius:8px;overflow:hidden;margin-bottom:18px">
+              <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--srf2);border-bottom:1px solid var(--bd)">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--tx)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 19.5 6.2v5.3c0 4.4-3.2 7.5-7.5 8.8-4.3-1.3-7.5-4.4-7.5-8.8V6.2z"></path><path d="M8.8 11.4l2.1 2.1 4.3-4.3"></path></svg>
+                <span style="font-size:12px;font-weight:600">Acceptation formelle du risque</span>
+              </div>
+              <div style="padding:12px">
+                <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--tx2);padding-top:1px">DATE</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">{{ rk.acceptedDate }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--tx2);padding-top:1px">SIGNATAIRE</span>
+                  <span style="font-size:12px;font-weight:500">{{ rk.acceptedBy }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--tx2);padding-top:1px">REVUE</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">{{ rk.acceptedReview }}</span>
+                </div>
+                <div style="font-size:12px;line-height:1.55;color:var(--tx);margin-top:11px;padding-top:11px;border-top:1px solid var(--bd);text-wrap:pretty">{{ rk.acceptedMotif }}</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">SCÉNARIO</div>
+            <div style="font-size:12.5px;line-height:1.6;color:var(--tx);text-wrap:pretty">{{ rk.scenario }}</div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:9px">COTATION</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:7px;overflow:hidden">
+              <div style="background:var(--srf);padding:10px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.07em;color:var(--tx2)">BRUTE</div>
+                <div style="display:flex;align-items:center;gap:7px;margin-top:7px"><span style="width:16px;height:16px;border-radius:4px;background:{{ rk.bruteBg }};border:1px solid {{ rk.bruteBd }}"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600">{{ rk.bruteTxt }}</span></div>
+              </div>
+              <div style="background:var(--srf);padding:10px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.07em;color:var(--tx2)">NETTE</div>
+                <div style="display:flex;align-items:center;gap:7px;margin-top:7px"><span style="width:16px;height:16px;border-radius:4px;background:{{ rk.netBg2 }};border:1px solid {{ rk.netBd }}"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600">{{ rk.netTxt }}</span></div>
+              </div>
+              <div style="background:var(--srf);padding:10px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.07em;color:var(--tx2)">CIBLE</div>
+                <div style="display:flex;align-items:center;gap:7px;margin-top:7px"><span style="width:16px;height:16px;border-radius:4px;background:transparent;border:1.5px dashed {{ rk.cibleBd }}"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--tx2)">{{ rk.cibleTxt }}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:9px">HISTORIQUE DES COTATIONS</div>
+            <div style="border:1px solid var(--bd);border-radius:7px;padding:14px 14px 10px">
+              <div style="display:flex;align-items:flex-end;gap:12px;height:78px">
+                <sc-for list="{{ rk.trend }}" as="t" hint-placeholder-count="4">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:{{ t.color }}">{{ t.score }}</span>
+                    <div style="width:100%;max-width:34px;height:{{ t.h }};background:{{ t.color }};border-radius:3px 3px 0 0"></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:12px;margin-top:6px;padding-top:8px;border-top:1px solid var(--bd)">
+                <sc-for list="{{ rk.trend }}" as="t" hint-placeholder-count="4">
+                  <div style="flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.04em;color:var(--tx2)">{{ t.date }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">TRAITEMENT</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;height:21px;padding:0 9px;border:1px solid {{ rk.treatBd }};border-radius:5px;background:{{ rk.treatBg }};color:{{ rk.treatFg }};font-size:11px"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ rk.treatIcon }}"></path></svg>{{ rk.treat }}</span>
+              <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx2)">REVUE {{ rk.review }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--bd);border-radius:7px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.07em;color:var(--tx2)">PROPRIÉTAIRE</span>
+              <div style="width:24px;height:24px;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">{{ rk.ownerInit }}</div>
+              <span style="font-size:12px;font-weight:500">{{ rk.ownerName }}</span>
+              <span style="font-size:11px;color:var(--tx2)">· {{ rk.ownerRole }}</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">CONTRÔLES LIÉS</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ rk.controls }}" as="c" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--bd);border-radius:6px;background:var(--srf2)">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;flex-shrink:0">{{ c.id }}</span>
+                  <span style="font-size:12px;color:var(--tx2);flex:1;min-width:0;line-height:1.3">{{ c.label }}</span>
+                  <span style="width:7px;height:7px;border-radius:50%;background:{{ c.dot }};flex-shrink:0"></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">PLAN DE TRAITEMENT · ACTIONS LIÉES</div>
+            <sc-if value="{{ rk.hasActions }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ rk.actions }}" as="a" hint-placeholder-count="1">
+                <a href="#" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--bd);border-radius:6px;text-decoration:none;color:var(--tx)" style-hover="background:var(--srf2)">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--ac);flex-shrink:0">{{ a.id }}</span>
+                  <span style="font-size:12px;flex:1;min-width:0;line-height:1.3">{{ a.label }}</span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--tx2);flex-shrink:0"><span style="width:6px;height:6px;border-radius:50%;background:{{ a.dot }}"></span>{{ a.status }}</span>
+                </a>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ rk.noActions }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:11px 12px;border:1px dashed var(--bd);border-radius:6px;font-size:12px;color:var(--tx2)">Risque accepté — aucune action de réduction. Revue programmée le {{ rk.acceptedReview }}.</div>
+            </sc-if>
+          </div>
+        </div>
+      </aside>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clair&quot;,&quot;sombre&quot;],&quot;default&quot;:&quot;clair&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Apparence&quot;}}">
+class Component extends DCLogic {
+  state = { scope:'tous', cell:null, openId:'RSK-023' };
+
+  scoreLevel(s){ if(s >= 12) return 4; if(s >= 6) return 3; if(s >= 3) return 2; return 1; }
+  L(lvl){ return {1:{base:'var(--r1)',name:'Faible',pct:14},2:{base:'var(--r2)',name:'Modéré',pct:20},3:{base:'var(--r3)',name:'Élevé',pct:27},4:{base:'var(--r4)',name:'Critique',pct:35}}[lvl]; }
+  chip(g,v){
+    const lvl = this.scoreLevel(g*v), L = this.L(lvl);
+    return { txt:'G'+g+'·V'+v, bg:'color-mix(in srgb,'+L.base+' '+L.pct+'%,var(--srf))', bd:L.base, level:L.name, fg:L.base };
+  }
+  treat(t){
+    const m = {
+      'Réduire':{icon:'M12 5v12 M7 12l5 5 5-5'},
+      'Transférer':{icon:'M6 13v4.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V13 M12 4v10 M8.5 7.5 12 4 15.5 7.5'},
+      'Accepter':{icon:'M12 3.4 19 6.2v4.9c0 4.1-3 7-7 8.1-4-1.1-7-4-7-8.1V6.2z M9 11.2l2 2 4-4'},
+      'Éviter':{icon:'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z M6.4 6.4 17.6 17.6'}
+    };
+    return { icon:m[t].icon, bd:'var(--bd)', bg:'var(--srf2)', fg:'var(--tx2)' };
+  }
+
+  data(){
+    return [
+      {id:'RSK-023',t:'Rançongiciel paralysant le SI de production',asset:'SI de production · Disponibilité',src:'Atelier EBIOS · DSI',gb:4,vb:3,gn:4,vn:2,gc:3,vc:2,tr:'Réduire',own:['Théo Renaud','TR','DSI'],rev:'15/09/2026',sc:'SMSI',
+        scen:'Un opérateur affilié déploie un rançongiciel après compromission d\u2019un accès VPN mal protégé, chiffre les serveurs de production et exige une rançon. Arrêt de la production et perte des données non sauvegardées.',
+        ctrl:[['A.8.8','Gestion des vulnérabilités','var(--dgr)'],['A.8.13','Sauvegarde des informations','var(--warn)'],['A.5.30','Continuité TIC','var(--dgr)']],
+        act:[['ACT-0129','Corriger les vulnérabilités critiques T2','En retard','var(--dgr)'],['ACT-0147','Formaliser le plan de continuité TIC','Planifié','var(--tx2)']],
+        tr_hist:[['T3-25',16],['T4-25',12],['T1-26',12],['T2-26',8]]},
+      {id:'RSK-028',t:'Compromission de comptes à privilèges',asset:'Annuaire · Active Directory',src:'Atelier EBIOS · RSSI',gb:4,vb:2,gn:3,vn:1,gc:2,vc:1,tr:'Réduire',own:['Claire Morel','CM','RSSI'],rev:'30/08/2026',sc:'SMSI',
+        scen:'Un attaquant obtient les identifiants d\u2019un administrateur via hameçonnage ciblé, puis étend ses privilèges sur l\u2019annuaire pour accéder à l\u2019ensemble du SI.',
+        ctrl:[['A.8.2','Privilèges d\u2019accès','var(--dgr)'],['A.8.5','Authentification sécurisée','var(--ok)']],
+        act:[['ACT-0126','Revue trimestrielle des comptes à privilèges','Terminé','var(--ok)'],['ACT-0138','Déployer le MFA sur les accès distants','En cours','var(--tx)']],
+        tr_hist:[['T3-25',12],['T4-25',8],['T1-26',8],['T2-26',8]]},
+      {id:'RSK-017',t:'Exfiltration de données clients',asset:'Données clients · Confidentialité',src:'Atelier EBIOS · DPO',gb:4,vb:2,gn:3,vn:2,gc:2,vc:2,tr:'Réduire',own:['Amélie Fontaine','AF','DPO'],rev:'10/09/2026',sc:'SMSI',
+        scen:'Un tiers exploite une faille applicative pour extraire la base clients. Divulgation de données personnelles, notification CNIL et atteinte à la réputation.',
+        ctrl:[['A.8.24','Cryptographie','var(--warn)'],['A.5.34','Protection des DCP','var(--ok)']],
+        act:[['ACT-0161','Réviser la matrice de contrôle d\u2019accès','Planifié','var(--tx2)']],
+        tr_hist:[['T3-25',12],['T4-25',9],['T1-26',8],['T2-26',6]]},
+      {id:'RSK-031',t:'Indisponibilité de l\u2019hébergeur infogéré critique',asset:'Hébergement infogéré',src:'Atelier EBIOS · Achats',gb:3,vb:3,gn:3,vn:2,gc:2,vc:2,tr:'Transférer',own:['Karim Benali','KB','Achats'],rev:'22/09/2026',sc:'SMSI',
+        scen:'Une défaillance majeure du prestataire d\u2019hébergement (panne, dépôt de bilan) rend indisponibles les services externalisés sans réversibilité éprouvée.',
+        ctrl:[['A.5.19','Relations fournisseurs','var(--dgr)'],['A.5.30','Continuité TIC','var(--dgr)']],
+        act:[['ACT-0142','Encadrer la sécurité des fournisseurs critiques','En retard','var(--dgr)']],
+        tr_hist:[['T3-25',12],['T4-25',9],['T1-26',9],['T2-26',6]]},
+      {id:'RSK-019',t:'Interruption de la chaîne logistique',asset:'Production · Livraison',src:'Atelier EBIOS · Direction',gb:3,vb:3,gn:3,vn:2,gc:2,vc:2,tr:'Transférer',own:['Valérie Lasserre','VL','Direction'],rev:'05/10/2026',sc:'QMS',
+        scen:'La rupture d\u2019approvisionnement d\u2019un composant à source unique interrompt la production et compromet les engagements de livraison clients.',
+        ctrl:[['§8.1','Maîtrise opérationnelle','var(--warn)'],['A.5.19','Relations fournisseurs','var(--dgr)']],
+        act:[['ACT-0147','Plan de continuité — volet logistique','Planifié','var(--tx2)']],
+        tr_hist:[['T3-25',9],['T4-25',9],['T1-26',9],['T2-26',6]]},
+      {id:'RSK-009',t:'Non-conformité RGPD du registre des traitements',asset:'Conformité · Réputation',src:'Revue · DPO',gb:3,vb:2,gn:2,vn:2,gc:2,vc:1,tr:'Réduire',own:['Amélie Fontaine','AF','DPO'],rev:'05/09/2026',sc:'SMSI',
+        scen:'Le registre des traitements n\u2019est pas à jour de 5 traitements récents ; en cas de contrôle CNIL, l\u2019écart expose à une sanction.',
+        ctrl:[['A.5.34','Protection des DCP','var(--ok)'],['A.5.31','Obligations légales','var(--ok)']],
+        act:[['ACT-0156','Mettre à jour le registre des traitements','Planifié','var(--tx2)']],
+        tr_hist:[['T3-25',6],['T4-25',6],['T1-26',6],['T2-26',4]]},
+      {id:'RSK-005',t:'Erreur humaine en production',asset:'Chaîne de production',src:'Atelier EBIOS · Qualité',gb:2,vb:3,gn:2,vn:2,gc:1,vc:2,tr:'Réduire',own:['Yann Prévost','YP','Qualité'],rev:'18/09/2026',sc:'QMS',
+        scen:'Une mauvaise manipulation lors d\u2019un changement de série entraîne un lot non conforme et un rappel produit partiel.',
+        ctrl:[['§7.2','Compétences','var(--ok)'],['§8.5','Maîtrise de la production','var(--warn)']],
+        act:[['ACT-0119','Renforcer la formation opérateurs','Terminé','var(--ok)']],
+        tr_hist:[['T3-25',9],['T4-25',6],['T1-26',6],['T2-26',4]]},
+      {id:'RSK-040',t:'Défaillance qualité d\u2019un fournisseur de composant',asset:'Qualité produit',src:'Atelier · Qualité',gb:3,vb:2,gn:2,vn:2,gc:2,vc:1,tr:'Réduire',own:['Yann Prévost','YP','Qualité'],rev:'28/09/2026',sc:'QMS',
+        scen:'Un composant hors spécification livré par un fournisseur non audité passe le contrôle réception et dégrade la qualité du produit fini.',
+        ctrl:[['§8.4','Maîtrise des prestataires','var(--warn)'],['A.5.19','Relations fournisseurs','var(--dgr)']],
+        act:[['ACT-0142','Évaluations sécurité & qualité fournisseurs','En retard','var(--dgr)']],
+        tr_hist:[['T3-25',6],['T4-25',6],['T1-26',6],['T2-26',4]]},
+      {id:'RSK-012',t:'Vol ou perte d\u2019un terminal mobile',asset:'Parc mobile · Données',src:'Atelier EBIOS · RSSI',gb:2,vb:2,gn:1,vn:2,gc:1,vc:1,tr:'Réduire',own:['Claire Morel','CM','RSSI'],rev:'12/10/2026',sc:'SMSI',
+        scen:'Un ordinateur portable non chiffré est volé lors d\u2019un déplacement, exposant les données locales et les accès enregistrés.',
+        ctrl:[['A.8.1','Terminaux utilisateurs','var(--ok)'],['A.7.10','Supports de stockage','var(--warn)']],
+        act:[['ACT-0154','Chiffrer les postes et sauvegardes','Planifié','var(--tx2)']],
+        tr_hist:[['T3-25',6],['T4-25',4],['T1-26',4],['T2-26',2]]},
+      {id:'RSK-036',t:'Dépendance à un fournisseur SaaS unique',asset:'SaaS métier',src:'Atelier EBIOS · Direction',gb:3,vb:2,gn:3,vn:2,gc:3,vc:2,tr:'Accepter',own:['Valérie Lasserre','VL','Direction'],rev:'01/12/2026',sc:'SMSI',
+        acc:['14/05/2026','V. Lasserre (Directrice générale)','01/12/2026','Coût et complexité de la réversibilité jugés disproportionnés au regard de l\u2019exposition ; la dépendance est encadrée contractuellement (SLA, clause de réversibilité, séquestre de code). Risque accepté jusqu\u2019à la prochaine revue de direction.'],
+        scen:'L\u2019éditeur du SaaS métier interrompt son service (défaillance, changement de politique). L\u2019activité dépendante est ralentie le temps d\u2019un contournement.',
+        ctrl:[['A.5.23','Usage des services cloud','var(--warn)'],['A.5.19','Relations fournisseurs','var(--dgr)']],
+        act:[],
+        tr_hist:[['T3-25',6],['T4-25',6],['T1-26',6],['T2-26',6]]},
+      {id:'RSK-002',t:'Obsolescence d\u2019un logiciel métier',asset:'Application métier',src:'Atelier · DSI',gb:2,vb:2,gn:2,vn:2,gc:2,vc:2,tr:'Accepter',own:['Théo Renaud','TR','DSI'],rev:'30/11/2026',sc:'QMS',
+        acc:['20/03/2026','V. Lasserre (Directrice générale)','30/11/2026','Migration planifiée au prochain exercice budgétaire. Le maintien en condition opérationnelle est assuré par un contrat de support étendu. Risque accepté à titre transitoire.'],
+        scen:'Le logiciel métier n\u2019est plus maintenu par l\u2019éditeur ; une incompatibilité ou une faille non corrigée pourrait perturber l\u2019exploitation.',
+        ctrl:[['A.8.8','Vulnérabilités techniques','var(--dgr)'],['§7.1','Ressources','var(--ok)']],
+        act:[],
+        tr_hist:[['T3-25',4],['T4-25',4],['T1-26',4],['T2-26',4]]},
+      {id:'RSK-044',t:'Sabotage interne malveillant',asset:'SI · Intégrité',src:'Atelier EBIOS · RSSI',gb:4,vb:1,gn:2,vn:1,gc:1,vc:1,tr:'Éviter',own:['Claire Morel','CM','RSSI'],rev:'20/09/2026',sc:'SMSI',
+        scen:'Un collaborateur en partance altère ou détruit délibérément des données critiques avant son départ, faute de révocation d\u2019accès en temps voulu.',
+        ctrl:[['A.6.5','Fin de contrat','var(--warn)'],['A.8.2','Privilèges d\u2019accès','var(--dgr)'],['A.8.16','Surveillance','var(--dgr)']],
+        act:[['ACT-0126','Revue et révocation des accès','Terminé','var(--ok)']],
+        tr_hist:[['T3-25',8],['T4-25',4],['T1-26',4],['T2-26',2]]}
+    ];
+  }
+
+  scopeFiltered(){ const s = this.state.scope; const all = this.data(); return s === 'tous' ? all : all.filter(r => r.sc === s); }
+
+  selectCell(g,v){ const key = g+'-'+v; this.setState({cell: this.state.cell === key ? null : key}); }
+  clearCell(){ this.setState({cell:null}); }
+  setScope(s){ this.setState({scope:s, cell:null}); }
+  open(id){ this.setState({openId:id}); }
+  closeDrawer(){ this.setState({openId:null}); }
+
+  rowDisplay(r){
+    const brute = this.chip(r.gb,r.vb), net = this.chip(r.gn,r.vn), cible = this.chip(r.gc,r.vc);
+    const tr = this.treat(r.tr);
+    return {
+      id:r.id, titre:r.t, asset:r.asset, source:r.src,
+      bruteTxt:brute.txt, bruteBg:brute.bg, bruteBd:brute.bd,
+      netTxt:net.txt, netBg:net.bg, netBd:net.bd,
+      cibleTxt:cible.txt, cibleBd:cible.bd,
+      treat:r.tr, treatIcon:tr.icon, treatBd:tr.bd, treatBg:tr.bg, treatFg:tr.fg,
+      ownerName:r.own[0], ownerInit:r.own[1], review:r.rev,
+      accepted: !!r.acc, acceptedDate: r.acc ? r.acc[0] : '',
+      rowBg: (r.id === this.state.openId) ? 'var(--srf2)' : 'transparent',
+      open: () => this.open(r.id)
+    };
+  }
+
+  buildRisk(){
+    const id = this.state.openId;
+    if(!id) return null;
+    const r = this.data().find(x => x.id === id);
+    if(!r) return null;
+    const brute = this.chip(r.gb,r.vb), net = this.chip(r.gn,r.vn), cible = this.chip(r.gc,r.vc);
+    const tr = this.treat(r.tr);
+    const maxH = 64;
+    const trend = r.tr_hist.map(p => { const lvl = this.scoreLevel(p[1]); return { date:p[0], score:p[1], color:this.L(lvl).base, h: Math.round(p[1]/16*maxH) + 'px' }; });
+    return {
+      id:r.id, titre:r.t, asset:r.asset, source:r.src, scope:r.sc,
+      scenario:r.scen,
+      bruteTxt:brute.txt, bruteBg:brute.bg, bruteBd:brute.bd,
+      netTxt:net.txt, netBg2:net.bg, netBg:net.bg, netBd:net.bd, netFg:net.fg, netLevel:net.level,
+      cibleTxt:cible.txt, cibleBd:cible.bd,
+      treat:r.tr, treatIcon:tr.icon, treatBd:tr.bd, treatBg:tr.bg, treatFg:tr.fg,
+      ownerName:r.own[0], ownerInit:r.own[1], ownerRole:r.own[2], review:r.rev,
+      trend,
+      controls: r.ctrl.map(c => ({id:c[0], label:c[1], dot:c[2]})),
+      hasActions: r.act.length > 0, noActions: r.act.length === 0,
+      actions: r.act.map(a => ({id:a[0], label:a[1], status:a[2], dot:a[3]})),
+      accepted: !!r.acc,
+      acceptedDate: r.acc ? r.acc[0] : '',
+      acceptedBy: r.acc ? r.acc[1] : '',
+      acceptedReview: r.acc ? r.acc[2] : '',
+      acceptedMotif: r.acc ? r.acc[3] : ''
+    };
+  }
+
+  renderVals(){
+    const scoped = this.scopeFiltered();
+    const cell = this.state.cell;
+
+    const colDefs = [['V1','Minime'],['V2','Signif.'],['V3','Forte'],['V4','Max.']];
+    const rowDefs = [[4,'G4','Critique'],[3,'G3','Grave'],[2,'G2','Significative'],[1,'G1','Mineure']];
+    const matrixRows = rowDefs.map(gd => {
+      const g = gd[0];
+      const cells = [1,2,3,4].map(v => {
+        const key = g+'-'+v;
+        const count = scoped.filter(r => r.gb === g && r.vb === v).length;
+        const lvl = this.scoreLevel(g*v), L = this.L(lvl);
+        const sel = cell === key;
+        const pct = count === 0 ? 6 : L.pct;
+        return {
+          count: count === 0 ? '·' : count,
+          bg: 'color-mix(in srgb,'+L.base+' '+pct+'%,var(--srf))',
+          bd: sel ? 'var(--tx)' : ('color-mix(in srgb,'+L.base+' 45%,var(--bd))'),
+          ring: sel ? 'inset 0 0 0 2px var(--tx)' : 'none',
+          numColor: count === 0 ? 'var(--tx2)' : 'var(--tx)',
+          onClick: () => this.selectCell(g,v)
+        };
+      });
+      return { id:gd[1], name:gd[2], cells };
+    });
+
+    let rowsData = scoped;
+    if(cell){ const parts = cell.split('-'); const g = +parts[0], v = +parts[1]; rowsData = scoped.filter(r => r.gb === g && r.vb === v); }
+    const rows = rowsData.map(r => this.rowDisplay(r));
+
+    const all = this.data();
+    const scopes = [
+      {key:'tous', label:'Tous', count: all.length},
+      {key:'SMSI', label:'SMSI', count: all.filter(r => r.sc === 'SMSI').length},
+      {key:'QMS', label:'QMS', count: all.filter(r => r.sc === 'QMS').length}
+    ].map(s => {
+      const active = this.state.scope === s.key;
+      return { label:s.label, count:s.count, onClick: () => this.setScope(s.key),
+        bg: active ? 'var(--srf)' : 'transparent', fg: active ? 'var(--tx)' : 'var(--tx2)' };
+    });
+
+    const cellLabel = cell ? ('G'+cell.split('-')[0]+'·V'+cell.split('-')[1]) : '';
+    const accepted = all.filter(r => r.acc).length;
+
+    return {
+      theme: this.props.theme ?? 'clair',
+      compteur: scoped.length + ' RISQUES · ' + accepted + ' ACCEPTÉS',
+      scopes,
+      colHeaders: colDefs.map(c => ({id:c[0], name:c[1]})),
+      matrixRows,
+      cellActive: !!cell, cellLabel, clearCell: () => this.clearCell(),
+      tableTitle: cell ? ('RISQUES EN COTATION BRUTE ' + cellLabel + ' (' + rows.length + ')') : ('REGISTRE — ' + rows.length + ' RISQUES'),
+      rows, noRows: rows.length === 0,
+      drawerOpen: !!this.state.openId,
+      rk: this.buildRisk(),
+      closeDrawer: () => this.closeDrawer()
+    };
+  }
+}
+</script>
+</body>
+</html>

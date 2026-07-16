@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"></link>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"></link>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></link>
+<style>
+body{margin:0;background:#F2F3F3}
+#toron-app{--bg:#F2F3F3;--srf:#FFFFFF;--srf2:#F7F7F6;--bd:#E4E5E3;--tx:#1C1E1D;--tx2:#5B605D;--ac:#CB4E0A;--acTx:#FFFFFF;--ok:#2E7D4F;--warn:#946200;--dgr:#B23327}
+#toron-app[data-theme="sombre"]{--bg:#151412;--srf:#1C1B18;--srf2:#22211D;--bd:#2C2A25;--tx:#ECEAE3;--tx2:#A6A198;--ac:#EF7A32;--acTx:#151412;--ok:#5FB582;--warn:#D8A23E;--dgr:#E0685A}
+#toron-app a{color:var(--ac);text-decoration:none}
+#toron-app a:hover{text-decoration:underline}
+#toron-app input::placeholder{color:var(--tx2);opacity:.65}
+#toron-app ::selection{background:rgba(203,78,10,.18)}
+#toron-app *::-webkit-scrollbar{width:10px;height:10px}
+#toron-app *::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:3px solid var(--srf)}
+</style>
+</helmet>
+<div id="toron-app" data-theme="{{ theme }}" data-screen-label="Incidents" style="display:flex;height:100vh;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;overflow:hidden">
+  <div style="width:236px;flex-shrink:0;height:100%;display:flex">
+    <dc-import name="Sidebar" active="incidents" hint-size="236px,100%"></dc-import>
+  </div>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <span style="font-size:14px;font-weight:600">Incidents</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">{{ compteur }}</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 10px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);width:210px">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5 20.5 20.5"></path></svg>
+          <input style="border:none;outline:none;background:transparent;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;flex:1;min-width:0;padding:0" placeholder="Rechercher — INC-007"></input>
+        </div>
+        <button style="height:30px;padding:0 14px;display:flex;align-items:center;gap:7px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          Déclarer un incident
+        </button>
+      </div>
+    </header>
+
+    <sc-if value="{{ rempli }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="width:312px;flex-shrink:0;border-right:1px solid var(--bd);background:var(--srf);overflow-y:auto">
+        <div style="padding:11px 14px 8px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">FILE DES INCIDENTS</div>
+        <sc-for list="{{ list }}" as="i" hint-placeholder-count="5">
+          <div onClick="{{ i.open }}" style="position:relative;padding:11px 14px 11px 15px;border-bottom:1px solid var(--bd);cursor:pointer;background:{{ i.bg }}" style-hover="background:var(--srf2)">
+            <span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:{{ i.bar }}"></span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600">{{ i.id }}</span>
+              <span style="display:inline-flex;align-items:center;height:17px;padding:0 6px;border:1px solid {{ i.sevBd }};border-radius:4px;background:{{ i.sevBg }};color:{{ i.sevFg }};font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.03em">{{ i.sev }}</span>
+              <sc-if value="{{ i.nis2 }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.05em;color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 40%,var(--bd));border-radius:4px;padding:1px 4px">NIS 2</span></sc-if>
+            </div>
+            <div style="font-size:12.5px;font-weight:500;margin-top:6px;line-height:1.35;text-wrap:pretty">{{ i.titre }}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2)"><span style="width:6px;height:6px;border-radius:50%;background:{{ i.stDot }}"></span>{{ i.statut }}</span>
+              <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2)">{{ i.date }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex:1;min-width:0;overflow-y:auto;background:var(--bg)">
+        <div style="padding:18px 22px 8px">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">{{ d.id }}</span>
+                <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid {{ d.sevBd }};border-radius:5px;background:{{ d.sevBg }};color:{{ d.sevFg }};font-size:11px;font-weight:500">{{ d.sev }}</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;height:20px;padding:0 8px;border:1px solid var(--bd);border-radius:5px;background:var(--srf2);font-size:11px"><span style="width:6px;height:6px;border-radius:50%;background:{{ d.stDot }}"></span>{{ d.statut }}</span>
+              </div>
+              <div style="font-size:16px;font-weight:600;margin-top:9px;letter-spacing:-.01em">{{ d.titre }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2);margin-top:6px">OUVERT LE {{ d.date }} · {{ d.origine }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:10px 22px 22px">
+          <sc-if value="{{ d.nis2 }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px solid color-mix(in srgb,var(--ac) 34%,var(--bd));border-radius:8px;overflow:hidden;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:9px;padding:11px 14px;background:color-mix(in srgb,var(--ac) 7%,transparent);border-bottom:1px solid color-mix(in srgb,var(--ac) 22%,var(--bd))">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--ac)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 19.5 6.2v5.3c0 4.4-3.2 7.5-7.5 8.8-4.3-1.3-7.5-4.4-7.5-8.8V6.2z"></path><path d="M12 8.4v4"></path><path d="M12 15.4v.2"></path></svg>
+              <span style="font-size:13px;font-weight:600">Incident important — NIS 2</span>
+              <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.07em;color:var(--tx2)">QUALIFIÉ LE {{ d.qualifDate }}</span>
+            </div>
+            <div style="padding:12px 14px;display:flex;gap:20px;flex-wrap:wrap">
+              <sc-for list="{{ d.criteria }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:17px;height:17px;border-radius:4px;background:var(--ok);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg></span>
+                  <span style="font-size:12px">{{ c }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="border:1px solid var(--bd);border-radius:8px;padding:15px 16px;margin-bottom:16px;background:var(--srf)">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:14px">CALENDRIER RÉGLEMENTAIRE ANSSI</div>
+            <div style="overflow-x:auto"><div style="display:flex;align-items:stretch;gap:0;min-width:544px">
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="width:22px;height:22px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg></span><span style="font-size:12.5px;font-weight:600">Alerte 24 h</span></div>
+                <div style="padding-left:30px"><div style="font-size:11.5px;color:var(--ok);font-weight:500">Transmise</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2);margin-top:2px">{{ d.alerteTs }}</div></div>
+              </div>
+              <div style="width:40px;display:flex;align-items:center;justify-content:center;padding-bottom:24px"><div style="width:100%;height:1.5px;background:var(--ok)"></div></div>
+              <div style="flex:1.4;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="width:22px;height:22px;border-radius:50%;border:2px solid var(--ac);background:color-mix(in srgb,var(--ac) 12%,transparent);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="width:7px;height:7px;border-radius:50%;background:var(--ac)"></span></span><span style="font-size:12.5px;font-weight:600">Notification 72 h</span></div>
+                <div style="padding-left:30px">
+                  <div style="display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px;border:1px solid color-mix(in srgb,var(--ac) 45%,var(--bd));border-radius:6px;background:color-mix(in srgb,var(--ac) 8%,transparent);white-space:nowrap">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--ac)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7.5"></circle><path d="M12 9.5V13l2.4 1.6"></path><path d="M9.5 3.5h5"></path></svg>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--ac)">dans {{ d.notifCountdown }}</span>
+                  </div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2);margin-top:5px">Échéance {{ d.notifDeadline }}</div>
+                </div>
+              </div>
+              <div style="width:40px;display:flex;align-items:center;justify-content:center;padding-bottom:24px"><div style="width:100%;height:1.5px;background:var(--bd)"></div></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd);background:var(--srf);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx2)">30</span><span style="font-size:12.5px;font-weight:600;color:var(--tx2)">Rapport final J+30</span></div>
+                <div style="padding-left:30px"><div style="font-size:11.5px;color:var(--tx2)">À venir</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2);margin-top:2px">{{ d.rapportDue }}</div></div>
+              </div>
+            </div></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
+              <button style="height:34px;padding:0 16px;display:flex;align-items:center;gap:8px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(.92)">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20V4a.5.5 0 0 1 .5-.5z"></path><path d="M13.5 3.5V8h4"></path><path d="M9.5 13h5M9.5 16h3"></path></svg>
+                Générer la déclaration ANSSI
+              </button>
+              <span style="font-size:11.5px;color:var(--tx2)">Formulaire pré-rempli depuis les données de l'incident.</span>
+            </div>
+          </div>
+
+          <div style="border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--srf2)">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--tx2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="9" cy="8" r="3.2"></circle><path d="M3.5 19c.5-3.2 2.8-5 5.5-5s5 1.8 5.5 5"></path><path d="M16.5 8.5h5M19 6v5"></path></svg>
+              <span style="font-size:12.5px;font-weight:500">Données personnelles concernées ?</span>
+              <div style="margin-left:auto;display:flex;gap:2px;border:1px solid var(--bd);border-radius:6px;padding:2px;background:var(--bg)">
+                <button onClick="{{ setRgpdOui }}" style="height:24px;padding:0 12px;border:none;border-radius:4px;background:{{ rgpdOuiBg }};color:{{ rgpdOuiFg }};font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;font-weight:500;cursor:pointer">Oui</button>
+                <button onClick="{{ setRgpdNon }}" style="height:24px;padding:0 12px;border:none;border-radius:4px;background:{{ rgpdNonBg }};color:{{ rgpdNonFg }};font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;font-weight:500;cursor:pointer">Non</button>
+              </div>
+            </div>
+            <sc-if value="{{ rgpdOn }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:13px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--ac)"></span><span style="font-size:12px;font-weight:500">Volet violation de données — RGPD</span></div>
+              <div style="display:inline-flex;align-items:center;gap:7px;height:24px;padding:0 10px;border:1px solid color-mix(in srgb,var(--ac) 45%,var(--bd));border-radius:6px;background:color-mix(in srgb,var(--ac) 8%,transparent);white-space:nowrap">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.06em;color:var(--tx2)">CNIL 72 H</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--ac)">dans {{ d.cnilCountdown }}</span>
+              </div>
+              <a href="#" style="font-size:11.5px;font-weight:500">Ouvrir le dossier violation →</a>
+            </div>
+            </sc-if>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ d.notNis2 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:10px;border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:16px;background:var(--srf)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--tx2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 19.5 6.2v5.3c0 4.4-3.2 7.5-7.5 8.8-4.3-1.3-7.5-4.4-7.5-8.8V6.2z"></path></svg>
+            <div><div style="font-size:12.5px;font-weight:500">Non qualifié « Incident important » NIS 2</div><div style="font-size:11.5px;color:var(--tx2);margin-top:2px">Critères de seuil non atteints — pas d'obligation de notification.</div></div>
+          </div>
+          </sc-if>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+            <div style="border:1px solid var(--bd);border-radius:8px;padding:15px 16px;background:var(--srf)">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:13px">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--tx2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="1.6"></rect><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"></path></svg>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">CHRONOLOGIE · JOURNAL IMMUABLE</span>
+              </div>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ d.timeline }}" as="t" hint-placeholder-count="4">
+                  <div style="display:flex;gap:11px">
+                    <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0"><span style="width:9px;height:9px;border-radius:50%;border:2px solid {{ t.dot }};background:var(--srf);margin-top:3px"></span><span style="width:1px;flex:1;background:var(--bd);min-height:12px"></span></div>
+                    <div style="padding-bottom:15px;min-width:0">
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;color:var(--tx2)">{{ t.ts }}</div>
+                      <div style="font-size:12px;font-weight:600;margin-top:2px">{{ t.title }}</div>
+                      <div style="font-size:11.5px;color:var(--tx2);line-height:1.45;margin-top:2px;text-wrap:pretty">{{ t.desc }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="border:1px solid var(--bd);border-radius:8px;padding:15px 16px;background:var(--srf)">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:10px">ACTIONS CORRECTIVES LIÉES</div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <sc-for list="{{ d.actions }}" as="a" hint-placeholder-count="2">
+                    <a href="#" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--bd);border-radius:6px;text-decoration:none;color:var(--tx)" style-hover="background:var(--srf2)">
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--ac);flex-shrink:0">{{ a.id }}</span>
+                      <span style="font-size:12px;flex:1;min-width:0;line-height:1.3">{{ a.label }}</span>
+                      <span style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--tx2);flex-shrink:0"><span style="width:6px;height:6px;border-radius:50%;background:{{ a.dot }}"></span>{{ a.status }}</span>
+                    </a>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="border:1px solid var(--bd);border-radius:8px;padding:15px 16px;background:var(--srf)">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:10px">RETOUR D'EXPÉRIENCE (REX)</div>
+                <sc-if value="{{ d.rexDone }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12.5px;line-height:1.6;color:var(--tx);text-wrap:pretty">{{ d.rexText }}</div>
+                </sc-if>
+                <sc-if value="{{ d.rexPending }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;gap:10px;padding:11px 12px;border:1px dashed var(--bd);border-radius:7px;background:var(--srf2)">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--tx2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><rect x="5" y="10.5" width="14" height="9.5" rx="1.6"></rect><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"></path></svg>
+                    <div style="font-size:12px;color:var(--tx2);line-height:1.5;text-wrap:pretty">Le retour d'expérience (cause racine, mesures pérennes, enseignements) se renseigne à la clôture de l'incident.</div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ vide }}" hint-placeholder-val="{{ false }}">
+    <main style="flex:1;min-height:0;overflow-y:auto;padding:22px 24px">
+      <div style="max-width:470px;margin:11vh auto 0;text-align:center;display:flex;flex-direction:column;align-items:center">
+        <div style="width:52px;height:52px;border-radius:10px;border:1px solid var(--bd);background:var(--srf);display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--ok)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4 19.6 6.4v5.4c0 4.5-3.3 7.7-7.6 9-4.3-1.3-7.6-4.5-7.6-9V6.4z"></path><path d="M8.8 11.8l2.2 2.2 4.2-4.4"></path></svg>
+        </div>
+        <div style="font-size:17px;font-weight:600;margin-top:18px">Aucun incident ouvert</div>
+        <div style="font-size:13px;color:var(--tx2);line-height:1.6;margin-top:8px;text-wrap:pretty">Rien à traiter pour le moment. En cas d'événement de sécurité, déclarez-le sans délai : Toron déclenche la qualification NIS 2 et le calendrier réglementaire (alerte 24 h, notification 72 h, rapport J+30).</div>
+        <div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center">
+          <button style="height:32px;padding:0 16px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">Déclarer un incident</button>
+          <button style="height:32px;padding:0 16px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:var(--srf2)">Consulter la procédure</button>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2);opacity:.85;margin-top:26px;line-height:1.8">PROCÉDURE PR-SEC-04 · DÉTECTER → QUALIFIER → NOTIFIER → CLÔTURER<br></br>ASTREINTE SÉCURITÉ 24/7 · soc@nexialis.fr</div>
+      </div>
+    </main>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clair&quot;,&quot;sombre&quot;],&quot;default&quot;:&quot;clair&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Apparence&quot;},&quot;etatVide&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;États&quot;}}">
+class Component extends DCLogic {
+  state = { sel:'INC-007', rgpd:'oui', now:0 };
+
+  componentDidMount(){
+    this.base = Date.now();
+    this.setState({ now: this.base });
+    this._t = setInterval(() => this.setState({ now: Date.now() }), 1000);
+  }
+  componentWillUnmount(){ if(this._t) clearInterval(this._t); }
+
+  fmt(ms){
+    if(ms <= 0) return 'échéance atteinte';
+    const h = Math.floor(ms/3600000);
+    const m = Math.floor((ms%3600000)/60000);
+    const pad = (n) => (n<10?'0':'')+n;
+    return h + ' h ' + pad(m) + ' min';
+  }
+
+  SEV(s){
+    return {
+      'Mineur':{fg:'var(--tx2)',bg:'var(--srf2)',bd:'var(--bd)'},
+      'Majeur':{fg:'var(--warn)',bg:'color-mix(in srgb,var(--warn) 11%,transparent)',bd:'color-mix(in srgb,var(--warn) 40%,var(--bd))'},
+      'Critique':{fg:'var(--dgr)',bg:'color-mix(in srgb,var(--dgr) 9%,transparent)',bd:'color-mix(in srgb,var(--dgr) 40%,var(--bd))'}
+    }[s];
+  }
+  stDot(s){ return {'En cours':'var(--warn)','Sous surveillance':'var(--warn)','Clôturé':'var(--tx2)','En qualification':'var(--ac)'}[s] || 'var(--tx2)'; }
+
+  data(){
+    return {
+      'INC-007':{sev:'Majeur',statut:'En cours',date:'14/07/2026',nis2:true,
+        titre:'Phishing ciblé — Direction financière',origine:'DÉTECTION SIEM + SIGNALEMENT',
+        qualifDate:'14/07 08:40',
+        criteria:['Perturbation opérationnelle grave','Pertes financières','Impact sur des tiers'],
+        alerteTs:'14/07/2026 10:30 · accusé ANSSI n° 2026-3312',
+        notifOffH:54, notifDeadline:'17/07/2026 08:40',
+        rapportDue:'13/08/2026',
+        cnilOffH:50,
+        timeline:[
+          ['14/07 08:12','Détection','E-mail suspect signalé par un collaborateur, corrélé à une alerte SIEM.','var(--dgr)'],
+          ['14/07 08:40','Qualification','Incident important NIS 2 — 3 critères de seuil réunis.','var(--warn)'],
+          ['14/07 09:05','Mesures conservatoires','Réinitialisation des comptes exposés, blocage de l\u2019expéditeur, isolement d\u2019un poste.','var(--ok)'],
+          ['14/07 10:30','Communication','Alerte 24 h transmise à l\u2019ANSSI (horodatée).','var(--tx2)'],
+          ['14/07 14:20','Communication interne','Note d\u2019information à la Direction financière.','var(--tx2)']
+        ],
+        actions:[
+          ['ACT-0138','Déployer le MFA sur les accès distants','En cours','var(--warn)'],
+          ['ACT-0165','Renforcer le filtrage anti-hameçonnage','Planifié','var(--tx2)'],
+          ['ACT-0119','Campagne de sensibilisation ciblée','Terminé','var(--ok)']
+        ],
+        rexDone:false},
+      'INC-006':{sev:'Mineur',statut:'Sous surveillance',date:'11/07/2026',nis2:false,
+        titre:'Connexions inhabituelles sur un compte admin',origine:'DÉTECTION SIEM',
+        timeline:[
+          ['11/07 22:14','Détection','Connexions depuis une géolocalisation atypique.','var(--warn)'],
+          ['11/07 22:40','Mesures conservatoires','MFA forcé et session révoquée.','var(--ok)'],
+          ['12/07 09:00','Analyse','Aucune action malveillante confirmée — surveillance maintenue.','var(--tx2)']
+        ],
+        actions:[['ACT-0126','Revue des comptes à privilèges','Terminé','var(--ok)']],
+        rexDone:false},
+      'INC-005':{sev:'Mineur',statut:'Clôturé',date:'02/07/2026',nis2:false,
+        titre:'Indisponibilité de la messagerie (2 h)',origine:'SUPERVISION',
+        timeline:[
+          ['02/07 09:10','Détection','Interruption du service de messagerie.','var(--warn)'],
+          ['02/07 11:05','Rétablissement','Bascule sur le nœud secondaire.','var(--ok)'],
+          ['03/07 15:00','Clôture','Cause : saturation disque. Correctif appliqué.','var(--tx2)']
+        ],
+        actions:[['ACT-0158','Superviser l\u2019espace disque des serveurs mail','Terminé','var(--ok)']],
+        rexDone:true, rexText:'Cause racine : absence d\u2019alerte de saturation disque. Mesure pérenne : seuils de supervision ajoutés et testés. Aucun impact sur les données ; RPO/RTO respectés.'},
+      'INC-004':{sev:'Critique',statut:'Clôturé',date:'20/06/2026',nis2:true,
+        titre:'Fuite présumée d\u2019un export de données clients',origine:'ALERTE DLP',
+        qualifDate:'20/06 11:20',
+        criteria:['Perturbation opérationnelle grave','Pertes financières','Impact sur des tiers'],
+        alerteTs:'20/06/2026 13:00 · accusé ANSSI n° 2026-2984',
+        notifDone:true, notifTs:'22/06/2026 10:15', rapportDone:true, rapportTs:'18/07/2026',
+        timeline:[
+          ['20/06 10:45','Détection','Export volumineux détecté par le DLP.','var(--dgr)'],
+          ['20/06 11:20','Qualification','Incident important NIS 2 + violation RGPD.','var(--warn)'],
+          ['20/06 12:30','Mesures conservatoires','Révocation des accès, préservation des preuves.','var(--ok)'],
+          ['22/06 10:15','Notification','Notification ANSSI et CNIL transmises.','var(--tx2)'],
+          ['18/07 09:00','Clôture','Rapport final déposé, personnes concernées informées.','var(--tx2)']
+        ],
+        actions:[['ACT-0161','Réviser la matrice de contrôle d\u2019accès','Planifié','var(--tx2)'],['ACT-0154','Chiffrer les exports sensibles','Planifié','var(--tx2)']],
+        rexDone:true, rexText:'Cause racine : droits d\u2019export trop larges sur un profil. Mesures : cloisonnement des exports, journalisation renforcée, revue trimestrielle. Notifications ANSSI/CNIL dans les délais ; 2 tiers informés.'},
+      'INC-003':{sev:'Majeur',statut:'Clôturé',date:'12/06/2026',nis2:false,
+        titre:'Vol d\u2019un ordinateur portable (commercial)',origine:'SIGNALEMENT',
+        timeline:[
+          ['12/06 18:30','Détection','Déclaration de vol par le collaborateur.','var(--warn)'],
+          ['12/06 19:00','Mesures conservatoires','Effacement à distance déclenché ; accès révoqués.','var(--ok)'],
+          ['13/06 10:00','Clôture','Poste chiffré, aucune donnée exploitable exposée.','var(--tx2)']
+        ],
+        actions:[['ACT-0154','Généraliser le chiffrement des postes','Planifié','var(--tx2)']],
+        rexDone:true, rexText:'Poste chiffré (BitLocker) : risque de compromission des données écarté. Enseignement : maintenir le taux de chiffrement à 100 % du parc mobile.'}
+    };
+  }
+
+  open(id){ this.setState({ sel:id, rgpd:'oui' }); }
+  setRgpd(v){ this.setState({ rgpd:v }); }
+
+  buildDetail(){
+    const d = this.data()[this.state.sel];
+    const sev = this.SEV(d.sev);
+    const base = this.base || Date.now();
+    const now = this.state.now || base;
+    const out = {
+      id:this.state.sel, titre:d.titre, sev:d.sev, statut:d.statut, date:d.date, origine:d.origine,
+      sevFg:sev.fg, sevBg:sev.bg, sevBd:sev.bd, stDot:this.stDot(d.statut),
+      nis2:d.nis2, notNis2:!d.nis2,
+      timeline: d.timeline.map(t => ({ts:t[0], title:t[1], desc:t[2], dot:t[3]})),
+      actions: d.actions.map(a => ({id:a[0], label:a[1], status:a[2], dot:a[3]})),
+      rexDone: !!d.rexDone, rexPending: !d.rexDone, rexText: d.rexText || ''
+    };
+    if(d.nis2){
+      out.qualifDate = d.qualifDate;
+      out.criteria = d.criteria;
+      out.alerteTs = d.alerteTs;
+      out.notifDeadline = d.notifDeadline || '—';
+      out.rapportDue = d.rapportDue || d.rapportTs || '—';
+      out.notifCountdown = d.notifOffH ? this.fmt(base + d.notifOffH*3600000 - now) : 'transmise';
+      out.cnilCountdown = d.cnilOffH ? this.fmt(base + d.cnilOffH*3600000 - now) : 'transmise';
+    }
+    return out;
+  }
+
+  renderVals(){
+    const empty = (this.props.etatVide ?? false) === true;
+    const all = this.data();
+    const list = Object.keys(all).map(k => {
+      const d = all[k], sev = this.SEV(d.sev), on = k === this.state.sel;
+      return {
+        id:k, titre:d.titre, sev:d.sev, statut:d.statut, date:d.date, nis2:d.nis2,
+        sevFg:sev.fg, sevBg:sev.bg, sevBd:sev.bd, stDot:this.stDot(d.statut),
+        bg: on ? 'var(--srf2)' : 'var(--srf)',
+        bar: on ? 'var(--ac)' : 'transparent',
+        open: () => this.open(k)
+      };
+    });
+    const rgpdOn = this.state.rgpd === 'oui';
+    return {
+      theme: this.props.theme ?? 'clair',
+      vide: empty, rempli: !empty,
+      compteur: empty ? '0 OUVERT' : '2 OUVERTS · 1 IMPORTANT NIS 2',
+      list,
+      d: this.buildDetail(),
+      rgpdOn,
+      setRgpdOui: () => this.setRgpd('oui'),
+      setRgpdNon: () => this.setRgpd('non'),
+      rgpdOuiBg: rgpdOn ? 'var(--srf)' : 'transparent', rgpdOuiFg: rgpdOn ? 'var(--tx)' : 'var(--tx2)',
+      rgpdNonBg: !rgpdOn ? 'var(--srf)' : 'transparent', rgpdNonFg: !rgpdOn ? 'var(--tx)' : 'var(--tx2)'
+    };
+  }
+}
+</script>
+</body>
+</html>

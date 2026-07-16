@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"></link>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"></link>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></link>
+<style>
+body{margin:0;background:#F2F3F3}
+#toron-app{--bg:#F2F3F3;--srf:#FFFFFF;--srf2:#F7F7F6;--bd:#E4E5E3;--tx:#1C1E1D;--tx2:#5B605D;--ac:#CB4E0A;--acTx:#FFFFFF;--ok:#2E7D4F;--warn:#946200;--dgr:#B23327}
+#toron-app[data-theme="sombre"]{--bg:#151412;--srf:#1C1B18;--srf2:#22211D;--bd:#2C2A25;--tx:#ECEAE3;--tx2:#A6A198;--ac:#EF7A32;--acTx:#151412;--ok:#5FB582;--warn:#D8A23E;--dgr:#E0685A}
+#toron-app a{color:var(--ac);text-decoration:none}
+#toron-app a:hover{text-decoration:underline}
+#toron-app input::placeholder{color:var(--tx2);opacity:.65}
+#toron-app ::selection{background:rgba(203,78,10,.18)}
+#toron-app *::-webkit-scrollbar{width:10px;height:10px}
+#toron-app *::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:3px solid var(--srf)}
+</style>
+</helmet>
+<div id="toron-app" data-theme="{{ theme }}" data-screen-label="Atelier EBIOS RM" style="display:flex;height:100vh;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;overflow:hidden">
+  <div style="width:236px;flex-shrink:0;height:100%;display:flex">
+    <dc-import name="Sidebar" active="risques" hint-size="236px,100%"></dc-import>
+  </div>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <a href="#" style="display:flex;align-items:center;gap:5px;color:var(--tx2);font-size:12.5px" style-hover="color:var(--tx)">Risques</a>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--tx2)" stroke-width="1.6" stroke-linecap="round"><path d="M9.5 5.5 15 12l-5.5 6.5"></path></svg>
+      <span style="font-size:13px;font-weight:600">Atelier EBIOS RM</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);border:1px solid var(--bd);border-radius:4px;padding:2px 6px">MÉTHODE ANSSI</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.09em;color:var(--tx2)">ÉTUDE · SI DE PRODUCTION 2026</span>
+        <div style="width:28px;height:28px;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500">CM</div>
+      </div>
+    </header>
+
+    <div style="flex-shrink:0;padding:14px 22px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <div style="display:flex;align-items:center">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0">
+            <div style="display:flex;align-items:center;gap:9px;min-width:0">
+              <div style="width:26px;height:26px;flex-shrink:0;border-radius:50%;border:1.5px solid {{ s.ringBd }};background:{{ s.ringBg }};color:{{ s.numColor }};display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">
+                <sc-if value="{{ s.done }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--acTx)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg></sc-if>
+                <sc-if value="{{ s.showNum }}" hint-placeholder-val="{{ true }}">{{ s.num }}</sc-if>
+              </div>
+              <div style="min-width:0">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.09em;color:var(--tx2)">ATELIER {{ s.num }}</div>
+                <div style="font-size:12px;font-weight:{{ s.weight }};color:{{ s.labelColor }};white-space:nowrap;line-height:1.3">{{ s.label }}</div>
+              </div>
+            </div>
+            <sc-if value="{{ s.hasConn }}" hint-placeholder-val="{{ true }}"><div style="width:34px;height:1.5px;background:{{ s.connColor }};margin:0 6px;flex-shrink:0"></div></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="width:246px;flex-shrink:0;border-right:1px solid var(--bd);background:var(--srf);overflow-y:auto;display:flex;flex-direction:column">
+        <div style="padding:13px 14px 9px;display:flex;align-items:center;gap:7px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">SCÉNARIOS OPÉRATIONNELS</span>
+        </div>
+        <div style="padding:0 8px 12px;display:flex;flex-direction:column;gap:3px">
+          <sc-for list="{{ scenarios }}" as="sc" hint-placeholder-count="5">
+            <div onClick="{{ sc.open }}" style="padding:9px 10px;border:1px solid {{ sc.bd }};border-radius:7px;background:{{ sc.bg }};cursor:pointer" style-hover="border-color:var(--tx2)">
+              <div style="display:flex;align-items:center;gap:7px">
+                <span style="font-size:12.5px;font-weight:500;flex:1;min-width:0;line-height:1.3">{{ sc.src }}</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;height:18px;padding:0 7px;border:1px solid {{ sc.stBd }};border-radius:5px;background:{{ sc.stBg }};color:{{ sc.stFg }};font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.03em;white-space:nowrap;flex-shrink:0"><span style="width:5px;height:5px;border-radius:50%;background:{{ sc.stDot }}"></span>{{ sc.statut }}</span>
+              </div>
+              <div style="font-size:11.5px;color:var(--tx2);margin-top:4px;line-height:1.35;text-wrap:pretty">{{ sc.obj }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:auto;padding:12px 14px;border-top:1px solid var(--bd)">
+          <button style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px;height:30px;border:1px dashed var(--bd);border-radius:7px;background:transparent;color:var(--tx2);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Ajouter un scénario</button>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:0;overflow:auto;background:var(--bg);display:flex;flex-direction:column">
+        <div style="flex:1;min-height:0;padding:18px 20px">
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--tx2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="8.4"></circle><path d="M12 11v5"></path><path d="M12 7.6v.2"></path></svg>
+            <div style="font-size:12.5px;color:var(--tx2);line-height:1.5;text-wrap:pretty">Construisez le mode opératoire phase par phase. Reliez chaque action élémentaire à une technique <span style="color:var(--tx);font-weight:500">MITRE ATT&amp;CK</span> — la vraisemblance de chaque phase se propage à la cotation du scénario.</div>
+          </div>
+
+          <sc-if value="{{ sel.hasChain }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:stretch;gap:0;min-width:min-content">
+            <sc-for list="{{ sel.phases }}" as="ph" hint-placeholder-count="4">
+              <div style="display:flex;align-items:stretch">
+                <div style="width:230px;flex-shrink:0;background:var(--srf);border:1px solid var(--bd);border-radius:8px;display:flex;flex-direction:column">
+                  <div style="padding:11px 13px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px">
+                    <span style="width:20px;height:20px;border-radius:50%;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--tx2)">{{ ph.n }}</span>
+                    <span style="font-size:12.5px;font-weight:600">{{ ph.k }}</span>
+                  </div>
+                  <div style="padding:10px;display:flex;flex-direction:column;gap:8px;flex:1">
+                    <sc-for list="{{ ph.acts }}" as="a" hint-placeholder-count="2">
+                      <div style="border:1px solid var(--bd);border-radius:6px;padding:9px 10px;background:var(--srf2)">
+                        <div style="font-size:11.5px;font-weight:500;line-height:1.35;text-wrap:pretty">{{ a.label }}</div>
+                        <div style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;height:18px;padding:0 6px;border:1px solid color-mix(in srgb,var(--ac) 35%,var(--bd));border-radius:5px;background:var(--srf)">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:var(--ac)">{{ a.tid }}</span>
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx2)">{{ a.tname }}</span>
+                        </div>
+                      </div>
+                    </sc-for>
+                    <button style="margin-top:auto;display:flex;align-items:center;justify-content:center;gap:6px;height:26px;border:1px dashed var(--bd);border-radius:6px;background:transparent;color:var(--tx2);font-family:'IBM Plex Sans',sans-serif;font-size:11px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Action</button>
+                  </div>
+                </div>
+                <sc-if value="{{ ph.hasArrow }}" hint-placeholder-val="{{ true }}">
+                  <div style="width:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--tx2)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"></path><path d="M13 6l6 6-6 6"></path></svg></div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ sel.empty }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px dashed var(--bd);border-radius:10px;padding:44px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;background:var(--srf)">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2-5 4 10 2-5h4"></path></svg>
+            <div style="font-size:15px;font-weight:600;margin-top:14px">Ce scénario opérationnel reste à construire</div>
+            <div style="font-size:12.5px;color:var(--tx2);line-height:1.6;margin-top:7px;max-width:400px;text-wrap:pretty">Le couple source de risque / objectif est hérité de l'atelier 2. Déroulez la kill chain « Connaître → Rentrer → Trouver → Exploiter » pour coter sa vraisemblance.</div>
+            <button style="height:32px;padding:0 16px;margin-top:18px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">Construire le mode opératoire</button>
+          </div>
+          </sc-if>
+        </div>
+
+        <div style="position:sticky;bottom:0;flex-shrink:0;display:flex;align-items:center;gap:16px;padding:12px 20px;background:var(--srf);border-top:1px solid var(--bd)">
+          <div style="display:flex;align-items:center;gap:10px;min-width:200px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.09em;color:var(--tx2)">ATELIER 4</span>
+            <div style="width:130px;height:6px;background:var(--srf2);border:1px solid var(--bd);border-radius:3px;overflow:hidden"><div style="width:{{ progressPct }};height:100%;background:var(--ac)"></div></div>
+            <span style="font-size:12px;color:var(--tx2)"><span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--tx)">{{ progressTxt }}</span> scénarios cotés</span>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
+            <div style="display:flex;align-items:center;gap:6px;color:var(--tx2)">
+              <svg viewBox="0 0 24 24" width="13" height="13" style="flex-shrink:0"><path d="M12 3.6 19.4 11 12 18.4 4.6 11Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path><rect x="2.4" y="10" width="19.2" height="2" rx="1" fill="var(--ac)"></rect></svg>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.07em">FORMAT ANSSI · PDF SCELLÉ</span>
+            </div>
+            <button style="height:32px;padding:0 15px;display:flex;align-items:center;gap:8px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v9"></path><path d="M8.8 10 12 13.2 15.2 10"></path><path d="M5 15.5v2.9c0 .6.5 1.1 1.1 1.1h11.8c.6 0 1.1-.5 1.1-1.1v-2.9"></path></svg>
+              Exporter le livrable
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:302px;flex-shrink:0;border-left:1px solid var(--bd);background:var(--srf);overflow-y:auto;padding:16px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:9px">SOURCE DE RISQUE / OBJECTIF VISÉ</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.07em;color:var(--tx2);margin-bottom:9px">HÉRITÉ DE L'ATELIER 2</div>
+        <div style="border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:18px">
+          <div style="padding:11px 13px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--tx2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="8" r="3.4"></circle><path d="M5 19.5c.7-3.6 3.4-5.4 7-5.4s6.3 1.8 7 5.4"></path></svg>
+            <div><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.08em;color:var(--tx2)">SOURCE DE RISQUE</div><div style="font-size:13px;font-weight:600;margin-top:2px">{{ sel.src }}</div></div>
+          </div>
+          <div style="padding:11px 13px;display:flex;align-items:center;gap:9px">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--ac)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3.4"></circle></svg>
+            <div><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.08em;color:var(--tx2)">OBJECTIF VISÉ</div><div style="font-size:13px;font-weight:600;margin-top:2px">{{ sel.obj }}</div></div>
+          </div>
+        </div>
+
+        <sc-if value="{{ sel.hasChain }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-bottom:18px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:9px">CHEMIN D'ATTAQUE</div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px">
+            <sc-for list="{{ sel.path }}" as="p" hint-placeholder-count="4">
+              <span style="display:inline-flex;align-items:center;gap:5px">
+                <span style="height:22px;padding:0 9px;display:inline-flex;align-items:center;border:1px solid var(--bd);border-radius:6px;background:var(--srf2);font-size:11px;font-weight:500">{{ p.k }}</span>
+                <sc-if value="{{ p.arrow }}" hint-placeholder-val="{{ true }}"><span style="color:var(--tx2)">→</span></sc-if>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">VRAISEMBLANCE</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">{{ sel.vrais }} · {{ sel.vraisName }}</span>
+          </div>
+          <div style="display:flex;gap:4px;margin-bottom:14px">
+            <sc-for list="{{ sel.vscale }}" as="v" hint-placeholder-count="4">
+              <div style="flex:1;height:6px;border-radius:3px;background:{{ v.bg }}"></div>
+            </sc-for>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.08em;color:var(--tx2);margin-bottom:8px">PAR MODE OPÉRATOIRE</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <sc-for list="{{ sel.modes }}" as="m" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--bd);border-radius:6px">
+                <span style="font-size:12px;flex:1;min-width:0;line-height:1.35;text-wrap:pretty">{{ m.label }}</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;flex-shrink:0"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ m.v }}</span><span style="font-size:10.5px;color:var(--tx2)">{{ m.name }}</span></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ sel.empty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px;border:1px dashed var(--bd);border-radius:8px;font-size:12px;color:var(--tx2);line-height:1.55;text-wrap:pretty">La vraisemblance sera calculée une fois le mode opératoire construit. Chaque phase renseignée affine la cotation.</div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clair&quot;,&quot;sombre&quot;],&quot;default&quot;:&quot;clair&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Apparence&quot;}}">
+class Component extends DCLogic {
+  state = { sel:'s1' };
+
+  ST(s){
+    return {
+      'Coté':{fg:'var(--ok)',bg:'color-mix(in srgb,var(--ok) 9%,transparent)',bd:'color-mix(in srgb,var(--ok) 40%,var(--bd))',dot:'var(--ok)'},
+      'En cours':{fg:'var(--tx)',bg:'var(--srf2)',bd:'var(--bd)',dot:'var(--tx)'},
+      'À faire':{fg:'var(--tx2)',bg:'var(--srf2)',bd:'var(--bd)',dot:'var(--tx2)'}
+    }[s];
+  }
+
+  data(){
+    return {
+      s1:{src:'Cybercriminel organisé',obj:'Rançonner l\u2019entreprise',statut:'En cours',vrais:'V3',vraisName:'Forte',
+        phases:[
+          ['Connaître',[['T1591','Ciblage org.','Reconnaissance de l\u2019organisation cible'],['T1589','Identités','Collecte d\u2019adresses e-mail des dirigeants']]],
+          ['Rentrer',[['T1566','Phishing','Hameçonnage ciblé du service financier'],['T1204','Exécution','Ouverture de la pièce jointe piégée']]],
+          ['Trouver',[['T1078','Comptes valides','Réutilisation d\u2019identifiants dérobés'],['T1068','Élévation','Escalade de privilèges sur un serveur']]],
+          ['Exploiter',[['T1041','Exfiltration','Vol des données sensibles avant chiffrement'],['T1486','Impact','Chiffrement pour impact (rançongiciel)']]]
+        ],
+        modes:[['Hameçonnage → rançongiciel','V3','Forte'],['Accès VPN compromis → chiffrement','V2','Signif.']]},
+      s2:{src:'Concurrent',obj:'Voler des données R&D',statut:'Coté',vrais:'V2',vraisName:'Significative',
+        phases:[
+          ['Connaître',[['T1591','Ciblage org.','Identification des équipes R&D']]],
+          ['Rentrer',[['T1566','Phishing','E-mail piégé vers un ingénieur'],['T1195','Chaîne appro.','Compromission d\u2019un composant logiciel']]],
+          ['Trouver',[['T1083','Découverte','Exploration des partages de fichiers'],['T1078','Comptes valides','Usurpation d\u2019un compte projet']]],
+          ['Exploiter',[['T1567','Exfil. cloud','Exfiltration vers un stockage externe']]]
+        ],
+        modes:[['Spear-phishing → exfiltration','V2','Signif.'],['Compromission chaîne appro.','V1','Minime']]},
+      s3:{src:'État (attaquant étatique)',obj:'Espionner durablement',statut:'Coté',vrais:'V2',vraisName:'Significative',
+        phases:[
+          ['Connaître',[['T1598','Phishing info','Collecte de renseignements sur le SI']]],
+          ['Rentrer',[['T1133','Services distants','Exploitation d\u2019un accès distant exposé']]],
+          ['Trouver',[['T1078','Comptes valides','Persistance via comptes légitimes'],['T1021','Mouvement latéral','Propagation vers les serveurs sensibles']]],
+          ['Exploiter',[['T1071','Canal C2','Communication discrète et durable'],['T1041','Exfiltration','Exfiltration régulière de faible volume']]]
+        ],
+        modes:[['Accès distant → implant persistant','V2','Signif.']]},
+      s4:{src:'Hacktiviste',obj:'Défigurer le site public',statut:'À faire',phases:[]},
+      s5:{src:'Initié malveillant',obj:'Saboter la production',statut:'À faire',phases:[]}
+    };
+  }
+
+  open(id){ this.setState({sel:id}); }
+
+  buildSel(){
+    const d = this.data()[this.state.sel];
+    const empty = !d.phases || d.phases.length === 0;
+    const vmap = {V1:1,V2:2,V3:3,V4:4};
+    const lvl = empty ? 0 : vmap[d.vrais];
+    return {
+      src:d.src, obj:d.obj, hasChain:!empty, empty,
+      vrais:d.vrais, vraisName:d.vraisName,
+      phases: empty ? [] : d.phases.map((p,i) => ({
+        n:i+1, k:p[0], hasArrow: i < d.phases.length-1,
+        acts: p[1].map(a => ({tid:a[0], tname:a[1], label:a[2]}))
+      })),
+      path: empty ? [] : d.phases.map((p,i) => ({k:p[0], arrow: i < d.phases.length-1})),
+      vscale: [1,2,3,4].map(n => ({bg: n <= lvl ? 'var(--ac)' : 'var(--srf2)'})),
+      modes: empty ? [] : d.modes.map(m => ({label:m[0], v:m[1], name:m[2]}))
+    };
+  }
+
+  renderVals(){
+    const stepDefs = [
+      [1,'Cadrage et socle','done'],[2,'Sources de risque','done'],[3,'Scénarios stratégiques','done'],
+      [4,'Scénarios opérationnels','active'],[5,'Traitement du risque','todo']
+    ];
+    const steps = stepDefs.map((s,i) => {
+      const done = s[2]==='done', active = s[2]==='active';
+      return {
+        num:s[0], label:s[1], done, showNum: !done,
+        ringBd: active ? 'var(--ac)' : (done ? 'var(--ac)' : 'var(--bd)'),
+        ringBg: active ? 'color-mix(in srgb,var(--ac) 10%,transparent)' : (done ? 'var(--ac)' : 'var(--srf)'),
+        numColor: active ? 'var(--ac)' : 'var(--tx2)',
+        labelColor: (active||done) ? 'var(--tx)' : 'var(--tx2)',
+        weight: active ? '600' : '400',
+        hasConn: i < stepDefs.length-1,
+        connColor: done ? 'var(--ac)' : 'var(--bd)'
+      };
+    });
+
+    const all = this.data();
+    const scenarios = Object.keys(all).map(k => {
+      const d = all[k], st = this.ST(d.statut), on = k === this.state.sel;
+      return {
+        src:d.src, obj:d.obj, statut:d.statut,
+        stFg:st.fg, stBg:st.bg, stBd:st.bd, stDot:st.dot,
+        bg: on ? 'var(--srf2)' : 'var(--srf)',
+        bd: on ? 'var(--tx2)' : 'var(--bd)',
+        open: () => this.open(k)
+      };
+    });
+
+    const cote = Object.keys(all).filter(k => all[k].statut === 'Coté').length;
+    return {
+      theme: this.props.theme ?? 'clair',
+      steps, scenarios,
+      sel: this.buildSel(),
+      progressTxt: cote + ' / 5',
+      progressPct: Math.round(cote/5*100) + '%'
+    };
+  }
+}
+</script>
+</body>
+</html>

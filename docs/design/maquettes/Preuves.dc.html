@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"></link>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"></link>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></link>
+<style>
+body{margin:0;background:#F2F3F3}
+#toron-app{--bg:#F2F3F3;--srf:#FFFFFF;--srf2:#F7F7F6;--bd:#E4E5E3;--tx:#1C1E1D;--tx2:#5B605D;--ac:#CB4E0A;--acTx:#FFFFFF;--ok:#2E7D4F;--warn:#946200;--dgr:#B23327}
+#toron-app[data-theme="sombre"]{--bg:#151412;--srf:#1C1B18;--srf2:#22211D;--bd:#2C2A25;--tx:#ECEAE3;--tx2:#A6A198;--ac:#EF7A32;--acTx:#151412;--ok:#5FB582;--warn:#D8A23E;--dgr:#E0685A}
+#toron-app a{color:var(--ac);text-decoration:none}
+#toron-app a:hover{text-decoration:underline}
+#toron-app input::placeholder{color:var(--tx2);opacity:.65}
+#toron-app ::selection{background:rgba(203,78,10,.18)}
+#toron-app *::-webkit-scrollbar{width:10px;height:10px}
+#toron-app *::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:3px solid var(--srf)}
+</style>
+</helmet>
+<div id="toron-app" data-theme="{{ theme }}" data-screen-label="Preuves" style="display:flex;height:100vh;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;overflow:hidden">
+  <div style="width:236px;flex-shrink:0;height:100%;display:flex">
+    <dc-import name="Sidebar" active="preuves" hint-size="236px,100%"></dc-import>
+  </div>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <span style="font-size:14px;font-weight:600">Preuves</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">COFFRE-FORT · SHA-256 À LA COLLECTE</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 10px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);width:220px">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5 20.5 20.5"></path></svg>
+          <input style="border:none;outline:none;background:transparent;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;flex:1;min-width:0;padding:0" placeholder="Rechercher une preuve, un contrôle"></input>
+        </div>
+        <button style="height:30px;padding:0 14px;display:flex;align-items:center;gap:7px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Ajouter une preuve</button>
+      </div>
+    </header>
+
+    <sc-if value="{{ rempli }}" hint-placeholder-val="{{ true }}">
+    <div style="flex-shrink:0;display:flex;align-items:stretch;gap:12px;padding:14px 20px;background:var(--srf);border-bottom:1px solid var(--bd);flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 18px 12px 14px;border:1px solid var(--bd);border-radius:8px;background:var(--srf2)">
+        <div style="position:relative;width:48px;height:48px;flex-shrink:0">
+          <svg viewBox="0 0 44 44" width="48" height="48" style="transform:rotate(-90deg)"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--bd)" stroke-width="5"></circle><circle cx="22" cy="22" r="18" fill="none" stroke="var(--ok)" stroke-width="5" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="15"></circle></svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">87%</div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600">Fraîcheur globale</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--tx2);margin-top:3px">84 / 96 PREUVES À JOUR</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:12px 18px;border:1px solid color-mix(in srgb,var(--dgr) 30%,var(--bd));border-radius:8px;background:color-mix(in srgb,var(--dgr) 5%,transparent)">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:var(--dgr)">5</span>
+        <div><div style="font-size:12.5px;font-weight:500">Expirées</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">à recollecter en priorité</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:12px 18px;border:1px solid color-mix(in srgb,var(--warn) 34%,var(--bd));border-radius:8px;background:color-mix(in srgb,var(--warn) 7%,transparent)">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:var(--warn)">12</span>
+        <div><div style="font-size:12.5px;font-weight:500">Expirent sous 30 j</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">renouvellement à planifier</div></div>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;align-self:center">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.09em;color:var(--tx2)">TRI</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);font-size:12px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:var(--dgr)"></span>Expirées d'abord</span>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="flex:1;min-width:0;overflow:auto;background:var(--bg)">
+        <div style="min-width:1080px">
+          <div style="position:sticky;top:0;z-index:1;display:grid;grid-template-columns:4px minmax(220px,1fr) 112px minmax(220px,300px) 108px 152px 122px 116px;align-items:center;background:var(--srf);border-bottom:1px solid var(--bd);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2);height:34px">
+            <div></div>
+            <div style="padding:0 8px">PREUVE</div>
+            <div style="padding:0 8px">TYPE</div>
+            <div style="padding:0 8px">COUVERTURE</div>
+            <div style="padding:0 8px">COLLECTE</div>
+            <div style="padding:0 8px">FRAÎCHEUR</div>
+            <div style="padding:0 8px">COLLECTEUR</div>
+            <div style="padding:0 8px">RÉCURRENCE</div>
+          </div>
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="10">
+            <div onClick="{{ r.open }}" style="display:grid;grid-template-columns:4px minmax(220px,1fr) 112px minmax(220px,300px) 108px 152px 122px 116px;align-items:center;border-bottom:1px solid var(--bd);cursor:pointer;background:{{ r.rowBg }};min-height:52px" style-hover="background:var(--srf2)">
+              <div style="align-self:stretch;background:{{ r.fil }}"></div>
+              <div style="padding:9px 8px;min-width:0;display:flex;align-items:center;gap:9px">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--tx2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="{{ r.icon }}"></path></svg>
+                <span style="font-size:12.5px;font-weight:500;line-height:1.35;min-width:0;text-wrap:pretty">{{ r.nom }}</span>
+              </div>
+              <div style="padding:0 8px"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid var(--bd);border-radius:5px;background:var(--srf2);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:9.5px;white-space:nowrap">{{ r.type }}</span></div>
+              <div style="padding:8px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0">
+                <sc-if value="{{ r.mut }}" hint-placeholder-val="{{ false }}"><span style="width:12px;height:2px;background:var(--ac);border-radius:1px;flex-shrink:0"></span></sc-if>
+                <sc-for list="{{ r.cov }}" as="c" hint-placeholder-count="2">
+                  <span style="display:inline-flex;align-items:center;gap:4px;height:19px;padding:0 6px;border:1px solid {{ c.bd }};border-radius:4px;background:{{ c.bg }};font-family:'IBM Plex Mono',monospace;font-size:9.5px;white-space:nowrap"><sc-if value="{{ r.mut }}" hint-placeholder-val="{{ false }}"><span style="width:4px;height:4px;border-radius:50%;background:var(--ac)"></span></sc-if><span style="color:var(--tx2)">{{ c.ref }}</span><span style="font-weight:500">{{ c.code }}</span></span>
+                </sc-for>
+              </div>
+              <div style="padding:0 8px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx2)">{{ r.collecte }}</div>
+              <div style="padding:0 8px"><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border:1px solid {{ r.frBd }};border-radius:5px;background:{{ r.frBg }};color:{{ r.frFg }};font-size:11px;font-weight:500;white-space:nowrap"><span style="width:6px;height:6px;border-radius:50%;background:{{ r.frDot }}"></span>{{ r.fresh }}</span></div>
+              <div style="padding:0 8px;display:flex;align-items:center;gap:8px;min-width:0"><div title="{{ r.byName }}" style="width:24px;height:24px;flex-shrink:0;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">{{ r.byInit }}</div></div>
+              <div style="padding:0 8px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2)">{{ r.recur }}</div>
+            </div>
+          </sc-for>
+          <div style="padding:13px 12px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2)">{{ footnote }}</div>
+        </div>
+      </div>
+
+      <aside style="width:384px;flex-shrink:0;border-left:1px solid var(--bd);background:var(--srf);overflow-y:auto">
+        <div style="position:sticky;top:0;z-index:1;background:var(--srf);border-bottom:1px solid var(--bd);padding:14px 16px 13px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid var(--bd);border-radius:5px;background:var(--srf2);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:9.5px">{{ pv.type }}</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border:1px solid {{ pv.frBd }};border-radius:5px;background:{{ pv.frBg }};color:{{ pv.frFg }};font-size:11px;font-weight:500"><span style="width:5px;height:5px;border-radius:50%;background:{{ pv.frDot }}"></span>{{ pv.fresh }}</span>
+          </div>
+          <div style="font-size:14px;font-weight:600;margin-top:9px;line-height:1.35;text-wrap:pretty">{{ pv.nom }}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.08em;color:var(--tx2);margin-top:6px">COLLECTÉE LE {{ pv.collecte }} · {{ pv.recur }}</div>
+        </div>
+
+        <div style="padding:16px">
+          <div style="border:1px solid var(--bd);border-radius:8px;background:var(--srf2);padding:14px;margin-bottom:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px">
+            <div style="width:100%;height:96px;border:1px solid var(--bd);border-radius:6px;background:repeating-linear-gradient(135deg,var(--srf),var(--srf) 8px,var(--srf2) 8px,var(--srf2) 16px);display:flex;align-items:center;justify-content:center">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ pv.icon }}"></path></svg>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--tx2);margin-top:9px">{{ pv.filename }}</div>
+          </div>
+          <button style="width:100%;height:30px;margin-bottom:18px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="background:var(--srf2)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6"></circle></svg>Ouvrir le fichier</button>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">EMPREINTE SHA-256</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--bd);border-radius:6px;background:var(--srf2)">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx);word-break:break-all;line-height:1.5;flex:1;min-width:0">{{ pv.sha }}</span>
+              <button style="width:26px;height:26px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd);border-radius:5px;background:var(--srf);color:var(--tx2);cursor:pointer" style-hover="color:var(--tx)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M6 16H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path></svg></button>
+            </div>
+            <div style="font-size:11px;color:var(--tx2);margin-top:6px;line-height:1.45;text-wrap:pretty">Calculée au dépôt puis scellée : toute modification du fichier invaliderait l'empreinte.</div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">COUVERTURE</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              <sc-if value="{{ pv.mut }}" hint-placeholder-val="{{ false }}"><span style="width:16px;height:2px;background:var(--ac);border-radius:1px"></span></sc-if>
+              <sc-for list="{{ pv.cov }}" as="c" hint-placeholder-count="2">
+                <span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border:1px solid {{ c.bd }};border-radius:5px;background:{{ c.bg }};font-family:'IBM Plex Mono',monospace;font-size:10px;white-space:nowrap"><sc-if value="{{ pv.mut }}" hint-placeholder-val="{{ false }}"><span style="width:4px;height:4px;border-radius:50%;background:var(--ac)"></span></sc-if><span style="color:var(--tx2)">{{ c.ref }}</span><span style="font-weight:500">{{ c.code }}</span></span>
+              </sc-for>
+            </div>
+            <sc-if value="{{ pv.mut }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;color:var(--tx2);margin-top:8px;line-height:1.45;text-wrap:pretty">Preuve mutualisée : une seule collecte satisfait plusieurs référentiels.</div></sc-if>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">TÂCHE DE RENOUVELLEMENT</div>
+            <div style="border:1px solid {{ pv.renBd }};border-radius:7px;padding:11px 12px;background:{{ pv.renBg }}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="{{ pv.renIcon }}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 12a8 8 0 1 1-2.3-5.6"></path><path d="M20 4v3.4h-3.4"></path></svg>
+                <span style="font-size:12.5px;font-weight:500">{{ pv.renTitle }}</span>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:{{ pv.renColor }}">{{ pv.renEch }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:9px">
+                <div style="width:22px;height:22px;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:500">{{ pv.renInit }}</div>
+                <span style="font-size:11.5px;color:var(--tx2)">{{ pv.renResp }}</span>
+                <a href="#" style="margin-left:auto;font-size:11px;font-weight:500">Voir la tâche →</a>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:10px">JOURNAL DES ACCÈS</div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ pv.access }}" as="a" hint-placeholder-count="3">
+                <div style="display:flex;gap:10px">
+                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0"><span style="width:8px;height:8px;border-radius:50%;border:2px solid {{ a.dot }};background:var(--srf);margin-top:3px"></span><span style="width:1px;flex:1;background:var(--bd);min-height:10px"></span></div>
+                  <div style="padding-bottom:12px;min-width:0">
+                    <div style="font-size:12px;line-height:1.35"><span style="font-weight:500">{{ a.who }}</span> <span style="color:var(--tx2)">— {{ a.action }}</span></div>
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;color:var(--tx2);margin-top:2px">{{ a.ts }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <button style="width:100%;height:34px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid color-mix(in srgb,var(--ac) 40%,var(--bd));border-radius:7px;background:color-mix(in srgb,var(--ac) 7%,transparent);color:var(--ac);font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:color-mix(in srgb,var(--ac) 12%,transparent)">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"></path><path d="M8 8l4-4 4 4"></path><path d="M12 4v12"></path></svg>
+            Réutiliser dans une réponse fournisseur
+          </button>
+        </div>
+      </aside>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ vide }}" hint-placeholder-val="{{ false }}">
+    <main style="flex:1;min-height:0;overflow-y:auto;padding:22px 24px">
+      <div style="max-width:490px;margin:10vh auto 0;text-align:center;display:flex;flex-direction:column;align-items:center">
+        <div style="width:52px;height:52px;border-radius:10px;border:1px solid var(--bd);background:var(--srf);display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--tx2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="12" rx="2"></rect><path d="M8 9V7a4 4 0 0 1 8 0v2"></path><circle cx="12" cy="15" r="1.4"></circle></svg>
+        </div>
+        <div style="font-size:17px;font-weight:600;margin-top:18px">Le coffre-fort est vide</div>
+        <div style="font-size:13px;color:var(--tx2);line-height:1.6;margin-top:8px;text-wrap:pretty">Au démarrage, la collecte est manuelle : déposez vos captures, exports, attestations et PV. Chaque preuve reçoit une empreinte SHA-256 au dépôt et se rattache aux contrôles qu'elle justifie.</div>
+        <div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center">
+          <button style="height:32px;padding:0 16px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">Ajouter une preuve</button>
+          <button style="height:32px;padding:0 16px;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:var(--srf2)">Importer en lot</button>
+        </div>
+        <div style="display:flex;gap:9px;align-items:flex-start;text-align:left;margin-top:26px;padding:12px 14px;border:1px solid var(--bd);border-radius:8px;background:var(--srf);max-width:430px">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--tx2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="8.4"></circle><path d="M12 11v5"></path><path d="M12 7.8v.2"></path></svg>
+          <div style="font-size:11.5px;color:var(--tx2);line-height:1.55;text-wrap:pretty">Des connecteurs de collecte automatique (SIEM, IAM, sauvegarde) sont sur la feuille de route. Tant qu'ils ne sont pas disponibles, nous ne les affichons pas : la collecte reste manuelle et sous votre contrôle.</div>
+        </div>
+      </div>
+    </main>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clair&quot;,&quot;sombre&quot;],&quot;default&quot;:&quot;clair&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Apparence&quot;},&quot;etatVide&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;États&quot;}}">
+class Component extends DCLogic {
+  state = { sel:'p3' };
+
+  ICON(t){
+    return {
+      'Capture':'M4 6.5h4l1.4-2h5.2L16 6.5h4v13H4z M12 15.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8z',
+      'Export':'M6 4h9l3 3v13H6z M14.5 4v4H18 M12 11v6 M9.2 14 12 17 14.8 14',
+      'Attestation':'M7 3.5h10v17l-3-2-2 2-2-2-3 2z M10 8h4 M9.5 11.5h5',
+      'Rapport':'M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20V4a.5.5 0 0 1 .5-.5z M13.5 3.5V8h4 M9.5 12h5 M9.5 15h4',
+      'PV':'M5 5.5h14v13H5z M5 9h14 M8.5 12.5h7 M8.5 15h4'
+    }[t];
+  }
+
+  FR(state, val){
+    if(state==='over') return {order:0, fresh:'Expirée depuis '+val+' j', fg:'var(--dgr)', bg:'color-mix(in srgb,var(--dgr) 9%,transparent)', bd:'color-mix(in srgb,var(--dgr) 40%,var(--bd))', dot:'var(--dgr)'};
+    if(state==='soon') return {order:1, fresh:'Expire J-'+val, fg:'var(--warn)', bg:'color-mix(in srgb,var(--warn) 11%,transparent)', bd:'color-mix(in srgb,var(--warn) 40%,var(--bd))', dot:'var(--warn)'};
+    return {order:2, fresh:'À jour', fg:'var(--ok)', bg:'color-mix(in srgb,var(--ok) 9%,transparent)', bd:'color-mix(in srgb,var(--ok) 40%,var(--bd))', dot:'var(--ok)'};
+  }
+
+  data(){
+    return {
+      p1:{nom:'Journal SIEM — 30 jours',type:'Export',cov:[['27001','A.8.16'],['NIS 2','OBJ-11']],collecte:'15/06/2026',fr:['soon',9],by:['Théo Renaud','TR'],recur:'Trimestrielle'},
+      p2:{nom:'Scan de vulnérabilités — T2 2026',type:'Rapport',cov:[['27001','A.8.8'],['NIS 2','OBJ-11']],collecte:'30/06/2026',fr:['ok'],by:['Théo Renaud','TR'],recur:'Trimestrielle'},
+      p3:{nom:'Attestation ISO 27001 — hébergeur',type:'Attestation',cov:[['27001','A.5.19'],['NIS 2','OBJ-14'],['9001','§8.4']],collecte:'05/07/2025',fr:['over',12],by:['Karim Benali','KB'],recur:'Annuelle'},
+      p4:{nom:'PV du comité sécurité — Q2',type:'PV',cov:[['27001','§9.3'],['9001','§9.3']],collecte:'20/06/2026',fr:['ok'],by:['Claire Morel','CM'],recur:'Trimestrielle'},
+      p5:{nom:'Capture — MFA activé (console admin)',type:'Capture',cov:[['27001','A.8.5']],collecte:'02/07/2026',fr:['ok'],by:['Claire Morel','CM'],recur:'Annuelle'},
+      p6:{nom:'Export du registre des traitements',type:'Export',cov:[['RGPD','art.30'],['27001','A.5.34']],collecte:'10/01/2026',fr:['over',5],by:['Amélie Fontaine','AF'],recur:'Annuelle'},
+      p7:{nom:'Rapport de test PRA (bascule)',type:'Rapport',cov:[['27001','A.5.30'],['NIS 2','OBJ-09']],collecte:'15/11/2025',fr:['over',34],by:['Théo Renaud','TR'],recur:'Annuelle'},
+      p8:{nom:'Attestation — sauvegardes chiffrées',type:'Attestation',cov:[['27001','A.8.13']],collecte:'01/07/2026',fr:['ok'],by:['Théo Renaud','TR'],recur:'Trimestrielle'},
+      p9:{nom:'Capture — revue des accès à privilèges',type:'Capture',cov:[['27001','A.8.2']],collecte:'05/07/2026',fr:['soon',21],by:['Claire Morel','CM'],recur:'Trimestrielle'},
+      p10:{nom:'PV de revue de direction 2025',type:'PV',cov:[['27001','§9.3']],collecte:'12/12/2025',fr:['ok'],by:['Claire Morel','CM'],recur:'Annuelle'},
+      p11:{nom:'Export inventaire des actifs (CMDB)',type:'Export',cov:[['27001','A.5.9']],collecte:'20/05/2026',fr:['soon',3],by:['Sofia Nguyen','SN'],recur:'Trimestrielle'},
+      p12:{nom:'Rapport d\u2019audit interne 2025',type:'Rapport',cov:[['27001','§9.2'],['9001','§9.2']],collecte:'28/02/2026',fr:['ok'],by:['Yann Prévost','YP'],recur:'Annuelle'},
+      p13:{nom:'Attestation — formation sécurité',type:'Attestation',cov:[['27001','A.6.3']],collecte:'10/06/2025',fr:['over',66],by:['Amélie Fontaine','AF'],recur:'Annuelle'},
+      p14:{nom:'Capture — configuration du pare-feu',type:'Capture',cov:[['27001','A.8.20']],collecte:'20/03/2026',fr:['over',27],by:['Théo Renaud','TR'],recur:'Trimestrielle'}
+    };
+  }
+
+  sha(k){
+    const m = {
+      p3:'a3f5c9e1b7284d0f6ac21e93b8547fd0c6e91a24bb7f3e08d15c9724af6013be',
+      p7:'7d1e4b90c2a6f38e5019bd74ac3f2681e9b0d5c47a82f16309e4bd7c85a12f6d'
+    };
+    return m[k] || '9f8c2d47a10b6e35fd94c7218a03be5c6d1749af23e80b5c9a6f14d327e0b8a1';
+  }
+  renewal(k, fr){
+    const over = fr[0]==='over';
+    const base = {
+      p3:['Karim Benali','KB','05/07/2026'], p7:['Théo Renaud','TR','15/11/2025'], p6:['Amélie Fontaine','AF','10/01/2026'],
+      p13:['Amélie Fontaine','AF','10/06/2025'], p14:['Théo Renaud','TR','20/06/2026']
+    }[k] || ['Théo Renaud','TR', over ? 'échéance dépassée' : '30/09/2026'];
+    return {
+      title: over ? 'Recollecte requise' : 'Renouvellement planifié',
+      resp: base[0], init: base[1], ech: over ? ('en retard · ' + base[2]) : base[2],
+      over
+    };
+  }
+  access(k){
+    return [
+      ['Claire Morel','Consultation','16/07/2026 09:12','var(--tx2)'],
+      ['Audit — Bureau Veritas','Téléchargement','02/07/2026 14:40','var(--warn)'],
+      ['Système','Collecte + scellement SHA-256','15/06/2026 03:00','var(--ok)']
+    ];
+  }
+
+  open(id){ this.setState({sel:id}); }
+
+  covDisp(cov, mut){
+    return cov.map(c => ({ ref:c[0], code:c[1],
+      bd: mut ? 'color-mix(in srgb,var(--ac) 38%,var(--bd))' : 'var(--bd)',
+      bg: mut ? 'color-mix(in srgb,var(--ac) 6%,transparent)' : 'var(--srf)' }));
+  }
+  isMut(cov){ const s = new Set(cov.map(c => c[0])); return s.size > 1; }
+
+  buildPv(){
+    const k = this.state.sel, d = this.data()[k];
+    const fr = this.FR(d.fr[0], d.fr[1]);
+    const mut = this.isMut(d.cov);
+    const ren = this.renewal(k, d.fr);
+    return {
+      nom:d.nom, type:d.type, collecte:d.collecte, recur:d.recur, icon:this.ICON(d.type),
+      fresh:fr.fresh, frFg:fr.fg, frBg:fr.bg, frBd:fr.bd, frDot:fr.dot,
+      cov:this.covDisp(d.cov, mut), mut,
+      sha:this.sha(k),
+      filename: d.nom.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,26) + (d.type==='Capture'?'.png':'.pdf'),
+      renTitle:ren.title, renResp:ren.resp, renInit:ren.init, renEch:ren.ech,
+      renColor: ren.over ? 'var(--dgr)' : 'var(--tx2)',
+      renBd: ren.over ? 'color-mix(in srgb,var(--dgr) 34%,var(--bd))' : 'var(--bd)',
+      renBg: ren.over ? 'color-mix(in srgb,var(--dgr) 5%,transparent)' : 'var(--srf)',
+      renIcon: ren.over ? 'var(--dgr)' : 'var(--tx2)',
+      access: this.access(k).map(a => ({who:a[0], action:a[1], ts:a[2], dot:a[3]}))
+    };
+  }
+
+  renderVals(){
+    const empty = (this.props.etatVide ?? false) === true;
+    const all = this.data();
+    const rows = Object.keys(all).map(k => {
+      const d = all[k], fr = this.FR(d.fr[0], d.fr[1]), mut = this.isMut(d.cov);
+      return {
+        key:k, order:fr.order, nom:d.nom, type:d.type, icon:this.ICON(d.type),
+        cov:this.covDisp(d.cov, mut), mut, fil: mut ? 'var(--ac)' : 'transparent',
+        collecte:d.collecte, fresh:fr.fresh, frFg:fr.fg, frBg:fr.bg, frBd:fr.bd, frDot:fr.dot,
+        byName:d.by[0], byInit:d.by[1], recur:d.recur,
+        rowBg: k===this.state.sel ? 'var(--srf2)' : 'transparent',
+        open: () => this.open(k)
+      };
+    }).sort((a,b) => a.order - b.order);
+
+    return {
+      theme: this.props.theme ?? 'clair',
+      vide: empty, rempli: !empty,
+      rows,
+      footnote: rows.length + ' preuves affichées · extrait du coffre-fort (96 au total) · tri : expirées d\u2019abord',
+      pv: this.buildPv()
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"></link>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"></link>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></link>
+<style>
+body{margin:0;background:#F2F3F3}
+#toron-app{--bg:#F2F3F3;--srf:#FFFFFF;--srf2:#F7F7F6;--bd:#E4E5E3;--tx:#1C1E1D;--tx2:#5B605D;--ac:#CB4E0A;--acTx:#FFFFFF;--ok:#2E7D4F;--warn:#946200;--dgr:#B23327}
+#toron-app[data-theme="sombre"]{--bg:#151412;--srf:#1C1B18;--srf2:#22211D;--bd:#2C2A25;--tx:#ECEAE3;--tx2:#A6A198;--ac:#EF7A32;--acTx:#151412;--ok:#5FB582;--warn:#D8A23E;--dgr:#E0685A}
+#toron-app a{color:var(--ac);text-decoration:none}
+#toron-app a:hover{text-decoration:underline}
+#toron-app input::placeholder{color:var(--tx2);opacity:.65}
+#toron-app select{appearance:none;-webkit-appearance:none}
+#toron-app ::selection{background:rgba(203,78,10,.18)}
+#toron-app *::-webkit-scrollbar{width:10px;height:10px}
+#toron-app *::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:3px solid var(--srf)}
+</style>
+</helmet>
+<div id="toron-app" data-theme="{{ theme }}" data-screen-label="ISO 27001 — détail référentiel" style="display:flex;height:100vh;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;overflow:hidden">
+  <aside style="width:236px;flex-shrink:0;background:var(--srf);border-right:1px solid var(--bd);display:flex;flex-direction:column;min-height:0">
+    <div style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:9px;padding:0 16px;border-bottom:1px solid var(--bd)">
+      <svg viewBox="0 0 24 24" width="22" height="22" style="color:var(--tx);flex-shrink:0"><rect x="4" y="4.4" width="16" height="3.2" rx="1.6" fill="currentColor"></rect><rect x="4" y="10.4" width="16" height="3.2" rx="1.6" fill="currentColor"></rect><rect x="4" y="16.4" width="16" height="3.2" rx="1.6" fill="currentColor"></rect><rect x="7.6" y="1.4" width="2.8" height="21.2" rx="1.4" fill="var(--ac)"></rect><rect x="7.6" y="10.4" width="2.8" height="3.2" fill="currentColor"></rect></svg>
+      <span style="font-weight:600;font-size:13.5px;letter-spacing:.13em">TORON</span>
+    </div>
+    <nav style="flex:1;min-height:0;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);padding:2px 9px 6px">PILOTAGE</div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.2"></rect></svg>
+        Tableau de bord
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="1.6"></rect><path d="M3.5 9.5h17"></path><path d="M8 3v3M16 3v3"></path></svg>
+        Revue de direction
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);padding:14px 9px 6px">CONFORMITÉ</div>
+      <div style="position:relative;display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;background:var(--srf2);color:var(--tx);font-size:12.5px;font-weight:500;cursor:pointer">
+        <span style="position:absolute;left:0;top:7px;bottom:7px;width:2px;background:var(--ac);border-radius:1px"></span>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 6.4h16M4 12h16M4 17.6h16"></path></svg>
+        Référentiels
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"></circle><path d="M8.6 12.3l2.4 2.4 4.6-5"></path></svg>
+        Contrôles
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.2 20.6 19H3.4Z"></path><path d="M12 10v4"></path><path d="M12 16.4v.2"></path></svg>
+        Écarts &amp; plan d'action
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2)">23</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="1.6"></rect><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"></path></svg>
+        Preuves
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);padding:14px 9px 6px">OPÉRATIONS</div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3.4 20.6 12 12 20.6 3.4 12Z"></path></svg>
+        Risques · EBIOS RM
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.2"></circle><path d="M12 8v4.5"></path><path d="M12 15.6v.2"></path></svg>
+        Incidents
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2)">2</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:6px;color:var(--tx2);font-size:12.5px;cursor:pointer" style-hover="color:var(--tx);background:var(--srf2)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4.4c0 .9.7 1.6 1.6 1.6h12.8c.9 0 1.6-.7 1.6-1.6V14"></path><path d="M12 4v9"></path><path d="M8.8 10 12 13.2 15.2 10"></path></svg>
+        Livrables
+      </div>
+    </nav>
+    <div style="flex-shrink:0;border-top:1px solid var(--bd);padding:10px;display:flex;flex-direction:column;gap:2px">
+      <div style="display:flex;align-items:center;gap:9px;padding:8px 9px 4px">
+        <div style="width:26px;height:26px;flex-shrink:0;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--tx)">CM</div>
+        <div style="min-width:0">
+          <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Claire Morel</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.08em;color:var(--tx2);margin-top:1px">RSSI · NEXIALIS SAS</div>
+        </div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.09em;color:var(--tx2);opacity:.75;padding:4px 9px 2px">DONNÉES HÉBERGÉES EN UE · SECNUMCLOUD</div>
+    </div>
+  </aside>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <a href="#" style="display:flex;align-items:center;gap:5px;color:var(--tx2);font-size:12.5px" style-hover="color:var(--tx)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"></path></svg>
+        Référentiels
+      </a>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--tx2)" stroke-width="1.6" stroke-linecap="round"><path d="M9.5 5.5 15 12l-5.5 6.5"></path></svg>
+      <span style="font-size:12.5px;font-weight:500">ISO/IEC 27001:2022</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 10px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);width:230px">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5 20.5 20.5"></path></svg>
+          <input style="border:none;outline:none;background:transparent;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;flex:1;min-width:0;padding:0" placeholder="Rechercher un contrôle — A.5.19"></input>
+        </div>
+        <div style="width:28px;height:28px;flex-shrink:0;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--tx)">CM</div>
+      </div>
+    </header>
+
+    <div style="flex-shrink:0;display:flex;align-items:center;gap:22px;padding:14px 24px;background:var(--srf);border-bottom:1px solid var(--bd);flex-wrap:wrap">
+      <div style="min-width:210px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-size:17px;font-weight:600;letter-spacing:-.01em">ISO/IEC 27001:2022</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);border:1px solid var(--bd);border-radius:4px;padding:2px 6px">SMSI</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.09em;color:var(--tx2);margin-top:5px">DÉCLARATION D'APPLICABILITÉ · SoA v3 · MàJ 02/07/2026</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:260px;flex:1;max-width:420px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">COUVERTURE ANNEXE A</span>
+          <span style="font-size:12px;color:var(--tx2)"><span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--tx)">67</span> / 93 conformes</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;height:7px;background:var(--srf2);border:1px solid var(--bd);border-radius:4px;overflow:hidden;display:flex">
+            <div style="width:72%;height:100%;background:var(--tx)"></div>
+            <div style="width:15%;height:100%;background:var(--dgr);opacity:.55"></div>
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600">72&nbsp;%</span>
+        </div>
+      </div>
+      <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <button style="height:32px;padding:0 15px;display:flex;align-items:center;gap:8px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v9"></path><path d="M8.8 10 12 13.2 15.2 10"></path><path d="M5 15.5v2.9c0 .6.5 1.1 1.1 1.1h11.8c.6 0 1.1-.5 1.1-1.1v-2.9"></path></svg>
+          Exporter la Déclaration d'applicabilité
+        </button>
+        <div style="display:flex;align-items:center;gap:6px;color:var(--tx2)">
+          <svg viewBox="0 0 24 24" width="13" height="13" style="flex-shrink:0"><path d="M12 3.6 19.4 11 12 18.4 4.6 11Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path><rect x="2.4" y="10" width="19.2" height="2" rx="1" fill="var(--ac)"></rect></svg>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.08em">PDF SCELLÉ · EMPREINTE SHA-256 + URL DE VÉRIFICATION</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:9px 24px;background:var(--srf);border-bottom:1px solid var(--bd);flex-wrap:wrap">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">STATUT</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <sc-for list="{{ pills }}" as="p" hint-placeholder-count="5">
+          <button onClick="{{ p.onClick }}" style="display:flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:1px solid {{ p.bd }};border-radius:6px;background:{{ p.bg }};color:{{ p.fg }};font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">
+            <span style="width:7px;height:7px;border-radius:50%;background:{{ p.dot }}"></span>
+            {{ p.label }}
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.8">{{ p.count }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">DOMAINE</span>
+        <div style="position:relative;display:flex;align-items:center">
+          <select onChange="{{ onDomain }}" value="{{ node }}" style="height:28px;padding:0 28px 0 10px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;cursor:pointer">
+            <optgroup label="Chapitres (exigences)">
+              <option value="§4">§4 · Contexte de l'organisation</option>
+              <option value="§5">§5 · Leadership</option>
+              <option value="§6">§6 · Planification</option>
+              <option value="§7">§7 · Support</option>
+              <option value="§8">§8 · Fonctionnement</option>
+              <option value="§9">§9 · Évaluation des performances</option>
+              <option value="§10">§10 · Amélioration</option>
+            </optgroup>
+            <optgroup label="Annexe A · Contrôles">
+              <option value="A.5">A.5 · Organisationnel</option>
+              <option value="A.6">A.6 · Personnel</option>
+              <option value="A.7">A.7 · Physique</option>
+              <option value="A.8">A.8 · Technologique</option>
+            </optgroup>
+          </select>
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:9px;pointer-events:none"><path d="M6 9.5 12 15.5 18 9.5"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="width:262px;flex-shrink:0;border-right:1px solid var(--bd);background:var(--srf);overflow-y:auto;padding:12px 10px">
+        <div style="display:flex;align-items:center;gap:7px;padding:2px 8px 8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">CHAPITRES · EXIGENCES</span>
+          <div style="flex:1;height:1px;background:var(--bd)"></div>
+        </div>
+        <sc-for list="{{ treeCh }}" as="n" hint-placeholder-count="7">
+          <div onClick="{{ n.onClick }}" style="position:relative;display:flex;align-items:center;gap:8px;min-height:32px;padding:5px 9px;border-radius:6px;cursor:pointer;background:{{ n.bg }}" style-hover="background:var(--srf2)">
+            <span style="position:absolute;left:0;top:7px;bottom:7px;width:2px;border-radius:1px;background:{{ n.bar }}"></span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;color:{{ n.idColor }};width:30px;flex-shrink:0">{{ n.id }}</span>
+            <span style="font-size:12px;color:{{ n.labelColor }};flex:1;min-width:0;line-height:1.3">{{ n.label }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2)">{{ n.count }}</span>
+            <sc-if value="{{ n.hasEcarts }}" hint-placeholder-val="{{ false }}">
+              <span style="display:inline-flex;align-items:center;gap:3px;height:16px;padding:0 5px;border-radius:8px;background:color-mix(in srgb,var(--dgr) 12%,transparent);color:var(--dgr);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600">{{ n.ecarts }}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="display:flex;align-items:center;gap:7px;padding:16px 8px 8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">ANNEXE A · CONTRÔLES</span>
+          <div style="flex:1;height:1px;background:var(--bd)"></div>
+        </div>
+        <sc-for list="{{ treeAnnexe }}" as="n" hint-placeholder-count="4">
+          <div onClick="{{ n.onClick }}" style="position:relative;display:flex;align-items:center;gap:8px;min-height:32px;padding:5px 9px;border-radius:6px;cursor:pointer;background:{{ n.bg }}" style-hover="background:var(--srf2)">
+            <span style="position:absolute;left:0;top:7px;bottom:7px;width:2px;border-radius:1px;background:{{ n.bar }}"></span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;color:{{ n.idColor }};width:30px;flex-shrink:0">{{ n.id }}</span>
+            <span style="font-size:12px;color:{{ n.labelColor }};flex:1;min-width:0;line-height:1.3">{{ n.label }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2)">{{ n.count }}</span>
+            <sc-if value="{{ n.hasEcarts }}" hint-placeholder-val="{{ false }}">
+              <span style="display:inline-flex;align-items:center;gap:3px;height:16px;padding:0 5px;border-radius:8px;background:color-mix(in srgb,var(--dgr) 12%,transparent);color:var(--dgr);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600">{{ n.ecarts }}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="margin-top:16px;padding:10px 9px;border-top:1px solid var(--bd)">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.09em;color:var(--tx2);margin-bottom:7px">FRAÎCHEUR DES PREUVES</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--tx2)"><span style="width:7px;height:7px;border-radius:50%;background:var(--ok)"></span>À jour (&lt; 6 mois)</div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--tx2)"><span style="width:7px;height:7px;border-radius:50%;background:var(--warn)"></span>À renouveler</div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--tx2)"><span style="width:7px;height:7px;border-radius:50%;background:var(--dgr)"></span>Périmée</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:0;overflow-y:auto;background:var(--bg)">
+        <div style="position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;padding:11px 18px;background:var(--bg);border-bottom:1px solid var(--bd)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--tx)">{{ headerId }}</span>
+          <span style="font-size:12.5px;font-weight:500">{{ headerLabel }}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2)">{{ headerMeta }}</span>
+        </div>
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+          <div onClick="{{ r.open }}" style="display:grid;grid-template-columns:4px 20px 68px 1fr auto;align-items:stretch;border-bottom:1px solid var(--bd);cursor:pointer;background:{{ r.rowBg }}" style-hover="background:var(--srf2)">
+            <div style="background:{{ r.fil }}"></div>
+            <div style="display:flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.dot }}"></span></div>
+            <div style="display:flex;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--tx);padding:10px 6px 10px 2px">{{ r.id }}</div>
+            <div style="padding:9px 10px 9px 2px;min-width:0;display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:12.5px;font-weight:500;line-height:1.35;text-wrap:pretty">{{ r.titre }}</div>
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                <sc-for list="{{ r.ctl }}" as="c" hint-placeholder-count="0">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx2);border:1px solid var(--bd);border-radius:4px;padding:1px 5px;background:var(--srf)">{{ c.id }}</span>
+                </sc-for>
+                <sc-for list="{{ r.prv }}" as="p" hint-placeholder-count="0">
+                  <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--tx2)" title="{{ p.fresh }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ p.color }};flex-shrink:0"></span>{{ p.label }}</span>
+                </sc-for>
+                <sc-if value="{{ r.hasMut }}" hint-placeholder-val="{{ false }}">
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding-left:2px">
+                    <span style="width:14px;height:2px;background:var(--ac);border-radius:1px"></span>
+                    <sc-for list="{{ r.mut }}" as="b" hint-placeholder-count="1">
+                      <span style="display:inline-flex;align-items:center;gap:4px;height:17px;padding:0 6px;border:1px solid color-mix(in srgb,var(--ac) 40%,var(--bd));border-radius:8px;background:color-mix(in srgb,var(--ac) 7%,transparent);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.03em"><span style="width:4px;height:4px;border-radius:50%;background:var(--ac)"></span>{{ b.label }}</span>
+                    </sc-for>
+                  </span>
+                </sc-if>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:0 14px 0 10px">
+              <span style="display:inline-flex;align-items:center;height:21px;padding:0 9px;border:1px solid {{ r.badgeBd }};border-radius:5px;background:{{ r.badgeBg }};color:{{ r.badgeFg }};font-size:11px;font-weight:500;white-space:nowrap">{{ r.statut }}</span>
+              <sc-if value="{{ r.warnMissing }}" hint-placeholder-val="{{ false }}">
+                <span title="Motif d'exclusion manquant" style="display:inline-flex;align-items:center;color:var(--dgr)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.6 20.4 19H3.6Z"></path><path d="M12 10v4"></path><path d="M12 16.4v.2"></path></svg></span>
+              </sc-if>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--tx2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M9.5 5.5 15 12l-5.5 6.5"></path></svg>
+            </div>
+          </div>
+        </sc-for>
+        <div style="padding:14px 18px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--tx2)">{{ rowsFootnote }}</div>
+      </div>
+
+      <sc-if value="{{ selOpen }}" hint-placeholder-val="{{ true }}">
+      <aside style="width:372px;flex-shrink:0;border-left:1px solid var(--bd);background:var(--srf);overflow-y:auto">
+        <div style="position:sticky;top:0;z-index:1;background:var(--srf);border-bottom:1px solid var(--bd);padding:14px 16px 12px">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ sel.id }}</span>
+                <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid {{ sel.badgeBd }};border-radius:5px;background:{{ sel.badgeBg }};color:{{ sel.badgeFg }};font-size:11px;font-weight:500">{{ sel.statut }}</span>
+              </div>
+              <div style="font-size:13.5px;font-weight:600;margin-top:7px;line-height:1.35;text-wrap:pretty">{{ sel.titre }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.09em;color:var(--tx2);margin-top:6px">{{ sel.domainMeta }}</div>
+            </div>
+            <button onClick="{{ closePanel }}" style="width:26px;height:26px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd);border-radius:6px;background:var(--srf);color:var(--tx2);cursor:pointer" style-hover="background:var(--srf2);color:var(--tx)">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"></path></svg>
+            </button>
+          </div>
+          <sc-if value="{{ sel.hasMut }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:8px;margin-top:11px;padding:8px 10px;border:1px solid color-mix(in srgb,var(--ac) 34%,var(--bd));border-radius:6px;background:color-mix(in srgb,var(--ac) 6%,transparent)">
+              <span style="width:16px;height:2px;background:var(--ac);border-radius:1px;flex-shrink:0"></span>
+              <span style="font-size:11.5px;color:var(--tx2);flex:1">Contrôle mutualisé — couvre aussi</span>
+              <span style="display:flex;gap:5px">
+                <sc-for list="{{ sel.mut }}" as="b" hint-placeholder-count="1">
+                  <span style="display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px;border:1px solid color-mix(in srgb,var(--ac) 40%,var(--bd));border-radius:8px;background:var(--srf);color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:9px"><span style="width:4px;height:4px;border-radius:50%;background:var(--ac)"></span>{{ b.label }}</span>
+                </sc-for>
+              </span>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="padding:16px">
+          <sc-if value="{{ sel.isEcart }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:10px;padding:11px 12px;border:1px solid color-mix(in srgb,var(--dgr) 34%,var(--bd));border-radius:7px;background:color-mix(in srgb,var(--dgr) 6%,transparent);margin-bottom:16px">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--dgr)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M12 4.6 20.4 19H3.6Z"></path><path d="M12 10v4"></path><path d="M12 16.4v.2"></path></svg>
+              <div style="min-width:0">
+                <div style="font-size:12px;font-weight:600;color:var(--dgr)">Écart ouvert</div>
+                <div style="font-size:12px;color:var(--tx2);line-height:1.5;margin-top:3px;text-wrap:pretty">{{ sel.ecartTxt }}</div>
+                <a href="#" style="display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;margin-top:7px">{{ sel.actionId }} · voir le plan d'action →</a>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ sel.isIncl }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-bottom:18px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">JUSTIFICATION D'INCLUSION</div>
+              <div style="font-size:12.5px;line-height:1.6;color:var(--tx);text-wrap:pretty">{{ sel.justif }}</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ sel.isExcl }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-bottom:18px">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">JUSTIFICATION D'EXCLUSION</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.06em;color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 45%,var(--bd));border-radius:4px;padding:1px 5px">REQUIS</span>
+              </div>
+              <div style="font-size:12.5px;line-height:1.6;color:var(--tx);border-left:2px solid var(--bd);padding-left:11px;text-wrap:pretty">{{ sel.justif }}</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ sel.isErr }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-bottom:18px;border:1px solid color-mix(in srgb,var(--dgr) 40%,var(--bd));border-radius:7px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:7px;padding:8px 12px;background:color-mix(in srgb,var(--dgr) 9%,transparent);border-bottom:1px solid color-mix(in srgb,var(--dgr) 30%,var(--bd))">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--dgr)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"></circle><path d="M12 8v4.6"></path><path d="M12 15.8v.2"></path></svg>
+                <span style="font-size:12px;font-weight:600;color:var(--dgr)">Justification d'exclusion requise</span>
+              </div>
+              <div style="padding:11px 12px">
+                <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--tx2);margin-bottom:3px">CAUSE</div>
+                <div style="font-size:12.5px;line-height:1.55;color:var(--tx);margin-bottom:10px;text-wrap:pretty">Ce contrôle est marqué « Non applicable » sans motif renseigné. La Déclaration d'applicabilité ne peut être scellée tant qu'une exclusion n'est pas justifiée.</div>
+                <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--tx2);margin-bottom:3px">CORRECTION</div>
+                <div style="font-size:12.5px;line-height:1.55;color:var(--tx);margin-bottom:11px;text-wrap:pretty">Renseignez le motif d'exclusion (actifs hors périmètre, mesure portée par un tiers, risque non retenu en EBIOS RM…).</div>
+                <button style="height:30px;padding:0 13px;background:var(--ac);color:var(--acTx);border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer" style-hover="filter:brightness(.92)">Renseigner le motif</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">RESPONSABLE</div>
+            <div style="display:flex;align-items:center;gap:9px">
+              <div style="width:28px;height:28px;flex-shrink:0;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500">{{ sel.respInit }}</div>
+              <div>
+                <div style="font-size:12.5px;font-weight:500">{{ sel.respName }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--tx2);margin-top:1px">{{ sel.respRole }}</div>
+              </div>
+            </div>
+          </div>
+
+          <sc-if value="{{ sel.hasCtl }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">CONTRÔLES INTERNES LIÉS</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ sel.ctlFull }}" as="c" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--bd);border-radius:6px;background:var(--srf2)">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;flex-shrink:0">{{ c.id }}</span>
+                  <span style="font-size:12px;color:var(--tx2);flex:1;min-width:0;line-height:1.3">{{ c.label }}</span>
+                  <span style="width:7px;height:7px;border-radius:50%;background:{{ c.dot }};flex-shrink:0"></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ sel.hasPrv }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">PREUVES</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ sel.prvFull }}" as="p" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--bd);border-radius:6px">
+                  <span style="width:8px;height:8px;border-radius:50%;background:{{ p.color }};flex-shrink:0"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:12px;font-weight:500;line-height:1.3">{{ p.label }}</div>
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;color:var(--tx2);margin-top:2px">{{ p.meta }}</div>
+                  </div>
+                  <a href="#" style="font-size:11.5px;font-weight:500;flex-shrink:0">Ouvrir</a>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:10px">HISTORIQUE DES STATUTS</div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ sel.hist }}" as="h" hint-placeholder-count="2">
+                <div style="display:flex;gap:10px">
+                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+                    <span style="width:9px;height:9px;border-radius:50%;border:2px solid {{ h.dot }};background:var(--srf);margin-top:3px"></span>
+                    <span style="width:1px;flex:1;background:var(--bd);min-height:14px"></span>
+                  </div>
+                  <div style="padding-bottom:14px;min-width:0">
+                    <div style="font-size:12px;line-height:1.4">
+                      <span style="color:var(--tx2)">{{ h.from }}</span>
+                      <span style="color:var(--tx2);margin:0 4px">→</span>
+                      <span style="font-weight:600;color:{{ h.toColor }}">{{ h.to }}</span>
+                    </div>
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;color:var(--tx2);margin-top:3px">{{ h.date }} · {{ h.who }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </aside>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clair&quot;,&quot;sombre&quot;],&quot;default&quot;:&quot;clair&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Apparence&quot;}}">
+class Component extends DCLogic {
+  state = { node: 'A.5', status: 'tous', req: 'A.5.19' };
+
+  S(name){
+    const m = {
+      'Conforme':{dot:'var(--ok)',fg:'var(--ok)',bg:'color-mix(in srgb,var(--ok) 9%,transparent)',bd:'color-mix(in srgb,var(--ok) 40%,var(--bd))'},
+      'Écart':{dot:'var(--dgr)',fg:'var(--dgr)',bg:'color-mix(in srgb,var(--dgr) 9%,transparent)',bd:'color-mix(in srgb,var(--dgr) 40%,var(--bd))'},
+      'Non applicable':{dot:'var(--tx2)',fg:'var(--tx2)',bg:'var(--srf2)',bd:'var(--bd)'},
+      'À évaluer':{dot:'var(--warn)',fg:'var(--warn)',bg:'color-mix(in srgb,var(--warn) 11%,transparent)',bd:'color-mix(in srgb,var(--warn) 40%,var(--bd))'}
+    };
+    return m[name];
+  }
+  fresh(code){
+    return {1:{color:'var(--ok)',label:'récente',meta:'MàJ 12/06/2026'},2:{color:'var(--warn)',label:'à renouveler',meta:'MàJ 02/2026'},3:{color:'var(--dgr)',label:'périmée',meta:'MàJ 09/2025'},0:{color:'var(--tx2)',label:'manquante',meta:'—'}}[code];
+  }
+  ctlLabel(id){
+    const m = {
+      'CTL-FOURN-03':'Évaluation sécurité des fournisseurs',
+      'CTL-CONTR-11':'Clauses SSI dans les contrats-cadres',
+      'CTL-ACT-01':'Tenue de l\u2019inventaire des actifs',
+      'CTL-POL-01':'Cycle de révision des politiques',
+      'CTL-IAM-04':'Revue trimestrielle des accès',
+      'CTL-CLOUD-02':'Registre des services cloud',
+      'CTL-PCA-01':'Plan de continuité d\u2019activité',
+      'CTL-PCA-02':'Tests de bascule PRA',
+      'CTL-DCP-01':'Registre des traitements DCP'
+    };
+    return m[id] || 'Contrôle interne';
+  }
+
+  data(){
+    return {
+      '§4':[
+        {id:'§4.1',t:'Cerner le contexte et les enjeux SI de l\u2019organisation',s:'Conforme',c:['CTL-010'],p:[['Analyse de contexte',1]]},
+        {id:'§4.2',t:'Recenser les parties intéressées et leurs attentes',s:'Écart',c:['CTL-011'],p:[['Registre parties intéressées',2]]},
+        {id:'§4.3',t:'Fixer le périmètre du SMSI',s:'Conforme',c:['CTL-012'],p:[['Note de périmètre v2',1]]},
+        {id:'§4.4',t:'Faire vivre le système de management',s:'À évaluer',c:[],p:[]}
+      ],
+      '§5':[
+        {id:'§5.1',t:'Engagement et pilotage par la direction',s:'Conforme',c:['CTL-020'],p:[['PV comité de direction',1]]},
+        {id:'§5.2',t:'Publier la politique de sécurité de l\u2019information',s:'Conforme',c:['CTL-POL-01'],p:[['PSSI v4',1]]},
+        {id:'§5.3',t:'Répartir les rôles, responsabilités et autorités',s:'Conforme',c:['CTL-021'],p:[['Matrice RACI',1]]}
+      ],
+      '§6':[
+        {id:'§6.1',t:'Traiter les risques et opportunités (EBIOS RM)',s:'Écart',c:['CTL-030'],p:[['Étude EBIOS RM 2025',2]],m:['NIS 2']},
+        {id:'§6.2',t:'Fixer des objectifs de sécurité mesurables',s:'À évaluer',c:[],p:[]},
+        {id:'§6.3',t:'Planifier les modifications du SMSI',s:'Conforme',c:['CTL-031'],p:[['Registre des changements',1]]}
+      ],
+      '§7':[
+        {id:'§7.1',t:'Dimensionner les ressources du SMSI',s:'Conforme',c:['CTL-040'],p:[['Budget SSI 2026',1]]},
+        {id:'§7.2',t:'Assurer les compétences nécessaires',s:'Conforme',c:['CTL-041'],p:[['Plan de formation',1]],m:['ISO 9001']},
+        {id:'§7.3',t:'Sensibiliser le personnel à la sécurité',s:'À évaluer',c:['CTL-042'],p:[['Campagne phishing Q2',2]]},
+        {id:'§7.4',t:'Organiser la communication interne et externe',s:'Conforme',c:['CTL-043'],p:[['Plan de communication',1]]},
+        {id:'§7.5',t:'Maîtriser les informations documentées',s:'Conforme',c:['CTL-044'],p:[['GED — plan de classement',1]],m:['ISO 9001']}
+      ],
+      '§8':[
+        {id:'§8.1',t:'Piloter les activités opérationnelles de sécurité',s:'Écart',c:['CTL-050'],p:[['Procédures d\u2019exploitation',3]]},
+        {id:'§8.2',t:'Conduire l\u2019appréciation des risques SI',s:'Conforme',c:['CTL-051'],p:[['Rapport d\u2019appréciation',1]],m:['NIS 2']},
+        {id:'§8.3',t:'Mettre en \u0153uvre le traitement des risques',s:'Écart',c:['CTL-052'],p:[['Plan de traitement',2]]}
+      ],
+      '§9':[
+        {id:'§9.1',t:'Mesurer, surveiller et évaluer la performance',s:'À évaluer',c:['CTL-060'],p:[['Tableau d\u2019indicateurs',2]]},
+        {id:'§9.2',t:'Programmer et conduire les audits internes',s:'Conforme',c:['CTL-061'],p:[['Programme d\u2019audit 2026',1]],m:['ISO 9001']},
+        {id:'§9.3',t:'Tenir la revue de direction',s:'Écart',c:['CTL-062'],p:[['PV revue de direction',3]],m:['ISO 9001']}
+      ],
+      '§10':[
+        {id:'§10.1',t:'Traiter les non-conformités et actions correctives',s:'Conforme',c:['CTL-070'],p:[['Registre des NC',1]],m:['ISO 9001']},
+        {id:'§10.2',t:'Piloter l\u2019amélioration continue',s:'Conforme',c:['CTL-071'],p:[['Suivi des actions',1]]}
+      ],
+      'A.5':[
+        {id:'A.5.1',t:'Définir, approuver et diffuser les politiques SI',s:'Conforme',c:['CTL-POL-01'],p:[['PSSI v4 (PDF)',1]]},
+        {id:'A.5.2',t:'Attribuer les rôles et responsabilités sécurité',s:'Conforme',c:['CTL-021'],p:[['Matrice RACI',1]]},
+        {id:'A.5.7',t:'Organiser la veille sur les menaces (threat intel)',s:'À évaluer',c:[],p:[]},
+        {id:'A.5.9',t:'Tenir l\u2019inventaire des actifs et de leurs propriétaires',s:'Écart',c:['CTL-ACT-01'],p:[['CMDB (export)',2],['Cartographie des actifs',3]]},
+        {id:'A.5.15',t:'Encadrer les règles de contrôle d\u2019accès',s:'Conforme',c:['CTL-IAM-04'],p:[['Politique de contrôle d\u2019accès',1]]},
+        {id:'A.5.19',t:'Encadrer la sécurité dans les relations fournisseurs',s:'Écart',c:['CTL-FOURN-03','CTL-CONTR-11'],p:[['Clausier SSI',1],['Registre fournisseurs',2],['Évaluations 2025',3]],m:['NIS 2','ISO 9001']},
+        {id:'A.5.23',t:'Cadrer la sécurité de l\u2019usage des services cloud',s:'À évaluer',c:['CTL-CLOUD-02'],p:[['Registre services cloud',2]],m:['NIS 2']},
+        {id:'A.5.29',t:'Maintenir la sécurité pendant une perturbation',s:'Écart',c:['CTL-PCA-01'],p:[['Plan de continuité',3]],m:['NIS 2']},
+        {id:'A.5.30',t:'Préparer les TIC à la continuité d\u2019activité',s:'Écart',c:['CTL-PCA-02'],p:[['Tests de bascule',3]],m:['NIS 2']},
+        {id:'A.5.31',t:'Recenser les obligations légales et contractuelles',s:'Conforme',c:['CTL-LEG-01'],p:[['Veille réglementaire',1]],m:['ISO 9001','RGPD']},
+        {id:'A.5.34',t:'Protéger les données à caractère personnel',s:'Conforme',c:['CTL-DCP-01'],p:[['Registre des traitements',1]],m:['RGPD']},
+        {id:'A.5.37',t:'Documenter les procédures d\u2019exploitation',s:'Non applicable',c:[],p:[]}
+      ],
+      'A.6':[
+        {id:'A.6.1',t:'Vérifier les antécédents à l\u2019embauche',s:'Conforme',c:['CTL-RH-01'],p:[['Procédure de recrutement',1]]},
+        {id:'A.6.2',t:'Intégrer la sécurité aux conditions d\u2019emploi',s:'Conforme',c:['CTL-RH-02'],p:[['Contrat-type + charte',1]],m:['RGPD']},
+        {id:'A.6.3',t:'Sensibiliser et former à la sécurité',s:'Écart',c:['CTL-042'],p:[['Suivi des formations',2]]},
+        {id:'A.6.7',t:'Encadrer le travail à distance',s:'À évaluer',c:['CTL-RH-05'],p:[['Charte télétravail',2]]}
+      ],
+      'A.7':[
+        {id:'A.7.1',t:'Délimiter les zones de sécurité physique',s:'Conforme',c:['CTL-PHY-01'],p:[['Plan des zones',1]]},
+        {id:'A.7.2',t:'Contrôler les accès physiques aux locaux',s:'Écart',c:['CTL-PHY-02'],p:[['Journal des badges',2]]},
+        {id:'A.7.4',t:'Assurer la surveillance physique des locaux',s:'Non applicable',c:[],p:[]},
+        {id:'A.7.10',t:'Gérer le cycle de vie des supports de stockage',s:'À évaluer',c:['CTL-PHY-07'],p:[['Registre des supports',2]]}
+      ],
+      'A.8':[
+        {id:'A.8.1',t:'Protéger les terminaux des utilisateurs',s:'Conforme',c:['CTL-TEC-01'],p:[['Parc EDR (export)',1]]},
+        {id:'A.8.2',t:'Restreindre les privilèges d\u2019accès',s:'Écart',c:['CTL-IAM-08'],p:[['Revue des comptes à privilèges',3]]},
+        {id:'A.8.5',t:'Imposer une authentification sécurisée (MFA)',s:'Conforme',c:['CTL-TEC-05'],p:[['Politique MFA',1]]},
+        {id:'A.8.8',t:'Gérer les vulnérabilités techniques',s:'Écart',c:['CTL-TEC-08'],p:[['Scan de vulnérabilités',2]],m:['NIS 2']},
+        {id:'A.8.16',t:'Surveiller les activités et journaliser',s:'Écart',c:['CTL-TEC-16'],p:[['Journal SIEM (30j)',2]],m:['NIS 2']},
+        {id:'A.8.24',t:'Encadrer l\u2019usage de la cryptographie',s:'À évaluer',c:['CTL-TEC-24'],p:[['Politique cryptographique',2]]}
+      ]
+    };
+  }
+
+  soa(){
+    return {
+      'A.5.19':{resp:['Karim Benali','Resp. Achats & Fournisseurs','KB'],action:'ACT-0142',
+        ecart:'Les évaluations sécurité annuelles ne couvrent pas 4 fournisseurs critiques ; clauses SSI absentes de 2 contrats reconduits.',
+        justif:'Contrôle applicable : l\u2019organisation recourt à des prestataires TIC (hébergement, infogérance, SaaS) traitant des informations sensibles. Retenu dans la SoA v3.',
+        hist:[['02/07/2026 14:12','À évaluer','Écart','Claire Morel'],['18/03/2026 09:40','—','À évaluer','Karim Benali']]},
+      'A.5.37':{resp:['Claire Morel','RSSI','CM'],
+        justif:'Exclu du périmètre : l\u2019exploitation TIC est entièrement infogérée. Les procédures d\u2019exploitation relèvent du prestataire et sont couvertes par A.5.19 et l\u2019annexe sécurité du contrat d\u2019infogérance.',
+        hist:[['12/05/2026 11:03','À évaluer','Non applicable','Claire Morel']]},
+      'A.7.4':{resp:['Claire Morel','RSSI','CM'],err:true,
+        hist:[['09/07/2026 16:20','À évaluer','Non applicable','Théo Renaud']]},
+      'A.5.9':{resp:['Sofia Nguyen','Resp. Actifs SI','SN'],action:'ACT-0151',
+        ecart:'Inventaire incomplet : 12 % des actifs sans propriétaire désigné ; CMDB non réconciliée avec le scan réseau.',
+        hist:[['24/06/2026 10:05','Conforme','Écart','Sofia Nguyen'],['02/02/2026 15:30','—','Conforme','Sofia Nguyen']]}
+    };
+  }
+
+  meta(){
+    return {
+      '§4':{d:'CHAPITRE 4 · EXIGENCES',l:'Contexte de l\u2019organisation',n:4,e:1,u:'exigences'},
+      '§5':{d:'CHAPITRE 5 · EXIGENCES',l:'Leadership',n:3,e:0,u:'exigences'},
+      '§6':{d:'CHAPITRE 6 · EXIGENCES',l:'Planification',n:3,e:1,u:'exigences'},
+      '§7':{d:'CHAPITRE 7 · EXIGENCES',l:'Support',n:5,e:0,u:'exigences'},
+      '§8':{d:'CHAPITRE 8 · EXIGENCES',l:'Fonctionnement',n:3,e:2,u:'exigences'},
+      '§9':{d:'CHAPITRE 9 · EXIGENCES',l:'Évaluation des performances',n:3,e:1,u:'exigences'},
+      '§10':{d:'CHAPITRE 10 · EXIGENCES',l:'Amélioration',n:2,e:0,u:'exigences'},
+      'A.5':{d:'ANNEXE A · ORGANISATIONNEL',l:'Contrôles organisationnels',n:37,e:4,u:'contrôles'},
+      'A.6':{d:'ANNEXE A · PERSONNEL',l:'Contrôles liés aux personnes',n:8,e:1,u:'contrôles'},
+      'A.7':{d:'ANNEXE A · PHYSIQUE',l:'Contrôles physiques',n:14,e:1,u:'contrôles'},
+      'A.8':{d:'ANNEXE A · TECHNOLOGIQUE',l:'Contrôles technologiques',n:34,e:3,u:'contrôles'}
+    };
+  }
+
+  selectNode(id){ this.setState({node:id, status:'tous', req:null}); }
+  onDomain(e){ this.setState({node:e.target.value, status:'tous', req:null}); }
+  setStatus(k){ this.setState({status:k}); }
+  selectReq(id){ this.setState({req:id}); }
+  closePanel(){ this.setState({req:null}); }
+
+  treeItem(id, meta){
+    const active = this.state.node === id;
+    return {
+      id, label: meta.l.replace(/^Contrôles?\s+/,'').replace(/^Contrôles liés aux /,''), count: meta.n,
+      ecarts: meta.e, hasEcarts: meta.e > 0,
+      bg: active ? 'var(--srf2)' : 'transparent',
+      bar: active ? 'var(--ac)' : 'transparent',
+      idColor: active ? 'var(--ac)' : 'var(--tx)',
+      labelColor: active ? 'var(--tx)' : 'var(--tx2)',
+      onClick: () => this.selectNode(id)
+    };
+  }
+
+  buildSel(){
+    const id = this.state.req;
+    if(!id) return null;
+    const all = this.data();
+    let raw = null, nodeKey = null;
+    for(const k in all){ const f = all[k].find(x => x.id === id); if(f){ raw = f; nodeKey = k; break; } }
+    if(!raw) return null;
+    const extra = (this.soa()[id]) || {};
+    const st = this.S(raw.s);
+    const meta = this.meta()[nodeKey];
+    const isNA = raw.s === 'Non applicable';
+    const isErr = isNA && extra.err === true;
+    const resp = extra.resp || ['Claire Morel','RSSI','CM'];
+    const defJustif = 'Contrôle retenu dans le périmètre du SMSI : applicable au regard des actifs et des risques identifiés lors de l\u2019appréciation EBIOS RM.';
+    const hist = (extra.hist || [['18/03/2026 09:40','—',raw.s,'Claire Morel']]).map(h => ({
+      from:h[1], to:h[2], date:h[0], who:h[3], dot:this.S(h[2]).dot, toColor:this.S(h[2]).fg
+    }));
+    return {
+      id: raw.id, titre: raw.t, statut: raw.s,
+      badgeFg: st.fg, badgeBg: st.bg, badgeBd: st.bd,
+      domainMeta: meta.d + ' · SoA v3',
+      mut: (raw.m || []).map(x => ({label:x})), hasMut: !!(raw.m && raw.m.length),
+      isEcart: raw.s === 'Écart',
+      ecartTxt: extra.ecart || 'Écart constaté lors de la dernière évaluation ; mesure de traitement en cours.',
+      actionId: extra.action || 'ACT-0148',
+      isIncl: !isNA,
+      isExcl: isNA && !isErr,
+      isErr,
+      justif: isNA ? (extra.justif || '') : (extra.justif || defJustif),
+      respName: resp[0], respRole: resp[1], respInit: resp[2],
+      hasCtl: (raw.c || []).length > 0,
+      ctlFull: (raw.c || []).map(cid => ({id:cid, label:this.ctlLabel(cid), dot: raw.s==='Conforme'?'var(--ok)':(raw.s==='Écart'?'var(--dgr)':'var(--tx2)')})),
+      hasPrv: (raw.p || []).length > 0,
+      prvFull: (raw.p || []).map(pr => { const f=this.fresh(pr[1]); return {label:pr[0], color:f.color, meta:f.label+' · '+f.meta}; }),
+      hist
+    };
+  }
+
+  renderVals(){
+    const node = this.state.node;
+    const status = this.state.status;
+    const metaMap = this.meta();
+    const nodeMeta = metaMap[node];
+    const rowsRaw = this.data()[node] || [];
+    const soaMap = this.soa();
+
+    const counts = {tous: rowsRaw.length, 'Conforme':0, 'Écart':0, 'Non applicable':0, 'À évaluer':0};
+    rowsRaw.forEach(r => { counts[r.s]++; });
+
+    const pillDefs = [
+      {key:'tous', label:'Tous', dot:'var(--tx2)'},
+      {key:'Conforme', label:'Conforme', dot:'var(--ok)'},
+      {key:'Écart', label:'Écart', dot:'var(--dgr)'},
+      {key:'Non applicable', label:'Non applicable', dot:'var(--tx2)'},
+      {key:'À évaluer', label:'À évaluer', dot:'var(--warn)'}
+    ];
+    const pills = pillDefs.map(p => {
+      const active = status === p.key;
+      return {
+        label:p.label, count:counts[p.key], dot:p.dot,
+        bd: active ? 'var(--ac)' : 'var(--bd)',
+        bg: active ? 'color-mix(in srgb,var(--ac) 9%,transparent)' : 'var(--srf)',
+        fg: active ? 'var(--ac)' : 'var(--tx)',
+        onClick: () => this.setStatus(p.key)
+      };
+    });
+
+    const filtered = status === 'tous' ? rowsRaw : rowsRaw.filter(r => r.s === status);
+    const rows = filtered.map(r => {
+      const st = this.S(r.s);
+      const mut = r.m || [];
+      const extra = soaMap[r.id] || {};
+      return {
+        id:r.id, titre:r.t, statut:r.s,
+        dot:st.dot, badgeFg:st.fg, badgeBg:st.bg, badgeBd:st.bd,
+        fil: mut.length ? 'var(--ac)' : 'transparent',
+        rowBg: r.id === this.state.req ? 'var(--srf2)' : 'transparent',
+        ctl: (r.c || []).map(c => ({id:c})),
+        prv: (r.p || []).map(p => { const f=this.fresh(p[1]); return {label:p[0], color:f.color, fresh:f.label}; }),
+        mut: mut.map(m => ({label:m})), hasMut: mut.length > 0,
+        warnMissing: r.s === 'Non applicable' && extra.err === true,
+        open: () => this.selectReq(r.id)
+      };
+    });
+
+    const chKeys = ['§4','§5','§6','§7','§8','§9','§10'];
+    const anKeys = ['A.5','A.6','A.7','A.8'];
+
+    return {
+      theme: this.props.theme ?? 'clair',
+      node,
+      onDomain: (e) => this.onDomain(e),
+      pills,
+      treeCh: chKeys.map(k => this.treeItem(k, metaMap[k])),
+      treeAnnexe: anKeys.map(k => this.treeItem(k, metaMap[k])),
+      headerId: node,
+      headerLabel: nodeMeta.l,
+      headerMeta: nodeMeta.n + ' ' + nodeMeta.u + (nodeMeta.e ? ' · ' + nodeMeta.e + ' écart' + (nodeMeta.e>1?'s':'') : ' · aucun écart'),
+      rows,
+      rowsFootnote: filtered.length + ' / ' + nodeMeta.n + ' ' + nodeMeta.u + ' affichés · extrait représentatif',
+      selOpen: !!this.state.req,
+      sel: this.buildSel(),
+      closePanel: () => this.closePanel()
+    };
+  }
+}
+</script>
+</body>
+</html>

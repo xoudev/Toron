@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"></link>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"></link>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></link>
+<style>
+body{margin:0;background:#F2F3F3}
+#toron-app{--bg:#F2F3F3;--srf:#FFFFFF;--srf2:#F7F7F6;--bd:#E4E5E3;--tx:#1C1E1D;--tx2:#5B605D;--ac:#CB4E0A;--acTx:#FFFFFF;--ok:#2E7D4F;--warn:#946200;--dgr:#B23327;--r1:#5F7E5A;--r2:#A8791F;--r3:#C56A2A;--r4:#A32820}
+#toron-app[data-theme="sombre"]{--bg:#151412;--srf:#1C1B18;--srf2:#22211D;--bd:#2C2A25;--tx:#ECEAE3;--tx2:#A6A198;--ac:#EF7A32;--acTx:#151412;--ok:#5FB582;--warn:#D8A23E;--dgr:#E0685A;--r1:#7FA07A;--r2:#CBA24A;--r3:#DD8A4C;--r4:#D9564A}
+#toron-app a{color:var(--ac);text-decoration:none}
+#toron-app a:hover{text-decoration:underline}
+#toron-app ::selection{background:rgba(203,78,10,.18)}
+#toron-app *::-webkit-scrollbar{width:10px;height:10px}
+#toron-app *::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:3px solid var(--srf)}
+</style>
+</helmet>
+<div id="toron-app" data-theme="{{ theme }}" data-screen-label="Processus" style="display:flex;height:100vh;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;overflow:hidden">
+  <div style="width:236px;flex-shrink:0;height:100%;display:flex">
+    <dc-import name="Sidebar" active="processus" hint-size="236px,100%"></dc-import>
+  </div>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 20px;background:var(--srf);border-bottom:1px solid var(--bd)">
+      <span style="font-size:14px;font-weight:600">Processus</span>
+      <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid var(--bd);border-radius:8px;background:var(--srf2);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em">PACK QMS · ISO 9001</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2)">10 PROCESSUS · 3 NC OUVERTES</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:8px;height:8px;border-radius:50%;background:var(--ok)"></span>Sain</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:8px;height:8px;border-radius:50%;background:var(--warn)"></span>À surveiller</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)"><span style="width:8px;height:8px;border-radius:50%;background:var(--dgr)"></span>En alerte</span>
+        </div>
+      </div>
+    </header>
+
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="flex:1;min-width:0;overflow:auto;background:var(--bg);padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--tx2)">CARTOGRAPHIE DES PROCESSUS</span>
+          <div style="flex:1;height:1px;background:var(--bd)"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;min-width:640px">
+          <sc-for list="{{ bands }}" as="b" hint-placeholder-count="3">
+            <div style="display:flex;align-items:stretch;gap:12px;background:var(--srf);border:1px solid var(--bd);border-radius:8px;padding:12px">
+              <div style="width:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--bd)">
+                <span style="writing-mode:vertical-rl;transform:rotate(180deg);font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:var(--tx2);font-weight:500">{{ b.label }}</span>
+              </div>
+              <div style="flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(184px,1fr));gap:10px">
+                <sc-for list="{{ b.procs }}" as="p" hint-placeholder-count="4">
+                  <div onClick="{{ p.open }}" style="border:1px solid {{ p.bd }};border-radius:7px;padding:11px 12px;cursor:pointer;background:{{ p.bg }};display:flex;flex-direction:column;gap:8px" style-hover="border-color:var(--tx2)">
+                    <div style="display:flex;align-items:flex-start;gap:8px">
+                      <span style="font-size:12.5px;font-weight:600;line-height:1.3;flex:1;min-width:0;text-wrap:pretty">{{ p.name }}</span>
+                      <span title="{{ p.healthLabel }}" style="width:8px;height:8px;border-radius:50%;background:{{ p.dot }};flex-shrink:0;margin-top:4px"></span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:7px">
+                      <span style="width:19px;height:19px;border-radius:5px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:500">{{ p.pilInit }}</span>
+                      <span style="font-size:11px;color:var(--tx2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.pilote }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <aside style="width:404px;flex-shrink:0;border-left:1px solid var(--bd);background:var(--srf);overflow-y:auto">
+        <div style="position:sticky;top:0;z-index:1;background:var(--srf);border-bottom:1px solid var(--bd);padding:14px 16px 13px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid var(--bd);border-radius:5px;background:var(--srf2);color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:9px">{{ f.famille }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">{{ f.ver }}</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border:1px solid {{ f.wfBd }};border-radius:5px;background:{{ f.wfBg }};color:{{ f.wfFg }};font-size:11px;font-weight:500"><span style="width:5px;height:5px;border-radius:50%;background:{{ f.wfDot }}"></span>{{ f.wf }}</span>
+          </div>
+          <div style="font-size:15px;font-weight:600;margin-top:9px;line-height:1.3;letter-spacing:-.01em">{{ f.name }}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+            <div style="width:24px;height:24px;border-radius:6px;background:var(--srf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">{{ f.pilInit }}</div>
+            <span style="font-size:12px;font-weight:500">{{ f.pilote }}</span>
+            <span style="font-size:11px;color:var(--tx2)">· pilote du processus</span>
+          </div>
+        </div>
+
+        <div style="padding:16px">
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">CARTOUCHE SIPOC</div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:7px;overflow:hidden">
+              <sc-for list="{{ f.sipoc }}" as="col" hint-placeholder-count="5">
+                <div style="background:var(--srf);padding:9px 8px;min-height:96px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.05em;color:var(--tx2);margin-bottom:6px">{{ col.h }}</div>
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <sc-for list="{{ col.items }}" as="it" hint-placeholder-count="2">
+                      <div style="font-size:10px;line-height:1.3;color:var(--tx);text-wrap:pretty">{{ it }}</div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:9px">INDICATEURS</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ f.kpis }}" as="k" hint-placeholder-count="3">
+                <div style="border:1px solid var(--bd);border-radius:7px;padding:10px 12px">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px">
+                    <span style="font-size:12px;font-weight:500">{{ k.label }}</span>
+                    <span style="display:flex;align-items:baseline;gap:7px"><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:{{ k.color }}">{{ k.real }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx2)">cible {{ k.cible }}</span></span>
+                  </div>
+                  <div style="position:relative;height:6px;background:var(--srf2);border:1px solid var(--bd);border-radius:3px;overflow:hidden">
+                    <div style="width:{{ k.pct }};height:100%;background:{{ k.color }}"></div>
+                    <div style="position:absolute;top:-2px;bottom:-2px;left:{{ k.target }};width:2px;background:var(--tx)"></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">EXIGENCES COUVERTES</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              <sc-if value="{{ f.hasMut }}" hint-placeholder-val="{{ false }}"><span style="width:16px;height:2px;background:var(--ac);border-radius:1px"></span></sc-if>
+              <sc-for list="{{ f.exig }}" as="e" hint-placeholder-count="2">
+                <span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border:1px solid {{ e.bd }};border-radius:5px;background:{{ e.bg }};font-family:'IBM Plex Mono',monospace;font-size:10px;white-space:nowrap"><sc-if value="{{ e.mut }}" hint-placeholder-val="{{ false }}"><span style="width:4px;height:4px;border-radius:50%;background:var(--ac)"></span></sc-if><span style="color:var(--tx2)">{{ e.ref }}</span><span style="font-weight:500">{{ e.code }}</span></span>
+              </sc-for>
+            </div>
+            <sc-if value="{{ f.hasMut }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;color:var(--tx2);margin-top:8px;line-height:1.45;text-wrap:pretty">Le fil orange indique qu'un contrôle ISO 27001 s'adosse à ce processus — sécurité et qualité mutualisées.</div></sc-if>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">RISQUES LIÉS</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ f.risks }}" as="r" hint-placeholder-count="1">
+                <a href="#" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--bd);border-radius:6px;text-decoration:none;color:var(--tx)" style-hover="background:var(--srf2)">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--ac);flex-shrink:0">{{ r.id }}</span>
+                  <span style="font-size:12px;flex:1;min-width:0;line-height:1.3">{{ r.label }}</span>
+                  <span style="width:14px;height:14px;border-radius:3px;background:{{ r.chip }};flex-shrink:0"></span>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">INTERACTIONS</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ f.interactions }}" as="i" hint-placeholder-count="2">
+                <span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border:1px solid var(--bd);border-radius:6px;background:var(--srf2);font-size:11.5px"><span style="color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:11px">{{ i.dir }}</span>{{ i.name }}</span>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--tx2);margin-bottom:8px">DOCUMENTS RATTACHÉS</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ f.docs }}" as="d" hint-placeholder-count="2">
+                <a href="#" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--bd);border-radius:6px;text-decoration:none;color:var(--tx)" style-hover="background:var(--srf2)">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--tx2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20V4a.5.5 0 0 1 .5-.5z"></path><path d="M13.5 3.5V8h4"></path></svg>
+                  <span style="font-size:12px;flex:1;min-width:0;line-height:1.3">{{ d.name }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--tx2);flex-shrink:0">{{ d.ver }}</span>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;clair&quot;,&quot;sombre&quot;],&quot;default&quot;:&quot;clair&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Apparence&quot;}}">
+class Component extends DCLogic {
+  state = { sel:'real-transport' };
+
+  H(h){ return {ok:{dot:'var(--ok)',label:'Sain'},warn:{dot:'var(--warn)',label:'À surveiller'},dgr:{dot:'var(--dgr)',label:'En alerte'}}[h]; }
+  WF(s){
+    return {
+      'Brouillon':{fg:'var(--tx2)',bg:'var(--srf2)',bd:'var(--bd)',dot:'var(--tx2)'},
+      'Relecture':{fg:'var(--warn)',bg:'color-mix(in srgb,var(--warn) 11%,transparent)',bd:'color-mix(in srgb,var(--warn) 40%,var(--bd))',dot:'var(--warn)'},
+      'Approuvé':{fg:'var(--tx)',bg:'var(--srf2)',bd:'var(--bd)',dot:'var(--tx)'},
+      'Publié':{fg:'var(--ok)',bg:'color-mix(in srgb,var(--ok) 9%,transparent)',bd:'color-mix(in srgb,var(--ok) 40%,var(--bd))',dot:'var(--ok)'}
+    }[s];
+  }
+
+  data(){
+    return {
+      'mgmt-pilotage':{fam:'Management',name:'Pilotage stratégique',pilote:['Valérie Lasserre','VL'],h:'ok'},
+      'mgmt-amelioration':{fam:'Management',name:'Amélioration continue',pilote:['Yann Prévost','YP'],h:'ok'},
+      'real-commande':{fam:'Réalisation',name:'Prise de commande',pilote:['Nadia Cherif','NC'],h:'ok'},
+      'real-prepa':{fam:'Réalisation',name:'Préparation logistique',pilote:['Sofia Nguyen','SN'],h:'warn'},
+      'real-transport':{fam:'Réalisation',name:'Transport & livraison',pilote:['Karim Benali','KB'],h:'warn'},
+      'real-sav':{fam:'Réalisation',name:'Service après-vente',pilote:['Nadia Cherif','NC'],h:'dgr'},
+      'sup-rh':{fam:'Support',name:'Ressources humaines',pilote:['Amélie Fontaine','AF'],h:'ok'},
+      'sup-si':{fam:'Support',name:'Systèmes d\u2019information',pilote:['Théo Renaud','TR'],h:'warn'},
+      'sup-achats':{fam:'Support',name:'Achats & fournisseurs',pilote:['Karim Benali','KB'],h:'ok'},
+      'sup-maint':{fam:'Support',name:'Maintenance',pilote:['Théo Renaud','TR'],h:'ok'}
+    };
+  }
+
+  fiche(k){
+    const base = {
+      'real-transport':{ver:'v2.1',wf:'Publié',
+        sipoc:[['FOURNISSEURS',['Préparation logistique','Transporteurs']],['ENTRÉES',['Colis préparés','Bon de transport']],['ACTIVITÉS',['Affrètement','Suivi de tournée','Preuve de livraison']],['SORTIES',['Colis livré','POD signée']],['CLIENTS',['Client final','SAV']]],
+        kpis:[['Taux de service','96,2 %','98 %',0.98,0.98,'var(--warn)'],['Livraison à l\u2019heure','94 %','95 %',0.94,0.95,'var(--warn)'],['Taux de casse','0,8 %','< 1 %',0.8,0.85,'var(--ok)']],
+        exig:[['9001','§8.5',false],['9001','§8.6',false],['27001','A.8.16',true]],
+        risks:[['RSK-019','Interruption de la chaîne logistique','var(--r3)'],['RSK-031','Indisponibilité hébergeur (suivi)','var(--r3)']],
+        interactions:[['←','Préparation logistique'],['→','SAV'],['↔','Achats & fournisseurs']],
+        docs:[['Procédure de transport','v2.1'],['Fiche processus — Transport','v1.3'],['Cahier des charges transporteurs','v1.0']]},
+      'real-prepa':{ver:'v1.4',wf:'Approuvé',
+        sipoc:[['FOURNISSEURS',['Prise de commande','Entrepôt']],['ENTRÉES',['Commande validée','Stock']],['ACTIVITÉS',['Picking','Emballage','Contrôle']],['SORTIES',['Colis préparé','Étiquette']],['CLIENTS',['Transport & livraison']]],
+        kpis:[['Taux de préparation juste','98,1 %','99 %',0.981,0.99,'var(--warn)'],['Délai de préparation','1,2 j','< 1,5 j',0.9,0.85,'var(--ok)']],
+        exig:[['9001','§8.5',false],['27001','A.7.1',true]],
+        risks:[['RSK-005','Erreur humaine en production','var(--r3)']],
+        interactions:[['←','Prise de commande'],['→','Transport & livraison']],
+        docs:[['Procédure de préparation','v1.4'],['Fiche processus — Préparation','v1.1']]}
+    }[k];
+    if(base) return base;
+    return {ver:'v1.0',wf:'Approuvé',
+      sipoc:[['FOURNISSEURS',['Amont']],['ENTRÉES',['Données d\u2019entrée']],['ACTIVITÉS',['Étapes clés']],['SORTIES',['Livrables']],['CLIENTS',['Aval']]],
+      kpis:[['Indicateur principal','—','cible',0.7,0.8,'var(--tx2)']],
+      exig:[['9001','§4.4',false]],
+      risks:[['RSK-000','Risque à rattacher','var(--r2)']],
+      interactions:[['↔','Autres processus']],
+      docs:[['Fiche processus','v1.0']]};
+  }
+
+  open(k){ this.setState({sel:k}); }
+
+  buildF(){
+    const k = this.state.sel, d = this.data()[k], f = this.fiche(k);
+    const wf = this.WF(f.wf);
+    const mut = f.exig.some(e => e[2]);
+    return {
+      famille:d.fam, name:d.name, ver:f.ver, wf:f.wf, wfFg:wf.fg, wfBg:wf.bg, wfBd:wf.bd, wfDot:wf.dot,
+      pilote:d.pilote[0], pilInit:d.pilote[1],
+      sipoc: f.sipoc.map(c => ({h:c[0], items:c[1]})),
+      kpis: f.kpis.map(k2 => ({label:k2[0], real:k2[1], cible:k2[2], pct:Math.round(k2[3]*100)+'%', target:Math.round(k2[4]*100)+'%', color:k2[5]})),
+      exig: f.exig.map(e => ({ref:e[0], code:e[1], mut:e[2], bd: e[2] ? 'color-mix(in srgb,var(--ac) 40%,var(--bd))' : 'var(--bd)', bg: e[2] ? 'color-mix(in srgb,var(--ac) 6%,transparent)' : 'var(--srf2)'})),
+      hasMut: mut,
+      risks: f.risks.map(r => ({id:r[0], label:r[1], chip:r[2]})),
+      interactions: f.interactions.map(i => ({dir:i[0], name:i[1]})),
+      docs: f.docs.map(dd => ({name:dd[0], ver:dd[1]}))
+    };
+  }
+
+  renderVals(){
+    const all = this.data();
+    const fams = ['Management','Réalisation','Support'];
+    const bands = fams.map(fam => ({
+      label: fam,
+      procs: Object.keys(all).filter(k => all[k].fam === fam).map(k => {
+        const d = all[k], h = this.H(d.h), on = k === this.state.sel;
+        return { name:d.name, pilote:d.pilote[0], pilInit:d.pilote[1], dot:h.dot, healthLabel:h.label,
+          bg: on ? 'var(--srf2)' : 'var(--srf)', bd: on ? 'var(--tx2)' : 'var(--bd)', open: () => this.open(k) };
+      })
+    }));
+    return { theme: this.props.theme ?? 'clair', bands, f: this.buildF() };
+  }
+}
+</script>
+</body>
+</html>

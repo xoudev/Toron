@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+  - workers
+# Scripts d'installation explicitement autorisés (binaires natifs requis)
+allowBuilds:
+  esbuild: true
+  sharp: true

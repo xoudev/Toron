@@ -1,0 +1,35 @@
+# Toron — environnement local (DoD M0 : « l'app tourne en Docker local »).
+# Usage : docker compose -f infra/compose.yaml up --build
+# Les identifiants ci-dessous sont locaux uniquement — jamais utilisés hors poste dev.
+
+services:
+  db:
+    image: postgres:16.11-alpine3.22
+    environment:
+      POSTGRES_DB: toron
+      POSTGRES_USER: toron_local
+      POSTGRES_PASSWORD: toron_local_dev_only
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U toron_local -d toron"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/web.Dockerfile
+    environment:
+      DATABASE_URL: postgres://toron_local:toron_local_dev_only@db:5432/toron
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

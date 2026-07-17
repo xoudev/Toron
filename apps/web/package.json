@@ -9,9 +9,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.0.0",
+    "@toron/core": "workspace:*",
+    "@toron/db": "workspace:*",
+    "better-auth": "^1.6.0",
+    "drizzle-orm": "^0.45.0",
     "next": "^15.5.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

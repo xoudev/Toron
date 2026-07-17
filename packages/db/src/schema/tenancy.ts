@@ -1,4 +1,5 @@
 import {
+  boolean,
   inet,
   jsonb,
   pgTable,
@@ -14,22 +15,33 @@ import { membershipRole, scopeKind, tenantPlan } from './enums.js';
 // Le DDL opérant (RLS comprise) vit dans packages/db/migrations/*.sql ;
 // ce schéma Drizzle est le miroir typé pour les requêtes applicatives.
 
-export const tenants = pgTable('tenants', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  plan: tenantPlan('plan').notNull().default('decouverte'),
-  region: text('region').notNull().default('eu-fr'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const tenants = pgTable(
+  'tenants',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    // Contexte tenant explicite dans l'URL : /t/[slug]/… (RM §5.1)
+    slug: text('slug').notNull(),
+    plan: tenantPlan('plan').notNull().default('decouverte'),
+    region: text('region').notNull().default('eu-fr'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('tenants_slug_unique').on(t.slug)],
+);
 
+// Identité globale (un utilisateur peut appartenir à plusieurs tenants).
+// Les credentials vivent dans accounts (argon2id) et les secrets TOTP
+// dans two_factors — gérés par Better Auth via le rôle toron_auth.
 export const users = pgTable(
   'users',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     email: text('email').notNull(),
-    passwordHash: text('password_hash'),
-    totpSecret: text('totp_secret'),
+    name: text('name').notNull().default(''),
+    emailVerified: boolean('email_verified').notNull().default(false),
+    image: text('image'),
+    twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
     locale: text('locale').notNull().default('fr'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

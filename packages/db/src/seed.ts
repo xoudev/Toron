@@ -150,8 +150,8 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
     for (const [id, name, kind] of scopes) {
       await sql`
         INSERT INTO scopes (id, tenant_id, name, kind, entity_ids, site_ids)
-        VALUES (${id}, ${DEMO.tenantId}, ${name}, ${kind}, ${sql.array([DEMO.entityId])},
-                ${sql.array([DEMO.siteSiege, DEMO.siteEntrepot, DEMO.siteAgence])})
+        VALUES (${id}, ${DEMO.tenantId}, ${name}, ${kind}, ${sql.array([DEMO.entityId])}::uuid[],
+                ${sql.array([DEMO.siteSiege, DEMO.siteEntrepot, DEMO.siteAgence])}::uuid[])
         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`;
     }
 

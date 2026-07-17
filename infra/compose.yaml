@@ -13,6 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U toron_local -d toron"]
       interval: 5s
@@ -24,7 +25,12 @@ services:
       context: ..
       dockerfile: infra/web.Dockerfile
     environment:
-      DATABASE_URL: postgres://toron_local:toron_local_dev_only@db:5432/toron
+      DATABASE_URL_APP: postgres://toron_app_login:toron_app_dev_only@db:5432/toron
+      DATABASE_URL_AUTH: postgres://toron_auth_login:toron_auth_dev_only@db:5432/toron
+      # Secret de dev local uniquement — généré aléatoirement par
+      # environnement réel via le gestionnaire de secrets (S3).
+      BETTER_AUTH_SECRET: dev_local_secret_32_caracteres_min_x
+      BETTER_AUTH_URL: http://localhost:3000
     ports:
       - "3000:3000"
     depends_on:

@@ -66,8 +66,8 @@ beforeAll(async () => {
 
   // ── Seed système (superuser — la création de tenants/users/memberships
   //    est une opération de la couche auth, hors rôle applicatif) ──
-  const [ta] = await admin`INSERT INTO tenants (name) VALUES ('Tenant A') RETURNING id`;
-  const [tb] = await admin`INSERT INTO tenants (name) VALUES ('Tenant B') RETURNING id`;
+  const [ta] = await admin`INSERT INTO tenants (name, slug) VALUES ('Tenant A', 'tenant-a') RETURNING id`;
+  const [tb] = await admin`INSERT INTO tenants (name, slug) VALUES ('Tenant B', 'tenant-b') RETURNING id`;
   tenantA = (ta as { id: string }).id;
   tenantB = (tb as { id: string }).id;
 
@@ -208,7 +208,7 @@ describe('isolation en écriture', () => {
   it('le rôle applicatif ne peut pas créer de tenant', async () => {
     await expectDbError(
       withTenant(app.db, tenantA, (tx) =>
-        tx.insert(schema.tenants).values({ name: 'Tenant pirate' }),
+        tx.insert(schema.tenants).values({ name: 'Tenant pirate', slug: 'tenant-pirate' }),
       ),
       /permission denied/,
     );

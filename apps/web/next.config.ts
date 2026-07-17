@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
   // Les paquets internes sont consommés en source TypeScript
   transpilePackages: ['@toron/core', '@toron/db', '@toron/ui', '@toron/frameworks'],
   poweredByHeader: false,
+  webpack: (config) => {
+    // Spécificateurs ESM « ./module.js » résolus vers les sources .ts —
+    // requis car les paquets internes s'exécutent aussi sous Node natif.
+    config.resolve.extensionAlias = {
+      '.js': ['.ts', '.tsx', '.js'],
+    };
+    return config;
+  },
 };
 
 export default nextConfig;

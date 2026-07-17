@@ -109,6 +109,12 @@ importers:
 
   packages/db:
     dependencies:
+      '@node-rs/argon2':
+        specifier: ^2.0.0
+        version: 2.0.2
+      '@toron/frameworks':
+        specifier: workspace:*
+        version: link:../frameworks
       drizzle-orm:
         specifier: ^0.45.0
         version: 0.45.2(kysely@0.29.3)(postgres@3.4.9)
@@ -130,10 +136,20 @@ importers:
         version: 3.2.7(@types/node@24.13.3)(yaml@2.9.0)
 
   packages/frameworks:
+    dependencies:
+      zod:
+        specifier: ^4.0.0
+        version: 4.4.3
     devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.3
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.7(@types/node@24.13.3)(yaml@2.9.0)
 
   packages/typst:
     devDependencies:

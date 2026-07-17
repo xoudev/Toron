@@ -1,0 +1,1103 @@
+{
+  "code": "recyf",
+  "version": "v2.5",
+  "name": "NIS 2 · Référentiel Cyber France (ReCyF)",
+  "publishedAt": "2026-03-17",
+  "sourceNote": "ReCyF v2.5 du 17/03/2026, ANSSI — document public diffusé via MesServicesCyber.",
+  "objectives": [
+    {
+      "ref": "OBJ-01",
+      "number": 1,
+      "title": "Recensement des systèmes d'information",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité tient à jour l'inventaire de ses activités, services et systèmes d'information associés. Elle applique les objectifs de sécurité à tous ses SI, sauf exclusion justifiée par une analyse de risques documentée dans cet inventaire.",
+      "means": [
+        {
+          "ref": "1.1-EI/EE",
+          "title": "Inventorier toutes les activités et tous les services, avec pour chacun un responsable désigné et les systèmes d'information qui les supportent.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "1.2-EI/EE",
+          "title": "Signaler dans l'inventaire les SI non exposés aux risques mentionnés par l'objectif, donc exclus, avec la justification de chaque exclusion.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "1.3-EI/EE",
+          "title": "Valider et réexaminer l'inventaire au moins une fois par an et à chaque évolution notable (nouvelle activité, mise en service d'un SI).",
+          "ei": true,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-02",
+      "number": 2,
+      "title": "Mise en œuvre d'un cadre de gouvernance de la sécurité numérique",
+      "appliesTo": "ei_ee",
+      "summary": "Sous la responsabilité du dirigeant exécutif, l'entité met en place une gouvernance de la sécurité numérique : organisation et rôles, PSSI et politiques associées, analyse de conformité et plan d'action de remédiation suivi dans la durée.",
+      "means": [
+        {
+          "ref": "2.A.1-EI/EE",
+          "title": "Le dirigeant exécutif porte la responsabilité de la sécurité numérique et du suivi de la conformité des SI aux mesures du référentiel.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "2.A.2-EE",
+          "title": "Désigner au moins une personne qui conseille le dirigeant sur la sécurité numérique et sert de point de contact privilégié de l'ANSSI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "2.A.3-EI/EE",
+          "title": "Définir et mettre en œuvre une organisation adaptée de la sécurité numérique (responsable désigné, RACI, comitologie).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "2.B.1-EI/EE",
+          "title": "Définir et appliquer une politique de sécurité des systèmes d'information (PSSI).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "2.B.2-EI/EE",
+          "title": "Couvrir dans la PSSI la gouvernance, les rôles internes et externes, les orientations stratégiques, les engagements du dirigeant et le contexte sectoriel.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "2.B.3-EI/EE",
+          "title": "Faire approuver la PSSI par le dirigeant exécutif de l'entité.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "2.B.4-EI/EE",
+          "title": "Revoir la PSSI au moins une fois par an et la mettre à jour en cas d'évolution majeure de la menace ou du contexte métier, technique ou organisationnel.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "2.B.5-EI/EE",
+          "title": "Décliner la PSSI en politiques thématiques : au minimum chiffrement, contrôle d'accès physique et logique, revue des mesures et gestion des comptes.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "2.C.1-EI/EE",
+          "title": "Analyser et maintenir à jour, pour chaque SI, la conformité aux mesures du référentiel en identifiant les écarts, en cohérence avec la PSSI.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "2.C.2-EI/EE",
+          "title": "Établir et suivre un plan d'action de remédiation des écarts, avec une échéance raisonnable et un responsable désigné pour chaque action.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "2.C.3-EI/EE",
+          "title": "Justifier dans l'analyse de conformité toute mesure alternative appliquée à la place d'un moyen acceptable de conformité du référentiel.",
+          "ei": true,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-03",
+      "number": 3,
+      "title": "Maîtrise de l'écosystème",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité cartographie ses prestataires et fournisseurs informatiques et leurs interconnexions avec ses SI. Elle s'assure, contractuellement puis par des vérifications périodiques, que ces prestations respectent ses obligations de sécurité et de notification d'incidents.",
+      "means": [
+        {
+          "ref": "3.A.1-EI/EE",
+          "title": "Cartographier l'écosystème : prestataires et fournisseurs informatiques contribuant aux activités, et interconnexions avec les SI de l'entité.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "3.A.2-EI/EE",
+          "title": "Tenir à jour les coordonnées d'au moins un point de contact pour chaque entrée de la cartographie de l'écosystème.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "3.B.1-EI/EE",
+          "title": "Obtenir des garanties contractuelles de conformité des prestations informatiques aux obligations de l'entité (ex. plan d'assurance sécurité).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "3.B.2-EI/EE",
+          "title": "Vérifier périodiquement la conformité des prestations, le cas échéant via des audits menés selon les modalités 17.2-EE, 17.4-EE et 17.5-EE.",
+          "ei": true,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-04",
+      "number": 4,
+      "title": "Intégration de la sécurité numérique dans la gestion des ressources humaines",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité sensibilise l'ensemble de ses utilisateurs, forme les fonctions à responsabilités dans le numérique et intègre la sécurité dans la gestion RH, de l'arrivée au départ des personnels.",
+      "means": [
+        {
+          "ref": "4.1-EI/EE",
+          "title": "Mettre en place une charte d'usage des SI opposable à tous les utilisateurs, avec le cas échéant des dispositions propres aux administrateurs.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "4.2-EI/EE",
+          "title": "Déployer un programme de sensibilisation à la sécurité numérique couvrant tous les utilisateurs, tout au long de leur présence dans l'entité.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "4.3-EE",
+          "title": "Prévoir des clauses de sécurité dans les contrats de travail (ex. confidentialité pendant et après le contrat).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "4.4-EI/EE",
+          "title": "Gérer arrivées, mobilités et départs : règles de sécurité, attribution et mise à jour des accès, restitution du matériel, désactivation des accès.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "4.5-EI/EE",
+          "title": "Former spécifiquement à la sécurité numérique les fonctions assumant des responsabilités dans le domaine du numérique, selon leurs responsabilités.",
+          "ei": true,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-05",
+      "number": 5,
+      "title": "Maîtrise des systèmes d'information",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité tient une cartographie de ses SI assez détaillée pour le maintien en condition opérationnelle et de sécurité et pour la réaction aux incidents. Elle applique un processus de veille sur les vulnérabilités et d'application des correctifs.",
+      "means": [
+        {
+          "ref": "5.A.1-EI/EE",
+          "title": "Élaborer et maintenir une cartographie des SI assez détaillée pour assurer le MCO/MCS et réagir sans retard injustifié aux incidents.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "5.B.1-EE",
+          "title": "Formaliser et maintenir une procédure de maintien en condition opérationnelle et de sécurité des ressources matérielles et logicielles.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "5.B.2-EI/EE",
+          "title": "Maintenir à jour les bases de connaissances des outils de protection contre les codes malveillants (base antivirale, signatures EDR).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "5.B.3-EI/EE",
+          "title": "Assurer une veille sur les vulnérabilités, correctifs et mesures d'atténuation (fournisseurs, prestataire mandaté, CERT-FR, CSIRT).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "5.B.4-EI/EE",
+          "title": "Préparer sans délai puis appliquer sans retard injustifié les correctifs sur les ressources exposées à des SI tiers et sur les postes de travail.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "5.B.5-EE",
+          "title": "Planifier et installer les correctifs de sécurité sur l'ensemble des ressources, y compris celles non exposées à des SI tiers.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "5.B.6-EI/EE",
+          "title": "En cas d'impossibilité d'appliquer un correctif, mettre en œuvre des mesures d'atténuation (isolement de la ressource, contrôle d'accès renforcé).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "5.B.7-EI/EE",
+          "title": "Maintenir sans délai les ressources logicielles, y compris embarquées, dans des versions supportées et intégrant les mises à jour de sécurité.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "5.B.8-EI/EE",
+          "title": "Télécharger toute nouvelle version logicielle uniquement depuis les ressources officielles des éditeurs ou fournisseurs.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "5.B.9-EI/EE",
+          "title": "En cas de maintien d'une version non supportée pour raisons techniques ou opérationnelles, réduire les risques liés à cette obsolescence.",
+          "ei": true,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-06",
+      "number": 6,
+      "title": "Maîtrise des accès physiques aux locaux",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité contrôle les accès physiques à ses locaux, salles serveurs et locaux techniques : droits limités au besoin strict, protection des lieux et encadrement des personnes externes.",
+      "means": [
+        {
+          "ref": "6.1-EI/EE",
+          "title": "Limiter l'accès des personnes non autorisées aux locaux, salles serveurs et locaux techniques (registre des visiteurs, badges d'accès).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "6.2-EE",
+          "title": "Protéger physiquement locaux, salles serveurs et locaux techniques pour prévenir, surveiller et traiter les accès non autorisés (vidéosurveillance, alarme).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "6.3-EE",
+          "title": "N'attribuer les droits d'accès physique qu'au regard du besoin strictement nécessaire aux missions de chaque personne.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "6.4-EI/EE",
+          "title": "Faire accompagner ou dûment autoriser les personnes externes accédant aux locaux techniques et salles serveurs.",
+          "ei": true,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-07",
+      "number": 7,
+      "title": "Sécurisation de l'architecture des systèmes d'information",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité identifie ses besoins d'exposition et d'interconnexion, puis filtre les communications entrantes et sortantes de ses SI. Les entités essentielles cloisonnent en outre leurs SI en zones de sécurité cohérentes et contrôlées.",
+      "means": [
+        {
+          "ref": "7.A.1-EI/EE",
+          "title": "Cloisonner physiquement ou logiquement l'ensemble des SI vis-à-vis des SI tiers et des SI exclus des objectifs (VLAN, VM, volumes de stockage).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "7.A.2-EE",
+          "title": "Cloisonner chaque SI vis-à-vis des autres SI de l'entité, des SI exclus des objectifs et des SI tiers.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "7.A.3-EE",
+          "title": "Étudier pour chaque SI la pertinence de sous-systèmes homogènes en sensibilité, exposition et sécurité, et justifier l'absence de sous-système.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "7.A.4-EE",
+          "title": "Cloisonner physiquement ou logiquement entre eux les sous-systèmes identifiés.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "7.A.5-EE",
+          "title": "Mettre en place au moins une passerelle sortante qui authentifie, filtre et trace les accès vers les SI tiers (ex. serveur mandataire).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "7.A.6-EE",
+          "title": "Mettre en place au moins une passerelle entrante qui filtre et trace les accès depuis les SI tiers (ex. serveur mandataire inverse ou relai).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "7.A.7-EI/EE",
+          "title": "Ne mettre en œuvre, entre l'ensemble des SI et les SI tiers ou exclus des objectifs, que les interconnexions nécessaires aux activités ou au MCO/MCS.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "7.A.8-EE",
+          "title": "Limiter de même les interconnexions de chaque SI, et entre les sous-systèmes d'un SI, aux seuls besoins des activités ou du MCO/MCS.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "7.B.1-EI/EE",
+          "title": "Définir et documenter les communications nécessaires aux activités et au MCO/MCS entre les SI et les SI tiers ou exclus des objectifs.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "7.B.2-EE",
+          "title": "Définir et documenter les communications nécessaires au MCO/MCS circulant entre les sous-systèmes d'un même SI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "7.B.3-EI/EE",
+          "title": "Appliquer aux interconnexions des règles de filtrage n'autorisant que les communications documentées, tout le reste étant bloqué par défaut.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "7.B.4-EI/EE",
+          "title": "Filtrer par un ou plusieurs pare-feux dédiés, au minimum, les communications entre les SI de l'entité et les SI tiers.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "7.B.5-EI/EE",
+          "title": "Revoir chaque année la mise en œuvre technique des règles de filtrage des pare-feux dédiés.",
+          "ei": true,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-08",
+      "number": 8,
+      "title": "Sécurisation des accès distants aux systèmes d'information",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité sécurise les accès à ses SI effectués depuis des SI tiers : chiffrement des canaux conforme à l'état de l'art et authentification des personnes et processus, renforcée en multifacteur pour les entités essentielles.",
+      "means": [
+        {
+          "ref": "8.1-EI/EE",
+          "title": "Protéger les accès effectués à travers un SI tiers par des mécanismes de chiffrement conformes aux recommandations de l'ANSSI (VPN TLS/IPsec, TLS, SSH).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "8.2-EI/EE",
+          "title": "Soumettre les accès distants des personnels et prestataires autorisés à un mécanisme d'authentification conforme aux mesures d'authentification.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "8.3-EE",
+          "title": "Imposer pour ces accès distants une authentification multifacteur incluant au moins un facteur de connaissance (ex. carte à puce et code PIN).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "8.4-EE",
+          "title": "Si l'authentification multifacteur est techniquement ou opérationnellement impossible, mettre en œuvre des mesures de réduction du risque.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "8.5-EE",
+          "title": "Chiffrer en permanence, avec authentification à l'état de l'art, les mémoires de masse des postes et mobiles utilisés hors des lieux maîtrisés par l'entité.",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-09",
+      "number": 9,
+      "title": "Protection des systèmes d'information contre les codes malveillants",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité protège ses SI contre les codes malveillants. Les entités essentielles n'autorisent en outre la connexion qu'aux seules ressources matérielles gérées participant aux activités ou au MCO/MCS.",
+      "means": [
+        {
+          "ref": "9.1-EI/EE",
+          "title": "Définir les ressources matérielles, notamment les terminaux, autorisées à se connecter aux SI (le BYOD peut rester autorisé).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "9.2-EE",
+          "title": "N'autoriser la connexion qu'aux matériels gérés par l'entité ou son prestataire mandaté et participant aux activités ou au MCO/MCS (BYOD interdit).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "9.3-EI/EE",
+          "title": "Empêcher, par des mesures organisationnelles ou techniques, la connexion de matériels non autorisés au titre du 9.1-EI/EE.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "9.4-EE",
+          "title": "Empêcher, par des mesures organisationnelles ou techniques, la connexion de matériels non autorisés au titre du 9.2-EE.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "9.5-EI/EE",
+          "title": "Ne connecter que les supports amovibles réinscriptibles nécessaires aux activités ou au MCO/MCS (clés USB, disques durs amovibles).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "9.6-EI/EE",
+          "title": "Équiper de protections contre l'exécution de codes malveillants (antivirus, EDR) les postes, serveurs et mobiles traitant des données de sources externes.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "9.7-EI/EE",
+          "title": "Analyser à réception les données de sources externes pour y rechercher des codes malveillants (passerelle mail, SAS USB), hors mises à jour vérifiées.",
+          "ei": true,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-10",
+      "number": 10,
+      "title": "Gestion des identités et des accès des utilisateurs aux systèmes d'information",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité identifie et authentifie les utilisateurs et processus automatiques de ses SI. Elle attribue, révoque et revoit les droits d'accès selon le strict besoin opérationnel.",
+      "means": [
+        {
+          "ref": "10.A.1-EI/EE",
+          "title": "Doter chaque utilisateur et chaque processus automatique de comptes individuels, un utilisateur pouvant en détenir plusieurs.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.A.2-EI/EE",
+          "title": "Réserver l'usage d'un compte individuel à l'utilisateur ou au processus automatique auquel il est attribué.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.A.3-EI/EE",
+          "title": "Si des comptes partagés sont inévitables, réduire le risque associé et garantir la traçabilité de leur utilisation (ex. carnet de quart, badgeuse).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.A.4-EI/EE",
+          "title": "Ne pas exiger de compte pour l'accès du public à l'information diffusée publiquement (ex. site vitrine), contrairement à l'intranet.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.A.5-EI/EE",
+          "title": "Désactiver les comptes devenus inutiles dans les délais prévus par la politique de gestion des comptes (ex. sous 7 jours).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.A.6-EI/EE",
+          "title": "Passer en revue les comptes au moins une fois par an et corriger les anomalies constatées.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.B.1-EI/EE",
+          "title": "Protéger l'accès aux ressources par une authentification reposant sur au moins un élément secret (mot de passe, carte à puce avec code PIN).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.B.2-EI/EE",
+          "title": "Changer les éléments secrets configurés par défaut avant mise en service, en s'assurant de disposer des moyens et droits pour le faire.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.B.3-EI/EE",
+          "title": "Renouveler l'élément secret d'un compte partagé à chaque retrait d'un utilisateur de ce compte.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.B.4-EI/EE",
+          "title": "Restreindre la connaissance de l'élément secret d'un compte aux seuls utilisateurs autorisés (ex. coffre-fort de mots de passe).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.B.5-EI/EE",
+          "title": "Aligner complexité et renouvellement des facteurs d'authentification sur les recommandations de l'ANSSI, dans la limite permise par la ressource.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.B.6-EI/EE",
+          "title": "Si l'élément secret ne peut être modifié, compenser par un contrôle d'accès adapté et des mesures de réduction du risque du secret fixe.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.B.7-EE",
+          "title": "Dans le cadre de cette exception, assurer en plus la traçabilité des accès à la ressource concernée.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "10.C.1-EI/EE",
+          "title": "N'attribuer de droits qu'aux utilisateurs et processus automatiques authentifiés.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.C.2-EI/EE",
+          "title": "Limiter les droits de chaque utilisateur ou processus aux seules ressources nécessaires aux activités ou au MCO/MCS.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.C.3-EI/EE",
+          "title": "Pour chaque ressource, n'accorder l'accès qu'aux utilisateurs et processus justifiant d'un besoin au regard de leurs missions.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "10.C.4-EI/EE",
+          "title": "Passer en revue les droits d'accès au moins une fois par an et corriger les anomalies constatées.",
+          "ei": true,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-11",
+      "number": 11,
+      "title": "Maîtrise de l'administration des systèmes d'information",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité réserve les actions d'administration à des comptes dédiés utilisés par les seules personnes autorisées. Les entités essentielles sécurisent en outre leurs annuaires et leur cœur de confiance selon les recommandations de l'ANSSI.",
+      "means": [
+        {
+          "ref": "11.A.1-EI/EE",
+          "title": "Réaliser les actions d'administration exclusivement depuis des comptes d'administration, eux-mêmes réservés à cet usage.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "11.A.2-EI/EE",
+          "title": "Restreindre l'usage des comptes d'administration aux administrateurs et aux personnes autorisées.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "11.A.3-EI/EE",
+          "title": "Appliquer aux comptes d'administration les mesures de gestion des identités et des accès des utilisateurs.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "11.A.4-EE",
+          "title": "N'utiliser un compte d'administration que pour se connecter aux ressources qu'il administre ou à une ressource d'administration.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "11.A.5-EI/EE",
+          "title": "En cas d'impossibilité d'utiliser un compte d'administration, contrôler les actions réalisées et réduire le risque lié au compte non dédié.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "11.A.6-EE",
+          "title": "Établir et tenir à jour la liste des comptes d'administration des SI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "11.A.7-EE",
+          "title": "À chaque modification d'un compte d'administration, vérifier la cohérence des droits avec les besoins et les restreindre au périmètre du compte.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "11.B.1-EI/EE",
+          "title": "Appliquer sans retard injustifié les correctifs de sécurité sur les annuaires gérant les utilisateurs ou les ressources des SI.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "11.B.2-EE",
+          "title": "Identifier, pour chaque annuaire, les ressources constituant son cœur de confiance (annuaire, hébergement, moyens de prise de contrôle).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "11.B.3-EE",
+          "title": "Administrer les cœurs de confiance depuis des comptes d'administration qui leur sont dédiés.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "11.B.4-EE",
+          "title": "Administrer les cœurs de confiance depuis des ressources exclusivement dédiées à cet usage.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "11.B.5-EE",
+          "title": "Interdire par un dispositif de filtrage les connexions externes vers les ressources d'administration des cœurs de confiance (ex. pare-feu local).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "11.B.6-EE",
+          "title": "Revoir chaque année la configuration des annuaires pour repérer tout élément inutile ou anormal, de préférence avec un outil automatisé.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "11.B.7-EE",
+          "title": "Appliquer les recommandations de l'ANSSI relatives au cœur de confiance lorsqu'elles existent (guides, mémos techniques, outils de revue).",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-12",
+      "number": 12,
+      "title": "Identification et réaction aux incidents de sécurité",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité s'organise pour détecter, qualifier et traiter les incidents de sécurité : procédure de traitement, collecte des signalements, réaction, analyse des causes et conservation des éléments de preuve.",
+      "means": [
+        {
+          "ref": "12.1-EE",
+          "title": "Élaborer, maintenir à jour et appliquer une procédure de traitement des incidents de sécurité affectant les SI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "12.2-EE",
+          "title": "Outiller la collecte des signalements provenant des employés, des clients et usagers, et des prestataires et fournisseurs.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "12.3-EI/EE",
+          "title": "Mettre en place des mécanismes d'analyse et de qualification des événements remontés pour identifier les incidents potentiels ou avérés.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "12.4-EE",
+          "title": "Définir des mécanismes organisationnels et techniques de réaction limitant les conséquences sur les services, repris dans les PCA/PRA.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "12.5-EE",
+          "title": "Analyser les causes après chaque incident pour réduire la vraisemblance ou l'impact d'une récidive, et conserver les preuves de cette analyse.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "12.6-EI/EE",
+          "title": "Conserver les relevés techniques utilisables comme preuves en cas de judiciarisation, pour une durée conforme à la protection des données personnelles.",
+          "ei": false,
+          "ee": true,
+          "extractionNote": "Incohérence du document source : le code porte le suffixe EI/EE mais la colonne « ATTENDU D'UNE EI » indique « Non ». Valeurs des colonnes reprises telles quelles."
+        },
+        {
+          "ref": "12.7-EE",
+          "title": "Protéger les relevés techniques d'analyse des incidents contre un incident qui les rendrait inexploitables (ex. stockage hors ligne).",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-13",
+      "number": 13,
+      "title": "Continuité et reprise d'activité",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité sauvegarde ses SI et teste sa capacité de restauration au moins une fois par an. Les entités essentielles formalisent en outre DMIA, PRD et des plans de continuité et de reprise adaptés aux crises d'origine cyber.",
+      "means": [
+        {
+          "ref": "13.1-EI/EE",
+          "title": "Définir et appliquer des procédures de sauvegarde et de restauration des SI et des données qu'ils manipulent.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "13.2-EI/EE",
+          "title": "Tester au moins une fois par an la bonne réalisation des sauvegardes et leur bonne restauration.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "13.3-EI/EE",
+          "title": "Protéger les sauvegardes d'un incident les rendant inexploitables (ex. stockage hors ligne contre les rançongiciels).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "13.4-EE",
+          "title": "Définir et documenter, pour chaque activité et service, la durée maximale d'interruption admissible (DMIA) et le point de rétablissement des données (PRD).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "13.5-EI/EE",
+          "title": "Dimensionner les mécanismes de sauvegarde selon les besoins de disponibilité des activités et services fournis.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "13.6-EE",
+          "title": "Mettre en œuvre un PCA et un PRA adaptés aux scénarios de crise d'origine cyber et cohérents avec la DMIA et le PRD.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "13.7-EE",
+          "title": "Appuyer l'identification des mesures de continuité sur la cartographie de l'écosystème et sur les procédures de gestion des incidents et des crises.",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-14",
+      "number": 14,
+      "title": "Réaction aux crises d'origine cyber",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité se prépare aux crises d'origine cyber : procédure de gestion de crise, annuaires de crise à jour et accessibles, stratégie de communication, moyens de secours et retours d'expérience.",
+      "means": [
+        {
+          "ref": "14.1-EI/EE",
+          "title": "Définir, maintenir et appliquer une procédure de gestion de crise pour les incidents nécessitant le passage en mode crise.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "14.2-EI/EE",
+          "title": "Tenir à jour une liste imprimée des personnes mobilisables en crise sur les sujets de sécurité numérique, avec leurs coordonnées.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "14.3-EI/EE",
+          "title": "Rendre cette liste accessible dans un format adapté à la nature de la crise (papier si les SI sont indisponibles, numérique sinon).",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "14.4-EI/EE",
+          "title": "Tenir à jour un annuaire des parties prenantes externes pertinentes en gestion de crise, en s'appuyant sur la cartographie de l'écosystème.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "14.5-EE",
+          "title": "Mettre en œuvre des retours d'expérience (RETEX) identifiant axes d'amélioration et mesures associées après un entraînement, un exercice ou une crise.",
+          "ei": true,
+          "ee": true,
+          "extractionNote": "Incohérence du document source : le code porte le suffixe EE mais la colonne « ATTENDU D'UNE EI » indique « Oui ». Valeurs des colonnes reprises telles quelles."
+        },
+        {
+          "ref": "14.6-EE",
+          "title": "Définir et maintenir les critères d'activation et de désactivation du dispositif de gestion de crise prenant en compte les menaces cyber.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "14.7-EE",
+          "title": "Définir et appliquer des procédures et mécanismes de gestion de crise adaptés à la menace cyber, selon les recommandations de l'ANSSI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "14.8-EE",
+          "title": "Prévoir des mesures activables pour isoler, protéger et si besoin reconstruire les SI, couvrant aussi les services externalisés, en cohérence avec PCA/PRA.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "14.9-EE",
+          "title": "Définir une stratégie de communication de crise cyber : scénarios, organisation, outils de pilotage et éléments de langage sur les sujets sensibles.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "14.10-EE",
+          "title": "Disposer de moyens de communication de secours, si possible sécurisés, utilisables lorsque les moyens habituels sont indisponibles.",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-15",
+      "number": 15,
+      "title": "Exercices, tests et entraînements",
+      "appliesTo": "ei_ee",
+      "summary": "L'entité vérifie à intervalles réguliers, par des exercices, tests et entraînements, la capacité de son organisation, de ses processus et de ses outils à faire face aux incidents et aux crises d'origine cyber.",
+      "means": [
+        {
+          "ref": "15.1-EI/EE",
+          "title": "Sensibiliser les personnes mobilisables en crise cyber et organiser au moins un exercice sur table à une fréquence définie par l'entité.",
+          "ei": true,
+          "ee": true
+        },
+        {
+          "ref": "15.2-EE",
+          "title": "Formaliser une stratégie d'entraînement : acteurs, exercices, objectifs, moyens d'évaluation, scénarios prioritaires et comitologie de suivi.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "15.3-EE",
+          "title": "Orienter la stratégie d'entraînement vers les dispositifs d'alerte, de continuité et de reprise d'activité, et de gestion des crises cyber.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "15.4-EE",
+          "title": "Décliner la stratégie en programme triennal d'entraînements et d'exercices précisant leur fréquence, leur nature et leurs objectifs.",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-16",
+      "number": 16,
+      "title": "Mise en œuvre d'une approche par les risques",
+      "appliesTo": "ee",
+      "summary": "L'entité essentielle gouverne ses risques numériques sous la responsabilité du dirigeant exécutif : analyse de risques par SI ou par activité, plan de traitement suivi, acceptation des risques résiduels et réexamen au moins triennal.",
+      "means": [
+        {
+          "ref": "16.1-EE",
+          "title": "Instaurer une gouvernance par les risques impliquant le dirigeant et les responsables, avec allocation de moyens adaptés, en complément de la conformité.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "16.2-EE",
+          "title": "Soumettre chaque SI à une analyse de risques (par SI ou par activité), nourrie de la PSSI, de l'écosystème, de la conformité et des audits ; EBIOS RM possible.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "16.3-EE",
+          "title": "Valider l'analyse de risques, accepter les risques résiduels et dérouler un plan d'action avec échéance raisonnable et responsable par action.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "16.4-EE",
+          "title": "Réexaminer l'analyse de risques au moins tous les trois ans et après tout incident de sécurité ou évolution majeure du contexte.",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-17",
+      "number": 17,
+      "title": "Audit de la sécurité des systèmes d'information",
+      "appliesTo": "ee",
+      "summary": "L'entité essentielle audite régulièrement la sécurité de ses SI selon un programme fondé sur les risques, la criticité et l'exposition, puis corrige les non-conformités et vulnérabilités identifiées via un plan d'action.",
+      "means": [
+        {
+          "ref": "17.1-EE",
+          "title": "Bâtir un programme d'audit couvrant tous les SI, dont la profondeur et la fréquence tiennent compte des risques, de la criticité et de l'exposition.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "17.2-EE",
+          "title": "Garantir un audit indépendant vérifiant l'atteinte des objectifs réglementaires et évaluant le niveau de sécurité face aux menaces et vulnérabilités connues.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "17.3-EE",
+          "title": "Inclure au minimum une activité parmi : test d'intrusion, audit de configuration, d'architecture, organisationnel et physique ou, si pertinent, de code.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "17.4-EE",
+          "title": "Produire un rapport d'audit : synthèse de conformité et de niveau de sécurité, constats de non-conformité et vulnérabilités, recommandations.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "17.5-EE",
+          "title": "Corriger les non-conformités et vulnérabilités via un plan d'action avec échéance raisonnable et responsable par action.",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-18",
+      "number": 18,
+      "title": "Sécurisation de la configuration des ressources des systèmes d'information",
+      "appliesTo": "ee",
+      "summary": "L'entité essentielle réduit la surface d'attaque de ses SI : seules les ressources logicielles nécessaires sont installées ou conservées, et les configurations sont durcies puis revues chaque année.",
+      "means": [
+        {
+          "ref": "18.1-EE",
+          "title": "N'installer et ne conserver que les ressources logicielles nécessaires aux activités ou au MCO/MCS (ex. master limité au strict besoin).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "18.2-EE",
+          "title": "Si une ressource logicielle ne peut être désactivée ou désinstallée, réduire le risque associé par des mesures adaptées.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "18.3-EE",
+          "title": "Configurer les ressources des SI de manière sécurisée selon les recommandations de l'éditeur, du fabricant ou de l'ANSSI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "18.4-EE",
+          "title": "Revoir chaque année la configuration des ressources, de préférence avec des outils automatisés (scans de ports et de vulnérabilités, revue des pare-feux).",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-19",
+      "number": 19,
+      "title": "Administration des systèmes d'information depuis des ressources dédiées",
+      "appliesTo": "ee",
+      "summary": "L'entité essentielle administre ses SI depuis des postes et réseaux dédiés et maîtrisés, avec des flux d'administration cloisonnés, chiffrés et authentifiés conformément aux recommandations de l'ANSSI.",
+      "means": [
+        {
+          "ref": "19.1-EE",
+          "title": "Réaliser les actions d'administration au moyen d'un réseau d'administration dédié.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.2-EE",
+          "title": "Faire gérer et configurer les ressources des réseaux d'administration par l'entité ou par le prestataire mandaté pour l'administration.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.3-EE",
+          "title": "Réserver les ressources matérielles des réseaux d'administration aux seules actions d'administration.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.4-EE",
+          "title": "Dédier exclusivement aux actions d'administration le poste physique utilisé pour les réaliser.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.5-EE",
+          "title": "Connecter les administrateurs au réseau d'administration uniquement depuis un poste physique dédié aux actions d'administration.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.6-EE",
+          "title": "À défaut de poste dédié, durcir et cloisonner le poste pour isoler le système d'exploitation d'administration, selon les recommandations de l'ANSSI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.7-EE",
+          "title": "Relier les réseaux d'administration aux ressources administrées par une liaison réseau physique dédiée, via leur interface d'administration physique.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.8-EE",
+          "title": "Aligner le cloisonnement et le filtrage du réseau d'administration sur ceux mis en œuvre entre et au sein des SI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.9-EE",
+          "title": "À défaut de liaison ou d'interface physique dédiée, réduire le risque par des mesures logiques conformes aux recommandations de l'ANSSI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.10-EE",
+          "title": "Protéger les communications d'administration par des mécanismes de chiffrement et d'authentification à l'état de l'art recommandé par l'ANSSI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.11-EE",
+          "title": "Cloisonner par chiffrement et authentification (ex. tunnels VPN) les flux d'administration transitant par des réseaux non dédiés.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "19.12-EE",
+          "title": "À défaut de chiffrement ou d'authentification possibles, protéger la confidentialité et l'intégrité des flux et renforcer contrôle et traçabilité.",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    },
+    {
+      "ref": "OBJ-20",
+      "number": 20,
+      "title": "Supervision de la sécurité des systèmes d'information",
+      "appliesTo": "ee",
+      "summary": "L'entité essentielle supervise la sécurité de ses SI : prise en compte des journaux et événements au plus sous 24 heures, amélioration continue de la couverture de détection et conservation des données pendant au moins trois mois.",
+      "means": [
+        {
+          "ref": "20.1-EE",
+          "title": "Dimensionner et opérer le SI de supervision pour traiter journaux et événements de sécurité sans retard injustifié, au plus sous 24 h ouvrées.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "20.2-EE",
+          "title": "Améliorer en continu la supervision : couverture des scénarios de menaces issus de l'analyse de risques et efficacité de la détection.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "20.3-EE",
+          "title": "Maîtriser, directement ou via le prestataire mandaté, l'architecture et la configuration du SI de supervision (collecte, analyse, investigation, signalement).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "20.4-EE",
+          "title": "Collecter les données et événements utiles à la détection des principaux scénarios de menaces, en reflétant la variété des activités du SI.",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "20.5-EE",
+          "title": "Conserver les données de supervision et événements de sécurité au moins trois mois, sans préjudice des autres obligations légales (ex. RGPD).",
+          "ei": false,
+          "ee": true
+        },
+        {
+          "ref": "20.6-EE",
+          "title": "Protéger les données de supervision et événements de sécurité d'un incident les rendant inexploitables (ex. stockage hors ligne).",
+          "ei": false,
+          "ee": true
+        }
+      ]
+    }
+  ]
+}

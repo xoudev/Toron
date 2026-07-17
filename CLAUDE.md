@@ -94,4 +94,7 @@ Cloudflare Pages), `packages/{db,core,ui,frameworks,typst}`, `workers/`,
 - `pnpm build` — build de tous les paquets.
 - `docker compose -f infra/compose.yaml up --build` — app + Postgres 16
   en local (DoD M0).
-- Migrations et seed : à compléter en M0-2/M0-6.
+- `DATABASE_URL_MIGRATIONS=… pnpm --filter @toron/db migrate` — applique
+  les migrations SQL (rôle DDL, jamais le rôle applicatif).
+- `DATABASE_URL_MIGRATIONS=… pnpm --filter @toron/db seed` — seed ReCyF
+  v2.5 complet + tenant démo « Meridiane Logistics » (idempotent).

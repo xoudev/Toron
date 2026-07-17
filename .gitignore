@@ -1,0 +1,24 @@
+# Dépendances
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Builds
+dist/
+*.tsbuildinfo
+
+# Environnement — jamais de secrets dans le repo (S3)
+.env
+.env.*
+!.env.example
+
+# Tests & couverture
+coverage/
+
+# Divers
+.DS_Store
+Thumbs.db
+*.log

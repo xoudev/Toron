@@ -86,6 +86,12 @@ Cloudflare Pages), `packages/{db,core,ui,frameworks,typst}`, `workers/`,
 
 ## Commandes
 
-À compléter dès que le monorepo existe (install, dev, test, lint,
-migrate, seed). Toujours lancer `test` et `lint` avant de conclure
-une tâche.
+- `pnpm install` — installe tout le monorepo (Node ≥ 22, pnpm 11).
+- `pnpm dev` — lance apps/web en développement (`--filter @toron/site dev`
+  pour la vitrine, port 3001).
+- `pnpm lint` · `pnpm typecheck` · `pnpm test` — les trois gates locaux.
+  Toujours les lancer avant de conclure une tâche.
+- `pnpm build` — build de tous les paquets.
+- `docker compose -f infra/compose.yaml up --build` — app + Postgres 16
+  en local (DoD M0).
+- Migrations et seed : à compléter en M0-2/M0-6.

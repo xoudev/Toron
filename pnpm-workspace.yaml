@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+  - workers
+
+# ── Durcissement supply chain (S7) ─────────────────────────────────────
+# Refuse d'exécuter les scripts d'installation sauf autorisation explicite
+allowBuilds:
+  esbuild: true
+  sharp: true
+# Attend 7 jours avant de résoudre une version fraîchement publiée
+minimumReleaseAge: 10080
+# Bloque les sous-dépendances hors registre npm (git, http, …)
+blockExoticSubdeps: true
+# Empêche une mise à jour de paquet d'assouplir ces réglages
+trustPolicy: no-downgrade
+# Versions de Node imposées par le champ engines
+engineStrict: true

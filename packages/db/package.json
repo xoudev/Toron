@@ -9,9 +9,12 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "migrate": "node src/migrate-cli.ts"
+    "migrate": "node src/migrate-cli.ts",
+    "seed": "node src/seed-cli.ts"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.0.0",
+    "@toron/frameworks": "workspace:*",
     "drizzle-orm": "^0.45.0",
     "postgres": "^3.4.0"
   },

@@ -26,7 +26,8 @@ export default async function OrganisationsPage() {
     .where(eq(schema.memberships.userId, session.user.id));
 
   return (
-    <main>
+    <main className="auth-page">
+      <div className="auth-card">
       <h1>Vos organisations</h1>
       {rows.length === 0 ? (
         <p>Vous n’appartenez à aucune organisation pour l’instant — créez la vôtre.</p>
@@ -40,6 +41,7 @@ export default async function OrganisationsPage() {
         </ul>
       )}
       <CreateTenantForm />
+      </div>
     </main>
   );
 }

@@ -17,6 +17,7 @@ export type TenantContext =
       tenantId: string;
       tenantName: string;
       userId: string;
+      userName: string;
       role: MembershipRole;
     };
 
@@ -63,6 +64,7 @@ export async function resolveTenantContext(slug: string): Promise<TenantContext>
     tenantId: tenant.id,
     tenantName: tenant.name,
     userId: session.user.id,
+    userName: session.user.name || session.user.email,
     role: membership!.role,
   };
 }

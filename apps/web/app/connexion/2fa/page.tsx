@@ -20,7 +20,8 @@ export default function Verification2faPage() {
   }
 
   return (
-    <main>
+    <main className="auth-page">
+      <div className="auth-card">
       <h1>Double authentification</h1>
       <p>Saisissez le code à 6 chiffres de votre application d’authentification.</p>
       <form onSubmit={verifier}>
@@ -36,8 +37,9 @@ export default function Verification2faPage() {
           />
         </label>
         {erreur ? <p role="alert">{erreur}</p> : null}
-        <button type="submit">Vérifier</button>
+        <button className="btn btn-primary" type="submit">Vérifier</button>
       </form>
+      </div>
     </main>
   );
 }

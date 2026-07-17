@@ -39,7 +39,8 @@ export default function Activation2faPage() {
   }
 
   return (
-    <main>
+    <main className="auth-page">
+      <div className="auth-card">
       <h1>Activer la double authentification</h1>
 
       {etape === 'mot_de_passe' ? (
@@ -59,7 +60,7 @@ export default function Activation2faPage() {
             />
           </label>
           {erreur ? <p role="alert">{erreur}</p> : null}
-          <button type="submit">Générer la clé</button>
+          <button className="btn btn-primary" type="submit">Générer la clé</button>
         </form>
       ) : null}
 
@@ -87,18 +88,19 @@ export default function Activation2faPage() {
             />
           </label>
           {erreur ? <p role="alert">{erreur}</p> : null}
-          <button type="submit">Confirmer l’activation</button>
+          <button className="btn btn-primary" type="submit">Confirmer l’activation</button>
         </form>
       ) : null}
 
       {etape === 'active' ? (
         <>
           <p>Double authentification activée.</p>
-          <p>
+          <p className="auth-alt">
             <a href="/organisations">Retour à vos organisations</a>
           </p>
         </>
       ) : null}
+      </div>
     </main>
   );
 }

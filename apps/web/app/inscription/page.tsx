@@ -36,7 +36,8 @@ export default function InscriptionPage() {
   }
 
   return (
-    <main>
+    <main className="auth-page">
+      <div className="auth-card">
       <h1>Créer un compte Toron</h1>
       <form onSubmit={creerCompte}>
         <label>
@@ -65,13 +66,14 @@ export default function InscriptionPage() {
           />
         </label>
         {erreur ? <p role="alert">{erreur}</p> : null}
-        <button type="submit" disabled={enCours}>
+        <button className="btn btn-primary" type="submit" disabled={enCours}>
           {enCours ? 'Création…' : 'Créer le compte'}
         </button>
       </form>
-      <p>
+      <p className="auth-alt">
         Déjà un compte ? <a href="/connexion">Se connecter</a>
       </p>
+      </div>
     </main>
   );
 }

@@ -17,6 +17,28 @@ import { withTenant } from './tenant.js';
 
 const PG_IMAGE = 'postgres:16.14-alpine3.23';
 
+/**
+ * Drizzle enveloppe les erreurs Postgres (DrizzleQueryError « Failed
+ * query… ») ; le message d'origine vit dans la chaîne `cause`. On
+ * vérifie donc le motif sur la chaîne complète — et on échoue si la
+ * requête passe.
+ */
+async function expectDbError(promise: Promise<unknown>, pattern: RegExp): Promise<void> {
+  try {
+    await promise;
+  } catch (e) {
+    const messages: string[] = [];
+    let cur: unknown = e;
+    while (cur instanceof Error) {
+      messages.push(cur.message);
+      cur = cur.cause;
+    }
+    expect(messages.join(' | ')).toMatch(pattern);
+    return;
+  }
+  expect.fail('La requête aurait dû être rejetée par Postgres, elle a réussi.');
+}
+
 let container: StartedPostgreSqlContainer;
 let admin: postgres.Sql; // superuser : migrations + seed hors RLS
 let app: DbHandle; // rôle applicatif soumis à la RLS
@@ -142,13 +164,14 @@ describe('isolation en lecture', () => {
 
 describe('isolation en écriture', () => {
   it('INSERT avec un tenant_id forgé est rejeté par la politique RLS', async () => {
-    await expect(
+    await expectDbError(
       withTenant(app.db, tenantA, (tx) =>
         tx
           .insert(schema.controls)
           .values({ tenantId: tenantB, title: 'Contrôle forgé cross-tenant' }),
       ),
-    ).rejects.toThrow(/row-level security/);
+      /row-level security/,
+    );
   });
 
   it("UPDATE d'une ligne d'un autre tenant n'affecte aucune ligne", async () => {
@@ -174,25 +197,28 @@ describe('isolation en écriture', () => {
   });
 
   it('le rôle applicatif ne peut pas écrire dans users', async () => {
-    await expect(
+    await expectDbError(
       withTenant(app.db, tenantA, (tx) =>
         tx.insert(schema.users).values({ email: 'intrus@exemple.fr' }),
       ),
-    ).rejects.toThrow(/permission denied|row-level security/);
+      /permission denied|row-level security/,
+    );
   });
 
   it('le rôle applicatif ne peut pas créer de tenant', async () => {
-    await expect(
+    await expectDbError(
       withTenant(app.db, tenantA, (tx) =>
         tx.insert(schema.tenants).values({ name: 'Tenant pirate' }),
       ),
-    ).rejects.toThrow(/permission denied/);
+      /permission denied/,
+    );
   });
 });
 
 describe('accès hors contexte tenant', () => {
   it('toute requête hors withTenant() échoue bruyamment (S4)', async () => {
-    await expect(app.db.select().from(schema.controls)).rejects.toThrow(
+    await expectDbError(
+      app.db.select().from(schema.controls),
       /unrecognized configuration parameter|invalid input syntax/,
     );
   });
@@ -257,14 +283,16 @@ describe('journal d’audit (droits M0-2)', () => {
   });
 
   it('UPDATE et DELETE refusés au rôle applicatif (INSERT only)', async () => {
-    await expect(
+    await expectDbError(
       withTenant(app.db, tenantA, (tx) =>
         tx.update(schema.auditLog).set({ action: 'falsifié' }),
       ),
-    ).rejects.toThrow(/permission denied/);
-    await expect(
+      /permission denied/,
+    );
+    await expectDbError(
       withTenant(app.db, tenantA, (tx) => tx.delete(schema.auditLog)),
-    ).rejects.toThrow(/permission denied/);
+      /permission denied/,
+    );
   });
 });
 
@@ -283,7 +311,7 @@ describe('règles métier en base', () => {
       return { assessmentId: a!.id };
     });
 
-    await expect(
+    await expectDbError(
       withTenant(app.db, tenantA, (tx) =>
         tx.insert(schema.assessmentItems).values({
           tenantId: tenantA,
@@ -292,7 +320,8 @@ describe('règles métier en base', () => {
           status: 'non_applicable',
         }),
       ),
-    ).rejects.toThrow(/assessment_items_na_justifiee/);
+      /assessment_items_na_justifiee/,
+    );
 
     // Avec justification : accepté
     await withTenant(app.db, tenantA, (tx) =>

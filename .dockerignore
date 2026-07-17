@@ -1,0 +1,30 @@
+# Contexte de build minimal (ADR-9) — indispensable, pas cosmétique :
+# sans cette exclusion, les node_modules de l'hôte (symlinks pnpm) sont
+# copiés dans l'image et écrasent l'installation faite dans le conteneur,
+# cassant la résolution de modules. La CI part d'un checkout vierge et ne
+# le voit pas ; un poste de dev avec `pnpm install` local, si.
+**/node_modules
+
+# Artefacts de build (reconstruits dans l'image)
+**/.next
+**/out
+**/dist
+**/*.tsbuildinfo
+**/next-env.d.ts
+
+# Git & CI
+.git
+.gitignore
+.github
+
+# Secrets / environnement — jamais dans une image (S3)
+**/.env
+**/.env.*
+
+# Tests, couverture, docs (inutiles à l'image applicative)
+**/coverage
+docs
+
+# Divers
+**/.DS_Store
+**/Thumbs.db

@@ -7,8 +7,8 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
 import { twoFactor } from 'better-auth/plugins';
 
-import { authDb } from './db.js';
-import { env } from './env.js';
+import { authDb } from './db.ts';
+import { env } from './env.ts';
 
 // Paramètres alignés sur les recommandations OWASP (§8.1). L'algorithme
 // par défaut de @node-rs/argon2 est argon2id (variante exigée par ADR-4).

@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 
-import type { Db } from './client.js';
+import type { Db } from './client.ts';
 
 /** Transaction Drizzle liée à un tenant (contexte RLS posé). */
 export type TenantTx = Parameters<Parameters<Db['transaction']>[0]>[0];

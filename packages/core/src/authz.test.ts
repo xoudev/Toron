@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { MEMBERSHIP_ROLES, tenantAccessVerdict, totpRequiredForRole } from './authz.js';
+import { MEMBERSHIP_ROLES, tenantAccessVerdict, totpRequiredForRole } from './authz.ts';
 
 describe('totpRequiredForRole', () => {
   it('exige le TOTP pour owner, direction et rssi (§8.1)', () => {

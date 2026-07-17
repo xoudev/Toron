@@ -2,7 +2,7 @@ import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testconta
 import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { applyMigrations } from './migrate.js';
+import { applyMigrations } from './migrate.ts';
 
 /**
  * Séparation des rôles d'authentification (M0-3, ADR-4/S5) :

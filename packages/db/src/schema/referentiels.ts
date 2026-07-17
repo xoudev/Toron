@@ -15,8 +15,8 @@ import {
   controlStatus,
   frameworkSource,
   reviewFrequency,
-} from './enums.js';
-import { scopes, tenants, users } from './tenancy.js';
+} from './enums.ts';
+import { scopes, tenants, users } from './tenancy.ts';
 
 // ── Section 4.2 — Moteur de référentiels (le cœur) ────────────────────
 // frameworks/requirements : tenant_id NULL = référentiel « builtin »

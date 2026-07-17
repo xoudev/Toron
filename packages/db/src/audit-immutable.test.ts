@@ -2,10 +2,10 @@ import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testconta
 import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { writeAuditEntry } from './audit.js';
-import { createDb, type DbHandle } from './client.js';
-import { applyMigrations } from './migrate.js';
-import { withTenant } from './tenant.js';
+import { writeAuditEntry } from './audit.ts';
+import { createDb, type DbHandle } from './client.ts';
+import { applyMigrations } from './migrate.ts';
+import { withTenant } from './tenant.ts';
 
 /**
  * Immuabilité du journal d'audit (M0-4, S6/§8.2) : INSERT only pour TOUS

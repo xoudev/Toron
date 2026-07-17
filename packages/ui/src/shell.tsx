@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { BrandMark } from './brand.js';
+import { BrandMark } from './brand.tsx';
 
 // Shell applicatif (M0-5) : sidebar 236px + topbar 52px, d'après la
 // maquette de référence. Composants serveur — la seule interactivité

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { createDb, type DbHandle } from '@toron/db';
 
-import { env } from './env.js';
+import { env } from './env.ts';
 
 // Deux connexions, deux rôles Postgres (S5) :
 // - appDb  → toron_app  : données métier, toujours via withTenant()

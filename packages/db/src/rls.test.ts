@@ -3,10 +3,10 @@ import { eq, sql as dsql } from 'drizzle-orm';
 import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createDb, type DbHandle } from './client.js';
-import { applyMigrations } from './migrate.js';
-import * as schema from './schema/index.js';
-import { withTenant } from './tenant.js';
+import { createDb, type DbHandle } from './client.ts';
+import { applyMigrations } from './migrate.ts';
+import * as schema from './schema/index.ts';
+import { withTenant } from './tenant.ts';
 
 /**
  * Tests d'isolation cross-tenant (S1, ADR-3) — gate de merge.

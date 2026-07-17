@@ -5,8 +5,8 @@ import { schema } from '@toron/db';
 import { and, eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 
-import { auth } from './auth.js';
-import { authDb } from './db.js';
+import { auth } from './auth.ts';
+import { authDb } from './db.ts';
 
 export type TenantContext =
   | { verdict: 'non_connecte' }

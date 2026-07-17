@@ -63,3 +63,38 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --prod --audit-level high
+
+  # DoD M0 : « l'app tourne en Docker » — build de l'image de production,
+  # Postgres compose + migrations + seed, puis smoke test HTTP réel.
+  docker-smoke:
+    name: Docker (build + smoke test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Base de données (compose)
+        run: docker compose -f infra/compose.yaml up -d --wait db
+      - name: Migrations + seed (rôle DDL local)
+        env:
+          DATABASE_URL_MIGRATIONS: postgres://toron_local:toron_local_dev_only@localhost:5432/toron
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @toron/db migrate
+          pnpm --filter @toron/db seed
+      - name: Application (image de production)
+        run: docker compose -f infra/compose.yaml up -d --build web
+      - name: Smoke test HTTP
+        run: |
+          for i in $(seq 1 45); do
+            if curl -fsS -o /tmp/connexion.html http://localhost:3000/connexion; then break; fi
+            sleep 2
+            if [ "$i" = "45" ]; then echo "web injoignable"; docker compose -f infra/compose.yaml logs web; exit 1; fi
+          done
+          grep -q "Connexion" /tmp/connexion.html
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/t/meridiane-logistics)
+          echo "GET /t/meridiane-logistics -> $code (redirection connexion attendue)"
+          case "$code" in 302|303|307|308) ;; *) echo "code inattendu"; exit 1;; esac

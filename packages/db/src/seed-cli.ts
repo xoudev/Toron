@@ -1,4 +1,4 @@
-import { DEMO, seedDemoTenant, seedRecyfFramework } from './seed.js';
+import { DEMO, seedDemoTenant, seedRecyfFramework } from './seed.ts';
 
 // Usage : DATABASE_URL_MIGRATIONS=postgres://… pnpm --filter @toron/db seed
 // Rôle DDL/superutilisateur local uniquement (les builtins et la création

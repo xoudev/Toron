@@ -1,1 +1,1 @@
-export { recyf, type RecyfFramework, type RecyfMean, type RecyfObjective } from './recyf.js';
+export { recyf, type RecyfFramework, type RecyfMean, type RecyfObjective } from './recyf.ts';

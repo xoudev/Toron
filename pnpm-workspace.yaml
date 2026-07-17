@@ -8,6 +8,10 @@ packages:
 allowBuilds:
   esbuild: true
   sharp: true
+  # Refusés — fallbacks JS purs suffisants (devDeps testcontainers)
+  cpu-features: false
+  protobufjs: false
+  ssh2: false
 # Attend 7 jours avant de résoudre une version fraîchement publiée
 minimumReleaseAge: 10080
 # Bloque les sous-dépendances hors registre npm (git, http, …)

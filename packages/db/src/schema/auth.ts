@@ -1,6 +1,6 @@
 import { index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
-import { users } from './tenancy.js';
+import { users } from './tenancy.ts';
 
 // ── Tables Better Auth (ADR-4) ────────────────────────────────────────
 // Authentification auto-hébergée dans notre Postgres. Ces tables sont

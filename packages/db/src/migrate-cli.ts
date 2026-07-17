@@ -1,4 +1,4 @@
-import { applyMigrations } from './migrate.js';
+import { applyMigrations } from './migrate.ts';
 
 // Usage : DATABASE_URL_MIGRATIONS=postgres://… pnpm --filter @toron/db migrate
 // Le rôle de connexion doit être le rôle DDL, pas le rôle applicatif (S5).

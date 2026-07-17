@@ -1,5 +1,5 @@
-import { auditLog } from './schema/tenancy.js';
-import type { TenantTx } from './tenant.js';
+import { auditLog } from './schema/tenancy.ts';
+import type { TenantTx } from './tenant.ts';
 
 /**
  * Entrée du journal d'audit (S6, §8.2). `before`/`after` reçoivent des

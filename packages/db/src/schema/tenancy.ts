@@ -9,7 +9,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { membershipRole, scopeKind, tenantPlan } from './enums.js';
+import { membershipRole, scopeKind, tenantPlan } from './enums.ts';
 
 // ── Section 4.1 — Organisation & accès ────────────────────────────────
 // Le DDL opérant (RLS comprise) vit dans packages/db/migrations/*.sql ;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { slugifyTenantName } from './slug.js';
+import { slugifyTenantName } from './slug.ts';
 
 describe('slugifyTenantName', () => {
   it('normalise accents, casse et séparateurs', () => {

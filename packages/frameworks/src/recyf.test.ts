@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { recyf } from './recyf.js';
+import { recyf } from './recyf.ts';
 
 describe('référentiel ReCyF v2.5', () => {
   const data = recyf();

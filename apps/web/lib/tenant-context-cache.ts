@@ -2,7 +2,7 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import { resolveTenantContext } from './tenant-context.js';
+import { resolveTenantContext } from './tenant-context.ts';
 
 /**
  * Mémoïsation par requête (React cache) : layout et page partagent la

@@ -3,11 +3,11 @@ import { eq } from 'drizzle-orm';
 import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createDb, type DbHandle } from './client.js';
-import { applyMigrations } from './migrate.js';
-import * as schema from './schema/index.js';
-import { DEMO, seedDemoTenant, seedRecyfFramework } from './seed.js';
-import { withTenant } from './tenant.js';
+import { createDb, type DbHandle } from './client.ts';
+import { applyMigrations } from './migrate.ts';
+import * as schema from './schema/index.ts';
+import { DEMO, seedDemoTenant, seedRecyfFramework } from './seed.ts';
+import { withTenant } from './tenant.ts';
 
 /** Seeds M0-6 : ReCyF complet + tenant démo, idempotents, visibles côté rôle applicatif. */
 

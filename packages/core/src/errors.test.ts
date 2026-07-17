@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { appError } from './errors.js';
+import { appError } from './errors.ts';
 
 describe('appError', () => {
   it('produit le format standard { code, message, correlationId }', () => {

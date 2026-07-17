@@ -112,6 +112,9 @@ importers:
       '@node-rs/argon2':
         specifier: ^2.0.0
         version: 2.0.2
+      '@toron/core':
+        specifier: workspace:*
+        version: link:../core
       '@toron/frameworks':
         specifier: workspace:*
         version: link:../frameworks

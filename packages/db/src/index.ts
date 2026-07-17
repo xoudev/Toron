@@ -1,3 +1,4 @@
-// @toron/db — schéma Drizzle, migrations SQL, politiques RLS, wrapper withTenant().
-// Implémenté en M0-2 (PLAN.md §4.1, §4.2 et ADR-3).
-export {};
+export { createDb, type Db, type DbHandle } from './client.js';
+export { withTenant, type TenantTx } from './tenant.js';
+export { applyMigrations } from './migrate.js';
+export * as schema from './schema/index.js';

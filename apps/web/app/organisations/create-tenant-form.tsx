@@ -17,7 +17,7 @@ export function CreateTenantForm() {
         <input name="name" minLength={2} maxLength={120} required />
       </label>
       {state.erreur ? <p role="alert">{state.erreur}</p> : null}
-      <button type="submit" disabled={pending}>
+      <button className="btn btn-primary" type="submit" disabled={pending}>
         {pending ? 'Création…' : 'Créer'}
       </button>
     </form>

@@ -60,6 +60,9 @@ importers:
       '@toron/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@toron/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       better-auth:
         specifier: ^1.6.0
         version: 1.6.23(drizzle-orm@0.45.2(kysely@0.29.3)(postgres@3.4.9))(next@15.5.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@3.2.7(@types/node@24.13.3)(yaml@2.9.0))
@@ -140,6 +143,12 @@ importers:
 
   packages/ui:
     devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      react:
+        specifier: ^19.1.0
+        version: 19.2.7
       typescript:
         specifier: ~5.9.3
         version: 5.9.3

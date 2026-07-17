@@ -28,7 +28,8 @@ export default function ConnexionPage() {
   }
 
   return (
-    <main>
+    <main className="auth-page">
+      <div className="auth-card">
       <h1>Connexion à Toron</h1>
       <form onSubmit={seConnecter}>
         <label>
@@ -52,13 +53,14 @@ export default function ConnexionPage() {
           />
         </label>
         {erreur ? <p role="alert">{erreur}</p> : null}
-        <button type="submit" disabled={enCours}>
+        <button className="btn btn-primary" type="submit" disabled={enCours}>
           {enCours ? 'Connexion…' : 'Se connecter'}
         </button>
       </form>
-      <p>
+      <p className="auth-alt">
         Pas encore de compte ? <a href="/inscription">Créer un compte</a>
       </p>
+      </div>
     </main>
   );
 }

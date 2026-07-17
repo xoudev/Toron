@@ -1,0 +1,60 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Toron — design tokens (M0-5)
+   Source de vérité unique des couleurs et typos du produit (PLAN.md §13) :
+   aucune couleur en dur ailleurs. Valeurs issues de la maquette de
+   référence docs/design/toron-dashboard.html.
+   Thème par attribut data-theme sur <html> ; le sombre n'est pas une
+   inversion du clair.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Thème clair */
+  --bg: #f2f3f3;
+  --surface: #ffffff;
+  --surface-2: #f7f7f6;
+  --border: #e4e5e3;
+  --border-strong: #cfd1ce;
+  --text: #1c1e1d;
+  --text-2: #5b605d;
+  --text-3: #8b908c;
+  --accent: #cb4e0a;
+  --accent-strong: #a93f05;
+  --on-accent: #ffffff;
+  --ok: #2e7d4f;
+  --warn: #946200;
+  --danger: #b23327;
+  --focus: #cb4e0a;
+  --shadow: 0 1px 2px rgba(28, 30, 29, 0.05);
+
+  /* Typographie — familles fournies par l'app (next/font), avec repli */
+  --font-sans: var(--font-plex-sans, 'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif);
+  --font-mono: var(--font-plex-mono, 'IBM Plex Mono', ui-monospace, monospace);
+
+  /* Forme : densité outil métier */
+  --radius-s: 4px;
+  --radius-m: 6px;
+  --radius-l: 8px;
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --bg: #151412;
+  --surface: #1c1b18;
+  --surface-2: #22211d;
+  --border: #2c2a25;
+  --border-strong: #3b382f;
+  --text: #eceae3;
+  --text-2: #a6a198;
+  --text-3: #6f6c64;
+  --accent: #ef7a32;
+  --accent-strong: #f79051;
+  --on-accent: #1d1006;
+  --ok: #5fb582;
+  --warn: #d8a23e;
+  --danger: #e0685a;
+  --focus: #ef7a32;
+  --shadow: none;
+
+  color-scheme: dark;
+}

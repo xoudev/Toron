@@ -4,12 +4,19 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/styles/tokens.css",
+    "./shell.css": "./src/styles/shell.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
   "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.1.0",
     "typescript": "~5.9.3"
   }
 }

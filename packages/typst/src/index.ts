@@ -1,4 +1,3 @@
-// @toron/typst — templates de livrables + service de compilation (ADR-5, ADR-6).
-// Tous les exports PDF sont compilés par Typst côté serveur, puis scellés
-// (SHA-256 + slug de vérification). Implémenté en phase MVP.
-export {};
+export { renderSoaTypst } from './soa-template.ts';
+export { compileTypst, compileSoa, sha256Hex, randomVerifySlug, type CompileOptions } from './compile.ts';
+export type { SoaModel, SoaRow } from './soa-model.ts';

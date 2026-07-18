@@ -6,6 +6,23 @@ description courte, phase cible pressentie.
 
 ## Entrées
 
+- **2026-07-18 · pg-boss pour la file d'export (5.3c)** — Le worker Typst
+  consomme la file via la table `exports` (statut `en_cours` →
+  `en_traitement` → `scelle`/`echec`, réclamation atomique `FOR UPDATE SKIP
+  LOCKED`). Solution suffisante pour le MVP (un worker, faible volume). Passer
+  à pg-boss (ADR-8) quand il faudra planification, back-off/retries, jobs
+  périodiques (fraîcheur des preuves, chronologie NIS 2) et plusieurs types de
+  jobs. Phase cible : V1.
+- **2026-07-18 · Rate limiting de la page publique /verifier (5.3c)** — La
+  vérification publique du poinçon (`verify_export`, SECURITY DEFINER, champs
+  sûrs uniquement) n'a pas encore de limite de débit ; à poser avec le rate
+  limiting global des endpoints publics/auth (§8.1) au déploiement. Phase
+  cible : MVP (déploiement staging).
+- **2026-07-18 · e2e Playwright de l'export SoA scellé (5.3c)** — Lancer une
+  campagne → « Exporter la Déclaration d'applicabilité » → attendre le scellé
+  (worker) → télécharger le PDF → ouvrir /verifier/<slug> → comparer
+  l'empreinte d'un fichier. Vérifié manuellement en Docker local ; l'e2e suit
+  l'infra Playwright transverse. Phase cible : MVP.
 - **2026-07-18 · e2e Playwright du parcours référentiels (5.2c)** — Connexion
   Camille (resp_qualite) → catalogue → ouvrir ISO 27001 → sélectionner A.8.5 →
   rattacher/retirer un contrôle → voir « mutualisé ». Vérifié manuellement en

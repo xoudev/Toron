@@ -156,6 +156,9 @@ importers:
 
   packages/typst:
     devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.3
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
@@ -173,7 +176,20 @@ importers:
         version: 5.9.3
 
   workers:
+    dependencies:
+      '@toron/core':
+        specifier: workspace:*
+        version: link:../packages/core
+      '@toron/db':
+        specifier: workspace:*
+        version: link:../packages/db
+      '@toron/typst':
+        specifier: workspace:*
+        version: link:../packages/typst
     devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.3
       typescript:
         specifier: ~5.9.3
         version: 5.9.3

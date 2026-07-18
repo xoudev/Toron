@@ -1,14 +1,58 @@
 'use client';
 
 import type { CoverageScore } from '@toron/core';
-import type { AssessmentSummary, ScopeSummary } from '@toron/db';
+import type { AssessmentSummary, ExportSummary, ScopeSummary } from '@toron/db';
 import { Dialog } from '@toron/ui';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
-import { createAssessmentAction } from './assessment-actions';
+import { createAssessmentAction, requestSoaExportAction } from './assessment-actions';
 
 const SCOPE_KIND_LABEL: Record<string, string> = { smsi: 'SMSI', qms: 'QMS', mixte: 'Mixte' };
+
+function ExportRow({
+  slug,
+  exp,
+  onRefresh,
+}: {
+  slug: string;
+  exp: ExportSummary;
+  onRefresh: () => void;
+}) {
+  const sealed = exp.status === 'scelle';
+  const failed = exp.status === 'echec';
+  return (
+    <div className="export-row">
+      <span className="export-label">Déclaration d’applicabilité</span>
+      {sealed ? (
+        <>
+          <a className="link-btn" href={`/t/${slug}/exports/${exp.id}/pdf`}>
+            Télécharger le PDF scellé
+          </a>
+          {exp.verifySlug ? (
+            <a className="link-btn" href={`/verifier/${exp.verifySlug}`} target="_blank" rel="noreferrer">
+              Vérifier le poinçon ↗
+            </a>
+          ) : null}
+          {exp.sha256 ? (
+            <span className="export-hash mono" title={exp.sha256}>
+              {exp.sha256.slice(0, 12)}…
+            </span>
+          ) : null}
+        </>
+      ) : failed ? (
+        <span style={{ color: 'var(--danger)', fontSize: '12px' }}>Échec de génération</span>
+      ) : (
+        <>
+          <span style={{ color: 'var(--text-2)', fontSize: '12px' }}>Génération en cours…</span>
+          <button className="link-btn" onClick={onRefresh}>
+            Actualiser
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 const CAMPAIGN_STATUS_LABEL: Record<string, string> = {
   planifiee: 'planifiée',
   en_cours: 'en cours',
@@ -23,6 +67,7 @@ export function CampaignBar({
   assessments,
   activeCampaign,
   score,
+  exportsList,
 }: {
   slug: string;
   canManage: boolean;
@@ -31,6 +76,7 @@ export function CampaignBar({
   assessments: AssessmentSummary[];
   activeCampaign: AssessmentSummary | null;
   score: CoverageScore | null;
+  exportsList: ExportSummary[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -38,6 +84,16 @@ export function CampaignBar({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  function requestExport() {
+    if (!activeCampaign) return;
+    setError(null);
+    start(async () => {
+      const res = await requestSoaExportAction(slug, { frameworkId, assessmentId: activeCampaign.id });
+      if (res.ok) router.refresh();
+      else setError(res.error.message);
+    });
+  }
 
   function selectCampaign(id: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -92,6 +148,12 @@ export function CampaignBar({
         </button>
       ) : null}
 
+      {canManage && activeCampaign ? (
+        <button className="btn btn-primary btn-sm" onClick={requestExport} disabled={pending}>
+          {pending ? 'Demande…' : 'Exporter la Déclaration d’applicabilité'}
+        </button>
+      ) : null}
+
       {activeCampaign && score ? (
         <div className="campaign-metrics">
           <div className="metric">
@@ -105,6 +167,20 @@ export function CampaignBar({
             <span className="metric-value gaps">{score.gaps}</span>
             <span className="metric-label">écart{score.gaps > 1 ? 's' : ''}</span>
           </div>
+        </div>
+      ) : null}
+
+      {error ? (
+        <p className="form-error" role="alert" style={{ flexBasis: '100%', margin: 0 }}>
+          {error}
+        </p>
+      ) : null}
+
+      {activeCampaign && exportsList.length > 0 ? (
+        <div className="campaign-exports">
+          {exportsList.map((e) => (
+            <ExportRow key={e.id} slug={slug} exp={e} onRefresh={() => router.refresh()} />
+          ))}
         </div>
       ) : null}
 

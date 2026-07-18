@@ -6,6 +6,34 @@ import type { TenantTx } from '../tenant.ts';
 
 // ── Couche d'accès des exports scellés (module 5.3c, ADR-6) ────────────
 
+export interface ClaimedExport {
+  id: string;
+  tenantId: string;
+  objectRef: string | null;
+  type: string;
+}
+
+/**
+ * Réclame le prochain export à traiter (worker). Passe par la fonction
+ * SECURITY DEFINER claim_next_export : voit les jobs de tous les tenants
+ * sans BYPASSRLS, claim atomique. Prend le client brut (pas de withTenant) —
+ * le traitement qui suit repasse par withTenant(tenantId).
+ */
+export async function claimNextExport(db: Db): Promise<ClaimedExport | null> {
+  const rows = await db.execute(
+    sql`SELECT id, tenant_id, object_ref, type FROM claim_next_export()`,
+  );
+  const list = rows as unknown as {
+    id: string;
+    tenant_id: string;
+    object_ref: string | null;
+    type: string;
+  }[];
+  if (list.length === 0) return null;
+  const r = list[0]!;
+  return { id: r.id, tenantId: r.tenant_id, objectRef: r.object_ref, type: r.type };
+}
+
 export interface CreateExportInput {
   tenantId: string;
   type: 'soa';

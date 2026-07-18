@@ -3,6 +3,7 @@ import '@toron/ui/shell.css';
 import '@toron/ui/referentiels.css';
 import '@toron/ui/risques.css';
 import '@toron/ui/plan-action.css';
+import '@toron/ui/documents.css';
 
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';

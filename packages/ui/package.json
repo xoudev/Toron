@@ -9,7 +9,8 @@
     "./shell.css": "./src/styles/shell.css",
     "./referentiels.css": "./src/styles/referentiels.css",
     "./risques.css": "./src/styles/risques.css",
-    "./plan-action.css": "./src/styles/plan-action.css"
+    "./plan-action.css": "./src/styles/plan-action.css",
+    "./documents.css": "./src/styles/documents.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

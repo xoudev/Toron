@@ -108,3 +108,10 @@ export const evidenceAccessKind = pgEnum('evidence_access_kind', [
   'consultation',
   'telechargement',
 ]);
+
+export const assetCategory = pgEnum('asset_category', [
+  'materiel',
+  'logiciel',
+  'donnees',
+  'flux',
+]);

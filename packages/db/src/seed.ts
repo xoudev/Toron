@@ -40,6 +40,10 @@ export const DEMO = {
   evidenceRestauration: 'd0000000-0000-4000-8000-000000000081',
   evidenceMfa: 'd0000000-0000-4000-8000-000000000082',
   evidenceInventaire: 'd0000000-0000-4000-8000-000000000083',
+  assetWms: 'd0000000-0000-4000-8000-000000000091',
+  assetServeurs: 'd0000000-0000-4000-8000-000000000092',
+  assetDonneesClients: 'd0000000-0000-4000-8000-000000000093',
+  assetFluxEdi: 'd0000000-0000-4000-8000-000000000094',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -650,6 +654,59 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         INSERT INTO evidence_links (evidence_id, target_type, target_id, tenant_id)
         VALUES (${ev.id}, 'control', ${ev.control}, ${DEMO.tenantId})
         ON CONFLICT DO NOTHING`;
+    }
+
+    // ── Module 6.3 : actifs du tenant démo ──────────────────────────────
+    // Inventaire minimal (matériel/logiciel/données/flux) coté DICP, quelques
+    // liens actif↔risque.
+    const assets = [
+      {
+        id: DEMO.assetWms,
+        name: 'Serveurs applicatifs — plateforme logistique',
+        category: 'materiel',
+        description: 'Cluster hébergeant le WMS et la facturation, site de Corbas.',
+        d: 4, i: 3, c: 3, p: 2,
+        risk: DEMO.riskRancongiciel,
+      },
+      {
+        id: DEMO.assetServeurs,
+        name: 'WMS — logiciel de gestion d’entrepôt',
+        category: 'logiciel',
+        description: 'Application métier critique de préparation et d’expédition.',
+        d: 4, i: 3, c: 2, p: 2,
+        risk: DEMO.riskRancongiciel,
+      },
+      {
+        id: DEMO.assetDonneesClients,
+        name: 'Base de données clients et commandes',
+        category: 'donnees',
+        description: 'Données à caractère personnel (clients, destinataires).',
+        d: 3, i: 4, c: 4, p: 3,
+        risk: DEMO.riskCompteDistant,
+      },
+      {
+        id: DEMO.assetFluxEdi,
+        name: 'Flux EDI avec les transporteurs',
+        category: 'flux',
+        description: 'Échanges de données informatisés commandes/livraisons.',
+        d: 3, i: 3, c: 2, p: 2,
+        risk: null,
+      },
+    ] as const;
+
+    for (const a of assets) {
+      await sql`
+        INSERT INTO assets (id, tenant_id, name, category, description, scope_id, dicp_d, dicp_i, dicp_c, dicp_p)
+        VALUES (${a.id}, ${DEMO.tenantId}, ${a.name}, ${a.category}, ${a.description}, ${DEMO.scopeSmsi},
+                ${a.d}, ${a.i}, ${a.c}, ${a.p})
+        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description,
+          dicp_d = EXCLUDED.dicp_d, dicp_i = EXCLUDED.dicp_i, dicp_c = EXCLUDED.dicp_c, dicp_p = EXCLUDED.dicp_p`;
+      if (a.risk) {
+        await sql`
+          INSERT INTO asset_risks (asset_id, risk_id, tenant_id)
+          VALUES (${a.id}, ${a.risk}, ${DEMO.tenantId})
+          ON CONFLICT DO NOTHING`;
+      }
     }
   } finally {
     await sql.end();

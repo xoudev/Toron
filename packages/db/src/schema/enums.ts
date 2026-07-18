@@ -40,3 +40,7 @@ export const assessmentItemStatus = pgEnum('assessment_item_status', [
   'non_applicable',
   'a_evaluer',
 ]);
+
+export const exportStatus = pgEnum('export_status', ['en_cours', 'scelle', 'echec']);
+
+export const exportType = pgEnum('export_type', ['soa']);

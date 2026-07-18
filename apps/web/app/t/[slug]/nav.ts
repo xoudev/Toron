@@ -67,7 +67,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Preuves',
           href: `${base}/preuves`,
-          disabled: true,
+          active: isActive(`${base}/preuves`),
           iconPath: 'M6.5 4h11v16h-11z M9.5 8.5h5 M9.5 12h5 M9.5 15.5h3',
         },
         {

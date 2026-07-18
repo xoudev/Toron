@@ -78,3 +78,25 @@ export {
   type RiskHistoryRow,
 } from './queries/risks.ts';
 export { listTenantMembers, type TenantMember } from './queries/members.ts';
+export {
+  createAction,
+  listActions,
+  updateActionDetails,
+  setActionStatus,
+  bulkSetStatus,
+  addSubtask,
+  setSubtaskDone,
+  addComment,
+  linkAction,
+  unlinkAction,
+  getActionDetail,
+  type ActionLinkTarget,
+  type CreateActionInput,
+  type ActionSummary,
+  type ActionFilter,
+  type UpdateActionInput,
+  type ActionSubtaskRow,
+  type ActionCommentRow,
+  type ActionLinkRow,
+  type ActionDetail,
+} from './queries/actions.ts';

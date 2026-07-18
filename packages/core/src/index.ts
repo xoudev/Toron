@@ -47,3 +47,18 @@ export {
   type AcceptanceState,
   type AcceptanceInput,
 } from './risks.ts';
+export {
+  ACTION_STATUSES,
+  ACTION_EFFECTIVE_STATUSES,
+  ACTION_PRIORITIES,
+  ACTION_ORIGINS,
+  KANBAN_COLUMNS,
+  isOverdue,
+  effectiveActionStatus,
+  subtaskProgress,
+  type ActionStatus,
+  type ActionEffectiveStatus,
+  type ActionPriority,
+  type ActionOrigin,
+  type SubtaskProgress,
+} from './actions.ts';

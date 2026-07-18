@@ -30,6 +30,9 @@ export const DEMO = {
   riskEntrepot: 'd0000000-0000-4000-8000-000000000053',
   riskObsolescence: 'd0000000-0000-4000-8000-000000000054',
   riskInventaire: 'd0000000-0000-4000-8000-000000000055',
+  actionMessagerie: 'd0000000-0000-4000-8000-000000000061',
+  actionRevueAcces: 'd0000000-0000-4000-8000-000000000062',
+  actionPcaEntrepot: 'd0000000-0000-4000-8000-000000000063',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -440,6 +443,95 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
           SELECT ${DEMO.tenantId}, ${r.id}, ${r.acceptance.by}, ${r.acceptance.rationale},
                  ${r.acceptance.expiresAt}
           WHERE NOT EXISTS (SELECT 1 FROM risk_acceptances WHERE risk_id = ${r.id})`;
+      }
+    }
+
+    // ── Module 5.5 : plan d'action du tenant démo ───────────────────────
+    // Origines variées (risque, manuel), dont une échéance passée qui
+    // illustre le statut « en retard » CALCULÉ (RM §5.5).
+    const actions = [
+      {
+        id: DEMO.actionMessagerie,
+        title: 'Durcir la messagerie contre les pièces jointes piégées',
+        description:
+          'Bac à sable des pièces jointes, blocage des macros, sensibilisation ciblée des services logistiques.',
+        originType: 'risk',
+        originId: DEMO.riskRancongiciel,
+        owner: DEMO.userClaire,
+        dueDate: '2026-09-30',
+        priority: 'p1',
+        status: 'en_cours',
+        links: [DEMO.controlMfa, DEMO.controlSauvegardes],
+        subtasks: [
+          ['Activer le bac à sable des pièces jointes', true],
+          ['Bloquer l’exécution des macros Office', false],
+          ['Former les équipes préparation de commandes', false],
+        ] as const,
+        comment: 'Bac à sable activé en préproduction, bascule production prévue la semaine prochaine.',
+      },
+      {
+        id: DEMO.actionRevueAcces,
+        title: 'Mettre en place la revue trimestrielle des accès',
+        description: 'Revue des comptes à privilèges et des accès prestataires, PV conservé.',
+        originType: 'manual',
+        originId: null,
+        owner: DEMO.userCamille,
+        dueDate: '2026-06-30', // passée → « en retard » calculé
+        priority: 'p2',
+        status: 'planifie',
+        links: [DEMO.controlMfa],
+        subtasks: [] as const,
+        comment: null,
+      },
+      {
+        id: DEMO.actionPcaEntrepot,
+        title: 'Documenter le plan de continuité de l’entrepôt régional',
+        description: 'Procédure de repli et de reprise en cas de sinistre à Meyzieu.',
+        originType: 'risk',
+        originId: DEMO.riskEntrepot,
+        owner: DEMO.userAntoine,
+        dueDate: '2027-02-28',
+        priority: 'p3',
+        status: 'planifie',
+        links: [] as const,
+        subtasks: [] as const,
+        comment: null,
+      },
+    ] as const;
+
+    for (const a of actions) {
+      await sql`
+        INSERT INTO actions
+          (id, tenant_id, title, description, origin_type, origin_id, owner_user_id, due_date, priority, status)
+        VALUES
+          (${a.id}, ${DEMO.tenantId}, ${a.title}, ${a.description}, ${a.originType}, ${a.originId},
+           ${a.owner}, ${a.dueDate}, ${a.priority}, ${a.status})
+        ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description,
+          due_date = EXCLUDED.due_date, priority = EXCLUDED.priority, status = EXCLUDED.status`;
+
+      for (const controlId of a.links) {
+        await sql`
+          INSERT INTO action_links (action_id, target_type, target_id, tenant_id)
+          VALUES (${a.id}, 'control', ${controlId}, ${DEMO.tenantId})
+          ON CONFLICT DO NOTHING`;
+      }
+
+      let order = 0;
+      for (const [title, done] of a.subtasks) {
+        await sql`
+          INSERT INTO action_subtasks (tenant_id, action_id, title, done, sort_order)
+          SELECT ${DEMO.tenantId}, ${a.id}, ${title}, ${done}, ${order}
+          WHERE NOT EXISTS (
+            SELECT 1 FROM action_subtasks WHERE action_id = ${a.id} AND title = ${title}
+          )`;
+        order += 1;
+      }
+
+      if (a.comment) {
+        await sql`
+          INSERT INTO action_comments (tenant_id, action_id, author_user_id, body)
+          SELECT ${DEMO.tenantId}, ${a.id}, ${a.owner}, ${a.comment}
+          WHERE NOT EXISTS (SELECT 1 FROM action_comments WHERE action_id = ${a.id})`;
       }
     }
   } finally {

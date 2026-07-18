@@ -55,3 +55,24 @@ export const riskTreatment = pgEnum('risk_treatment', [
 export const riskSource = pgEnum('risk_source', ['manual', 'ebios']);
 
 export const riskBand = pgEnum('risk_band', ['faible', 'moyen', 'eleve', 'critique']);
+
+export const actionOrigin = pgEnum('action_origin', [
+  'risk',
+  'finding',
+  'incident',
+  'nc',
+  'assessment',
+  'review',
+  'manual',
+]);
+
+export const actionPriority = pgEnum('action_priority', ['p1', 'p2', 'p3']);
+
+export const actionStatus = pgEnum('action_status', [
+  'planifie',
+  'en_cours',
+  'termine',
+  'verification',
+]);
+
+export const actionLinkTarget = pgEnum('action_link_target', ['requirement', 'control']);

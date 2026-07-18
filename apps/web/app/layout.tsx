@@ -1,5 +1,6 @@
 import '@toron/ui/tokens.css';
 import '@toron/ui/shell.css';
+import '@toron/ui/data-screen.css';
 import '@toron/ui/referentiels.css';
 import '@toron/ui/risques.css';
 import '@toron/ui/plan-action.css';

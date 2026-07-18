@@ -10,7 +10,11 @@ import type { AssessmentItemRow, RequirementNode } from '@toron/db';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
-import { getInheritedSuggestionsAction, setItemStatusAction } from './assessment-actions';
+import {
+  createActionFromGapAction,
+  getInheritedSuggestionsAction,
+  setItemStatusAction,
+} from './assessment-actions';
 
 const STATUS_LABEL: Record<AssessmentItemStatus, string> = {
   conforme: 'Conforme',
@@ -47,8 +51,23 @@ export function EvaluationPanel({
   const [justification, setJustification] = useState(item?.soaJustification ?? '');
   const [statement, setStatement] = useState(item?.statement ?? '');
   const [suggestions, setSuggestions] = useState<StatusSuggestion[] | null>(null);
+  const [gapAction, setGapAction] = useState<'idle' | 'done'>('idle');
 
   const naNeedsJustif = soaJustificationRequired(status);
+
+  function createCorrectiveAction() {
+    setError(null);
+    start(async () => {
+      const res = await createActionFromGapAction(slug, {
+        assessmentId,
+        requirementId: requirement.id,
+        requirementRef: requirement.ref,
+        requirementTitle: requirement.title,
+      });
+      if (res.ok) setGapAction('done');
+      else setError(res.error.message);
+    });
+  }
 
   function save() {
     setError(null);
@@ -138,6 +157,20 @@ export function EvaluationPanel({
       >
         {pending ? 'Enregistrement…' : 'Enregistrer le statut'}
       </button>
+
+      {status === 'ecart' ? (
+        <div style={{ marginTop: 10 }}>
+          {gapAction === 'done' ? (
+            <p style={{ fontSize: 12, color: 'var(--ok)' }}>
+              Action corrective créée — retrouvez-la dans <a href={`/t/${slug}/plan-action`}>Plan d’action</a>.
+            </p>
+          ) : (
+            <button className="btn btn-ghost btn-sm" disabled={pending} onClick={createCorrectiveAction}>
+              Créer une action corrective
+            </button>
+          )}
+        </div>
+      ) : null}
 
       {suggestions && suggestions.length > 0 ? (
         <div className="inherit-suggestion" style={{ marginTop: 12 }}>

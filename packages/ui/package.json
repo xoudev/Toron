@@ -8,7 +8,8 @@
     "./tokens.css": "./src/styles/tokens.css",
     "./shell.css": "./src/styles/shell.css",
     "./referentiels.css": "./src/styles/referentiels.css",
-    "./risques.css": "./src/styles/risques.css"
+    "./risques.css": "./src/styles/risques.css",
+    "./plan-action.css": "./src/styles/plan-action.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

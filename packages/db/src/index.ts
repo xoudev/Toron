@@ -79,6 +79,24 @@ export {
 } from './queries/risks.ts';
 export { listTenantMembers, type TenantMember } from './queries/members.ts';
 export {
+  createEvidence,
+  listEvidences,
+  getEvidenceContent,
+  linkEvidence,
+  unlinkEvidence,
+  listEvidenceLinks,
+  listEvidencesCoveringRequirement,
+  logAccess,
+  listAccessLog,
+  type EvidenceTarget,
+  type CreateEvidenceInput,
+  type EvidenceSummary,
+  type EvidenceContent,
+  type EvidenceLinkRow,
+  type CoveringEvidence,
+  type AccessLogRow,
+} from './queries/evidences.ts';
+export {
   createDocument,
   addVersion,
   publishVersion,

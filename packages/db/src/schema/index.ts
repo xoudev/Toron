@@ -6,3 +6,4 @@ export * from './exports.ts';
 export * from './risks.ts';
 export * from './actions.ts';
 export * from './documents.ts';
+export * from './evidences.ts';

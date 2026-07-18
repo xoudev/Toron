@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { hash } from '@node-rs/argon2';
 import { defaultRiskScale, riskBand, type RiskBand } from '@toron/core';
 import { iso27001, recyf } from '@toron/frameworks';
@@ -35,6 +37,9 @@ export const DEMO = {
   actionPcaEntrepot: 'd0000000-0000-4000-8000-000000000063',
   docPssi: 'd0000000-0000-4000-8000-000000000071',
   docProcSauvegarde: 'd0000000-0000-4000-8000-000000000072',
+  evidenceRestauration: 'd0000000-0000-4000-8000-000000000081',
+  evidenceMfa: 'd0000000-0000-4000-8000-000000000082',
+  evidenceInventaire: 'd0000000-0000-4000-8000-000000000083',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -588,6 +593,62 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         SELECT ${doc.id}, r.id, ${DEMO.tenantId}
         FROM requirements r JOIN frameworks f ON f.id = r.framework_id
         WHERE f.tenant_id IS NULL AND f.code = 'iso27001' AND r.ref_id = ${doc.req}
+        ON CONFLICT DO NOTHING`;
+    }
+
+    // ── Module 5.7 : coffre de preuves du tenant démo ───────────────────
+    // Preuves empreintées (SHA-256), liées à des contrôles MUTUALISÉS — elles
+    // couvrent donc plusieurs référentiels (CA §5.7). Fraîcheurs variées :
+    // une preuve expirée (attestation MFA) signale sans changer de statut.
+    const evidences = [
+      {
+        id: DEMO.evidenceRestauration,
+        title: 'PV de test de restauration — T2 2026',
+        type: 'pv',
+        content: 'PV restauration T2 2026 — sauvegardes vérifiées, RTO respecté.',
+        collectedAt: '2026-06-20',
+        validUntil: '2026-09-20',
+        recurrence: 'trimestrielle',
+        collector: DEMO.userAntoine,
+        control: DEMO.controlSauvegardes,
+      },
+      {
+        id: DEMO.evidenceMfa,
+        title: 'Attestation d’activation MFA — prestataires',
+        type: 'attestation',
+        content: 'Attestation MFA prestataires — capture console IdP.',
+        collectedAt: '2025-11-15',
+        validUntil: '2026-05-15', // expirée → signalement
+        recurrence: 'semestrielle',
+        collector: DEMO.userClaire,
+        control: DEMO.controlMfa,
+      },
+      {
+        id: DEMO.evidenceInventaire,
+        title: 'Export de l’inventaire des actifs et services',
+        type: 'export',
+        content: 'Export CSV inventaire — 148 actifs recensés.',
+        collectedAt: '2026-07-01',
+        validUntil: '2027-07-01',
+        recurrence: 'annuelle',
+        collector: DEMO.userClaire,
+        control: DEMO.controlInventaire,
+      },
+    ] as const;
+
+    for (const ev of evidences) {
+      const buf = Buffer.from(ev.content);
+      const sha = createHash('sha256').update(buf).digest('hex');
+      await sql`
+        INSERT INTO evidences
+          (id, tenant_id, title, type, file_name, content, sha256, collected_at, valid_until, recurrence, collector_user_id)
+        VALUES
+          (${ev.id}, ${DEMO.tenantId}, ${ev.title}, ${ev.type}, ${`${ev.title}.txt`}, ${buf}, ${sha},
+           ${ev.collectedAt}, ${ev.validUntil}, ${ev.recurrence}, ${ev.collector})
+        ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, valid_until = EXCLUDED.valid_until`;
+      await sql`
+        INSERT INTO evidence_links (evidence_id, target_type, target_id, tenant_id)
+        VALUES (${ev.id}, 'control', ${ev.control}, ${DEMO.tenantId})
         ON CONFLICT DO NOTHING`;
     }
   } finally {

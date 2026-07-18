@@ -88,3 +88,23 @@ export const documentType = pgEnum('document_type', [
 ]);
 
 export const documentVersionStatus = pgEnum('document_version_status', ['brouillon', 'publie']);
+
+export const evidenceType = pgEnum('evidence_type', [
+  'capture',
+  'export',
+  'attestation',
+  'rapport',
+  'pv',
+]);
+
+export const evidenceRecurrence = pgEnum('evidence_recurrence', [
+  'ponctuelle',
+  'trimestrielle',
+  'semestrielle',
+  'annuelle',
+]);
+
+export const evidenceAccessKind = pgEnum('evidence_access_kind', [
+  'consultation',
+  'telechargement',
+]);

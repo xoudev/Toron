@@ -83,3 +83,13 @@ export {
   type EvidenceRecurrence,
   type FreshnessState,
 } from './evidences.ts';
+export {
+  ASSET_CATEGORIES,
+  isDicpAxisValid,
+  assetSensitivity,
+  parseAssetsCsv,
+  type AssetCategory,
+  type Dicp,
+  type ParsedAssetRow,
+  type CsvParseResult,
+} from './assets.ts';

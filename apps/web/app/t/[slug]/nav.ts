@@ -1,10 +1,13 @@
 import type { NavGroup } from '@toron/ui';
 
-// Navigation du produit (correspondance §9 du PLAN). Les modules des
-// phases MVP/V1/V2 sont annoncés mais désactivés : l'ordre et les
-// libellés sont ceux de la maquette de référence.
-export function buildNav(slug: string, active: 'accueil' | 'parametres'): NavGroup[] {
+// Navigation du produit (correspondance §9 du PLAN). Les modules des phases
+// ultérieures sont annoncés mais désactivés ; « Référentiels » est livré
+// (module 5.2). L'item actif est déterminé par le chemin courant.
+export function buildNav(slug: string, pathname: string): NavGroup[] {
   const base = `/t/${slug}`;
+  const isActive = (href: string): boolean =>
+    href === base ? pathname === base : pathname === href || pathname.startsWith(`${href}/`);
+
   return [
     {
       title: 'Pilotage',
@@ -12,13 +15,13 @@ export function buildNav(slug: string, active: 'accueil' | 'parametres'): NavGro
         {
           label: 'Tableau de bord',
           href: base,
-          active: active === 'accueil',
+          active: isActive(base),
           iconPath: 'M4 4.5h5.5v5.5H4z M14.5 4.5H20v5.5h-5.5z M4 14.5h5.5V20H4z M14.5 14.5H20V20h-5.5z',
         },
         {
           label: 'Référentiels',
           href: `${base}/referentiels`,
-          disabled: true,
+          active: isActive(`${base}/referentiels`),
           iconPath: 'M4 6.5h16 M4 12h16 M4 17.5h16',
         },
         {

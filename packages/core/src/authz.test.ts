@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { MEMBERSHIP_ROLES, tenantAccessVerdict, totpRequiredForRole } from './authz.ts';
+import {
+  MEMBERSHIP_ROLES,
+  canManageControls,
+  tenantAccessVerdict,
+  totpRequiredForRole,
+} from './authz.ts';
 
 describe('totpRequiredForRole', () => {
   it('exige le TOTP pour owner, direction et rssi (§8.1)', () => {
@@ -38,5 +43,23 @@ describe('tenantAccessVerdict', () => {
     expect(tenantAccessVerdict({ membershipRole: 'lecteur', twoFactorEnabled: false })).toBe(
       'autorise',
     );
+  });
+});
+
+describe('canManageControls (RBAC module 5.2, S5)', () => {
+  it('autorise les rôles opérationnels de conformité', () => {
+    for (const role of ['owner', 'direction', 'rssi', 'resp_qualite', 'pilote', 'contributeur'] as const) {
+      expect(canManageControls(role)).toBe(true);
+    }
+  });
+
+  it('refuse le lecteur et l’auditeur (lecture seule, séparation auditeur/audité)', () => {
+    expect(canManageControls('lecteur')).toBe(false);
+    expect(canManageControls('auditeur')).toBe(false);
+  });
+
+  it('couvre exactement les 8 rôles connus', () => {
+    const managed = MEMBERSHIP_ROLES.filter(canManageControls);
+    expect(managed).toHaveLength(6);
   });
 });

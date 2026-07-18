@@ -18,24 +18,33 @@ export interface FrameworkSummary {
   source: 'builtin' | 'custom';
   isBuiltin: boolean;
   requirementCount: number;
+  /** Exigences dotées d'au moins un contrôle interne (couverture structurelle, pas conformité). */
+  mappedRequirementCount: number;
+  /** Contrôles internes distincts rattachés à une exigence de ce référentiel. */
   mappedControlCount: number;
+  /** Nombre de périmètres du tenant sur lesquels le référentiel est activé (0 = disponible). */
+  activatedScopeCount: number;
 }
 
-/** Catalogue des référentiels visibles du tenant (builtin + custom). */
-export async function listFrameworks(tx: TenantTx): Promise<FrameworkSummary[]> {
-  const rows = await tx.execute(sql`
-    SELECT
-      f.id, f.code, f.version, f.name, f.source,
-      (f.tenant_id IS NULL) AS is_builtin,
-      count(DISTINCT r.id) AS requirement_count,
-      count(DISTINCT cr.control_id) AS mapped_control_count
-    FROM frameworks f
-    LEFT JOIN requirements r ON r.framework_id = f.id
-    LEFT JOIN control_requirements cr ON cr.requirement_id = r.id
-    GROUP BY f.id, f.code, f.version, f.name, f.source, is_builtin
-    ORDER BY is_builtin DESC, f.code
-  `);
-  return (rows as unknown as RawFramework[]).map((r) => ({
+// Compteurs par sous-requête corrélée : évite le fan-out d'une jointure
+// multiple (requirements × control_requirements × scope_frameworks) qui
+// fausserait les DISTINCT. Toutes les tables jointes sont filtrées par la
+// RLS du tenant courant ; requirements/frameworks restent visibles builtin+tenant.
+const FRAMEWORK_COLUMNS = sql`
+  f.id, f.code, f.version, f.name, f.source,
+  (f.tenant_id IS NULL) AS is_builtin,
+  (SELECT count(*) FROM requirements r WHERE r.framework_id = f.id) AS requirement_count,
+  (SELECT count(*) FROM requirements r WHERE r.framework_id = f.id
+     AND EXISTS (SELECT 1 FROM control_requirements cr WHERE cr.requirement_id = r.id)
+  ) AS mapped_requirement_count,
+  (SELECT count(DISTINCT cr.control_id) FROM control_requirements cr
+     JOIN requirements r ON r.id = cr.requirement_id WHERE r.framework_id = f.id
+  ) AS mapped_control_count,
+  (SELECT count(*) FROM scope_frameworks sf WHERE sf.framework_id = f.id) AS activated_scope_count
+`;
+
+function toFrameworkSummary(r: RawFramework): FrameworkSummary {
+  return {
     id: r.id,
     code: r.code,
     version: r.version,
@@ -43,8 +52,31 @@ export async function listFrameworks(tx: TenantTx): Promise<FrameworkSummary[]> 
     source: r.source,
     isBuiltin: r.is_builtin,
     requirementCount: Number(r.requirement_count),
+    mappedRequirementCount: Number(r.mapped_requirement_count),
     mappedControlCount: Number(r.mapped_control_count),
-  }));
+    activatedScopeCount: Number(r.activated_scope_count),
+  };
+}
+
+/** Catalogue des référentiels visibles du tenant (builtin + custom), builtin d'abord. */
+export async function listFrameworks(tx: TenantTx): Promise<FrameworkSummary[]> {
+  const rows = await tx.execute(sql`
+    SELECT ${FRAMEWORK_COLUMNS}
+    FROM frameworks f
+    ORDER BY is_builtin DESC, f.code
+  `);
+  return (rows as unknown as RawFramework[]).map(toFrameworkSummary);
+}
+
+/** Un référentiel visible du tenant, ou null (id inconnu / hors tenant via RLS). */
+export async function getFramework(tx: TenantTx, frameworkId: string): Promise<FrameworkSummary | null> {
+  const rows = await tx.execute(sql`
+    SELECT ${FRAMEWORK_COLUMNS}
+    FROM frameworks f
+    WHERE f.id = ${frameworkId}
+  `);
+  const list = rows as unknown as RawFramework[];
+  return list.length > 0 ? toFrameworkSummary(list[0]!) : null;
 }
 
 interface RawFramework {
@@ -55,7 +87,37 @@ interface RawFramework {
   source: 'builtin' | 'custom';
   is_builtin: boolean;
   requirement_count: string | number;
+  mapped_requirement_count: string | number;
   mapped_control_count: string | number;
+  activated_scope_count: string | number;
+}
+
+export interface ScopeSummary {
+  id: string;
+  name: string;
+  kind: 'smsi' | 'qms' | 'mixte';
+}
+
+/** Périmètres de management du tenant (pour activer un référentiel). */
+export async function listScopes(tx: TenantTx): Promise<ScopeSummary[]> {
+  const rows = await tx
+    .select({ id: schema.scopes.id, name: schema.scopes.name, kind: schema.scopes.kind })
+    .from(schema.scopes)
+    .orderBy(schema.scopes.name);
+  return rows;
+}
+
+/** Active un référentiel sur un périmètre (idempotent). */
+export async function activateFrameworkOnScope(
+  tx: TenantTx,
+  tenantId: string,
+  scopeId: string,
+  frameworkId: string,
+): Promise<void> {
+  await tx
+    .insert(schema.scopeFrameworks)
+    .values({ tenantId, scopeId, frameworkId })
+    .onConflictDoNothing();
 }
 
 export interface RequirementNode {
@@ -106,6 +168,32 @@ interface RawRequirement {
   guidance_internal: string | null;
   sort_order: string | number;
   mapped_control_count: string | number;
+}
+
+export interface ControlLink {
+  requirementId: string;
+  controlId: string;
+}
+
+/**
+ * Liens contrôle ↔ exigence pour toutes les exigences d'un référentiel.
+ * Croisé côté UI avec listControls (qui porte frameworkCodes par contrôle),
+ * il alimente le « fil » de mutualisation et les badges par ligne d'exigence.
+ */
+export async function listControlLinks(
+  tx: TenantTx,
+  frameworkId: string,
+): Promise<ControlLink[]> {
+  const rows = await tx.execute(sql`
+    SELECT cr.requirement_id, cr.control_id
+    FROM control_requirements cr
+    JOIN requirements r ON r.id = cr.requirement_id
+    WHERE r.framework_id = ${frameworkId}
+  `);
+  return (rows as unknown as { requirement_id: string; control_id: string }[]).map((r) => ({
+    requirementId: r.requirement_id,
+    controlId: r.control_id,
+  }));
 }
 
 export interface ControlSummary {
@@ -249,9 +337,18 @@ interface RawCovered {
   other_controls_count: string | number;
 }
 
-/** Supprime un contrôle (ses mappings partent en cascade). */
-export async function deleteControl(tx: TenantTx, controlId: string): Promise<void> {
-  await tx.delete(schema.controls).where(eq(schema.controls.id, controlId));
+/**
+ * Supprime un contrôle (ses mappings partent en cascade). Renvoie le
+ * nombre de lignes réellement supprimées : 0 si l'id est inconnu ou
+ * appartient à un autre tenant (filtré par la RLS) — l'appelant distingue
+ * ainsi un vrai retrait d'un no-op silencieux.
+ */
+export async function deleteControl(tx: TenantTx, controlId: string): Promise<number> {
+  const deleted = await tx
+    .delete(schema.controls)
+    .where(eq(schema.controls.id, controlId))
+    .returning({ id: schema.controls.id });
+  return deleted.length;
 }
 
 export interface CreateCustomFrameworkInput {

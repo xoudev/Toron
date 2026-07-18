@@ -1,3 +1,5 @@
+import { ThemeToggle, Topbar } from '@toron/ui';
+
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 export const dynamic = 'force-dynamic';
@@ -47,11 +49,22 @@ export default async function TenantAccueilPage({
 
   return (
     <>
-      <h1 style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.01em' }}>Tableau de bord</h1>
-      <p style={{ color: 'var(--text-2)', fontSize: '12.5px', marginTop: 2 }}>
-        Phase M0 — fondations. Les indicateurs, la couverture par référentiel et le plan d’action
-        arrivent avec la phase MVP.
-      </p>
+      <Topbar crumbRoot={ctx.tenantName} crumbCurrent="Tableau de bord" actions={<ThemeToggle />} />
+      <main className="app-page">
+        <div className="page-head">
+          <div>
+            <h1>Tableau de bord</h1>
+            <p className="sub">Périmètre SMSI + QMS · 148 salariés · 3 sites</p>
+          </div>
+        </div>
+        <article className="card" style={{ padding: 16 }}>
+          <p style={{ color: 'var(--text-2)', fontSize: '12.5px' }}>
+            Le module <a href={`/t/${slug}/referentiels`}>Référentiels</a> est disponible : catalogue,
+            arbre d’exigences et cross-mapping. Les indicateurs du tableau de bord, la couverture
+            pondérée et le plan d’action arrivent dans les modules suivants de la phase MVP.
+          </p>
+        </article>
+      </main>
     </>
   );
 }

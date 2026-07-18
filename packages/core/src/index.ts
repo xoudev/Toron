@@ -13,6 +13,7 @@ export {
   MEMBERSHIP_ROLES,
   tenantAccessVerdict,
   totpRequiredForRole,
+  canManageControls,
   type MembershipRole,
   type TenantAccessVerdict,
 } from './authz.ts';

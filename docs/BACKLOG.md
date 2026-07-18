@@ -6,6 +6,31 @@ description courte, phase cible pressentie.
 
 ## Entrées
 
+- **2026-07-18 · e2e Playwright du parcours référentiels (5.2c)** — Connexion
+  Camille (resp_qualite) → catalogue → ouvrir ISO 27001 → sélectionner A.8.5 →
+  rattacher/retirer un contrôle → voir « mutualisé ». Vérifié manuellement en
+  Docker local ; l'infra Playwright + job CI reste à poser (transverse, PR
+  dédiée). Phase cible : MVP.
+- **2026-07-18 · Écran référentiels — éléments d'évaluation (module 5.3)** —
+  Les maquettes 01/02 montrent jauge de couverture %, écarts, statuts
+  Conforme/Écart/N-A, panneau SoA (justification d'inclusion/exclusion),
+  historique de statut, export Déclaration d'applicabilité, preuves +
+  fraîcheur, « Lancer une évaluation ». Volontairement non construits en 5.2c
+  (données absentes du socle). Phase cible : MVP (module 5.3).
+- **2026-07-18 · Confiance de X-Forwarded-For derrière proxy** — L'IP source
+  des entrées audit_log est validée (format) mais reste falsifiable tant que
+  le hop injecté par le reverse proxy (Caddy, ADR-9) n'est pas le seul retenu.
+  Fixer la stratégie « trusted proxy » au déploiement. Phase cible : MVP
+  (déploiement staging).
+- **2026-07-18 · Contraste AA des libellés mono en --text-3** — Les libellés
+  de section en mono MAJUSCULES (~9-10px) restent en --text-3 (contraste sous
+  AA). Les identifiants porteurs de données ont été passés en --text-2. Décider
+  si ces labels décoratifs doivent aussi être assombris (ou --text-3 relevé
+  globalement dans les tokens). Phase cible : V1 (passe accessibilité).
+- **2026-07-18 · Ajout d'exigences aux référentiels custom (UI)** — L'action
+  addCustomRequirementAction existe et est gardée (builtin immuable), mais
+  l'UI d'ajout d'exigence dans un référentiel custom n'est pas encore posée
+  (le référentiel custom se crée vide). Phase cible : MVP.
 - **2026-07-17 · Seed en staging sans superutilisateur** — Les seeds M0-6
   (builtins + tenant démo) supposent un rôle DDL avec BYPASSRLS implicite
   (superutilisateur local). Sur Postgres managé Scaleway, prévoir un rôle

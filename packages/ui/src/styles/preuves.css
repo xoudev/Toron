@@ -1,0 +1,97 @@
+/* Écran 08 — Coffre de preuves (module 5.7). Tokens uniquement. */
+
+.ev-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+.ev-table-wrap {
+  overflow-x: auto;
+}
+.ev-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.ev-table th {
+  text-align: left;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ev-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.ev-table tbody tr:hover {
+  background: var(--surface-2);
+}
+.ev-title-cell {
+  font-weight: 600;
+  cursor: pointer;
+}
+.ev-type {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.ev-hash {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* ── Fraîcheur ────────────────────────────────────────────────────────── */
+.fresh--expiree {
+  --fr: var(--danger);
+}
+.fresh--bientot {
+  --fr: var(--warn);
+}
+.fresh--fraiche {
+  --fr: var(--ok);
+}
+.fresh--permanente {
+  --fr: var(--text-3);
+}
+.fresh-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--fr, var(--text-2));
+  background: color-mix(in srgb, var(--fr, var(--border)) 13%, transparent);
+  white-space: nowrap;
+}
+.fresh-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.access-log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+  font-size: 12px;
+}
+.access-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-2);
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}

@@ -27,7 +27,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Plan d’action',
           href: `${base}/plan-action`,
-          disabled: true,
+          active: isActive(`${base}/plan-action`),
           iconPath: 'M12 4.4 20.4 19H3.6Z M12 10v4 M12 16.4v.2',
         },
       ],

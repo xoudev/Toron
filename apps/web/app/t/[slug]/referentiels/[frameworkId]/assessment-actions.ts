@@ -9,6 +9,7 @@ import {
 } from '@toron/core';
 import {
   closeAssessment,
+  createAction,
   createAssessment,
   createExport,
   getMutualizedPeers,
@@ -25,6 +26,60 @@ import { authorizeManager, isActionError, logFailure, type ActionResult } from '
 function revalidateDetail(slug: string, frameworkId: string) {
   revalidatePath(`/t/${slug}/referentiels/${frameworkId}`, 'page');
   revalidatePath(`/t/${slug}/referentiels`, 'layout');
+}
+
+/**
+ * CA §5.5 : convertir un écart d'évaluation en action corrective en 1 clic.
+ * L'action est pré-liée à sa campagne (origine) et à l'exigence concernée —
+ * la conversion ne perd jamais la traçabilité (RM §5.5).
+ */
+export async function createActionFromGapAction(
+  slug: string,
+  input: { assessmentId: string; requirementId: string; requirementRef: string; requirementTitle: string },
+): Promise<ActionResult<{ actionId: string }>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z
+    .object({
+      assessmentId: z.uuid(),
+      requirementId: z.uuid(),
+      requirementRef: z.string().trim().min(1).max(40),
+      requirementTitle: z.string().trim().min(1).max(300),
+    })
+    .safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: appError('SAISIE_INVALIDE', 'Écart invalide — rechargez la page et réessayez.') };
+  }
+  const d = parsed.data;
+  try {
+    const actionId = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const id = await createAction(tx, {
+        tenantId: auth.tenantId,
+        title: `Corriger l’écart — ${d.requirementRef} ${d.requirementTitle}`.slice(0, 200),
+        description: `Action corrective ouverte depuis l’évaluation pour l’exigence ${d.requirementRef}.`,
+        originType: 'assessment',
+        originId: d.assessmentId,
+        ownerUserId: auth.userId,
+        priority: 'p2',
+        links: [{ targetType: 'requirement', targetId: d.requirementId }],
+      });
+      await writeAuditEntry(tx, {
+        tenantId: auth.tenantId,
+        actorUserId: auth.userId,
+        action: 'action.create_from_gap',
+        objectType: 'action',
+        objectId: id,
+        after: { requirementRef: d.requirementRef, assessmentId: d.assessmentId },
+        ip: auth.ip,
+        userAgent: auth.userAgent,
+      });
+      return id;
+    });
+    revalidatePath(`/t/${slug}/plan-action`);
+    return { ok: true, data: { actionId } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_CREATION', 'La création de l’action a échoué — réessayez.')) };
+  }
 }
 
 export async function createAssessmentAction(

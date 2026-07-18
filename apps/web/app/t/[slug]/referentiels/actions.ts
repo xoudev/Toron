@@ -1,11 +1,6 @@
 'use server';
 
-import {
-  appError,
-  canManageControls,
-  type AppError,
-  type ControlDeleteImpact,
-} from '@toron/core';
+import { appError, type ControlDeleteImpact } from '@toron/core';
 import {
   activateFrameworkOnScope,
   addCustomRequirement,
@@ -19,88 +14,18 @@ import {
   withTenant,
   writeAuditEntry,
 } from '@toron/db';
-import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { appDb } from '@/lib/db';
-import { getTenantContext } from '@/lib/tenant-context-cache';
+import {
+  authorizeManager,
+  isActionError,
+  logFailure,
+  type ActionResult,
+} from '@/lib/action-guard';
 
-// Résultat uniforme des actions : jamais de stack au client (S4), message
-// utilisateur en français avec cause + correction.
-export type ActionResult<T = undefined> =
-  | { ok: true; data: T }
-  | { ok: false; error: AppError };
-
-interface Authorized {
-  tenantId: string;
-  userId: string;
-  ip?: string;
-  userAgent?: string;
-}
-
-/**
- * Garde commune : contexte tenant re-résolu côté serveur (le layout ne
- * protège pas les actions — points d'entrée distincts), puis RBAC. Le
- * tenantId provient TOUJOURS d'ici, jamais du formulaire (RLS WITH CHECK).
- */
-async function authorize(slug: string): Promise<Authorized | AppError> {
-  const ctx = await getTenantContext(slug);
-  if (ctx.verdict !== 'autorise') {
-    return appError(
-      'ACCES_REFUSE',
-      'Accès refusé — reconnectez-vous, puis réessayez depuis votre organisation.',
-    );
-  }
-  if (!canManageControls(ctx.role)) {
-    return appError(
-      'ROLE_INSUFFISANT',
-      'Votre rôle est en lecture seule sur les contrôles — demandez à un RSSI ou responsable qualité d’effectuer cette action.',
-    );
-  }
-  const h = await headers();
-  return {
-    tenantId: ctx.tenantId,
-    userId: ctx.userId,
-    ip: normalizeIp(h.get('x-forwarded-for')),
-    userAgent: h.get('user-agent') || undefined,
-  };
-}
-
-function isError(v: Authorized | AppError): v is AppError {
-  return 'code' in v;
-}
-
-/**
- * Normalise l'adresse source (en-tête proxy) : ne conserve que le premier
- * hop s'il est une adresse IP plausible, sinon `undefined`. Évite d'insérer
- * une valeur arbitraire ou invalide dans audit_log.ip (type inet) — qui,
- * mal formée, annulerait la transaction métier.
- */
-function normalizeIp(raw: string | null): string | undefined {
-  const first = raw?.split(',')[0]?.trim();
-  if (!first) return undefined;
-  const isIpv4 =
-    /^(\d{1,3}\.){3}\d{1,3}$/.test(first) && first.split('.').every((o) => Number(o) <= 255);
-  const isIpv6 = first.includes(':') && /^[0-9a-fA-F:.]+$/.test(first);
-  return isIpv4 || isIpv6 ? first : undefined;
-}
-
-/**
- * Journalise côté serveur l'échec d'une action, corrélé par correlationId
- * (celui renvoyé au client) — sans PII, secret ni contenu de preuve (§13).
- * Le support peut relier un correlationId utilisateur à une trace serveur.
- */
-function logFailure(err: unknown, error: AppError): AppError {
-  // Chaîne de format littérale + données en objet : pas d'interpolation de
-  // variable dans le format (aucune forge de log possible). Sans PII/secret.
-  console.error('[toron] échec d’action', {
-    correlationId: error.correlationId,
-    code: error.code,
-    cause: err instanceof Error ? err.message : String(err),
-  });
-  return error;
-}
+export type { ActionResult };
 
 const UuidSchema = z.object({ controlId: z.uuid(), requirementId: z.uuid() });
 
@@ -108,8 +33,8 @@ export async function createControlAction(
   slug: string,
   input: { title: string; description?: string; requirementId?: string },
 ): Promise<ActionResult<{ controlId: string }>> {
-  const auth = await authorize(slug);
-  if (isError(auth)) return { ok: false, error: auth };
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
 
   const parsed = z
     .object({
@@ -161,8 +86,8 @@ export async function mapControlAction(
   slug: string,
   input: { controlId: string; requirementId: string },
 ): Promise<ActionResult> {
-  const auth = await authorize(slug);
-  if (isError(auth)) return { ok: false, error: auth };
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = UuidSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: appError('SAISIE_INVALIDE', 'Références invalides — rechargez la page et réessayez.') };
@@ -195,8 +120,8 @@ export async function unmapControlAction(
   slug: string,
   input: { controlId: string; requirementId: string },
 ): Promise<ActionResult> {
-  const auth = await authorize(slug);
-  if (isError(auth)) return { ok: false, error: auth };
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = UuidSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: appError('SAISIE_INVALIDE', 'Références invalides — rechargez la page et réessayez.') };
@@ -230,8 +155,8 @@ export async function getControlDeleteImpactAction(
   slug: string,
   controlId: string,
 ): Promise<ActionResult<ControlDeleteImpact>> {
-  const auth = await authorize(slug);
-  if (isError(auth)) return { ok: false, error: auth };
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.uuid().safeParse(controlId);
   if (!parsed.success) {
     return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence de contrôle invalide.') };
@@ -253,8 +178,8 @@ export async function deleteControlAction(
   slug: string,
   input: { controlId: string; confirmed: boolean },
 ): Promise<ActionResult> {
-  const auth = await authorize(slug);
-  if (isError(auth)) return { ok: false, error: auth };
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z
     .object({ controlId: z.uuid(), confirmed: z.boolean() })
     .safeParse(input);
@@ -307,8 +232,8 @@ export async function activateFrameworkAction(
   slug: string,
   input: { frameworkId: string; scopeId: string },
 ): Promise<ActionResult> {
-  const auth = await authorize(slug);
-  if (isError(auth)) return { ok: false, error: auth };
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z
     .object({ frameworkId: z.uuid(), scopeId: z.uuid() })
     .safeParse(input);
@@ -343,8 +268,8 @@ export async function createCustomFrameworkAction(
   slug: string,
   input: { code: string; version: string; name: string },
 ): Promise<ActionResult<{ frameworkId: string }>> {
-  const auth = await authorize(slug);
-  if (isError(auth)) return { ok: false, error: auth };
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z
     .object({
       code: z.string().trim().min(1).max(40).regex(/^[a-z0-9_]+$/, 'minuscules, chiffres et _ uniquement'),
@@ -392,8 +317,8 @@ export async function addCustomRequirementAction(
   slug: string,
   input: { frameworkId: string; ref: string; title: string; guidance?: string },
 ): Promise<ActionResult<{ requirementId: string }>> {
-  const auth = await authorize(slug);
-  if (isError(auth)) return { ok: false, error: auth };
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z
     .object({
       frameworkId: z.uuid(),

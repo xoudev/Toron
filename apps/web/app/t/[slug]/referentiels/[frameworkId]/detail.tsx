@@ -1,7 +1,15 @@
 'use client';
 
-import type { ControlDeleteImpact } from '@toron/core';
-import type { ControlLink, ControlSummary, FrameworkSummary, RequirementNode } from '@toron/db';
+import { scoreAssessment, type AssessmentItemStatus, type ControlDeleteImpact } from '@toron/core';
+import type {
+  AssessmentItemRow,
+  AssessmentSummary,
+  ControlLink,
+  ControlSummary,
+  FrameworkSummary,
+  RequirementNode,
+  ScopeSummary,
+} from '@toron/db';
 import { Dialog } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
@@ -13,6 +21,18 @@ import {
   mapControlAction,
   unmapControlAction,
 } from '../actions';
+import { EvaluationPanel } from './evaluation-panel';
+import { CampaignBar } from './campaign-bar';
+
+const ASSESSMENT_STATUS_LABEL: Record<AssessmentItemStatus, string> = {
+  conforme: 'Conforme',
+  ecart: 'Écart',
+  non_applicable: 'Non applicable',
+  a_evaluer: 'À évaluer',
+};
+export function assessmentStatusLabel(status: AssessmentItemStatus): string {
+  return ASSESSMENT_STATUS_LABEL[status];
+}
 
 const FRAMEWORK_BADGE: Record<string, string> = {
   recyf: 'NIS 2',
@@ -46,9 +66,29 @@ interface Props {
   tree: RequirementNode[];
   controls: ControlSummary[];
   links: ControlLink[];
+  scopes: ScopeSummary[];
+  assessments: AssessmentSummary[];
+  activeCampaign: AssessmentSummary | null;
+  items: AssessmentItemRow[];
 }
 
-export function ReferentielDetail({ slug, canManage, framework, tree, controls, links }: Props) {
+export function ReferentielDetail({
+  slug,
+  canManage,
+  framework,
+  tree,
+  controls,
+  links,
+  scopes,
+  assessments,
+  activeCampaign,
+  items,
+}: Props) {
+  const itemsByReq = useMemo(
+    () => new Map(items.map((i) => [i.requirementId, i])),
+    [items],
+  );
+  const score = useMemo(() => (activeCampaign ? scoreAssessment(items) : null), [activeCampaign, items]);
   const roots = useMemo(() => tree.filter((n) => n.parentId === null), [tree]);
   const childrenByParent = useMemo(() => {
     const m = new Map<string, RequirementNode[]>();
@@ -130,6 +170,16 @@ export function ReferentielDetail({ slug, canManage, framework, tree, controls, 
         </div>
       </div>
 
+      <CampaignBar
+        slug={slug}
+        canManage={canManage}
+        frameworkId={framework.id}
+        scopes={scopes}
+        assessments={assessments}
+        activeCampaign={activeCampaign}
+        score={score}
+      />
+
       <div className={`detail-layout ${selectedReq ? '' : 'no-panel'}`}>
         {/* ─── Arbre (maître) ─── */}
         <div className="tree">
@@ -188,6 +238,7 @@ export function ReferentielDetail({ slug, canManage, framework, tree, controls, 
               const linkedIds = linkedByReq.get(r.id) ?? [];
               const others = otherFrameworks(r.id);
               const mutualized = others.length > 0;
+              const item = itemsByReq.get(r.id);
               return (
                 <button
                   key={r.id}
@@ -200,8 +251,13 @@ export function ReferentielDetail({ slug, canManage, framework, tree, controls, 
                   <span className="req-row-id">{r.ref}</span>
                   <span className="req-row-body">
                     <span className="req-row-title">{r.title}</span>
-                    {(linkedIds.length > 0 || mutualized) ? (
+                    {(linkedIds.length > 0 || mutualized || item) ? (
                       <span className="req-row-tags">
+                        {item ? (
+                          <span className={`status-pill status-pill--${item.status}`}>
+                            {assessmentStatusLabel(item.status)}
+                          </span>
+                        ) : null}
                         {linkedIds.slice(0, 2).map((cid) => (
                           <span className="control-chip" key={cid}>
                             {truncate(controlsById.get(cid)?.title ?? '—', 26)}
@@ -238,11 +294,14 @@ export function ReferentielDetail({ slug, canManage, framework, tree, controls, 
           <RequirementPanel
             slug={slug}
             canManage={canManage}
+            frameworkId={framework.id}
             requirement={selectedReq}
             linkedControlIds={linkedByReq.get(selectedReq.id) ?? []}
             controls={controls}
             controlsById={controlsById}
             otherFrameworks={otherFrameworks(selectedReq.id)}
+            activeCampaign={activeCampaign}
+            item={itemsByReq.get(selectedReq.id) ?? null}
             onClose={() => setSelectedReqId(null)}
           />
         ) : null}
@@ -254,20 +313,26 @@ export function ReferentielDetail({ slug, canManage, framework, tree, controls, 
 function RequirementPanel({
   slug,
   canManage,
+  frameworkId,
   requirement,
   linkedControlIds,
   controls,
   controlsById,
   otherFrameworks,
+  activeCampaign,
+  item,
   onClose,
 }: {
   slug: string;
   canManage: boolean;
+  frameworkId: string;
   requirement: RequirementNode;
   linkedControlIds: string[];
   controls: ControlSummary[];
   controlsById: Map<string, ControlSummary>;
   otherFrameworks: string[];
+  activeCampaign: AssessmentSummary | null;
+  item: AssessmentItemRow | null;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -303,6 +368,32 @@ function RequirementPanel({
           </svg>
         </button>
       </div>
+
+      {activeCampaign && activeCampaign.status === 'en_cours' ? (
+        <EvaluationPanel
+          slug={slug}
+          canManage={canManage}
+          frameworkId={frameworkId}
+          assessmentId={activeCampaign.id}
+          requirement={requirement}
+          item={item}
+        />
+      ) : activeCampaign && item ? (
+        <div className="panel-section">
+          <div className="panel-section-label">Évaluation ({activeCampaign.campaignLabel})</div>
+          <span className={`status-pill status-pill--${item.status}`}>
+            {assessmentStatusLabel(item.status)}
+          </span>
+          {item.soaJustification ? (
+            <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-2)' }}>
+              Justification&nbsp;: {item.soaJustification}
+            </p>
+          ) : null}
+          <p style={{ marginTop: 6, fontSize: 11, color: 'var(--text-3)' }}>
+            Campagne clôturée — statut figé.
+          </p>
+        </div>
+      ) : null}
 
       {otherFrameworks.length > 0 ? (
         <div className="panel-section">

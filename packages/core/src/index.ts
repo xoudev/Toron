@@ -15,10 +15,13 @@ export {
   scoreAssessment,
   soaJustificationRequired,
   isSoaItemValid,
+  suggestInheritedStatuses,
   type AssessmentItemStatus,
   type StatusCounts,
   type CoverageScore,
   type SoaItemInput,
+  type MutualizedPeer,
+  type StatusSuggestion,
 } from './assessments.ts';
 export {
   MEMBERSHIP_ROLES,

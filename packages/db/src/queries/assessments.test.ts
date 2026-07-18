@@ -13,6 +13,7 @@ import {
   closeAssessment,
   createAssessment,
   getAssessmentItems,
+  getMutualizedPeers,
   listAssessments,
   setAssessmentItemStatus,
 } from './assessments.ts';
@@ -191,6 +192,23 @@ describe('cycle de vie des campagnes', () => {
     expect(result.closed).toBe(1);
     expect(result.status).toBe('cloturee');
     expect(result.itemCount).toBe(118);
+  });
+});
+
+describe('pairs mutualisés (suggestion d’héritage)', () => {
+  it('A.8.5 (ISO) a pour pair OBJ-08 (ReCyF) via le contrôle MFA de la démo', async () => {
+    const peers = await withTenant(app.db, T, async (tx) => {
+      const [a85] = await tx
+        .select({ id: schema.requirements.id })
+        .from(schema.requirements)
+        .where(eq(schema.requirements.refId, 'A.8.5'));
+      return getMutualizedPeers(tx, a85!.id);
+    });
+    const nis = peers.find((p) => p.frameworkCode === 'recyf');
+    expect(nis?.requirementRef).toBe('OBJ-08');
+    expect(nis?.viaControlTitle).toContain('MFA');
+    // Aucun pair du même référentiel (ISO) — uniquement les autres.
+    expect(peers.every((p) => p.frameworkCode !== 'iso27001')).toBe(true);
   });
 });
 

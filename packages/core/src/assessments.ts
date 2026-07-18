@@ -75,3 +75,57 @@ export function isSoaItemValid(input: SoaItemInput): boolean {
   if (!soaJustificationRequired(input.status)) return true;
   return typeof input.soaJustification === 'string' && input.soaJustification.trim().length > 0;
 }
+
+/**
+ * Une exigence d'un AUTRE référentiel, couverte par le même contrôle que
+ * l'exigence source, et son statut actuel dans sa propre campagne (null si
+ * aucune campagne ne la porte).
+ */
+export interface MutualizedPeer {
+  requirementId: string;
+  requirementRef: string;
+  frameworkCode: string;
+  frameworkName: string;
+  viaControlTitle: string;
+  currentStatus: AssessmentItemStatus | null;
+}
+
+export interface StatusSuggestion {
+  requirementId: string;
+  requirementRef: string;
+  frameworkCode: string;
+  frameworkName: string;
+  suggestedStatus: AssessmentItemStatus;
+  /** Traçabilité affichée à l'humain qui valide (RM §5.3, décision 2026-07-18). */
+  reason: string;
+}
+
+/**
+ * Héritage de statut via un contrôle mutualisé (RM §5.3) — en SUGGESTION,
+ * jamais en propagation automatique : « Prouvez une fois. Couvrez tout. »
+ * mais l'humain valide (auditable > magique).
+ *
+ * Ne suggère que lorsque la source est CONFORME (le contrôle satisfait
+ * réellement l'exigence). N'écrase jamais une exclusion (non applicable) ni
+ * un statut déjà conforme du pair. La traçabilité pointe vers l'exigence
+ * source et le contrôle partagé.
+ */
+export function suggestInheritedStatuses(
+  source: { status: AssessmentItemStatus; requirementRef: string },
+  peers: readonly MutualizedPeer[],
+): StatusSuggestion[] {
+  if (source.status !== 'conforme') return [];
+  const suggestions: StatusSuggestion[] = [];
+  for (const peer of peers) {
+    if (peer.currentStatus === 'conforme' || peer.currentStatus === 'non_applicable') continue;
+    suggestions.push({
+      requirementId: peer.requirementId,
+      requirementRef: peer.requirementRef,
+      frameworkCode: peer.frameworkCode,
+      frameworkName: peer.frameworkName,
+      suggestedStatus: 'conforme',
+      reason: `Couvert par le contrôle « ${peer.viaControlTitle} », déjà conforme pour ${source.requirementRef}.`,
+    });
+  }
+  return suggestions;
+}

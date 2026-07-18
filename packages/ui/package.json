@@ -12,7 +12,8 @@
     "./plan-action.css": "./src/styles/plan-action.css",
     "./documents.css": "./src/styles/documents.css",
     "./preuves.css": "./src/styles/preuves.css",
-    "./dashboard.css": "./src/styles/dashboard.css"
+    "./dashboard.css": "./src/styles/dashboard.css",
+    "./actifs.css": "./src/styles/actifs.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

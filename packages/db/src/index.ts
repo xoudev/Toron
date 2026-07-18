@@ -57,3 +57,22 @@ export {
   type ExportSummary,
   type VerifiedExport,
 } from './queries/exports.ts';
+export {
+  getActiveScale,
+  ensureDefaultScale,
+  createRisk,
+  updateRiskRating,
+  updateRiskDetails,
+  listRisks,
+  acceptRisk,
+  linkRiskControl,
+  unlinkRiskControl,
+  listRiskHistory,
+  type StoredScale,
+  type CreateRiskInput,
+  type UpdateRiskRatingInput,
+  type UpdateRiskDetailsInput,
+  type RiskSummary,
+  type AcceptRiskInput,
+  type RiskHistoryRow,
+} from './queries/risks.ts';

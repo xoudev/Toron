@@ -1,4 +1,5 @@
 import { hash } from '@node-rs/argon2';
+import { defaultRiskScale, riskBand, type RiskBand } from '@toron/core';
 import { iso27001, recyf } from '@toron/frameworks';
 import postgres from 'postgres';
 
@@ -24,6 +25,11 @@ export const DEMO = {
   controlInventaire: 'd0000000-0000-4000-8000-000000000041',
   controlMfa: 'd0000000-0000-4000-8000-000000000042',
   controlSauvegardes: 'd0000000-0000-4000-8000-000000000043',
+  riskRancongiciel: 'd0000000-0000-4000-8000-000000000051',
+  riskCompteDistant: 'd0000000-0000-4000-8000-000000000052',
+  riskEntrepot: 'd0000000-0000-4000-8000-000000000053',
+  riskObsolescence: 'd0000000-0000-4000-8000-000000000054',
+  riskInventaire: 'd0000000-0000-4000-8000-000000000055',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -289,6 +295,151 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
           JOIN frameworks f ON f.id = r.framework_id
           WHERE f.tenant_id IS NULL AND f.code = ${code} AND r.ref_id = ${ref}
           ON CONFLICT DO NOTHING`;
+      }
+    }
+
+    // ── Module 5.4 : registre de risques du tenant démo ─────────────────
+    // Échelle 4×4 par défaut (version 1), puis quelques risques réalistes
+    // couvrant les états d'acceptation (à réduire, transféré, accepté signé,
+    // acceptation en attente). Cotations liées aux contrôles mutualisés.
+    const scale = defaultRiskScale();
+    await sql`
+      INSERT INTO risk_scales (tenant_id, version, size, g_labels, v_labels, bands)
+      VALUES (${DEMO.tenantId}, 1, ${scale.size},
+              ${JSON.stringify(scale.gLabels)}::jsonb,
+              ${JSON.stringify(scale.vLabels)}::jsonb,
+              ${JSON.stringify(scale.bands)}::jsonb)
+      ON CONFLICT ON CONSTRAINT risk_scales_tenant_version_unique DO NOTHING`;
+
+    const band = (g: number, v: number): RiskBand => {
+      const b = riskBand(g, v, scale);
+      if (b === null) throw new Error(`Seed démo : cotation (${g},${v}) hors échelle.`);
+      return b;
+    };
+
+    const risks = [
+      {
+        id: DEMO.riskRancongiciel,
+        title: 'Rançongiciel paralysant le SI logistique',
+        businessValue: 'Continuité des expéditions et de la facturation',
+        scenario:
+          'Chiffrement des serveurs applicatifs via une pièce jointe piégée, arrêt des expéditions multi-sites.',
+        gg: 4,
+        gv: 3,
+        ng: 3,
+        nv: 2,
+        treatment: 'reduire',
+        residualTarget: 'moyen',
+        owner: DEMO.userClaire,
+        nextReview: '2026-12-15',
+        controls: [DEMO.controlSauvegardes, DEMO.controlMfa],
+      },
+      {
+        id: DEMO.riskCompteDistant,
+        title: 'Compromission d’un compte à privilèges par accès distant',
+        businessValue: 'Confidentialité et intégrité du SI',
+        scenario:
+          'Vol d’identifiants d’un administrateur nomade, connexion VPN illégitime sans second facteur.',
+        gg: 4,
+        gv: 3,
+        ng: 2,
+        nv: 2,
+        treatment: 'reduire',
+        residualTarget: 'faible',
+        owner: DEMO.userClaire,
+        nextReview: '2026-11-30',
+        controls: [DEMO.controlMfa],
+      },
+      {
+        id: DEMO.riskEntrepot,
+        title: 'Indisponibilité prolongée de l’entrepôt de Meyzieu',
+        businessValue: 'Capacité de stockage et de préparation régionale',
+        scenario: 'Sinistre (incendie, dégât des eaux) rendant l’entrepôt régional inexploitable.',
+        gg: 4,
+        gv: 2,
+        ng: 3,
+        nv: 2,
+        treatment: 'transferer',
+        residualTarget: 'moyen',
+        owner: DEMO.userAntoine,
+        nextReview: '2027-01-31',
+        controls: [],
+      },
+      {
+        id: DEMO.riskObsolescence,
+        title: 'Obsolescence d’une application de suivi secondaire',
+        businessValue: 'Reporting logistique non critique',
+        scenario:
+          'Application interne sans maintenance éditeur ; risque résiduel formellement accepté par la direction.',
+        gg: 3,
+        gv: 2,
+        ng: 2,
+        nv: 2,
+        treatment: 'accepter',
+        residualTarget: 'moyen',
+        owner: DEMO.userClaire,
+        nextReview: '2027-06-30',
+        controls: [],
+        acceptance: {
+          by: DEMO.userAntoine,
+          rationale:
+            'Impact limité au reporting non critique ; remplacement planifié au prochain exercice. Acceptation revue à mi-parcours.',
+          expiresAt: '2027-06-30',
+        },
+      },
+      {
+        id: DEMO.riskInventaire,
+        title: 'Inventaire des actifs SI incomplet sur l’agence de Vitrolles',
+        businessValue: 'Maîtrise du périmètre technique',
+        scenario:
+          'Actifs de l’agence sud non recensés ; décision d’accepter temporairement en attendant la campagne d’inventaire.',
+        gg: 3,
+        gv: 3,
+        ng: 3,
+        nv: 2,
+        treatment: 'accepter',
+        residualTarget: 'moyen',
+        owner: DEMO.userClaire,
+        nextReview: '2026-10-31',
+        controls: [DEMO.controlInventaire],
+        // Pas d'acceptation signée : illustre « acceptation en attente » (RM §5.4).
+      },
+    ] as const;
+
+    for (const r of risks) {
+      await sql`
+        INSERT INTO risks
+          (id, tenant_id, scope_id, title, business_value, scenario, source,
+           gross_g, gross_v, net_g, net_v, treatment, residual_target, owner_user_id, next_review)
+        VALUES
+          (${r.id}, ${DEMO.tenantId}, ${DEMO.scopeSmsi}, ${r.title}, ${r.businessValue},
+           ${r.scenario}, 'manual', ${r.gg}, ${r.gv}, ${r.ng}, ${r.nv}, ${r.treatment},
+           ${r.residualTarget}, ${r.owner}, ${r.nextReview})
+        ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, scenario = EXCLUDED.scenario,
+          gross_g = EXCLUDED.gross_g, gross_v = EXCLUDED.gross_v,
+          net_g = EXCLUDED.net_g, net_v = EXCLUDED.net_v, treatment = EXCLUDED.treatment`;
+
+      // Instantané d'historique initial (idempotent : un seul par risque au seed).
+      await sql`
+        INSERT INTO risk_history
+          (tenant_id, risk_id, gross_g, gross_v, gross_band, net_g, net_v, net_band, scale_version, rated_by)
+        SELECT ${DEMO.tenantId}, ${r.id}, ${r.gg}, ${r.gv}, ${band(r.gg, r.gv)},
+               ${r.ng}, ${r.nv}, ${band(r.ng, r.nv)}, 1, ${r.owner}
+        WHERE NOT EXISTS (SELECT 1 FROM risk_history WHERE risk_id = ${r.id})`;
+
+      for (const controlId of r.controls) {
+        await sql`
+          INSERT INTO risk_controls (risk_id, control_id, tenant_id)
+          VALUES (${r.id}, ${controlId}, ${DEMO.tenantId})
+          ON CONFLICT DO NOTHING`;
+      }
+
+      if ('acceptance' in r && r.acceptance) {
+        await sql`
+          INSERT INTO risk_acceptances (tenant_id, risk_id, accepted_by_user, rationale, expires_at)
+          SELECT ${DEMO.tenantId}, ${r.id}, ${r.acceptance.by}, ${r.acceptance.rationale},
+                 ${r.acceptance.expiresAt}
+          WHERE NOT EXISTS (SELECT 1 FROM risk_acceptances WHERE risk_id = ${r.id})`;
       }
     }
   } finally {

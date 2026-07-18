@@ -92,10 +92,13 @@ function normalizeIp(raw: string | null): string | undefined {
  * Le support peut relier un correlationId utilisateur à une trace serveur.
  */
 function logFailure(err: unknown, error: AppError): AppError {
-  console.error(
-    `[${error.correlationId}] ${error.code}`,
-    err instanceof Error ? err.message : String(err),
-  );
+  // Chaîne de format littérale + données en objet : pas d'interpolation de
+  // variable dans le format (aucune forge de log possible). Sans PII/secret.
+  console.error('[toron] échec d’action', {
+    correlationId: error.correlationId,
+    code: error.code,
+    cause: err instanceof Error ? err.message : String(err),
+  });
   return error;
 }
 

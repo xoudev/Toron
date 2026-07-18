@@ -1,12 +1,17 @@
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { eq } from 'drizzle-orm';
+import { eq, sql as dsql } from 'drizzle-orm';
 import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createDb, type DbHandle } from './client.ts';
 import { applyMigrations } from './migrate.ts';
 import * as schema from './schema/index.ts';
-import { DEMO, seedDemoTenant, seedRecyfFramework } from './seed.ts';
+import {
+  DEMO,
+  seedDemoTenant,
+  seedIso27001Framework,
+  seedRecyfFramework,
+} from './seed.ts';
 import { withTenant } from './tenant.ts';
 
 /** Seeds M0-6 : ReCyF complet + tenant démo, idempotents, visibles côté rôle applicatif. */
@@ -22,9 +27,11 @@ beforeAll(async () => {
   const uri = container.getConnectionUri();
   await applyMigrations(uri);
   await seedRecyfFramework(uri);
+  await seedIso27001Framework(uri);
   await seedDemoTenant(uri);
   // Seconde exécution : les seeds doivent être idempotents.
   await seedRecyfFramework(uri);
+  await seedIso27001Framework(uri);
   await seedDemoTenant(uri);
 
   admin = postgres(uri, { max: 1, onnotice: () => {} });
@@ -88,18 +95,24 @@ describe('tenant démo Meridiane Logistics', () => {
     ]);
   });
 
-  it('mappe les 3 contrôles internes sur les objectifs ReCyF réels', async () => {
+  it('mappe les 3 contrôles internes à la fois sur ReCyF et sur ISO 27001', async () => {
     const links = await withTenant(app.db, DEMO.tenantId, (tx) =>
       tx
-        .select({ ref: schema.requirements.refId, title: schema.controls.title })
+        .select({ ref: schema.requirements.refId })
         .from(schema.controlRequirements)
-        .innerJoin(schema.controls, eq(schema.controls.id, schema.controlRequirements.controlId))
         .innerJoin(
           schema.requirements,
           eq(schema.requirements.id, schema.controlRequirements.requirementId),
         ),
     );
-    expect(links.map((l) => l.ref).sort()).toEqual(['OBJ-01', 'OBJ-08', 'OBJ-13']);
+    expect(links.map((l) => l.ref).sort()).toEqual([
+      'A.5.9',
+      'A.8.13',
+      'A.8.5',
+      'OBJ-01',
+      'OBJ-08',
+      'OBJ-13',
+    ]);
   });
 
   it('crée des comptes de connexion Better Auth (argon2id) pour les 3 utilisateurs', async () => {
@@ -118,6 +131,53 @@ describe('tenant démo Meridiane Logistics', () => {
       INSERT INTO tenants (name, slug) VALUES ('Autre PME', 'autre-pme') RETURNING id`;
     const rows = await withTenant(app.db, (other as { id: string }).id, (tx) =>
       tx.select().from(schema.controls),
+    );
+    expect(rows).toHaveLength(0);
+  });
+});
+
+describe('seed ISO/IEC 27001:2022', () => {
+  it('charge les clauses 4-10 et les 93 contrôles de l’Annexe A', async () => {
+    const [counts] = await admin`
+      SELECT
+        count(*) FILTER (WHERE r.ref_id ~ '^A\\.[5-8]\\.[0-9]+$') AS controles_annexe_a,
+        count(*) FILTER (WHERE r.ref_id ~ '^(4|5|6|7|8|9|10)$') AS clauses_racines
+      FROM requirements r
+      JOIN frameworks f ON f.id = r.framework_id
+      WHERE f.code = 'iso27001' AND f.tenant_id IS NULL`;
+    expect(Number((counts as { controles_annexe_a: string }).controles_annexe_a)).toBe(93);
+    expect(Number((counts as { clauses_racines: string }).clauses_racines)).toBe(7);
+  });
+
+  it('rattache chaque contrôle Annexe A à son thème parent (A.5.19 → A.5)', async () => {
+    const [row] = await admin`
+      SELECT p.ref_id AS theme
+      FROM requirements r
+      JOIN requirements p ON p.id = r.parent_id
+      JOIN frameworks f ON f.id = r.framework_id
+      WHERE f.code = 'iso27001' AND f.tenant_id IS NULL AND r.ref_id = 'A.5.19'`;
+    expect((row as { theme: string }).theme).toBe('A.5');
+  });
+});
+
+describe('mutualisation (le cœur du produit, P1)', () => {
+  it('les 3 contrôles couvrent 2 référentiels et remontent dans mutualized_controls', async () => {
+    const rows = await withTenant(app.db, DEMO.tenantId, (tx) =>
+      tx.execute(
+        dsql`SELECT control_id, framework_count FROM mutualized_controls ORDER BY control_id`,
+      ),
+    );
+    expect(rows).toHaveLength(3);
+    for (const row of rows as unknown as { framework_count: number }[]) {
+      expect(Number(row.framework_count)).toBe(2);
+    }
+  });
+
+  it('la vue reste isolée : un autre tenant ne voit aucune mutualisation', async () => {
+    const [other] = await admin`
+      INSERT INTO tenants (name, slug) VALUES ('Tiers sans lien', 'tiers-sans-lien') RETURNING id`;
+    const rows = await withTenant(app.db, (other as { id: string }).id, (tx) =>
+      tx.execute(dsql`SELECT control_id FROM mutualized_controls`),
     );
     expect(rows).toHaveLength(0);
   });

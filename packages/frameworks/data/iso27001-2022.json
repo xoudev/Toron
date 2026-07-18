@@ -1,0 +1,202 @@
+{
+  "code": "iso27001",
+  "version": "2022",
+  "name": "ISO/IEC 27001:2022",
+  "publishedAt": "2022-10-25",
+  "sourceNote": "Structure et identifiants de clauses issus de la norme ISO/IEC 27001:2022 (faits publics). Les intitulés et guidances sont des REFORMULATIONS MAISON — jamais le texte normatif, protégé par le droit d'auteur AFNOR/ISO (P4, PLAN §12). Revue juridique AFNOR requise avant toute diffusion externe d'un livrable citant ces contenus.",
+  "clauses": [
+    {
+      "ref": "4",
+      "title": "Contexte de l'organisme",
+      "guidance": "Cerner l'organisme, son environnement et les attentes des parties intéressées, puis fixer le périmètre du système de management de la sécurité (SMSI).",
+      "children": [
+        { "ref": "4.1", "title": "Enjeux internes et externes", "guidance": "Identifier les enjeux qui influent sur la capacité du SMSI à atteindre ses résultats." },
+        { "ref": "4.2", "title": "Besoins et attentes des parties intéressées", "guidance": "Recenser les parties intéressées pertinentes et leurs exigences applicables à la sécurité." },
+        { "ref": "4.3", "title": "Détermination du périmètre du SMSI", "guidance": "Définir les limites et l'applicabilité du SMSI en tenant compte des enjeux, des exigences et des interfaces." },
+        { "ref": "4.4", "title": "Le système de management de la sécurité", "guidance": "Établir, mettre en œuvre, tenir à jour et améliorer en continu le SMSI et ses processus." }
+      ]
+    },
+    {
+      "ref": "5",
+      "title": "Leadership",
+      "guidance": "Engagement de la direction, politique de sécurité et attribution claire des rôles et responsabilités.",
+      "children": [
+        { "ref": "5.1", "title": "Leadership et engagement de la direction", "guidance": "La direction démontre son implication et intègre les exigences du SMSI aux processus de l'organisme." },
+        { "ref": "5.2", "title": "Politique de sécurité de l'information", "guidance": "Établir une politique adaptée, diffusée, et servant de cadre aux objectifs de sécurité." },
+        { "ref": "5.3", "title": "Rôles, responsabilités et autorités", "guidance": "Attribuer et communiquer les responsabilités et autorités relatives au SMSI." }
+      ]
+    },
+    {
+      "ref": "6",
+      "title": "Planification",
+      "guidance": "Traiter risques et opportunités, apprécier et traiter les risques de sécurité, fixer des objectifs mesurables et planifier les changements.",
+      "children": [
+        { "ref": "6.1.1", "title": "Actions face aux risques et opportunités — généralités", "guidance": "Déterminer les risques et opportunités à traiter pour garantir les résultats attendus du SMSI." },
+        { "ref": "6.1.2", "title": "Appréciation des risques de sécurité", "guidance": "Définir et appliquer un processus d'appréciation reproductible produisant des résultats comparables." },
+        { "ref": "6.1.3", "title": "Traitement des risques de sécurité", "guidance": "Choisir les options de traitement, déterminer les mesures nécessaires et produire la Déclaration d'applicabilité." },
+        { "ref": "6.2", "title": "Objectifs de sécurité et planification", "guidance": "Fixer des objectifs cohérents avec la politique, mesurables, suivis et planifiés (qui, quoi, quand)." },
+        { "ref": "6.3", "title": "Planification des changements", "guidance": "Conduire de façon planifiée toute modification du SMSI." }
+      ]
+    },
+    {
+      "ref": "7",
+      "title": "Support",
+      "guidance": "Ressources, compétences, sensibilisation, communication et maîtrise des informations documentées.",
+      "children": [
+        { "ref": "7.1", "title": "Ressources", "guidance": "Fournir les ressources nécessaires au SMSI." },
+        { "ref": "7.2", "title": "Compétences", "guidance": "Garantir la compétence des personnes dont le travail influe sur la performance de sécurité." },
+        { "ref": "7.3", "title": "Sensibilisation", "guidance": "Les personnes connaissent la politique, leur contribution et les conséquences d'un manquement." },
+        { "ref": "7.4", "title": "Communication", "guidance": "Déterminer les communications internes et externes pertinentes pour le SMSI." },
+        { "ref": "7.5", "title": "Informations documentées", "guidance": "Créer, mettre à jour et maîtriser les informations documentées exigées par le SMSI." }
+      ]
+    },
+    {
+      "ref": "8",
+      "title": "Fonctionnement",
+      "guidance": "Mettre en œuvre les processus opérationnels et exécuter appréciation et traitement des risques.",
+      "children": [
+        { "ref": "8.1", "title": "Planification et maîtrise opérationnelles", "guidance": "Planifier, mettre en œuvre et maîtriser les processus nécessaires, y compris ceux externalisés." },
+        { "ref": "8.2", "title": "Appréciation des risques (opérationnelle)", "guidance": "Réaliser les appréciations de risques à intervalles planifiés ou lors de changements notables." },
+        { "ref": "8.3", "title": "Traitement des risques (opérationnel)", "guidance": "Mettre en œuvre le plan de traitement des risques et en conserver la preuve." }
+      ]
+    },
+    {
+      "ref": "9",
+      "title": "Évaluation des performances",
+      "guidance": "Surveiller, mesurer, auditer et réexaminer le SMSI en revue de direction.",
+      "children": [
+        { "ref": "9.1", "title": "Surveillance, mesure, analyse et évaluation", "guidance": "Déterminer quoi mesurer, comment et quand, puis évaluer la performance et l'efficacité du SMSI." },
+        { "ref": "9.2", "title": "Audit interne", "guidance": "Mener des audits internes planifiés pour vérifier conformité et mise en œuvre effective." },
+        { "ref": "9.3", "title": "Revue de direction", "guidance": "Réexaminer périodiquement le SMSI pour statuer sur son adéquation, sa pertinence et son efficacité." }
+      ]
+    },
+    {
+      "ref": "10",
+      "title": "Amélioration",
+      "guidance": "Amélioration continue et traitement des non-conformités par actions correctives.",
+      "children": [
+        { "ref": "10.1", "title": "Amélioration continue", "guidance": "Améliorer en permanence la pertinence, l'adéquation et l'efficacité du SMSI." },
+        { "ref": "10.2", "title": "Non-conformité et action corrective", "guidance": "Réagir aux non-conformités, en corriger les effets, en traiter les causes et vérifier l'efficacité." }
+      ]
+    }
+  ],
+  "themes": [
+    {
+      "ref": "A.5",
+      "title": "Mesures organisationnelles",
+      "controls": [
+        { "ref": "A.5.1", "title": "Politiques de sécurité de l'information", "guidance": "Un corpus de politiques approuvé par la direction, publié, communiqué et réexaminé à intervalles planifiés." },
+        { "ref": "A.5.2", "title": "Rôles et responsabilités en sécurité", "guidance": "Définir et attribuer les responsabilités de sécurité selon les besoins de l'organisme." },
+        { "ref": "A.5.3", "title": "Séparation des tâches", "guidance": "Répartir les tâches et domaines de responsabilité incompatibles pour limiter fraude et erreur." },
+        { "ref": "A.5.4", "title": "Responsabilités de la direction", "guidance": "La direction exige de tous l'application des règles de sécurité établies." },
+        { "ref": "A.5.5", "title": "Relations avec les autorités", "guidance": "Entretenir des contacts appropriés avec les autorités compétentes." },
+        { "ref": "A.5.6", "title": "Relations avec des groupes spécialisés", "guidance": "Maintenir le lien avec des groupes d'intérêt et forums de sécurité pour rester informé." },
+        { "ref": "A.5.7", "title": "Renseignement sur les menaces", "guidance": "Collecter et analyser l'information sur les menaces pour produire du renseignement exploitable." },
+        { "ref": "A.5.8", "title": "Sécurité dans la gestion de projet", "guidance": "Intégrer la sécurité de l'information tout au long des projets, quel que soit leur type." },
+        { "ref": "A.5.9", "title": "Inventaire de l'information et des actifs associés", "guidance": "Tenir un inventaire des informations et actifs, avec propriétaires désignés." },
+        { "ref": "A.5.10", "title": "Usage acceptable des actifs", "guidance": "Établir et faire appliquer des règles d'utilisation acceptable des informations et actifs." },
+        { "ref": "A.5.11", "title": "Restitution des actifs", "guidance": "Restituer les actifs détenus au départ ou au changement de mission." },
+        { "ref": "A.5.12", "title": "Classification de l'information", "guidance": "Classer l'information selon sa sensibilité et les exigences légales et métier." },
+        { "ref": "A.5.13", "title": "Marquage de l'information", "guidance": "Marquer l'information conformément au schéma de classification retenu." },
+        { "ref": "A.5.14", "title": "Transfert de l'information", "guidance": "Encadrer les transferts d'information par des règles, procédures et accords." },
+        { "ref": "A.5.15", "title": "Contrôle d'accès", "guidance": "Fixer et appliquer des règles d'accès physique et logique fondées sur le besoin métier." },
+        { "ref": "A.5.16", "title": "Gestion des identités", "guidance": "Gérer le cycle de vie complet des identités numériques." },
+        { "ref": "A.5.17", "title": "Informations d'authentification", "guidance": "Maîtriser l'attribution et la gestion des secrets d'authentification." },
+        { "ref": "A.5.18", "title": "Droits d'accès", "guidance": "Attribuer, revoir et retirer les droits d'accès selon la politique de contrôle d'accès." },
+        { "ref": "A.5.19", "title": "Sécurité dans la relation fournisseurs", "guidance": "Définir et appliquer des mesures pour couvrir les risques liés à l'usage des produits et services de fournisseurs." },
+        { "ref": "A.5.20", "title": "Exigences de sécurité dans les accords fournisseurs", "guidance": "Inscrire les exigences de sécurité pertinentes dans les accords avec chaque fournisseur." },
+        { "ref": "A.5.21", "title": "Sécurité de la chaîne d'approvisionnement TIC", "guidance": "Maîtriser les risques de sécurité propres à la chaîne d'approvisionnement des produits et services TIC." },
+        { "ref": "A.5.22", "title": "Suivi et évolution des services fournisseurs", "guidance": "Surveiller, revoir et gérer les changements des pratiques de sécurité des fournisseurs." },
+        { "ref": "A.5.23", "title": "Sécurité de l'usage des services cloud", "guidance": "Encadrer l'acquisition, l'usage, la gestion et la sortie des services cloud selon les exigences de sécurité." },
+        { "ref": "A.5.24", "title": "Préparation à la gestion des incidents", "guidance": "Planifier et préparer la gestion des incidents : processus, rôles et responsabilités." },
+        { "ref": "A.5.25", "title": "Qualification des évènements de sécurité", "guidance": "Apprécier les évènements et décider s'ils constituent des incidents de sécurité." },
+        { "ref": "A.5.26", "title": "Réponse aux incidents", "guidance": "Répondre aux incidents conformément aux procédures documentées." },
+        { "ref": "A.5.27", "title": "Retour d'expérience sur incidents", "guidance": "Tirer les enseignements des incidents pour renforcer les mesures." },
+        { "ref": "A.5.28", "title": "Collecte de preuves", "guidance": "Identifier, collecter et conserver les éléments de preuve relatifs aux évènements." },
+        { "ref": "A.5.29", "title": "Sécurité pendant une perturbation", "guidance": "Maintenir un niveau de sécurité adapté durant une perturbation." },
+        { "ref": "A.5.30", "title": "Préparation TIC à la continuité d'activité", "guidance": "Planifier, mettre en œuvre et tester la préparation des TIC aux objectifs de continuité." },
+        { "ref": "A.5.31", "title": "Exigences légales, réglementaires et contractuelles", "guidance": "Recenser et satisfaire les exigences applicables, y compris en matière de données personnelles." },
+        { "ref": "A.5.32", "title": "Droits de propriété intellectuelle", "guidance": "Protéger les droits de propriété intellectuelle et l'usage licite des logiciels." },
+        { "ref": "A.5.33", "title": "Protection des enregistrements", "guidance": "Protéger les enregistrements contre perte, destruction, falsification et accès non autorisé." },
+        { "ref": "A.5.34", "title": "Vie privée et protection des données personnelles", "guidance": "Préserver la vie privée et protéger les données personnelles selon les exigences applicables." },
+        { "ref": "A.5.35", "title": "Revue indépendante de la sécurité", "guidance": "Faire réexaminer l'approche de sécurité de façon indépendante, à intervalles planifiés." },
+        { "ref": "A.5.36", "title": "Conformité aux politiques et normes internes", "guidance": "Vérifier régulièrement la conformité aux politiques, règles et normes de sécurité de l'organisme." },
+        { "ref": "A.5.37", "title": "Procédures d'exploitation documentées", "guidance": "Documenter les procédures d'exploitation et les mettre à disposition des personnes concernées." }
+      ]
+    },
+    {
+      "ref": "A.6",
+      "title": "Mesures liées aux personnes",
+      "controls": [
+        { "ref": "A.6.1", "title": "Vérification préalable à l'embauche", "guidance": "Réaliser des vérifications d'antécédents proportionnées avant l'embauche, dans le respect du droit." },
+        { "ref": "A.6.2", "title": "Clauses de sécurité du contrat de travail", "guidance": "Préciser les responsabilités de sécurité dans les contrats de travail." },
+        { "ref": "A.6.3", "title": "Sensibilisation et formation à la sécurité", "guidance": "Sensibiliser et former le personnel à la sécurité, avec mises à jour régulières." },
+        { "ref": "A.6.4", "title": "Processus disciplinaire", "guidance": "Formaliser et communiquer un processus disciplinaire pour les manquements à la sécurité." },
+        { "ref": "A.6.5", "title": "Obligations après départ ou changement de poste", "guidance": "Définir et faire appliquer les responsabilités de sécurité subsistant après la fin ou le changement d'emploi." },
+        { "ref": "A.6.6", "title": "Accords de confidentialité", "guidance": "Recenser, documenter et faire signer les engagements de confidentialité pertinents." },
+        { "ref": "A.6.7", "title": "Travail à distance", "guidance": "Protéger l'information accédée, traitée ou stockée hors des locaux de l'organisme." },
+        { "ref": "A.6.8", "title": "Signalement des évènements de sécurité", "guidance": "Offrir un moyen de signaler rapidement les évènements de sécurité observés." }
+      ]
+    },
+    {
+      "ref": "A.7",
+      "title": "Mesures physiques",
+      "controls": [
+        { "ref": "A.7.1", "title": "Périmètres de sécurité physique", "guidance": "Définir des périmètres protégeant les zones abritant l'information et les actifs." },
+        { "ref": "A.7.2", "title": "Contrôle des accès physiques", "guidance": "Protéger les zones sécurisées par des dispositifs d'accès appropriés." },
+        { "ref": "A.7.3", "title": "Sécurisation des bureaux, salles et installations", "guidance": "Concevoir et appliquer la sécurité physique des locaux et installations." },
+        { "ref": "A.7.4", "title": "Surveillance de la sécurité physique", "guidance": "Surveiller en continu les locaux pour détecter les accès physiques non autorisés." },
+        { "ref": "A.7.5", "title": "Protection contre les menaces physiques et environnementales", "guidance": "Se prémunir contre les menaces naturelles, accidentelles ou intentionnelles." },
+        { "ref": "A.7.6", "title": "Travail en zones sécurisées", "guidance": "Définir et appliquer des règles de travail dans les zones sécurisées." },
+        { "ref": "A.7.7", "title": "Bureau et écran nets", "guidance": "Adopter des règles de bureau dégagé et de verrouillage des écrans." },
+        { "ref": "A.7.8", "title": "Emplacement et protection des matériels", "guidance": "Positionner et protéger les matériels contre les menaces et accès non autorisés." },
+        { "ref": "A.7.9", "title": "Sécurité des actifs hors des locaux", "guidance": "Protéger les actifs utilisés à l'extérieur des sites de l'organisme." },
+        { "ref": "A.7.10", "title": "Supports de stockage", "guidance": "Gérer le cycle de vie des supports selon leur classification et les exigences de manipulation." },
+        { "ref": "A.7.11", "title": "Services généraux (énergie, climatisation)", "guidance": "Protéger les installations contre les défaillances des services d'appui." },
+        { "ref": "A.7.12", "title": "Sécurité du câblage", "guidance": "Protéger les câblages d'énergie et de télécommunications contre interception et dommage." },
+        { "ref": "A.7.13", "title": "Maintenance des matériels", "guidance": "Assurer la maintenance des matériels pour préserver disponibilité, intégrité et confidentialité." },
+        { "ref": "A.7.14", "title": "Mise au rebut ou réemploi sécurisé", "guidance": "Effacer ou détruire de façon sûre les données avant réforme ou réemploi des matériels." }
+      ]
+    },
+    {
+      "ref": "A.8",
+      "title": "Mesures technologiques",
+      "controls": [
+        { "ref": "A.8.1", "title": "Terminaux utilisateurs", "guidance": "Protéger l'information stockée, traitée ou accessible depuis les terminaux des utilisateurs." },
+        { "ref": "A.8.2", "title": "Droits d'accès à privilèges", "guidance": "Restreindre et maîtriser strictement l'attribution et l'usage des accès à privilèges." },
+        { "ref": "A.8.3", "title": "Restriction d'accès à l'information", "guidance": "Limiter l'accès à l'information et aux fonctions selon la politique de contrôle d'accès." },
+        { "ref": "A.8.4", "title": "Accès au code source", "guidance": "Encadrer l'accès en lecture et en écriture au code source et aux outils associés." },
+        { "ref": "A.8.5", "title": "Authentification sécurisée", "guidance": "Mettre en œuvre des mécanismes d'authentification robustes selon les restrictions et règles d'accès." },
+        { "ref": "A.8.6", "title": "Gestion de la capacité", "guidance": "Surveiller et ajuster les ressources aux besoins de capacité actuels et prévisibles." },
+        { "ref": "A.8.7", "title": "Protection contre les logiciels malveillants", "guidance": "Protéger contre les codes malveillants et sensibiliser les utilisateurs." },
+        { "ref": "A.8.8", "title": "Gestion des vulnérabilités techniques", "guidance": "Obtenir l'information sur les vulnérabilités, les évaluer et prendre les mesures adaptées." },
+        { "ref": "A.8.9", "title": "Gestion des configurations", "guidance": "Établir, documenter et surveiller les configurations sécurisées du matériel et du logiciel." },
+        { "ref": "A.8.10", "title": "Effacement de l'information", "guidance": "Effacer l'information devenue inutile pour éviter toute divulgation superflue." },
+        { "ref": "A.8.11", "title": "Masquage des données", "guidance": "Masquer les données sensibles selon la politique et les exigences applicables." },
+        { "ref": "A.8.12", "title": "Prévention des fuites de données", "guidance": "Appliquer des mesures pour prévenir la fuite d'information sur les systèmes et réseaux." },
+        { "ref": "A.8.13", "title": "Sauvegarde de l'information", "guidance": "Réaliser et tester des sauvegardes conformes à la politique définie." },
+        { "ref": "A.8.14", "title": "Redondance des moyens de traitement", "guidance": "Prévoir une redondance suffisante pour atteindre les exigences de disponibilité." },
+        { "ref": "A.8.15", "title": "Journalisation", "guidance": "Produire, conserver et protéger des journaux des activités, anomalies et évènements de sécurité." },
+        { "ref": "A.8.16", "title": "Surveillance des activités", "guidance": "Surveiller réseaux, systèmes et applications pour détecter les comportements anormaux." },
+        { "ref": "A.8.17", "title": "Synchronisation des horloges", "guidance": "Synchroniser les horloges des systèmes sur des sources de temps approuvées." },
+        { "ref": "A.8.18", "title": "Usage des utilitaires à privilèges", "guidance": "Restreindre et surveiller l'emploi des programmes utilitaires capables de contourner les mesures." },
+        { "ref": "A.8.19", "title": "Installation de logiciels sur les systèmes en production", "guidance": "Encadrer et maîtriser l'installation de logiciels sur les systèmes d'exploitation opérationnels." },
+        { "ref": "A.8.20", "title": "Sécurité des réseaux", "guidance": "Sécuriser, gérer et maîtriser les réseaux pour protéger l'information des systèmes." },
+        { "ref": "A.8.21", "title": "Sécurité des services réseau", "guidance": "Identifier et intégrer les mécanismes et niveaux de sécurité des services réseau." },
+        { "ref": "A.8.22", "title": "Cloisonnement des réseaux", "guidance": "Séparer les groupes de services, d'utilisateurs et de systèmes sur le réseau." },
+        { "ref": "A.8.23", "title": "Filtrage web", "guidance": "Maîtriser l'accès aux sites web externes pour réduire l'exposition aux contenus malveillants." },
+        { "ref": "A.8.24", "title": "Usage de la cryptographie", "guidance": "Définir et appliquer des règles d'usage de la cryptographie, dont la gestion des clés." },
+        { "ref": "A.8.25", "title": "Cycle de développement sécurisé", "guidance": "Établir et appliquer des règles de sécurité tout au long du cycle de développement." },
+        { "ref": "A.8.26", "title": "Exigences de sécurité applicative", "guidance": "Identifier et satisfaire les exigences de sécurité lors du développement et de l'acquisition d'applications." },
+        { "ref": "A.8.27", "title": "Principes d'architecture et d'ingénierie sécurisées", "guidance": "Établir des principes d'ingénierie de systèmes sécurisés et les appliquer aux développements." },
+        { "ref": "A.8.28", "title": "Codage sécurisé", "guidance": "Appliquer des principes de codage sécurisé aux développements logiciels." },
+        { "ref": "A.8.29", "title": "Tests de sécurité en développement et recette", "guidance": "Définir et exécuter des tests de sécurité au fil du cycle de vie." },
+        { "ref": "A.8.30", "title": "Développement externalisé", "guidance": "Diriger, surveiller et revoir les activités de développement confiées à des tiers." },
+        { "ref": "A.8.31", "title": "Séparation des environnements dev/test/prod", "guidance": "Séparer et protéger les environnements de développement, de test et de production." },
+        { "ref": "A.8.32", "title": "Gestion des changements", "guidance": "Soumettre les changements des moyens de traitement et des systèmes à une procédure maîtrisée." },
+        { "ref": "A.8.33", "title": "Données de test", "guidance": "Sélectionner, protéger et gérer avec soin les données utilisées pour les tests." },
+        { "ref": "A.8.34", "title": "Protection des SI pendant les tests d'audit", "guidance": "Planifier et convenir les tests d'audit sur les systèmes opérationnels pour en limiter l'impact." }
+      ]
+    }
+  ]
+}

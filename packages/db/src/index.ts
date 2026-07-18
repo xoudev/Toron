@@ -40,3 +40,16 @@ export {
   type SetItemStatusInput,
   type MutualizedPeerRow,
 } from './queries/assessments.ts';
+export {
+  createExport,
+  sealExport,
+  failExport,
+  getExport,
+  listExportsForObject,
+  getExportPdf,
+  verifyExport,
+  type CreateExportInput,
+  type SealExportInput,
+  type ExportSummary,
+  type VerifiedExport,
+} from './queries/exports.ts';

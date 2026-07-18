@@ -1,0 +1,86 @@
+/* Tableau de bord (module 5.11, MVP v1). Tokens uniquement. */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.kpi {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+  border-left: 3px solid var(--accent);
+}
+.kpi:hover {
+  border-color: var(--border-strong);
+}
+.kpi-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.kpi-value {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.kpi-sub {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.kpi-sub.alert {
+  color: var(--danger);
+  font-weight: 600;
+}
+.kpi--danger {
+  border-left-color: var(--danger);
+}
+.kpi--ok {
+  border-left-color: var(--ok);
+}
+.kpi--warn {
+  border-left-color: var(--warn);
+}
+
+.coverage-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.coverage-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}
+
+.risk-spark {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.risk-spark-seg {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--seg) 70%, transparent);
+}
+.seg--faible {
+  --seg: var(--ok);
+}
+.seg--moyen {
+  --seg: var(--warn);
+}
+.seg--eleve {
+  --seg: var(--accent);
+}
+.seg--critique {
+  --seg: var(--danger);
+}

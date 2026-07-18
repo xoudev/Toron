@@ -11,7 +11,8 @@
     "./risques.css": "./src/styles/risques.css",
     "./plan-action.css": "./src/styles/plan-action.css",
     "./documents.css": "./src/styles/documents.css",
-    "./preuves.css": "./src/styles/preuves.css"
+    "./preuves.css": "./src/styles/preuves.css",
+    "./dashboard.css": "./src/styles/dashboard.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

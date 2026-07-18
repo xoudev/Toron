@@ -239,6 +239,8 @@ export interface RiskSummary {
   scopeId: string;
   scopeName: string;
   title: string;
+  scenario: string | null;
+  businessValue: string | null;
   treatment: RiskTreatment;
   grossG: number;
   grossV: number;
@@ -247,6 +249,7 @@ export interface RiskSummary {
   netV: number;
   netBand: RiskBand | null;
   residualTarget: RiskBand | null;
+  ownerUserId: string | null;
   ownerName: string | null;
   nextReview: string | null;
   controlCount: number;
@@ -261,12 +264,15 @@ interface RawRisk {
   scope_id: string;
   scope_name: string;
   title: string;
+  scenario: string | null;
+  business_value: string | null;
   treatment: RiskTreatment;
   gross_g: number | string;
   gross_v: number | string;
   net_g: number | string;
   net_v: number | string;
   residual_target: RiskBand | null;
+  owner_user_id: string | null;
   owner_name: string | null;
   next_review: string | null;
   control_count: number | string;
@@ -287,9 +293,9 @@ export async function listRisks(tx: TenantTx, scopeId?: string): Promise<RiskSum
 
   const rows = await tx.execute(sql`
     SELECT
-      r.id, r.scope_id, s.name AS scope_name, r.title, r.treatment,
+      r.id, r.scope_id, s.name AS scope_name, r.title, r.scenario, r.business_value, r.treatment,
       r.gross_g, r.gross_v, r.net_g, r.net_v, r.residual_target,
-      o.name AS owner_name, r.next_review::text AS next_review,
+      r.owner_user_id, o.name AS owner_name, r.next_review::text AS next_review,
       (SELECT count(*) FROM risk_controls rc WHERE rc.risk_id = r.id) AS control_count,
       acc.accepted_by_name, acc.accepted_at, acc.acceptance_expires_at
     FROM risks r
@@ -331,6 +337,8 @@ export async function listRisks(tx: TenantTx, scopeId?: string): Promise<RiskSum
       scopeId: r.scope_id,
       scopeName: r.scope_name,
       title: r.title,
+      scenario: r.scenario,
+      businessValue: r.business_value,
       treatment: r.treatment,
       grossG,
       grossV,
@@ -339,6 +347,7 @@ export async function listRisks(tx: TenantTx, scopeId?: string): Promise<RiskSum
       netV,
       netBand: riskBand(netG, netV, scale),
       residualTarget: r.residual_target,
+      ownerUserId: r.owner_user_id,
       ownerName: r.owner_name,
       nextReview: r.next_review,
       controlCount: Number(r.control_count),
@@ -382,6 +391,14 @@ export async function linkRiskControl(
     .insert(schema.riskControls)
     .values({ tenantId: input.tenantId, riskId: input.riskId, controlId: input.controlId })
     .onConflictDoNothing();
+}
+
+/** Identifiants des contrôles atténuants rattachés à un risque. */
+export async function listRiskControlIds(tx: TenantTx, riskId: string): Promise<string[]> {
+  const rows = await tx.execute(sql`
+    SELECT control_id FROM risk_controls WHERE risk_id = ${riskId}
+  `);
+  return (rows as unknown as { control_id: string }[]).map((r) => r.control_id);
 }
 
 /** Détache un contrôle d'un risque. Renvoie le nombre de liens supprimés. */

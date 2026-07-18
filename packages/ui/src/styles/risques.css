@@ -1,0 +1,285 @@
+/* Écran 04 — Registre des risques (module 5.4). Tokens uniquement : les
+   bandes dérivent des couleurs sémantiques (--ok/--warn/--accent/--danger)
+   via color-mix, aucune couleur en dur. */
+
+.risk-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .risk-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Bandes de risque ─────────────────────────────────────────────────── */
+.band--faible {
+  --band: var(--ok);
+}
+.band--moyen {
+  --band: var(--warn);
+}
+.band--eleve {
+  --band: var(--accent);
+}
+.band--critique {
+  --band: var(--danger);
+}
+
+.band-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--band, var(--text-2));
+  background: color-mix(in srgb, var(--band, var(--border)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--band, var(--border)) 38%, transparent);
+  white-space: nowrap;
+}
+
+/* ── Matrice G×V ──────────────────────────────────────────────────────── */
+.risk-matrix-card {
+  padding: 16px;
+}
+.risk-matrix-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+.risk-matrix-sub {
+  font-size: 12px;
+  color: var(--text-2);
+  margin: 0 0 14px;
+}
+.risk-matrix {
+  display: grid;
+  gap: 3px;
+}
+.matrix-axis-y {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  align-self: center;
+}
+.matrix-axis-x {
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding-top: 6px;
+}
+.matrix-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--band);
+  background: color-mix(in srgb, var(--band) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--band) 30%, transparent);
+  cursor: pointer;
+  transition: outline-color 0.12s ease;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+}
+.matrix-cell:hover {
+  background: color-mix(in srgb, var(--band) 26%, transparent);
+}
+.matrix-cell[aria-pressed='true'] {
+  outline-color: var(--band);
+}
+.matrix-cell--empty {
+  color: var(--text-3);
+  cursor: default;
+}
+.matrix-cell--empty:hover {
+  background: color-mix(in srgb, var(--band) 16%, transparent);
+}
+.matrix-corner {
+  font-size: 10px;
+  color: var(--text-3);
+}
+.risk-filter-clear {
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+/* ── Table du registre ────────────────────────────────────────────────── */
+.risk-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+.risk-table-wrap {
+  overflow-x: auto;
+}
+.risk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.risk-table th {
+  text-align: left;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.risk-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.risk-table tbody tr {
+  cursor: pointer;
+}
+.risk-table tbody tr:hover {
+  background: var(--surface-2);
+}
+.risk-title-cell {
+  font-weight: 600;
+  color: var(--text);
+}
+.risk-title-cell small {
+  display: block;
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.risk-controls-count {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* ── Statut d'acceptation ─────────────────────────────────────────────── */
+.acc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.acc-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.acc--acceptee {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+.acc--en_attente {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+}
+.acc--expiree {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.acc--non_requise {
+  color: var(--text-3);
+  background: transparent;
+}
+.acc--non_requise::before {
+  background: var(--text-3);
+}
+
+.treatment-tag {
+  font-size: 11.5px;
+  color: var(--text-2);
+  text-transform: capitalize;
+}
+
+/* ── Fiche risque (dialog) ────────────────────────────────────────────── */
+.risk-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.risk-form-grid .field--full {
+  grid-column: 1 / -1;
+}
+.rating-block {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 4px;
+}
+.rating-block-title {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 0 8px;
+}
+.rating-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.rating-pair {
+  display: flex;
+  gap: 8px;
+}
+.rating-preview {
+  margin-left: auto;
+  align-self: center;
+}
+.acc-signature {
+  border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);
+  background: color-mix(in srgb, var(--ok) 8%, transparent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.acc-signature b {
+  color: var(--text);
+}
+.control-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.control-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 5px 8px;
+  border-radius: 7px;
+}
+.control-link-row:hover {
+  background: var(--surface-2);
+}
+.risk-mut-hint {
+  font-size: 11.5px;
+  color: var(--text-3);
+}

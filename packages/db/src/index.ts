@@ -67,6 +67,7 @@ export {
   acceptRisk,
   linkRiskControl,
   unlinkRiskControl,
+  listRiskControlIds,
   listRiskHistory,
   type StoredScale,
   type CreateRiskInput,
@@ -76,3 +77,4 @@ export {
   type AcceptRiskInput,
   type RiskHistoryRow,
 } from './queries/risks.ts';
+export { listTenantMembers, type TenantMember } from './queries/members.ts';

@@ -38,7 +38,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Registre des risques',
           href: `${base}/risques`,
-          disabled: true,
+          active: isActive(`${base}/risques`),
           iconPath: 'M12 3.6 20.4 12 12 20.4 3.6 12Z',
         },
         {

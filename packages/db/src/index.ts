@@ -32,9 +32,11 @@ export {
   listAssessments,
   getAssessmentItems,
   setAssessmentItemStatus,
+  getMutualizedPeers,
   closeAssessment,
   type CreateAssessmentInput,
   type AssessmentSummary,
   type AssessmentItemRow,
   type SetItemStatusInput,
+  type MutualizedPeerRow,
 } from './queries/assessments.ts';

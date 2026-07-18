@@ -5,7 +5,9 @@ import {
   isSoaItemValid,
   scoreAssessment,
   soaJustificationRequired,
+  suggestInheritedStatuses,
   type AssessmentItemStatus,
+  type MutualizedPeer,
 } from './assessments.ts';
 
 function items(...statuses: AssessmentItemStatus[]) {
@@ -75,5 +77,45 @@ describe('validation SoA', () => {
   it('accepte les autres statuts sans justification', () => {
     expect(isSoaItemValid({ status: 'conforme' })).toBe(true);
     expect(isSoaItemValid({ status: 'ecart', soaJustification: null })).toBe(true);
+  });
+});
+
+describe('suggestInheritedStatuses (héritage mutualisé, RM §5.3)', () => {
+  const peer = (overrides: Partial<MutualizedPeer> = {}): MutualizedPeer => ({
+    requirementId: 'r-nis',
+    requirementRef: 'OBJ-08',
+    frameworkCode: 'recyf',
+    frameworkName: 'NIS 2 · ReCyF',
+    viaControlTitle: 'MFA sur les accès distants',
+    currentStatus: 'a_evaluer',
+    ...overrides,
+  });
+
+  it('ne suggère rien si la source n’est pas conforme', () => {
+    expect(suggestInheritedStatuses({ status: 'ecart', requirementRef: 'A.8.5' }, [peer()])).toEqual([]);
+    expect(suggestInheritedStatuses({ status: 'a_evaluer', requirementRef: 'A.8.5' }, [peer()])).toEqual([]);
+  });
+
+  it('suggère « conforme » sur les pairs à évaluer / en écart, avec traçabilité', () => {
+    const s = suggestInheritedStatuses({ status: 'conforme', requirementRef: 'A.8.5' }, [
+      peer({ currentStatus: 'a_evaluer' }),
+      peer({ requirementId: 'r2', requirementRef: 'OBJ-09', currentStatus: 'ecart' }),
+    ]);
+    expect(s).toHaveLength(2);
+    expect(s[0]?.suggestedStatus).toBe('conforme');
+    expect(s[0]?.reason).toContain('MFA sur les accès distants');
+    expect(s[0]?.reason).toContain('A.8.5');
+  });
+
+  it('n’écrase jamais une exclusion (N/A) ni un pair déjà conforme', () => {
+    const s = suggestInheritedStatuses({ status: 'conforme', requirementRef: 'A.8.5' }, [
+      peer({ currentStatus: 'non_applicable' }),
+      peer({ requirementId: 'r2', currentStatus: 'conforme' }),
+    ]);
+    expect(s).toEqual([]);
+  });
+
+  it('gère l’absence de pairs', () => {
+    expect(suggestInheritedStatuses({ status: 'conforme', requirementRef: 'A.8.5' }, [])).toEqual([]);
   });
 });

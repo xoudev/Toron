@@ -185,6 +185,71 @@ export async function setAssessmentItemStatus(
   return updated.length;
 }
 
+export interface MutualizedPeerRow {
+  requirementId: string;
+  requirementRef: string;
+  frameworkCode: string;
+  frameworkName: string;
+  viaControlTitle: string;
+  currentStatus: AssessmentItemStatus | null;
+}
+
+/**
+ * Pairs mutualisés d'une exigence : les exigences d'AUTRES référentiels
+ * couvertes par un même contrôle, avec leur statut courant (dernière
+ * campagne les portant, ou null). Alimente la suggestion d'héritage
+ * (core.suggestInheritedStatuses). Un pair par exigence (contrôle arbitraire
+ * si plusieurs les relient).
+ */
+export async function getMutualizedPeers(
+  tx: TenantTx,
+  requirementId: string,
+): Promise<MutualizedPeerRow[]> {
+  const rows = await tx.execute(sql`
+    SELECT DISTINCT ON (peer.id)
+      peer.id AS requirement_id,
+      peer.ref_id AS requirement_ref,
+      pf.code AS framework_code,
+      pf.name AS framework_name,
+      c.title AS via_control_title,
+      latest.status AS current_status
+    FROM control_requirements cr_src
+    JOIN requirements src ON src.id = cr_src.requirement_id
+    JOIN control_requirements cr_peer ON cr_peer.control_id = cr_src.control_id
+    JOIN requirements peer ON peer.id = cr_peer.requirement_id
+    JOIN frameworks pf ON pf.id = peer.framework_id
+    JOIN controls c ON c.id = cr_src.control_id
+    LEFT JOIN LATERAL (
+      SELECT ai.status
+      FROM assessment_items ai
+      JOIN assessments a ON a.id = ai.assessment_id
+      WHERE ai.requirement_id = peer.id
+      ORDER BY a.created_at DESC
+      LIMIT 1
+    ) latest ON true
+    WHERE cr_src.requirement_id = ${requirementId}
+      AND peer.framework_id <> src.framework_id
+    ORDER BY peer.id, c.title
+  `);
+  return (rows as unknown as RawPeer[]).map((r) => ({
+    requirementId: r.requirement_id,
+    requirementRef: r.requirement_ref,
+    frameworkCode: r.framework_code,
+    frameworkName: r.framework_name,
+    viaControlTitle: r.via_control_title,
+    currentStatus: r.current_status,
+  }));
+}
+
+interface RawPeer {
+  requirement_id: string;
+  requirement_ref: string;
+  framework_code: string;
+  framework_name: string;
+  via_control_title: string;
+  current_status: AssessmentItemStatus | null;
+}
+
 /** Clôture une campagne (gèle son état ; l'historique reste dans les campagnes). */
 export async function closeAssessment(tx: TenantTx, assessmentId: string): Promise<number> {
   const updated = await tx

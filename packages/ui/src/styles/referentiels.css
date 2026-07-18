@@ -807,3 +807,178 @@
   padding: 4px 10px;
   font-size: 12px;
 }
+
+/* ─── Évaluation (module 5.3) ───────────────────────────────────────── */
+.campaign-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+}
+.campaign-bar select {
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 5px 8px;
+  max-width: 260px;
+}
+.campaign-bar-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.campaign-metrics {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.metric {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.metric-value.gaps {
+  color: var(--danger);
+}
+.metric-label {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.coverage-track {
+  width: 120px;
+  height: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.coverage-fill {
+  height: 100%;
+  background: var(--ok);
+  border-radius: 3px;
+}
+
+/* Pastille de statut d'évaluation */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 1px 8px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+}
+.status-pill--conforme {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+.status-pill--conforme::before {
+  background: var(--ok);
+}
+.status-pill--ecart {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.status-pill--ecart::before {
+  background: var(--danger);
+}
+.status-pill--non_applicable {
+  color: var(--text-2);
+  background: var(--surface-2);
+}
+.status-pill--non_applicable::before {
+  background: var(--text-3);
+}
+.status-pill--a_evaluer {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+}
+.status-pill--a_evaluer::before {
+  background: var(--warn);
+}
+/* Version mini dans les lignes d'exigence (point seul) */
+.status-dot-row {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.status-dot-row.conforme {
+  background: var(--ok);
+}
+.status-dot-row.ecart {
+  background: var(--danger);
+}
+.status-dot-row.non_applicable {
+  background: var(--text-3);
+}
+.status-dot-row.a_evaluer {
+  background: var(--warn);
+}
+
+/* Sélecteur de statut dans le panneau SoA */
+.status-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.status-choice {
+  font-size: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  padding: 4px 10px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.status-choice[aria-pressed='true'] {
+  color: var(--text);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  font-weight: 500;
+}
+
+/* Suggestion d'héritage mutualisé */
+.inherit-suggestion {
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: var(--radius-m);
+  font-size: 12px;
+  color: var(--text-2);
+}
+.inherit-suggestion b {
+  color: var(--text);
+}
+.inherit-peer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 11.5px;
+}

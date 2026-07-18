@@ -53,6 +53,12 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
           disabled: true,
           iconPath: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z M12 8v4.6 M12 15.8v.2',
         },
+        {
+          label: 'Cartographie des actifs',
+          href: `${base}/actifs`,
+          active: isActive(`${base}/actifs`),
+          iconPath: 'M4 7.5 12 4l8 3.5v9L12 20l-8-3.5z M4 7.5l8 3.5 8-3.5 M12 11v9',
+        },
       ],
     },
     {

@@ -31,3 +31,19 @@ export {
   type MembershipRole,
   type TenantAccessVerdict,
 } from './authz.ts';
+export {
+  RISK_TREATMENTS,
+  RISK_BANDS,
+  ACCEPTANCE_STATES,
+  bandRank,
+  defaultRiskScale,
+  riskBand,
+  riskScore,
+  acceptanceState,
+  acceptanceNeedsAttention,
+  type RiskTreatment,
+  type RiskBand,
+  type RiskScale,
+  type AcceptanceState,
+  type AcceptanceInput,
+} from './risks.ts';

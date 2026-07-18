@@ -44,3 +44,14 @@ export const assessmentItemStatus = pgEnum('assessment_item_status', [
 export const exportStatus = pgEnum('export_status', ['en_cours', 'scelle', 'echec']);
 
 export const exportType = pgEnum('export_type', ['soa']);
+
+export const riskTreatment = pgEnum('risk_treatment', [
+  'reduire',
+  'transferer',
+  'accepter',
+  'eviter',
+]);
+
+export const riskSource = pgEnum('risk_source', ['manual', 'ebios']);
+
+export const riskBand = pgEnum('risk_band', ['faible', 'moyen', 'eleve', 'critique']);

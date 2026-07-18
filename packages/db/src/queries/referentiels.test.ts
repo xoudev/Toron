@@ -14,14 +14,17 @@ import {
 } from '../seed.ts';
 import { withTenant } from '../tenant.ts';
 import {
+  activateFrameworkOnScope,
   addCustomRequirement,
   createControl,
   createCustomFramework,
   deleteControl,
   getControlDeleteImpact,
+  getFramework,
   getRequirementTree,
   listControls,
   listFrameworks,
+  listScopes,
   mapControlToRequirement,
   unmapControlFromRequirement,
 } from './referentiels.ts';
@@ -67,6 +70,52 @@ describe('catalogue (listFrameworks)', () => {
     // Les 3 contrôles démo sont mappés sur chaque référentiel.
     expect(byCode['recyf']?.mappedControlCount).toBe(3);
     expect(byCode['iso27001']?.mappedControlCount).toBe(3);
+    // Chaque contrôle démo couvre une exigence distincte → 3 exigences outillées.
+    expect(byCode['recyf']?.mappedRequirementCount).toBe(3);
+    expect(byCode['iso27001']?.mappedRequirementCount).toBe(3);
+  });
+
+  it('expose l’état d’activation par périmètre (ReCyF + ISO 27001 activés sur le SMSI démo)', async () => {
+    const frameworks = await withTenant(app.db, T, (tx) => listFrameworks(tx));
+    const byCode = Object.fromEntries(frameworks.map((f) => [f.code, f]));
+    expect(byCode['recyf']?.activatedScopeCount).toBeGreaterThanOrEqual(1);
+    expect(byCode['iso27001']?.activatedScopeCount).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('getFramework', () => {
+  it('renvoie un référentiel par id, null si inconnu', async () => {
+    const { iso, unknown } = await withTenant(app.db, T, async (tx) => {
+      const frameworks = await listFrameworks(tx);
+      const isoId = frameworks.find((f) => f.code === 'iso27001')!.id;
+      return {
+        iso: await getFramework(tx, isoId),
+        unknown: await getFramework(tx, '00000000-0000-4000-8000-000000000000'),
+      };
+    });
+    expect(iso?.code).toBe('iso27001');
+    expect(unknown).toBeNull();
+  });
+});
+
+describe('périmètres et activation', () => {
+  it('liste les périmètres du tenant et active un référentiel custom (idempotent)', async () => {
+    const result = await withTenant(app.db, T, async (tx) => {
+      const scopes = await listScopes(tx);
+      const smsi = scopes.find((s) => s.kind === 'smsi')!;
+      const fwId = await createCustomFramework(tx, {
+        tenantId: T,
+        code: 'activation_demo',
+        version: 'v1',
+        name: 'Référentiel à activer',
+      });
+      await activateFrameworkOnScope(tx, T, smsi.id, fwId);
+      await activateFrameworkOnScope(tx, T, smsi.id, fwId); // idempotent
+      const fw = await getFramework(tx, fwId);
+      return { scopeCount: scopes.length, activated: fw?.activatedScopeCount };
+    });
+    expect(result.scopeCount).toBe(2); // SMSI + QMS de la démo
+    expect(result.activated).toBe(1);
   });
 });
 
@@ -169,21 +218,30 @@ describe('impact de suppression (RM §5.2)', () => {
     expect(a85impact?.becomesUncovered).toBe(false);
   });
 
-  it('supprime effectivement le contrôle et ses mappings (cascade)', async () => {
-    const remaining = await withTenant(app.db, T, async (tx) => {
+  it('supprime effectivement le contrôle et ses mappings (cascade), renvoie 1', async () => {
+    const { removed, remaining } = await withTenant(app.db, T, async (tx) => {
       const controlId = await createControl(tx, { tenantId: T, title: 'À supprimer pour de bon' });
       const [obj] = await tx
         .select({ id: schema.requirements.id })
         .from(schema.requirements)
         .where(eq(schema.requirements.refId, 'OBJ-10'));
       await mapControlToRequirement(tx, T, controlId, obj!.id);
-      await deleteControl(tx, controlId);
-      return tx
+      const n = await deleteControl(tx, controlId);
+      const links = await tx
         .select()
         .from(schema.controlRequirements)
         .where(eq(schema.controlRequirements.controlId, controlId));
+      return { removed: n, remaining: links };
     });
+    expect(removed).toBe(1);
     expect(remaining).toHaveLength(0);
+  });
+
+  it('renvoie 0 pour un contrôle inexistant (pas de suppression fantôme)', async () => {
+    const removed = await withTenant(app.db, T, (tx) =>
+      deleteControl(tx, '00000000-0000-4000-8000-000000000000'),
+    );
+    expect(removed).toBe(0);
   });
 });
 

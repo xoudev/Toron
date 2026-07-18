@@ -5,8 +5,12 @@ export { writeAuditEntry, type AuditEntry } from './audit.ts';
 export * as schema from './schema/index.ts';
 export {
   listFrameworks,
+  getFramework,
   getRequirementTree,
   listControls,
+  listControlLinks,
+  listScopes,
+  activateFrameworkOnScope,
   createControl,
   mapControlToRequirement,
   unmapControlFromRequirement,
@@ -17,6 +21,8 @@ export {
   type FrameworkSummary,
   type RequirementNode,
   type ControlSummary,
+  type ControlLink,
+  type ScopeSummary,
   type CreateControlInput,
   type CreateCustomFrameworkInput,
   type AddCustomRequirementInput,

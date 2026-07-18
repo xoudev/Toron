@@ -1,5 +1,6 @@
 import '@toron/ui/tokens.css';
 import '@toron/ui/shell.css';
+import '@toron/ui/referentiels.css';
 
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';

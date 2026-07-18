@@ -1,0 +1,809 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Toron — écrans Référentiels (module 5.2c) : catalogue + détail.
+   Reconstruit d'après les maquettes de référence (jamais copié) ; toutes
+   les couleurs viennent de tokens.css. L'orange (--accent) est rationné :
+   bouton primaire, état actif, et le « fil » de mutualisation — nulle part
+   ailleurs, jamais en fond ni en dégradé.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── En-tête de page ───────────────────────────────────────────────── */
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.page-head h1 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.page-head .sub {
+  color: var(--text-2);
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+.page-head-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+/* ─── Séparateur de section (label mono + filet) ────────────────────── */
+.section-rule {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 12px;
+}
+.section-rule-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.section-rule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── Chips mono (codes de référentiels, refs d'exigences) ──────────── */
+.chip-ref {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  padding: 1px 6px;
+  color: var(--text-2);
+  background: var(--surface);
+  white-space: nowrap;
+}
+.badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  padding: 1px 5px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.badge--builtin {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+}
+.badge--custom {
+  color: var(--text-2);
+}
+
+/* ─── Catalogue : grilles de cartes ─────────────────────────────────── */
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  gap: 14px;
+}
+.catalog-grid--available {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+@media (max-width: 720px) {
+  .catalog-grid,
+  .catalog-grid--available {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fw-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 14px;
+}
+.fw-card--available {
+  border-style: dashed;
+  gap: 10px;
+}
+.fw-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.fw-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.fw-card-meta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  margin-top: 3px;
+}
+.fw-card-head .badge {
+  margin-left: auto;
+  flex: none;
+}
+.fw-card--available .fw-card-desc {
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+
+/* Bandeau de 3 stats séparées par des bordures internes */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}
+.stat {
+  padding: 9px 12px;
+}
+.stat + .stat {
+  border-left: 1px solid var(--border);
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 1px;
+}
+
+/* Barre « taux d'outillage » — NEUTRE (pas orange) : structurel, pas conformité */
+.tooling {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tooling-track {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.tooling-fill {
+  height: 100%;
+  background: var(--text-3);
+  border-radius: 3px;
+}
+.tooling-pct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  min-width: 34px;
+  text-align: right;
+}
+
+.fw-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+/* ─── Le « fil » de mutualisation ───────────────────────────────────── */
+/* Bandeau signature du catalogue */
+.mut-band {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-top: 20px;
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: var(--radius-l);
+}
+.mut-thread {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+/* Chips reliés par des segments orange + pastille */
+.mut-thread .chip-ref {
+  position: relative;
+  z-index: 1;
+}
+.mut-thread-link {
+  width: 16px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  flex: none;
+}
+.mut-band p {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.mut-band p b {
+  color: var(--text);
+  font-weight: 600;
+}
+.mut-band .mut-band-link {
+  margin-left: auto;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+/* ─── État vide ─────────────────────────────────────────────────────── */
+.empty-state {
+  max-width: 470px;
+  margin: 48px auto;
+  text-align: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+.empty-state .brand-ghost {
+  color: var(--text-3);
+}
+.empty-state h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.empty-state p {
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+.empty-state-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.empty-state-note {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+
+/* ─── Détail : layout master-detail 3 volets ────────────────────────── */
+.detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.detail-head .chip-ref {
+  font-size: 12px;
+}
+.detail-head h1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.detail-head .sub {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-2);
+  margin-top: 3px;
+}
+.detail-head-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: 262px 1fr 372px;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  overflow: hidden;
+  min-height: 60vh;
+}
+.detail-layout.no-panel {
+  grid-template-columns: 262px 1fr;
+}
+@media (max-width: 1080px) {
+  .detail-layout,
+  .detail-layout.no-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Panneau maître : arbre */
+.tree {
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  max-height: 78vh;
+  padding: 8px;
+}
+.tree-section-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 12px 8px 4px;
+}
+.tree-node {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 5px;
+  position: relative;
+  text-align: left;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.tree-node:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.tree-node.tree-node--active {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 500;
+}
+.tree-node.tree-node--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 5px;
+  bottom: 5px;
+  width: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.tree-node--child {
+  padding-left: 20px;
+}
+.tree-node-id {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-2);
+  flex: none;
+  min-width: 34px;
+}
+.tree-node.tree-node--active .tree-node-id {
+  color: var(--accent);
+}
+.tree-node-label {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.tree-node-count {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-2);
+  flex: none;
+}
+/* Présence de contrôles rattachés : couleur ET pastille (indice non chromatique) */
+.tree-node-count.has-mapping {
+  color: var(--accent);
+}
+.tree-node-map-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+/* Panneau central : liste des exigences */
+.req-list {
+  overflow-y: auto;
+  max-height: 78vh;
+  min-width: 0;
+}
+.req-list-head {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  z-index: 2;
+}
+.req-list-head b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.req-list-head .meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.req-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+.toggle-chip[aria-pressed='true'] {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.req-row {
+  display: grid;
+  grid-template-columns: 4px 62px 1fr 20px;
+  align-items: start;
+  gap: 10px;
+  padding: 11px 16px 11px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+.req-row:hover {
+  background: var(--surface-2);
+}
+.req-row.req-row--selected {
+  background: var(--surface-2);
+}
+.req-thread {
+  align-self: stretch;
+  border-radius: 0 2px 2px 0;
+}
+.req-row--mutualized .req-thread {
+  background: var(--accent);
+}
+.req-row-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  padding-top: 1px;
+}
+.req-row-body {
+  min-width: 0;
+}
+.req-row-title {
+  font-size: 12.5px;
+  color: var(--text);
+}
+.req-row-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.control-chip {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  padding: 1px 5px;
+  color: var(--text-2);
+  background: var(--surface);
+}
+/* Amorce du fil + badges des autres référentiels */
+.thread-start {
+  width: 14px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  flex: none;
+}
+.mut-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border-radius: 8px;
+  padding: 0 6px;
+  height: 17px;
+  color: var(--text-2);
+}
+.mut-tag-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+.req-row-chevron {
+  color: var(--text-3);
+  padding-top: 2px;
+}
+
+/* Panneau détail : mapping d'une exigence sélectionnée */
+.detail-panel {
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+}
+.panel-header {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.panel-header-body {
+  min-width: 0;
+}
+.panel-header .chip-ref {
+  font-size: 11px;
+}
+.panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.panel-guidance {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.panel-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-section-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+/* Callout mutualisation dans le panneau */
+.mut-callout {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: var(--radius-m);
+  font-size: 12px;
+  color: var(--text-2);
+}
+.mut-callout b {
+  color: var(--text);
+}
+.linked-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.linked-control:first-of-type {
+  border-top: none;
+}
+.linked-control-body {
+  min-width: 0;
+}
+.linked-control-title {
+  font-size: 12.5px;
+}
+.linked-control-meta {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-2);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+.status-dot--actif {
+  background: var(--ok);
+}
+.status-dot--brouillon {
+  background: var(--warn);
+}
+.status-dot--archive {
+  background: var(--text-3);
+}
+.linked-control-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.link-btn {
+  font-size: 11.5px;
+  color: var(--text-2);
+  padding: 2px 8px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border-strong);
+}
+.link-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.link-btn--danger:hover {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+.panel-placeholder {
+  margin: auto;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 12.5px;
+  max-width: 240px;
+}
+
+/* Sélecteur de contrôle à rattacher */
+.map-picker {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.map-picker select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 6px 8px;
+}
+
+.field {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 10px;
+}
+.field input,
+.field textarea,
+.field select {
+  font: inherit;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 7px 10px;
+}
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  /* Complément visuel ; l'anneau de focus global (:focus-visible de
+     shell.css) reste actif au clavier — on ne le supprime jamais. */
+  border-color: var(--accent);
+}
+.form-error {
+  color: var(--danger);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+/* Dialogue (impact de suppression, création) */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 24px;
+}
+.dialog {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.dialog h2 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.dialog p {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.impact-framework {
+  margin-top: 8px;
+}
+.impact-framework-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+.impact-req {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 3px 0;
+}
+.impact-uncovered {
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+.btn-danger {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+.btn-danger:hover {
+  filter: brightness(1.08);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}

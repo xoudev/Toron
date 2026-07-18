@@ -1,10 +1,10 @@
-import { AppShell, Sidebar, ThemeToggle, Topbar } from '@toron/ui';
+import { AppShell } from '@toron/ui';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
-import { buildNav } from './nav';
+import { TenantSidebar } from './tenant-sidebar';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,24 +33,20 @@ export default async function TenantLayout({
   // Refus et TOTP requis : la page rend le message, sans chrome de shell.
   if (ctx.verdict !== 'autorise') return <>{children}</>;
 
+  // Chaque page fournit sa propre topbar (fil d'Ariane contextuel).
   return (
     <AppShell
       sidebar={
-        <Sidebar
+        <TenantSidebar
+          slug={slug}
           tenantName={ctx.tenantName}
-          tenantDetail="Phase M0 — fondations"
-          groups={buildNav(slug, 'accueil')}
+          tenantDetail="Périmètre SMSI + QMS"
           userName={ctx.userName}
           userRole={ROLE_LABELS[ctx.role] ?? ctx.role}
         />
       }
     >
-      <Topbar
-        crumbRoot={ctx.tenantName}
-        crumbCurrent="Tableau de bord"
-        actions={<ThemeToggle />}
-      />
-      <main className="app-page">{children}</main>
+      {children}
     </AppShell>
   );
 }

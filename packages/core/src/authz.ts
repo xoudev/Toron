@@ -28,6 +28,26 @@ export function totpRequiredForRole(role: MembershipRole): boolean {
 }
 
 /**
+ * Rôles autorisés à gérer les contrôles et le cross-mapping (module 5.2) :
+ * créer/mapper/démapper/supprimer un contrôle, créer un référentiel custom.
+ * Lecteur et auditeur sont en lecture seule (S5, séparation auditeur/audité) :
+ * l'auditeur constate, il ne modifie pas l'objet audité. Le serveur décide,
+ * l'UI ne fait que refléter.
+ */
+const CONTROL_MANAGER_ROLES: ReadonlySet<MembershipRole> = new Set([
+  'owner',
+  'direction',
+  'rssi',
+  'resp_qualite',
+  'pilote',
+  'contributeur',
+]);
+
+export function canManageControls(role: MembershipRole): boolean {
+  return CONTROL_MANAGER_ROLES.has(role);
+}
+
+/**
  * Verdict d'accès au contexte tenant pour une session donnée.
  * `totp_requis` signifie : membre légitime, mais l'accès reste bloqué
  * tant que la double authentification n'est pas activée.

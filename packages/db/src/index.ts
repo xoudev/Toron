@@ -27,3 +27,14 @@ export {
   type CreateCustomFrameworkInput,
   type AddCustomRequirementInput,
 } from './queries/referentiels.ts';
+export {
+  createAssessment,
+  listAssessments,
+  getAssessmentItems,
+  setAssessmentItemStatus,
+  closeAssessment,
+  type CreateAssessmentInput,
+  type AssessmentSummary,
+  type AssessmentItemRow,
+  type SetItemStatusInput,
+} from './queries/assessments.ts';

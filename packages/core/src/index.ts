@@ -10,6 +10,17 @@ export {
   type ImpactedRequirement,
 } from './referentiels.ts';
 export {
+  ASSESSMENT_ITEM_STATUSES,
+  countStatuses,
+  scoreAssessment,
+  soaJustificationRequired,
+  isSoaItemValid,
+  type AssessmentItemStatus,
+  type StatusCounts,
+  type CoverageScore,
+  type SoaItemInput,
+} from './assessments.ts';
+export {
   MEMBERSHIP_ROLES,
   tenantAccessVerdict,
   totpRequiredForRole,

@@ -4,3 +4,4 @@ export * from './referentiels.ts';
 export * from './auth.ts';
 export * from './exports.ts';
 export * from './risks.ts';
+export * from './actions.ts';

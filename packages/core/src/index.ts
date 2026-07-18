@@ -71,3 +71,15 @@ export {
   type DocumentType,
   type DocumentVersionStatus,
 } from './documents.ts';
+export {
+  EVIDENCE_TYPES,
+  EVIDENCE_RECURRENCES,
+  FRESHNESS_STATES,
+  EXPIRING_SOON_DAYS,
+  freshnessState,
+  freshnessRank,
+  freshnessNeedsAttention,
+  type EvidenceType,
+  type EvidenceRecurrence,
+  type FreshnessState,
+} from './evidences.ts';

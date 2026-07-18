@@ -7,6 +7,7 @@
     ".": "./src/index.ts",
     "./tokens.css": "./src/styles/tokens.css",
     "./shell.css": "./src/styles/shell.css",
+    "./data-screen.css": "./src/styles/data-screen.css",
     "./referentiels.css": "./src/styles/referentiels.css",
     "./risques.css": "./src/styles/risques.css",
     "./plan-action.css": "./src/styles/plan-action.css",

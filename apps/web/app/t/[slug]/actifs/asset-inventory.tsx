@@ -2,9 +2,11 @@
 
 import type { AssetCategory } from '@toron/core';
 import type { AssetSummary, ScopeSummary } from '@toron/db';
-import { Dialog } from '@toron/ui';
+import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
+
+import { refCode } from '@/lib/format';
 
 import {
   createAssetAction,
@@ -76,6 +78,7 @@ export function AssetInventory({
             <table className="asset-table">
               <thead>
                 <tr>
+                  <th>ID</th>
                   <th>Actif</th>
                   <th>Catégorie</th>
                   <th>DICP</th>
@@ -87,6 +90,7 @@ export function AssetInventory({
               <tbody>
                 {assets.map((a) => (
                   <tr key={a.id}>
+                    <td className="ds-id">{refCode('AST', a.id)}</td>
                     <td className="asset-name-cell" onClick={() => setOpenAsset(a)}>
                       {a.name}
                       {a.description ? <div className="ev-type" style={{ textTransform: 'none' }}>{a.description}</div> : null}
@@ -273,33 +277,39 @@ function DetailDialog({
     });
   }
 
-  return (
-    <Dialog title={asset.name} onClose={onClose}>
-      <div className="doc-meta" style={{ marginBottom: 10 }}>
-        <span className="cat-tag">{CATEGORY_LABEL[asset.category] ?? asset.category}</span>
-        <Dicp dicp={asset.dicp} />
-        <span className={`sens-badge lvl${asset.sensitivity}`}>Sensibilité {asset.sensitivity}</span>
-      </div>
-      {asset.description ? <p style={{ fontSize: 13, color: 'var(--text-2)' }}>{asset.description}</p> : null}
+  const header = (
+    <>
+      <span className="ds-id" id="ast-drawer-title">{refCode('AST', asset.id)}</span>
+      <span className="cat-tag">{CATEGORY_LABEL[asset.category] ?? asset.category}</span>
+      <span className={`sens-badge lvl${asset.sensitivity}`}>Sensibilité {asset.sensitivity}</span>
+    </>
+  );
 
-      <p className="rating-block-title" style={{ marginTop: 12 }}>Risques associés</p>
-      {risks.length === 0 ? (
-        <p className="risk-mut-hint">Aucun risque au registre.</p>
-      ) : linked === null ? (
-        <p className="risk-mut-hint">Chargement…</p>
-      ) : (
-        <div className="control-link-list">
-          {risks.map((r) => (
-            <label className="control-link-row" key={r.id}>
-              <input type="checkbox" checked={linked.has(r.id)} disabled={!canManage || pending} onChange={(e) => toggle(r.id, e.target.checked)} />
-              {r.title}
-            </label>
-          ))}
-        </div>
-      )}
-      <div className="dialog-actions">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Fermer</button>
+  return (
+    <Drawer header={header} labelId="ast-drawer-title" onClose={onClose}>
+      <div className="drawer-section">
+        <div className="ds-primary" style={{ fontSize: 14 }}>{asset.name}</div>
+        <div className="doc-meta" style={{ margin: '8px 0' }}><Dicp dicp={asset.dicp} /></div>
+        {asset.description ? <p className="ds-muted">{asset.description}</p> : null}
       </div>
-    </Dialog>
+
+      <div className="drawer-section">
+        <p className="drawer-section-label">Risques associés</p>
+        {risks.length === 0 ? (
+          <p className="risk-mut-hint">Aucun risque au registre.</p>
+        ) : linked === null ? (
+          <p className="risk-mut-hint">Chargement…</p>
+        ) : (
+          <div className="control-link-list">
+            {risks.map((r) => (
+              <label className="control-link-row" key={r.id}>
+                <input type="checkbox" checked={linked.has(r.id)} disabled={!canManage || pending} onChange={(e) => toggle(r.id, e.target.checked)} />
+                {r.title}
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+    </Drawer>
   );
 }

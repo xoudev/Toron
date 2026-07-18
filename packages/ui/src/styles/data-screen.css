@@ -1,0 +1,408 @@
+/* Système visuel commun des écrans de données (référence : docs/design).
+   Reconstruit avec les tokens — jamais de couleur en dur. Utilisé par les
+   écrans risques / plan d'action / documents / preuves / actifs. */
+
+/* ── Barre d'outils d'écran : recherche + actions ─────────────────────── */
+.ds-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.ds-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  min-width: 230px;
+  flex: 1;
+  max-width: 360px;
+}
+.ds-search svg {
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+.ds-search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 12.5px;
+  flex: 1;
+  min-width: 0;
+}
+.ds-toolbar .spacer {
+  flex: 1;
+}
+
+/* ── Légende des bandes ───────────────────────────────────────────────── */
+.ds-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ds-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.ds-legend-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--sw) 42%, var(--surface));
+  border: 1px solid var(--sw);
+}
+
+/* ── Table dense (grille façon maquette) ──────────────────────────────── */
+.ds-table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ds-scroll {
+  overflow-x: auto;
+}
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.ds-table thead th {
+  text-align: left;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0 8px;
+  height: 34px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ds-table tbody td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.ds-table tbody tr {
+  cursor: pointer;
+}
+.ds-table tbody tr:hover {
+  background: var(--surface-2);
+}
+.ds-id {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.ds-primary {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text);
+}
+.ds-primary small {
+  display: block;
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.ds-muted {
+  color: var(--text-2);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+.ds-mono {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.ds-empty {
+  padding: 26px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+/* ── Avatar initiales ─────────────────────────────────────────────────── */
+.ds-owner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ds-avatar {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.ds-owner span {
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Pastille de niveau (bande de risque / sensibilité) ───────────────── */
+.ds-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.ds-level-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--sw) 55%, var(--surface));
+  border: 1px solid var(--sw);
+}
+.ds-level-swatch.target {
+  background: transparent;
+  border: 1.5px dashed var(--sw);
+}
+.ds-level b {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+}
+.ds-level.dim b {
+  color: var(--text-2);
+}
+
+/* Couleurs de bande (dérivées des tokens sémantiques). */
+.sw--faible,
+.sw--moyen,
+.sw--eleve,
+.sw--critique,
+.sw--1,
+.sw--2,
+.sw--3,
+.sw--4 {
+  --sw: var(--border-strong);
+}
+.sw--faible,
+.sw--1 {
+  --sw: var(--ok);
+}
+.sw--moyen,
+.sw--2 {
+  --sw: var(--warn);
+}
+.sw--eleve,
+.sw--3 {
+  --sw: var(--accent);
+}
+.sw--critique,
+.sw--4 {
+  --sw: var(--danger);
+}
+
+/* ── Chip générique (traitement, statut, catégorie) ───────────────────── */
+.ds-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.ds-chip.accent {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+}
+
+/* Chip mono d'exigence/référentiel + fil orange de mutualisation. */
+.ds-refchips {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+.ds-refchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10px;
+  color: var(--text-2);
+}
+.ds-refchip .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+.ds-refchip.mut .dot {
+  background: var(--accent);
+}
+.ds-thread {
+  width: 10px;
+  height: 2px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Badge « accepté » (acceptation signée, objet de première classe). */
+.ds-accept-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  height: 18px;
+  padding: 0 7px;
+  border: 1px solid var(--ok);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+  color: var(--ok);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 8.5px;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+.ds-accept-badge.pending {
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+  color: var(--warn);
+}
+
+/* ── Tiroir latéral droit ─────────────────────────────────────────────── */
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+  background: color-mix(in srgb, var(--scrim) 55%, transparent);
+}
+.drawer {
+  width: 420px;
+  max-width: 92vw;
+  height: 100%;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 28px color-mix(in srgb, var(--scrim) 40%, transparent);
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  animation: drawer-in 0.16s ease;
+}
+@keyframes drawer-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0.6;
+  }
+}
+.drawer-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  padding: 13px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.drawer-close {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.drawer-close:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+.drawer-section {
+  margin-bottom: 18px;
+}
+.drawer-section-label {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 0 8px;
+}
+
+/* Header d'écran : statistique + sous-titre (ex. fraîcheur des preuves). */
+.ds-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.ds-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ds-stat-value {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+.ds-stat-label {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.ds-stat-value.alert {
+  color: var(--danger);
+}

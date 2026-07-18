@@ -33,6 +33,8 @@ export const DEMO = {
   actionMessagerie: 'd0000000-0000-4000-8000-000000000061',
   actionRevueAcces: 'd0000000-0000-4000-8000-000000000062',
   actionPcaEntrepot: 'd0000000-0000-4000-8000-000000000063',
+  docPssi: 'd0000000-0000-4000-8000-000000000071',
+  docProcSauvegarde: 'd0000000-0000-4000-8000-000000000072',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -533,6 +535,60 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
           SELECT ${DEMO.tenantId}, ${a.id}, ${a.owner}, ${a.comment}
           WHERE NOT EXISTS (SELECT 1 FROM action_comments WHERE action_id = ${a.id})`;
       }
+    }
+
+    // ── Module 5.6 : documents du tenant démo ───────────────────────────
+    // Une PSSI publiée (revue à venir) et une procédure dont la revue est
+    // dépassée (alerte) avec une nouvelle version en brouillon. Les exigences
+    // couvertes alimenteront la SoA (RM §5.6).
+    const documents = [
+      {
+        id: DEMO.docPssi,
+        type: 'pssi',
+        title: 'Politique de sécurité du système d’information (PSSI)',
+        owner: DEMO.userClaire,
+        reviewDue: '2027-03-31',
+        req: 'A.5.1',
+        versions: [{ semver: '1.0', status: 'publie', file: 'PSSI Meridiane v1.0' }] as const,
+      },
+      {
+        id: DEMO.docProcSauvegarde,
+        type: 'procedure',
+        title: 'Procédure de sauvegarde et de restauration',
+        owner: DEMO.userAntoine,
+        reviewDue: '2026-05-31', // dépassée → alerte de revue
+        req: 'A.8.13',
+        versions: [
+          { semver: '1.0', status: 'publie', file: 'Procédure sauvegarde v1.0' },
+          { semver: '1.1', status: 'brouillon', file: 'Procédure sauvegarde v1.1 (révision)' },
+        ] as const,
+      },
+    ] as const;
+
+    for (const doc of documents) {
+      await sql`
+        INSERT INTO documents (id, tenant_id, type, title, scope_id, owner_user_id, review_due)
+        VALUES (${doc.id}, ${DEMO.tenantId}, ${doc.type}, ${doc.title}, ${DEMO.scopeSmsi}, ${doc.owner}, ${doc.reviewDue})
+        ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, review_due = EXCLUDED.review_due`;
+
+      for (const v of doc.versions) {
+        await sql`
+          INSERT INTO document_versions
+            (tenant_id, document_id, semver, file_name, content, status, created_by, published_at)
+          SELECT ${DEMO.tenantId}, ${doc.id}, ${v.semver}, ${`${v.file}.txt`},
+                 ${Buffer.from(v.file)}, ${v.status}, ${doc.owner},
+                 ${v.status === 'publie' ? sql`now()` : sql`NULL`}
+          WHERE NOT EXISTS (
+            SELECT 1 FROM document_versions WHERE document_id = ${doc.id} AND semver = ${v.semver}
+          )`;
+      }
+
+      await sql`
+        INSERT INTO document_requirements (document_id, requirement_id, tenant_id)
+        SELECT ${doc.id}, r.id, ${DEMO.tenantId}
+        FROM requirements r JOIN frameworks f ON f.id = r.framework_id
+        WHERE f.tenant_id IS NULL AND f.code = 'iso27001' AND r.ref_id = ${doc.req}
+        ON CONFLICT DO NOTHING`;
     }
   } finally {
     await sql.end();

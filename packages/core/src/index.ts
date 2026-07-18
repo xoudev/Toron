@@ -62,3 +62,12 @@ export {
   type ActionOrigin,
   type SubtaskProgress,
 } from './actions.ts';
+export {
+  DOCUMENT_TYPES,
+  DOCUMENT_VERSION_STATUSES,
+  canEditVersion,
+  nextSemver,
+  reviewOverdue,
+  type DocumentType,
+  type DocumentVersionStatus,
+} from './documents.ts';

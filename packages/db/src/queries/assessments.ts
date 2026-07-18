@@ -185,6 +185,43 @@ export async function setAssessmentItemStatus(
   return updated.length;
 }
 
+export interface SoaHeader {
+  frameworkName: string;
+  scopeName: string;
+  entityName: string;
+  campaignLabel: string;
+}
+
+/** En-tête de la Déclaration d'applicabilité (référentiel, périmètre, entité). */
+export async function getSoaHeader(tx: TenantTx, assessmentId: string): Promise<SoaHeader | null> {
+  const rows = await tx.execute(sql`
+    SELECT
+      f.name AS framework_name,
+      s.name AS scope_name,
+      a.campaign_label,
+      (SELECT le.name FROM legal_entities le WHERE le.tenant_id = a.tenant_id
+         ORDER BY le.created_at LIMIT 1) AS entity_name
+    FROM assessments a
+    JOIN frameworks f ON f.id = a.framework_id
+    JOIN scopes s ON s.id = a.scope_id
+    WHERE a.id = ${assessmentId}
+  `);
+  const list = rows as unknown as {
+    framework_name: string;
+    scope_name: string;
+    campaign_label: string;
+    entity_name: string | null;
+  }[];
+  if (list.length === 0) return null;
+  const r = list[0]!;
+  return {
+    frameworkName: r.framework_name,
+    scopeName: r.scope_name,
+    entityName: r.entity_name ?? r.scope_name,
+    campaignLabel: r.campaign_label,
+  };
+}
+
 export interface MutualizedPeerRow {
   requirementId: string;
   requirementRef: string;

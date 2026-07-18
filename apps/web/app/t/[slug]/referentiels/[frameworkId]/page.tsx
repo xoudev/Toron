@@ -6,9 +6,11 @@ import {
   listAssessments,
   listControlLinks,
   listControls,
+  listExportsForObject,
   listScopes,
   withTenant,
   type AssessmentItemRow,
+  type ExportSummary,
 } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { notFound, redirect } from 'next/navigation';
@@ -47,7 +49,11 @@ export default async function ReferentielDetailPage({
       assessments.find((a) => a.status === 'en_cours') ??
       null;
     let items: AssessmentItemRow[] = [];
-    if (active) items = await getAssessmentItems(tx, active.id);
+    let exportsList: ExportSummary[] = [];
+    if (active) {
+      items = await getAssessmentItems(tx, active.id);
+      exportsList = await listExportsForObject(tx, active.id);
+    }
     return {
       framework,
       tree: await getRequirementTree(tx, frameworkId),
@@ -57,6 +63,7 @@ export default async function ReferentielDetailPage({
       assessments,
       activeCampaign: active,
       items,
+      exportsList,
     };
   });
   if (!data) notFound();
@@ -76,6 +83,7 @@ export default async function ReferentielDetailPage({
           assessments={data.assessments}
           activeCampaign={data.activeCampaign}
           items={data.items}
+          exportsList={data.exportsList}
         />
       </main>
     </>

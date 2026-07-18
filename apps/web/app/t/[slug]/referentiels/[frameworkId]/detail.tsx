@@ -6,6 +6,7 @@ import type {
   AssessmentSummary,
   ControlLink,
   ControlSummary,
+  ExportSummary,
   FrameworkSummary,
   RequirementNode,
   ScopeSummary,
@@ -70,6 +71,7 @@ interface Props {
   assessments: AssessmentSummary[];
   activeCampaign: AssessmentSummary | null;
   items: AssessmentItemRow[];
+  exportsList: ExportSummary[];
 }
 
 export function ReferentielDetail({
@@ -83,6 +85,7 @@ export function ReferentielDetail({
   assessments,
   activeCampaign,
   items,
+  exportsList,
 }: Props) {
   const itemsByReq = useMemo(
     () => new Map(items.map((i) => [i.requirementId, i])),
@@ -178,6 +181,7 @@ export function ReferentielDetail({
         assessments={assessments}
         activeCampaign={activeCampaign}
         score={score}
+        exportsList={exportsList}
       />
 
       <div className={`detail-layout ${selectedReq ? '' : 'no-panel'}`}>

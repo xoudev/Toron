@@ -7,6 +7,7 @@ import { applyMigrations } from '../migrate.ts';
 import { DEMO, seedDemoTenant, seedIso27001Framework, seedRecyfFramework } from '../seed.ts';
 import { withTenant } from '../tenant.ts';
 import {
+  claimNextExport,
   createExport,
   failExport,
   getExport,
@@ -112,6 +113,29 @@ describe('vérification publique du poinçon (ADR-6)', () => {
     });
     expect(enCoursSlug).toBeTruthy();
     expect(await verifyExport(app.db, 'en-cours-jamais-scelle')).toBeNull();
+  });
+});
+
+describe('file de traitement (worker)', () => {
+  it('claimNextExport prend atomiquement un « en cours » et le passe « en traitement »', async () => {
+    await withTenant(app.db, T, (tx) =>
+      createExport(tx, { tenantId: T, type: 'soa', objectRef: DEMO.scopeSmsi, requestedBy: DEMO.userClaire }),
+    );
+    // Le worker réclame SANS contexte tenant (fonction SECURITY DEFINER).
+    const claimed = await claimNextExport(app.db);
+    expect(claimed).not.toBeNull();
+    expect(claimed!.tenantId).toBe(T);
+    // La ligne réclamée est désormais « en traitement » (plus réclamable).
+    const status = await withTenant(app.db, T, async (tx) => (await getExport(tx, claimed!.id))?.status);
+    expect(status).toBe('en_traitement');
+  });
+
+  it('claimNextExport renvoie null quand plus rien n’est « en cours »', async () => {
+    // Draine la file (les tests précédents ont pu laisser des « en cours »).
+    for (let i = 0; i < 20; i += 1) {
+      if ((await claimNextExport(app.db)) === null) break;
+    }
+    expect(await claimNextExport(app.db)).toBeNull();
   });
 });
 

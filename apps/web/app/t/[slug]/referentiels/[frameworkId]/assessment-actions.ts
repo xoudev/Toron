@@ -10,6 +10,7 @@ import {
 import {
   closeAssessment,
   createAssessment,
+  createExport,
   getMutualizedPeers,
   setAssessmentItemStatus,
   withTenant,
@@ -142,6 +143,51 @@ export async function setItemStatusAction(
     return {
       ok: false,
       error: logFailure(err, appError('ECHEC_STATUT', 'L’enregistrement du statut a échoué — réessayez.')),
+    };
+  }
+}
+
+/**
+ * Demande l'export scellé de la Déclaration d'applicabilité : crée un export
+ * « en cours » que le worker Typst compilera et scellera (ADR-5/6). Le
+ * poinçon (empreinte + slug) est posé par le worker.
+ */
+export async function requestSoaExportAction(
+  slug: string,
+  input: { frameworkId: string; assessmentId: string },
+): Promise<ActionResult<{ exportId: string }>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ frameworkId: z.uuid(), assessmentId: z.uuid() }).safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence de campagne invalide.') };
+  }
+  try {
+    const exportId = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const id = await createExport(tx, {
+        tenantId: auth.tenantId,
+        type: 'soa',
+        objectRef: parsed.data.assessmentId,
+        requestedBy: auth.userId,
+      });
+      await writeAuditEntry(tx, {
+        tenantId: auth.tenantId,
+        actorUserId: auth.userId,
+        action: 'export.request',
+        objectType: 'export',
+        objectId: id,
+        after: { type: 'soa', assessmentId: parsed.data.assessmentId },
+        ip: auth.ip,
+        userAgent: auth.userAgent,
+      });
+      return id;
+    });
+    revalidateDetail(slug, parsed.data.frameworkId);
+    return { ok: true, data: { exportId } };
+  } catch (err) {
+    return {
+      ok: false,
+      error: logFailure(err, appError('ECHEC_EXPORT', 'La demande d’export a échoué — réessayez.')),
     };
   }
 }

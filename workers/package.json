@@ -7,9 +7,16 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start": "node src/index.ts"
+  },
+  "dependencies": {
+    "@toron/core": "workspace:*",
+    "@toron/db": "workspace:*",
+    "@toron/typst": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "typescript": "~5.9.3"
   }
 }

@@ -14,6 +14,7 @@ import {
   createAssessment,
   getAssessmentItems,
   getMutualizedPeers,
+  getSoaHeader,
   listAssessments,
   setAssessmentItemStatus,
 } from './assessments.ts';
@@ -192,6 +193,23 @@ describe('cycle de vie des campagnes', () => {
     expect(result.closed).toBe(1);
     expect(result.status).toBe('cloturee');
     expect(result.itemCount).toBe(118);
+  });
+});
+
+describe('getSoaHeader (en-tête de la Déclaration d’applicabilité)', () => {
+  it('renvoie référentiel, périmètre et entité de l’organisation', async () => {
+    const header = await withTenant(app.db, T, async (tx) => {
+      const id = await createAssessment(tx, {
+        tenantId: T,
+        frameworkId: isoFwId,
+        scopeId: DEMO.scopeSmsi,
+        campaignLabel: 'Campagne en-tête SoA',
+      });
+      return getSoaHeader(tx, id);
+    });
+    expect(header?.frameworkName).toBe('ISO/IEC 27001:2022');
+    expect(header?.scopeName).toBe('SMSI Groupe');
+    expect(header?.entityName).toBe('Meridiane Logistics SAS');
   });
 });
 

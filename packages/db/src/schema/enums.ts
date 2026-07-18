@@ -76,3 +76,15 @@ export const actionStatus = pgEnum('action_status', [
 ]);
 
 export const actionLinkTarget = pgEnum('action_link_target', ['requirement', 'control']);
+
+export const documentType = pgEnum('document_type', [
+  'pssi',
+  'politique',
+  'procedure',
+  'charte',
+  'pca_pra',
+  'fiche_processus',
+  'autre',
+]);
+
+export const documentVersionStatus = pgEnum('document_version_status', ['brouillon', 'publie']);

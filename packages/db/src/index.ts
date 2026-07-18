@@ -79,6 +79,25 @@ export {
 } from './queries/risks.ts';
 export { listTenantMembers, type TenantMember } from './queries/members.ts';
 export {
+  createDocument,
+  addVersion,
+  publishVersion,
+  listDocuments,
+  listVersions,
+  latestSemver,
+  getVersionContent,
+  linkRequirement,
+  unlinkRequirement,
+  listDocumentRequirementIds,
+  listDocumentsCoveringRequirement,
+  type CreateDocumentInput,
+  type AddVersionInput,
+  type DocumentSummary,
+  type DocumentVersionRow,
+  type VersionContent,
+  type CoveringDocument,
+} from './queries/documents.ts';
+export {
   createAction,
   listActions,
   updateActionDetails,

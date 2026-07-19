@@ -78,6 +78,7 @@ export {
   type RiskHistoryRow,
 } from './queries/risks.ts';
 export { listTenantMembers, type TenantMember } from './queries/members.ts';
+export { listAuditLog, type AuditRow } from './queries/audit.ts';
 export { getDashboardMetrics, type DashboardMetrics } from './queries/dashboard.ts';
 export {
   createNc,

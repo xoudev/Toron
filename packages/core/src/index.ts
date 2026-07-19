@@ -99,6 +99,7 @@ export {
   detectMapping,
   validateRows,
   parseDelimited,
+  csvTemplate,
   type ImportTarget,
   type FieldSpec,
   type TargetSpec,

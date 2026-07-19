@@ -125,6 +125,38 @@ export const TARGET_SPECS: Record<ImportTarget, TargetSpec> = {
   },
 };
 
+/** Exemple de valeur par champ pour le modèle CSV téléchargeable. */
+const TEMPLATE_EXAMPLES: Record<ImportTarget, Record<string, string>> = {
+  risk: {
+    title: 'Rançongiciel sur le SI de production',
+    businessValue: 'Continuité des livraisons',
+    scenario: 'Chiffrement des serveurs après hameçonnage',
+    grossG: '4', grossV: '3', netG: '3', netV: '2', treatment: 'reduire',
+  },
+  action: {
+    title: 'Déployer la MFA sur les accès distants',
+    description: 'VPN + messagerie, priorité P1',
+    priority: 'p1', dueDate: '2026-09-30',
+  },
+  asset: {
+    name: 'Serveur de fichiers principal',
+    category: 'materiel', description: 'Baie du siège',
+    dicpD: '3', dicpI: '3', dicpC: '4', dicpP: '2',
+  },
+};
+
+/**
+ * Modèle CSV (point-virgule, en-tête + une ligne d'exemple) pour une cible.
+ * Fournit les en-têtes exacts que la détection reconnaît à coup sûr.
+ */
+export function csvTemplate(target: ImportTarget): string {
+  const spec = TARGET_SPECS[target];
+  const headers = spec.fields.map((f) => f.label);
+  const example = spec.fields.map((f) => TEMPLATE_EXAMPLES[target][f.field] ?? '');
+  const esc = (v: string): string => (/[;"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  return `${headers.map(esc).join(';')}\n${example.map(esc).join(';')}\n`;
+}
+
 export interface ColumnMapping {
   field: string;
   label: string;

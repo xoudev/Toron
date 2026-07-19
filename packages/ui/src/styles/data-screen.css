@@ -797,3 +797,28 @@ textarea {
   font-size: 12px;
   color: var(--text-2);
 }
+
+/* ── Champ fichier (input type=file) ─────────────────────────────────── */
+input[type='file'] {
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-2);
+  max-width: 100%;
+}
+input[type='file']::file-selector-button {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 6px 12px;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+input[type='file']::file-selector-button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+}

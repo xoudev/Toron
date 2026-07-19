@@ -108,7 +108,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Non-conformités',
           href: `${base}/non-conformites`,
-          disabled: true,
+          active: isActive(`${base}/non-conformites`),
           iconPath: 'M8.5 3.5h7L20.5 8.5v7L15.5 20.5h-7L3.5 15.5v-7z M9.7 9.7l4.6 4.6 M14.3 9.7l-4.6 4.6',
         },
       ],

@@ -4,12 +4,15 @@ import { appError } from '@toron/core';
 import {
   addAction,
   addScenario,
+  createExport,
   createStudy,
   generateRiskFromScenario,
   getStudy,
+  listExportsForObject,
   setWorkshop,
   withTenant,
   writeAuditEntry,
+  type ExportSummary,
   type StudyDetail,
 } from '@toron/db';
 import { revalidatePath } from 'next/cache';
@@ -100,6 +103,38 @@ export async function generateRiskAction(slug: string, input: unknown): Promise<
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_GENERATION', 'La génération du risque a échoué — le scénario doit être coté.')) };
+  }
+}
+
+/** Demande le livrable EBIOS RM scellé (poinçon SHA-256 + page /verifier). */
+export async function requestEbiosExportAction(slug: string, input: unknown): Promise<ActionResult<{ exportId: string }>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ studyId: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence d’étude invalide.') };
+  try {
+    const exportId = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const id = await createExport(tx, { tenantId: auth.tenantId, type: 'ebios', objectRef: parsed.data.studyId, requestedBy: auth.userId });
+      await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'export.request', objectType: 'export', objectId: id, after: { type: 'ebios', studyId: parsed.data.studyId }, ip: auth.ip, userAgent: auth.userAgent });
+      return id;
+    });
+    revalidatePath(`/t/${slug}/ebios`);
+    return { ok: true, data: { exportId } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_EXPORT', 'La demande de livrable a échoué — réessayez.')) };
+  }
+}
+
+export async function listStudyExportsAction(slug: string, studyId: string): Promise<ActionResult<ExportSummary[]>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.uuid().safeParse(studyId);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };
+  try {
+    const list = await withTenant(appDb().db, auth.tenantId, (tx) => listExportsForObject(tx, parsed.data));
+    return { ok: true, data: list };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_LECTURE', 'La lecture a échoué.')) };
   }
 }
 

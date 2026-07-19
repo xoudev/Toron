@@ -5,6 +5,8 @@ import type { SoaModel } from './soa-model.ts';
 import { renderSoaTypst } from './soa-template.ts';
 import type { PvModel } from './pv-model.ts';
 import { renderPvTypst } from './pv-template.ts';
+import type { EbiosModel } from './ebios-model.ts';
+import { renderEbiosTypst } from './ebios-template.ts';
 
 export interface CompileOptions {
   /** Chemin du binaire Typst (défaut : `typst` dans le PATH). */
@@ -49,6 +51,11 @@ export function compileSoa(model: SoaModel, opts: CompileOptions = {}): Promise<
 /** Rend et compile le procès-verbal de revue de direction. */
 export function compilePv(model: PvModel, opts: CompileOptions = {}): Promise<Buffer> {
   return compileTypst(renderPvTypst(model), opts);
+}
+
+/** Rend et compile le livrable EBIOS RM. */
+export function compileEbios(model: EbiosModel, opts: CompileOptions = {}): Promise<Buffer> {
+  return compileTypst(renderEbiosTypst(model), opts);
 }
 
 /** Empreinte SHA-256 (hex) d'un PDF — le poinçon (ADR-6). */

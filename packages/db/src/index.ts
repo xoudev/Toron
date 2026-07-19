@@ -122,11 +122,13 @@ export {
 export {
   createProcess,
   setProcessWorkflow,
+  updateProcess,
   addProcessRisk,
   removeProcessRisk,
   listProcesses,
   getProcess,
   type CreateProcessInput,
+  type UpdateProcessInput,
   type ProcessSummary,
   type ProcessDetail,
   type ProcessRiskRow,

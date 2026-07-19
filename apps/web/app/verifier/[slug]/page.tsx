@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 const TYPE_LABEL: Record<string, string> = {
   soa: 'Déclaration d’applicabilité (SoA)',
   pv: 'Procès-verbal de revue de direction',
+  ebios: 'Livrable EBIOS RM',
 };
 
 const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', {

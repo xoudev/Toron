@@ -6,7 +6,7 @@ import { createDb, type DbHandle } from '../client.ts';
 import { applyMigrations } from '../migrate.ts';
 import { DEMO, seedDemoTenant, seedIso27001Framework, seedRecyfFramework } from '../seed.ts';
 import { withTenant } from '../tenant.ts';
-import { addProcessRisk, createProcess, getProcess, listProcesses } from './processes.ts';
+import { addProcessRisk, createProcess, getProcess, listProcesses, updateProcess } from './processes.ts';
 
 const PG_IMAGE = 'postgres:16.14-alpine3.23';
 const T = DEMO.tenantId;
@@ -68,6 +68,23 @@ describe('processus (module 7.1)', () => {
       return getProcess(tx, pid);
     });
     expect(res?.risks.some((r) => r.id === DEMO.riskRancongiciel)).toBe(true);
+  });
+
+  it('édite les blocs de la fiche (SIPOC, indicateurs, exigences)', async () => {
+    const d = await withTenant(app.db, T, async (tx) => {
+      const pid = await createProcess(tx, { tenantId: T, family: 'realisation', name: 'Test — édition' });
+      await updateProcess(tx, pid, {
+        sipoc: { suppliers: ['Amont'], inputs: ['Entrée'], activities: ['Étape'], outputs: ['Sortie'], clients: ['Aval'] },
+        kpis: [{ label: 'Taux', actual: '95 %', target: '99 %', tone: 'warn' }],
+        coveredRequirements: [{ framework: '27001', code: 'A.8.1', mutualized: true }],
+      });
+      return getProcess(tx, pid);
+    });
+    expect(d?.sipoc.suppliers).toEqual(['Amont']);
+    expect(d?.kpis[0]?.actual).toBe('95 %');
+    // Un indicateur orange → santé à surveiller ; exigence 27001 → mutualisation.
+    expect(d?.health).toBe('a_surveiller');
+    expect(d?.mutualizedCount).toBe(1);
   });
 
   it('isolation cross-tenant (RLS)', async () => {

@@ -75,6 +75,31 @@ export async function setProcessWorkflow(tx: TenantTx, processId: string, workfl
   return u.length;
 }
 
+export interface UpdateProcessInput {
+  name?: string;
+  version?: string;
+  pilotUserId?: string | null;
+  sipoc?: Sipoc;
+  kpis?: ProcessKpi[];
+  coveredRequirements?: ProcessRequirement[];
+  interactions?: ProcessInteraction[];
+}
+
+/** Met à jour les blocs de la fiche processus (SIPOC, indicateurs, exigences, interactions). */
+export async function updateProcess(tx: TenantTx, processId: string, input: UpdateProcessInput): Promise<number> {
+  const set: Record<string, unknown> = {};
+  if (input.name !== undefined) set['name'] = input.name;
+  if (input.version !== undefined) set['version'] = input.version;
+  if (input.pilotUserId !== undefined) set['pilotUserId'] = input.pilotUserId;
+  if (input.sipoc !== undefined) set['sipoc'] = input.sipoc;
+  if (input.kpis !== undefined) set['kpis'] = input.kpis;
+  if (input.coveredRequirements !== undefined) set['coveredRequirements'] = input.coveredRequirements;
+  if (input.interactions !== undefined) set['interactions'] = input.interactions;
+  if (Object.keys(set).length === 0) return 0;
+  const u = await tx.update(schema.processes).set(set).where(eq(schema.processes.id, processId)).returning({ id: schema.processes.id });
+  return u.length;
+}
+
 export async function addProcessRisk(tx: TenantTx, input: { tenantId: string; processId: string; riskId: string }): Promise<void> {
   await tx
     .insert(schema.processRisks)

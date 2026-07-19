@@ -1,6 +1,6 @@
 'use client';
 
-import { PROCESS_FAMILIES, PROCESS_FAMILY_LABEL, PROCESS_HEALTH_LABEL, SIPOC_COLUMNS, WORKFLOW_LABEL, WORKFLOW_STATUSES, type ProcessFamily, type Sipoc, type Tone } from '@toron/core';
+import { PROCESS_FAMILIES, PROCESS_FAMILY_LABEL, PROCESS_HEALTH_LABEL, SIPOC_COLUMNS, WORKFLOW_LABEL, WORKFLOW_STATUSES, type ProcessFamily, type ProcessInteraction, type ProcessKpi, type ProcessRequirement, type Sipoc, type Tone } from '@toron/core';
 import type { ProcessDetail, ProcessSummary, TenantMember } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
@@ -8,7 +8,9 @@ import { useEffect, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
 
-import { addProcessRiskAction, createProcessAction, getProcessAction, removeProcessRiskAction, setProcessWorkflowAction } from './process-actions';
+import { addProcessRiskAction, createProcessAction, getProcessAction, removeProcessRiskAction, setProcessWorkflowAction, updateProcessAction } from './process-actions';
+
+const SIPOC_KEYS = ['suppliers', 'inputs', 'activities', 'outputs', 'clients'] as const;
 
 const WF_CLASS: Record<string, string> = { brouillon: 'ouverte', relecture: 'cloturee_a_verifier', approuve: 'en_traitement', publie: 'efficace' };
 const TONE_TEXT: Record<Tone, string> = { ok: 'var(--ok)', warn: 'var(--warn)', danger: 'var(--danger)', muted: 'var(--text-2)' };
@@ -94,6 +96,7 @@ function ProcessDrawer({ slug, processId, canManage, risks, onClose }: { slug: s
   const router = useRouter();
   const [d, setD] = useState<ProcessDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [pending, start] = useTransition();
 
   const reload = () => getProcessAction(slug, processId).then((r) => { if (r.ok) setD(r.data); });
@@ -118,8 +121,13 @@ function ProcessDrawer({ slug, processId, canManage, risks, onClose }: { slug: s
 
   return (
     <Drawer header={header} labelId="pr-title" onClose={onClose}>
-      <h2 style={{ margin: '0 0 4px', fontSize: 16 }}>{d.name}</h2>
-      <div className="ds-muted" style={{ marginBottom: 12 }}>{PROCESS_FAMILY_LABEL[d.family as ProcessFamily]} · pilote {d.pilotName ?? '—'} · {PROCESS_HEALTH_LABEL[d.health]}</div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <h2 style={{ margin: '0 0 4px', fontSize: 16 }}>{d.name}</h2>
+          <div className="ds-muted" style={{ marginBottom: 12 }}>{PROCESS_FAMILY_LABEL[d.family as ProcessFamily]} · pilote {d.pilotName ?? '—'} · {PROCESS_HEALTH_LABEL[d.health]}</div>
+        </div>
+        {canManage && !editing ? <button className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>Éditer la fiche</button> : null}
+      </div>
 
       {canManage ? (
         <div className="drawer-section">
@@ -130,34 +138,40 @@ function ProcessDrawer({ slug, processId, canManage, risks, onClose }: { slug: s
         </div>
       ) : null}
 
-      <div className="drawer-section">
-        <p className="drawer-section-label">Cartouche SIPOC</p>
-        <Cartouche sipoc={d.sipoc} />
-      </div>
-
-      {d.kpis.length > 0 ? (
-        <div className="drawer-section">
-          <p className="drawer-section-label">Indicateurs</p>
-          {d.kpis.map((k, i) => (
-            <div className="kpi-row" key={i}>
-              <div className="kpi-head"><span>{k.label}</span><span style={{ color: TONE_TEXT[k.tone], fontWeight: 600 }}>{k.actual}</span></div>
-              <div className="kpi-target">cible {k.target}</div>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {d.coveredRequirements.length > 0 ? (
-        <div className="drawer-section">
-          <p className="drawer-section-label">Exigences couvertes</p>
-          <div className="exig-list">
-            {d.coveredRequirements.map((e, i) => (
-              <span className={`exig ${e.mutualized ? 'mut' : ''}`} key={i}>{e.mutualized ? <span className="fil" /> : null}{e.framework} {e.code}</span>
-            ))}
+      {editing ? (
+        <EditForm slug={slug} process={d} pending={pending} onCancel={() => setEditing(false)} onRun={(fn) => run(async () => { const r = await fn(); if (r.ok) setEditing(false); return r; })} />
+      ) : (
+        <>
+          <div className="drawer-section">
+            <p className="drawer-section-label">Cartouche SIPOC</p>
+            <Cartouche sipoc={d.sipoc} />
           </div>
-          {d.mutualizedCount > 0 ? <p className="risk-mut-hint" style={{ marginTop: 6 }}>Le fil orange indique qu’un contrôle ISO 27001 s’adosse à ce processus — sécurité et qualité mutualisées.</p> : null}
-        </div>
-      ) : null}
+
+          {d.kpis.length > 0 ? (
+            <div className="drawer-section">
+              <p className="drawer-section-label">Indicateurs</p>
+              {d.kpis.map((k, i) => (
+                <div className="kpi-row" key={i}>
+                  <div className="kpi-head"><span>{k.label}</span><span style={{ color: TONE_TEXT[k.tone], fontWeight: 600 }}>{k.actual}</span></div>
+                  <div className="kpi-target">cible {k.target}</div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {d.coveredRequirements.length > 0 ? (
+            <div className="drawer-section">
+              <p className="drawer-section-label">Exigences couvertes</p>
+              <div className="exig-list">
+                {d.coveredRequirements.map((e, i) => (
+                  <span className={`exig ${e.mutualized ? 'mut' : ''}`} key={i}>{e.mutualized ? <span className="fil" /> : null}{e.framework} {e.code}</span>
+                ))}
+              </div>
+              {d.mutualizedCount > 0 ? <p className="risk-mut-hint" style={{ marginTop: 6 }}>Le fil orange indique qu’un contrôle ISO 27001 s’adosse à ce processus — sécurité et qualité mutualisées.</p> : null}
+            </div>
+          ) : null}
+        </>
+      )}
 
       <div className="drawer-section">
         <p className="drawer-section-label">Risques liés · {d.risks.length}</p>
@@ -177,7 +191,7 @@ function ProcessDrawer({ slug, processId, canManage, risks, onClose }: { slug: s
         ) : null}
       </div>
 
-      {d.interactions.length > 0 ? (
+      {!editing && d.interactions.length > 0 ? (
         <div className="drawer-section">
           <p className="drawer-section-label">Interactions</p>
           <div className="pr-interactions">
@@ -188,6 +202,88 @@ function ProcessDrawer({ slug, processId, canManage, risks, onClose }: { slug: s
 
       {error ? <p className="form-error" role="alert">{error}</p> : null}
     </Drawer>
+  );
+}
+
+function EditForm({ slug, process, pending, onCancel, onRun }: { slug: string; process: ProcessDetail; pending: boolean; onCancel: () => void; onRun: (fn: () => Promise<{ ok: boolean; error?: { message: string } }>) => void }) {
+  const [sipoc, setSipoc] = useState<Record<string, string>>(() => Object.fromEntries(SIPOC_KEYS.map((k) => [k, (process.sipoc[k] ?? []).join('\n')])));
+  const [kpis, setKpis] = useState<ProcessKpi[]>(process.kpis);
+  const [reqs, setReqs] = useState<ProcessRequirement[]>(process.coveredRequirements);
+  const [inter, setInter] = useState<ProcessInteraction[]>(process.interactions);
+
+  function save() {
+    const sipocPayload = Object.fromEntries(SIPOC_KEYS.map((k) => [k, (sipoc[k] ?? '').split('\n').map((s) => s.trim()).filter(Boolean)])) as unknown as Sipoc;
+    onRun(() => updateProcessAction(slug, {
+      processId: process.id,
+      sipoc: sipocPayload,
+      kpis: kpis.filter((k) => k.label.trim()),
+      coveredRequirements: reqs.filter((r) => r.framework.trim() && r.code.trim()),
+      interactions: inter.filter((i) => i.name.trim()),
+    }));
+  }
+
+  return (
+    <>
+      <div className="drawer-section">
+        <p className="drawer-section-label">Cartouche SIPOC <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>· un élément par ligne</span></p>
+        <div className="sipoc">
+          {SIPOC_COLUMNS.map((c) => (
+            <div className="sipoc-col" key={c.key}>
+              <h4>{c.label}</h4>
+              <textarea rows={4} value={sipoc[c.key] ?? ''} onChange={(e) => setSipoc((s) => ({ ...s, [c.key]: e.target.value }))} style={{ width: '100%', fontSize: 11 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="drawer-section">
+        <p className="drawer-section-label">Indicateurs</p>
+        {kpis.map((k, i) => (
+          <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 5, alignItems: 'center' }}>
+            <input placeholder="Libellé" value={k.label} onChange={(e) => setKpis((xs) => xs.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} style={{ flex: 2, minWidth: 0, fontSize: 11 }} />
+            <input placeholder="Réel" value={k.actual} onChange={(e) => setKpis((xs) => xs.map((x, j) => j === i ? { ...x, actual: e.target.value } : x))} style={{ width: 60, fontSize: 11 }} />
+            <input placeholder="Cible" value={k.target} onChange={(e) => setKpis((xs) => xs.map((x, j) => j === i ? { ...x, target: e.target.value } : x))} style={{ width: 60, fontSize: 11 }} />
+            <select value={k.tone} onChange={(e) => setKpis((xs) => xs.map((x, j) => j === i ? { ...x, tone: e.target.value as Tone } : x))} style={{ fontSize: 11 }}>
+              <option value="ok">vert</option><option value="warn">orange</option><option value="danger">rouge</option><option value="muted">neutre</option>
+            </select>
+            <button className="link-btn" aria-label="Retirer" onClick={() => setKpis((xs) => xs.filter((_, j) => j !== i))}>×</button>
+          </div>
+        ))}
+        <button className="btn btn-ghost btn-sm" onClick={() => setKpis((xs) => [...xs, { label: '', actual: '', target: '', tone: 'ok' }])}>+ Indicateur</button>
+      </div>
+
+      <div className="drawer-section">
+        <p className="drawer-section-label">Exigences couvertes <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>· cochez « 27001 » pour la mutualisation</span></p>
+        {reqs.map((r, i) => (
+          <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 5, alignItems: 'center' }}>
+            <input placeholder="Réf. (9001)" value={r.framework} onChange={(e) => setReqs((xs) => xs.map((x, j) => j === i ? { ...x, framework: e.target.value } : x))} style={{ width: 80, fontSize: 11 }} />
+            <input placeholder="Code (§8.5)" value={r.code} onChange={(e) => setReqs((xs) => xs.map((x, j) => j === i ? { ...x, code: e.target.value } : x))} style={{ flex: 1, minWidth: 0, fontSize: 11 }} />
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11 }}><input type="checkbox" checked={r.mutualized} onChange={(e) => setReqs((xs) => xs.map((x, j) => j === i ? { ...x, mutualized: e.target.checked } : x))} />27001</label>
+            <button className="link-btn" aria-label="Retirer" onClick={() => setReqs((xs) => xs.filter((_, j) => j !== i))}>×</button>
+          </div>
+        ))}
+        <button className="btn btn-ghost btn-sm" onClick={() => setReqs((xs) => [...xs, { framework: '9001', code: '', mutualized: false }])}>+ Exigence</button>
+      </div>
+
+      <div className="drawer-section">
+        <p className="drawer-section-label">Interactions</p>
+        {inter.map((it, i) => (
+          <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 5, alignItems: 'center' }}>
+            <select value={it.dir} onChange={(e) => setInter((xs) => xs.map((x, j) => j === i ? { ...x, dir: e.target.value as ProcessInteraction['dir'] } : x))} style={{ fontSize: 12 }}>
+              <option value="←">←</option><option value="→">→</option><option value="↔">↔</option>
+            </select>
+            <input placeholder="Processus" value={it.name} onChange={(e) => setInter((xs) => xs.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} style={{ flex: 1, minWidth: 0, fontSize: 11 }} />
+            <button className="link-btn" aria-label="Retirer" onClick={() => setInter((xs) => xs.filter((_, j) => j !== i))}>×</button>
+          </div>
+        ))}
+        <button className="btn btn-ghost btn-sm" onClick={() => setInter((xs) => [...xs, { dir: '↔', name: '' }])}>+ Interaction</button>
+      </div>
+
+      <div className="dialog-actions" style={{ marginTop: 6 }}>
+        <button className="btn btn-ghost btn-sm" disabled={pending} onClick={onCancel}>Annuler</button>
+        <button className="btn btn-primary btn-sm" disabled={pending} onClick={save}>{pending ? 'Enregistrement…' : 'Enregistrer la fiche'}</button>
+      </div>
+    </>
   );
 }
 

@@ -7,6 +7,7 @@ import {
   getProcess,
   removeProcessRisk,
   setProcessWorkflow,
+  updateProcess,
   withTenant,
   writeAuditEntry,
   type ProcessDetail,
@@ -59,6 +60,34 @@ export async function setProcessWorkflowAction(slug: string, input: unknown): Pr
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_STATUT', 'Le changement de statut a échoué.')) };
+  }
+}
+
+const StrList = z.array(z.string().trim().max(200)).max(20);
+const Tone = z.enum(['ok', 'warn', 'danger', 'muted']);
+const UpdateSchema = z.object({
+  processId: z.uuid(),
+  name: z.string().trim().min(2).max(200).optional(),
+  version: z.string().trim().max(20).optional(),
+  pilotUserId: z.uuid().optional().nullable(),
+  sipoc: z.object({ suppliers: StrList, inputs: StrList, activities: StrList, outputs: StrList, clients: StrList }).optional(),
+  kpis: z.array(z.object({ label: z.string().trim().min(1).max(120), actual: z.string().trim().max(40), target: z.string().trim().max(40), tone: Tone })).max(12).optional(),
+  coveredRequirements: z.array(z.object({ framework: z.string().trim().min(1).max(20), code: z.string().trim().min(1).max(30), mutualized: z.boolean() })).max(24).optional(),
+  interactions: z.array(z.object({ dir: z.enum(['←', '→', '↔']), name: z.string().trim().min(1).max(120) })).max(20).optional(),
+});
+
+export async function updateProcessAction(slug: string, input: unknown): Promise<ActionResult> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = UpdateSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Fiche invalide — vérifiez les champs.') };
+  const { processId, ...rest } = parsed.data;
+  try {
+    await withTenant(appDb().db, auth.tenantId, (tx) => updateProcess(tx, processId, rest));
+    revalidatePath(`/t/${slug}/processus`);
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_MAJ', 'La mise à jour de la fiche a échoué.')) };
   }
 }
 

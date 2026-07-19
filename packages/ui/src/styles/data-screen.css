@@ -737,3 +737,63 @@
   font-family: var(--mono, ui-monospace, monospace);
   font-size: 15px;
 }
+
+/* ── Base des contrôles de formulaire ────────────────────────────────── */
+/* Uniformise TOUT input texte / select / textarea, même hors `.field` (les
+   sélecteurs d'ajout, mini-formulaires en ligne, sélecteurs de contexte).
+   Les règles `.field` / `.auth-card` plus spécifiques restent prioritaires. */
+select,
+textarea,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 7px 10px;
+  max-width: 100%;
+}
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 26px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b908c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  cursor: pointer;
+}
+select:hover,
+textarea:hover,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):hover {
+  border-color: var(--border-strong);
+}
+select:focus,
+textarea:focus,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus {
+  border-color: var(--accent);
+  outline: none;
+}
+textarea {
+  resize: vertical;
+  min-height: 56px;
+}
+
+/* Layout deux colonnes (maître/détail) — ex. atelier EBIOS. */
+.ds-two-col {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .ds-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+/* Légende de santé (cartographie processus). */
+.pr-legend-item {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-2);
+}

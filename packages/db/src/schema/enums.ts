@@ -157,3 +157,9 @@ export const reviewStatus = pgEnum('review_status', ['planifie', 'tenue', 'close
 export const processFamily = pgEnum('process_family', ['management', 'realisation', 'support']);
 
 export const processWorkflow = pgEnum('process_workflow', ['brouillon', 'relecture', 'approuve', 'publie']);
+
+export const ebiosScenarioKind = pgEnum('ebios_scenario_kind', ['strategique', 'operationnel']);
+
+export const ebiosPhase = pgEnum('ebios_phase', ['connaitre', 'rentrer', 'trouver', 'exploiter']);
+
+export const ebiosLikelihood = pgEnum('ebios_likelihood', ['v1', 'v2', 'v3', 'v4']);

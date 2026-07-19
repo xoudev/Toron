@@ -14,3 +14,4 @@ export * from './suppliers.ts';
 export * from './audits.ts';
 export * from './reviews.ts';
 export * from './processes.ts';
+export * from './ebios.ts';

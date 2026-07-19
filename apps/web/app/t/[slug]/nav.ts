@@ -44,7 +44,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Ateliers EBIOS RM',
           href: `${base}/ebios`,
-          disabled: true,
+          active: isActive(`${base}/ebios`),
           iconPath: 'M6 4.5h4v4H6z M14 15.5h4v4h-4z M8 8.5v3a3 3 0 0 0 3 3h3',
         },
         {

@@ -635,3 +635,105 @@
   color: var(--text-2);
   margin-right: 6px;
 }
+
+/* ── Ateliers EBIOS RM (module 5.4b) ─────────────────────────────────── */
+.eb-stepper {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.eb-step {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 12px 5px 6px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 12px;
+}
+.eb-step[aria-current='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+.eb-step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2, var(--border));
+  font-size: 11px;
+  font-weight: 700;
+  flex: none;
+}
+.eb-step[aria-current='true'] .eb-step-num {
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+}
+.eb-step-label {
+  color: var(--text-2);
+}
+.eb-step[aria-current='true'] .eb-step-label {
+  color: var(--text);
+}
+/* Kill chain */
+.eb-killchain {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.eb-phase {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 0;
+}
+.eb-phase-head {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.eb-phase-n {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--surface-2, var(--border));
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+.eb-action {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 6px;
+  margin-bottom: 5px;
+  background: var(--surface);
+}
+.eb-action-tech {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  color: var(--accent);
+}
+.eb-action-label {
+  font-size: 11px;
+  line-height: 1.25;
+}
+.eb-vrais {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-weight: 700;
+}
+.eb-vrais .lv {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 15px;
+}

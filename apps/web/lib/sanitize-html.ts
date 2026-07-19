@@ -10,9 +10,12 @@ const ALLOWED_TAGS = new Set([
   'table', 'thead', 'tbody', 'tr', 'td', 'th',
 ]);
 const ATTRS_BY_TAG: Record<string, Set<string>> = {
-  a: new Set(['href', 'title']),
-  font: new Set(['color']),
+  a: new Set(['href', 'title', 'name']),
+  font: new Set(['color', 'size', 'face']),
 };
+// Balises pouvant porter un id (ancres du sommaire cliquable).
+const ID_ALLOWED_TAGS = new Set(['h1', 'h2', 'h3', 'h4']);
+const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 const ALLOWED_STYLE_PROPS = new Set([
   'color', 'background-color', 'text-align', 'font-weight', 'font-style',
   'text-decoration', 'font-size', 'margin', 'margin-left', 'padding',
@@ -62,7 +65,16 @@ function cleanNode(node: Node): void {
       if (name === 'href') {
         const v = attr.value.trim();
         if (!/^(https?:|mailto:|#|\/)/i.test(v)) el.removeAttribute('href');
-        else el.setAttribute('rel', 'noreferrer');
+        else if (!v.startsWith('#')) el.setAttribute('rel', 'noreferrer');
+        return;
+      }
+      if (name === 'id') {
+        // id conservé uniquement sur les titres et s'il est sûr (ancres du sommaire).
+        if (!(ID_ALLOWED_TAGS.has(tag) && SAFE_ID.test(attr.value))) el.removeAttribute('id');
+        return;
+      }
+      if (name === 'name' && tag === 'a') {
+        if (!SAFE_ID.test(attr.value)) el.removeAttribute('name');
         return;
       }
       if (!(ATTRS_BY_TAG[tag]?.has(name))) el.removeAttribute(attr.name);

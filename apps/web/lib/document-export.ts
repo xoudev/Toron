@@ -20,7 +20,10 @@ const PAGE_CSS = `
   h3 { font-size: 13px; margin: 14px 0 4px; }
   p, li { font-size: 12.5px; }
   ul, ol { padding-left: 22px; }
+  a { color: #cb4e0a; text-decoration: underline; }
+  blockquote { margin: 8px 0; padding: 4px 0 4px 14px; border-left: 3px solid #cfd1ce; color: #444; }
   hr { border: none; border-top: 1px solid #e2e0d8; margin: 16px 0; }
+  h1, h2, h3 { page-break-after: avoid; }
   .doc-meta { color: #7a7c73; font-size: 11px; border-bottom: 1px solid #e2e0d8; padding-bottom: 10px; margin-bottom: 16px; }
   @page { size: A4; margin: 18mm; }
 `;

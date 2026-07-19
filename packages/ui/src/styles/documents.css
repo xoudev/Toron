@@ -218,3 +218,59 @@
   margin-top: 12px;
 }
 .doc-editor-ok { color: var(--ok, #2e7d4f); font-size: 12.5px; }
+
+/* ── Éditeur niveau Word : compléments ───────────────────────────────── */
+.tb-select {
+  height: 28px;
+  padding: 0 6px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  max-width: 120px;
+}
+.tb-btn.on {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  color: var(--accent);
+}
+.tb-btn.tb-text {
+  min-width: auto;
+  padding: 0 10px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+}
+.doc-editable a {
+  color: #cb4e0a;
+  text-decoration: underline;
+}
+.doc-editable blockquote {
+  margin: 8px 0;
+  padding: 4px 0 4px 14px;
+  border-left: 3px solid var(--border-strong);
+  color: #444;
+}
+.doc-editable hr {
+  border: none;
+  border-top: 1px solid #d9d7cf;
+  margin: 14px 0;
+}
+.doc-editable:empty::before {
+  content: 'Rédigez votre document ici…';
+  color: #9aa;
+}
+/* Barre de statut (compteur de mots) */
+.doc-editor-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m, 6px);
+  background: var(--surface);
+  font-size: 12px;
+  color: var(--text-2);
+}

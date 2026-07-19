@@ -80,6 +80,20 @@ export {
 export { listTenantMembers, type TenantMember } from './queries/members.ts';
 export { getDashboardMetrics, type DashboardMetrics } from './queries/dashboard.ts';
 export {
+  createNc,
+  updateNcSteps,
+  closeNc,
+  confirmEffective,
+  reopenNc,
+  listNc,
+  getNc,
+  type CreateNcInput,
+  type UpdateNcInput,
+  type NcSummary,
+  type NcDetail,
+  type NcCorrectiveAction,
+} from './queries/nonconformities.ts';
+export {
   createIncident,
   qualifyIncident,
   addEvent,

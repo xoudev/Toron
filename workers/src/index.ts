@@ -6,6 +6,7 @@ import { claimNextExport, createDb } from '@toron/db';
 
 import { processSoaExport } from './soa-export.ts';
 import { processPvExport } from './pv-export.ts';
+import { processEbiosExport } from './ebios-export.ts';
 
 const DATABASE_URL_APP = process.env['DATABASE_URL_APP'];
 const PUBLIC_BASE_URL = process.env['PUBLIC_BASE_URL'] ?? 'http://localhost:3000';
@@ -30,6 +31,7 @@ async function loop(): Promise<void> {
         console.warn(`[worker] export ${job.type} ${job.id} — compilation`);
         try {
           if (job.type === 'pv') await processPvExport(db, job, PUBLIC_BASE_URL);
+          else if (job.type === 'ebios') await processEbiosExport(db, job, PUBLIC_BASE_URL);
           else await processSoaExport(db, job, PUBLIC_BASE_URL);
           console.warn(`[worker] export ${job.id} scellé`);
         } catch (err) {

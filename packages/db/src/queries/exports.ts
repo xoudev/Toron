@@ -36,7 +36,7 @@ export async function claimNextExport(db: Db): Promise<ClaimedExport | null> {
 
 export interface CreateExportInput {
   tenantId: string;
-  type: 'soa' | 'pv';
+  type: 'soa' | 'pv' | 'ebios';
   objectRef: string;
   requestedBy: string;
 }

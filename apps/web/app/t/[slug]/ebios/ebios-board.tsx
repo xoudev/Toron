@@ -1,32 +1,57 @@
 'use client';
 
 import { EBIOS_WORKSHOPS, KILL_CHAIN_PHASES, LIKELIHOOD_LABEL, SCENARIO_STATUS_LABEL, scenarioStatus, type EbiosLikelihood, type EbiosPhase } from '@toron/core';
-import type { EbiosScenarioRow, ScopeSummary, StudyDetail, StudySummary } from '@toron/db';
+import type { EbiosScenarioRow, ExportSummary, ScopeSummary, StudyDetail, StudySummary } from '@toron/db';
 import { Dialog } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
 
-import { addActionAction, addScenarioAction, createStudyAction, generateRiskAction, getStudyAction, setWorkshopAction } from './ebios-actions';
+import { addActionAction, addScenarioAction, createStudyAction, generateRiskAction, getStudyAction, listStudyExportsAction, requestEbiosExportAction, setWorkshopAction } from './ebios-actions';
 
 const STATUS_CLASS: Record<string, string> = { a_faire: 'ouverte', en_cours: 'cloturee_a_verifier', cote: 'efficace' };
 const LV_TONE: Record<EbiosLikelihood, string> = { v1: 'var(--text-2)', v2: 'var(--warn)', v3: 'var(--danger)', v4: 'var(--danger)' };
+
+function ExportRow({ slug, exp, onRefresh }: { slug: string; exp: ExportSummary; onRefresh: () => void }) {
+  const sealed = exp.status === 'scelle';
+  const failed = exp.status === 'echec';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', fontSize: 12.5, padding: '3px 0' }}>
+      <span className="export-label">Livrable EBIOS RM · format ANSSI</span>
+      {sealed ? (
+        <>
+          <a className="link-btn" href={`/t/${slug}/exports/${exp.id}/pdf`}>Télécharger le PDF scellé</a>
+          {exp.verifySlug ? <a className="link-btn" href={`/verifier/${exp.verifySlug}`} target="_blank" rel="noreferrer">Vérifier le poinçon ↗</a> : null}
+          {exp.sha256 ? <span className="ds-mono" title={exp.sha256} style={{ color: 'var(--text-2)' }}>{exp.sha256.slice(0, 12)}…</span> : null}
+        </>
+      ) : failed ? (
+        <span style={{ color: 'var(--danger)' }}>Échec de génération</span>
+      ) : (
+        <><span style={{ color: 'var(--text-2)' }}>Génération en cours…</span><button className="link-btn" onClick={onRefresh}>Actualiser</button></>
+      )}
+    </div>
+  );
+}
 
 export function EbiosBoard({ slug, canManage, studies, scopes }: { slug: string; canManage: boolean; studies: StudySummary[]; scopes: ScopeSummary[] }) {
   const router = useRouter();
   const [studyId, setStudyId] = useState<string | null>(studies[0]?.id ?? null);
   const [creating, setCreating] = useState(false);
   const [detail, setDetail] = useState<StudyDetail | null>(null);
+  const [exports, setExports] = useState<ExportSummary[]>([]);
   const [selScenario, setSelScenario] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  const reload = () => { if (studyId) getStudyAction(slug, studyId).then((r) => { if (r.ok) setDetail(r.data); }); };
+  const loadExports = (id: string) => listStudyExportsAction(slug, id).then((r) => { if (r.ok) setExports(r.data); });
+  const reload = () => { if (studyId) { getStudyAction(slug, studyId).then((r) => { if (r.ok) setDetail(r.data); }); loadExports(studyId); } };
   useEffect(() => {
     let a = true;
-    if (studyId) getStudyAction(slug, studyId).then((r) => { if (a && r.ok) { setDetail(r.data); setSelScenario((s) => s ?? r.data.scenarios[0]?.id ?? null); } });
-    else setDetail(null);
+    if (studyId) {
+      getStudyAction(slug, studyId).then((r) => { if (a && r.ok) { setDetail(r.data); setSelScenario((s) => s ?? r.data.scenarios[0]?.id ?? null); } });
+      listStudyExportsAction(slug, studyId).then((r) => { if (a && r.ok) setExports(r.data); });
+    } else { setDetail(null); setExports([]); }
     return () => { a = false; };
   }, [slug, studyId]);
 
@@ -56,8 +81,15 @@ export function EbiosBoard({ slug, canManage, studies, scopes }: { slug: string;
         ) : null}
         <span className="spacer" />
         {detail ? <span className="drawer-section-label" style={{ margin: 0 }}>{detail.ratedCount}/{detail.scenarioCount} scénarios cotés</span> : null}
+        {detail && canManage ? <button className="btn btn-primary btn-sm" disabled={pending || exports.some((e) => e.status === 'en_cours')} onClick={() => run(() => requestEbiosExportAction(slug, { studyId: detail.id }))}>{exports.some((e) => e.status === 'en_cours') ? 'Génération…' : 'Exporter le livrable'}</button> : null}
         {canManage ? <button className="btn btn-ghost btn-sm" onClick={() => setCreating(true)}>+ Étude</button> : null}
       </div>
+
+      {exports.length > 0 ? (
+        <div className="ds-table-card" style={{ padding: '8px 12px', marginBottom: 12 }}>
+          {exports.map((e) => <ExportRow key={e.id} slug={slug} exp={e} onRefresh={() => studyId && loadExports(studyId)} />)}
+        </div>
+      ) : null}
 
       {detail ? (
         <>

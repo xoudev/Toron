@@ -115,3 +115,14 @@ export const assetCategory = pgEnum('asset_category', [
   'donnees',
   'flux',
 ]);
+
+export const incidentSeverity = pgEnum('incident_severity', ['mineur', 'majeur', 'critique']);
+
+export const incidentStatus = pgEnum('incident_status', ['ouvert', 'qualifie', 'clos']);
+
+export const incidentNotifKind = pgEnum('incident_notif_kind', [
+  'alerte_24h',
+  'notification_72h',
+  'rapport_30j',
+  'cnil_72h',
+]);

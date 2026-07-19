@@ -44,6 +44,7 @@ export const DEMO = {
   assetServeurs: 'd0000000-0000-4000-8000-000000000092',
   assetDonneesClients: 'd0000000-0000-4000-8000-000000000093',
   assetFluxEdi: 'd0000000-0000-4000-8000-000000000094',
+  incidentPhishing: 'd0000000-0000-4000-8000-0000000000a1',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -707,6 +708,53 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
           VALUES (${a.id}, ${a.risk}, ${DEMO.tenantId})
           ON CONFLICT DO NOTHING`;
       }
+    }
+
+    // ── Module 6.1 : incident de démonstration (chronologie NIS 2) ──────
+    // Hameçonnage qualifié « important » avec volet RGPD : l'échéancier est
+    // posé à la qualification (alerte 24 h transmise, notification 72 h à
+    // venir, rapport J+30, CNIL 72 h).
+    const qualifiedAt = '2026-07-17 14:00:00+00';
+    await sql`
+      INSERT INTO incidents
+        (id, tenant_id, title, description, severity, status, opened_at, qualified_at,
+         nis2_important, nis2_criteria, gdpr_breach, owner_user_id)
+      VALUES
+        (${DEMO.incidentPhishing}, ${DEMO.tenantId},
+         'Hameçonnage ciblé — Direction financière',
+         'Campagne de phishing visant des comptes à privilèges de la direction financière.',
+         'majeur', 'qualifie', '2026-07-17 09:30:00+00', ${qualifiedAt}, true,
+         ${JSON.stringify({ perturbation_operationnelle: true, pertes_financieres: true, impact_tiers: false })}::jsonb,
+         true, ${DEMO.userClaire})
+      ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, status = EXCLUDED.status,
+        qualified_at = EXCLUDED.qualified_at, nis2_important = EXCLUDED.nis2_important`;
+
+    const events = [
+      ['2026-07-17 09:30:00+00', 'detection', 'Détection : signalement d’un e-mail suspect par un utilisateur.', DEMO.userClaire],
+      ['2026-07-17 10:15:00+00', 'mesure', 'Mesure conservatoire : réinitialisation des mots de passe des comptes exposés.', DEMO.userClaire],
+      ['2026-07-17 14:00:00+00', 'qualification', 'Qualifié « incident important » NIS 2 — échéancier réglementaire armé.', DEMO.userClaire],
+    ] as const;
+    for (const [at, kind, desc, author] of events) {
+      await sql`
+        INSERT INTO incident_events (tenant_id, incident_id, at, kind, description, author_user_id)
+        SELECT ${DEMO.tenantId}, ${DEMO.incidentPhishing}, ${at}, ${kind}, ${desc}, ${author}
+        WHERE NOT EXISTS (
+          SELECT 1 FROM incident_events WHERE incident_id = ${DEMO.incidentPhishing} AND kind = ${kind} AND at = ${at}
+        )`;
+    }
+
+    const notifs = [
+      ['alerte_24h', '24 hours', '2026-07-18 10:00:00+00'],
+      ['notification_72h', '72 hours', null],
+      ['rapport_30j', '30 days', null],
+      ['cnil_72h', '72 hours', null],
+    ] as const;
+    for (const [kind, interval, sentAt] of notifs) {
+      await sql`
+        INSERT INTO incident_notifications (tenant_id, incident_id, kind, due_at, sent_at)
+        VALUES (${DEMO.tenantId}, ${DEMO.incidentPhishing}, ${kind},
+                ${qualifiedAt}::timestamptz + ${interval}::interval, ${sentAt})
+        ON CONFLICT ON CONSTRAINT incident_notifications_unique DO NOTHING`;
     }
   } finally {
     await sql.end();

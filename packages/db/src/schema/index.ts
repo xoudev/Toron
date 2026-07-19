@@ -8,3 +8,4 @@ export * from './actions.ts';
 export * from './documents.ts';
 export * from './evidences.ts';
 export * from './assets.ts';
+export * from './incidents.ts';

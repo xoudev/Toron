@@ -13,6 +13,7 @@ import '@toron/ui/incidents.css';
 import '@toron/ui/nc.css';
 
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
 
@@ -36,15 +37,16 @@ export const metadata: Metadata = {
     'Plateforme de conformité et de gestion des risques — ISO 27001, NIS 2, ISO 9001, RGPD sur un socle unique.',
 };
 
-// Applique le thème mémorisé avant le premier rendu (évite le flash).
-// Sera servi avec nonce quand la CSP stricte arrivera (MVP, §8.1).
+// Applique le thème mémorisé avant le premier rendu (évite le flash). Servi
+// avec le nonce de la CSP stricte (§8.1), fourni par le middleware.
 const themeInit = `try{var t=localStorage.getItem('toron-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}`;
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <html lang="fr" data-theme="dark" className={`${plexSans.variable} ${plexMono.variable}`}>
       <body>
-        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeInit }} />
         {children}
       </body>
     </html>

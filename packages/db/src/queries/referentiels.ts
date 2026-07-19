@@ -24,6 +24,8 @@ export interface FrameworkSummary {
   mappedControlCount: number;
   /** Nombre de périmètres du tenant sur lesquels le référentiel est activé (0 = disponible). */
   activatedScopeCount: number;
+  /** true si le tenant a masqué ce référentiel du catalogue. */
+  hidden: boolean;
 }
 
 // Compteurs par sous-requête corrélée : évite le fan-out d'une jointure
@@ -40,7 +42,8 @@ const FRAMEWORK_COLUMNS = sql`
   (SELECT count(DISTINCT cr.control_id) FROM control_requirements cr
      JOIN requirements r ON r.id = cr.requirement_id WHERE r.framework_id = f.id
   ) AS mapped_control_count,
-  (SELECT count(*) FROM scope_frameworks sf WHERE sf.framework_id = f.id) AS activated_scope_count
+  (SELECT count(*) FROM scope_frameworks sf WHERE sf.framework_id = f.id) AS activated_scope_count,
+  EXISTS (SELECT 1 FROM framework_visibility fv WHERE fv.framework_id = f.id AND fv.hidden) AS hidden
 `;
 
 function toFrameworkSummary(r: RawFramework): FrameworkSummary {
@@ -55,6 +58,7 @@ function toFrameworkSummary(r: RawFramework): FrameworkSummary {
     mappedRequirementCount: Number(r.mapped_requirement_count),
     mappedControlCount: Number(r.mapped_control_count),
     activatedScopeCount: Number(r.activated_scope_count),
+    hidden: r.hidden === true,
   };
 }
 
@@ -66,6 +70,24 @@ export async function listFrameworks(tx: TenantTx): Promise<FrameworkSummary[]> 
     ORDER BY is_builtin DESC, f.code
   `);
   return (rows as unknown as RawFramework[]).map(toFrameworkSummary);
+}
+
+/**
+ * Masque ou rétablit un référentiel pour le tenant. Masquer = poser une ligne
+ * de visibilité ; rétablir = la retirer. Un référentiel activé ne se masque
+ * pas (on ne cache pas un cadre suivi).
+ */
+export async function setFrameworkHidden(tx: TenantTx, tenantId: string, frameworkId: string, hidden: boolean): Promise<void> {
+  if (hidden) {
+    await tx
+      .insert(schema.frameworkVisibility)
+      .values({ tenantId, frameworkId, hidden: true })
+      .onConflictDoUpdate({ target: [schema.frameworkVisibility.tenantId, schema.frameworkVisibility.frameworkId], set: { hidden: true } });
+  } else {
+    await tx
+      .delete(schema.frameworkVisibility)
+      .where(and(eq(schema.frameworkVisibility.tenantId, tenantId), eq(schema.frameworkVisibility.frameworkId, frameworkId)));
+  }
 }
 
 /** Un référentiel visible du tenant, ou null (id inconnu / hors tenant via RLS). */
@@ -90,6 +112,7 @@ interface RawFramework {
   mapped_requirement_count: string | number;
   mapped_control_count: string | number;
   activated_scope_count: string | number;
+  hidden: boolean;
 }
 
 export interface ScopeSummary {

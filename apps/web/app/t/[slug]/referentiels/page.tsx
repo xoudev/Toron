@@ -7,7 +7,7 @@ import { Fragment } from 'react';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
-import { ActivateFrameworkButton, CreateFrameworkButton } from './catalog-client';
+import { ActivateFrameworkButton, CreateFrameworkButton, FrameworkVisibilityButton } from './catalog-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +16,10 @@ const FRAMEWORK_SUBTITLE: Record<string, string> = {
   recyf: 'NIS 2 · ANSSI',
   rgpd: 'Données personnelles',
   iso9001: 'QMS',
+  iso27701: 'Vie privée · PIMS',
+  iso22301: 'Continuité d’activité',
+  dora: 'Résilience TIC · Finance',
+  secnumcloud: 'Cloud · ANSSI',
 };
 
 function toolingRate(f: FrameworkSummary): number {
@@ -45,7 +49,10 @@ export default async function ReferentielsPage({
   }));
 
   const active = frameworks.filter((f) => f.activatedScopeCount > 0);
-  const available = frameworks.filter((f) => f.activatedScopeCount === 0);
+  // Un référentiel activé n'est jamais masqué ; les autres se répartissent
+  // entre disponibles (visibles) et masqués (rétablissables).
+  const available = frameworks.filter((f) => f.activatedScopeCount === 0 && !f.hidden);
+  const hidden = frameworks.filter((f) => f.activatedScopeCount === 0 && f.hidden);
   const mutualizedCount = controls.filter((c) => c.mutualized).length;
   const activeCodes = active.map((f) => f.code.toUpperCase());
 
@@ -160,12 +167,43 @@ export default async function ReferentielsPage({
                   </div>
                   <div className="fw-card-foot">
                     {canManage ? (
-                      <ActivateFrameworkButton slug={slug} frameworkId={f.id} scopes={scopes} />
+                      <>
+                        <ActivateFrameworkButton slug={slug} frameworkId={f.id} scopes={scopes} />
+                        <FrameworkVisibilityButton slug={slug} frameworkId={f.id} hidden={false} />
+                      </>
                     ) : (
                       <a className="btn btn-ghost btn-sm" href={`/t/${slug}/referentiels/${f.id}`}>
                         Consulter
                       </a>
                     )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
+        ) : null}
+
+        {hidden.length > 0 ? (
+          <>
+            <div className="section-rule">
+              <span className="section-rule-label">Masqués ({hidden.length})</span>
+            </div>
+            <div className="catalog-grid catalog-grid--available">
+              {hidden.map((f) => (
+                <article className="card fw-card fw-card--available" key={f.id} style={{ opacity: 0.72 }}>
+                  <div className="fw-card-head">
+                    <div>
+                      <div className="fw-card-title">{f.name}</div>
+                      <div className="fw-card-meta">
+                        {(FRAMEWORK_SUBTITLE[f.code] ?? f.code.toUpperCase())} · {formatVersion(f.version)}
+                      </div>
+                    </div>
+                    <span className="badge badge--builtin">Masqué</span>
+                  </div>
+                  <div className="fw-card-foot">
+                    {canManage ? (
+                      <FrameworkVisibilityButton slug={slug} frameworkId={f.id} hidden={true} />
+                    ) : null}
                   </div>
                 </article>
               ))}

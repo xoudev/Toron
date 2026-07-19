@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 
 import { hash } from '@node-rs/argon2';
 import { defaultRiskScale, riskBand, type RiskBand } from '@toron/core';
-import { iso27001, recyf } from '@toron/frameworks';
+import { FRAMEWORK_CATALOG, iso27001, recyf } from '@toron/frameworks';
 import postgres from 'postgres';
 
 // Seeds M0-6 : référentiel builtin ReCyF v2.5 + tenant de démonstration
@@ -176,6 +176,38 @@ export async function seedIso27001Framework(connectionString: string): Promise<v
       sortOrder += 1;
       for (const control of theme.controls) {
         await upsert(control.ref, parentId, control.title, control.guidance, sortOrder);
+        sortOrder += 1;
+      }
+    }
+  } finally {
+    await sql.end();
+  }
+}
+
+/**
+ * Catalogue de référentiels intégrés « légers » (ISO 9001, RGPD, ISO 27701,
+ * ISO 22301, DORA, SecNumCloud) : entrées disponibles à l'activation, avec
+ * leurs exigences de tête. Idempotent — sûr à rejouer.
+ */
+export async function seedFrameworkCatalog(connectionString: string): Promise<void> {
+  const sql = postgres(connectionString, { max: 1, onnotice: () => {} });
+  try {
+    for (const fwData of FRAMEWORK_CATALOG) {
+      const [fw] = await sql`
+        INSERT INTO frameworks (tenant_id, code, version, name, source)
+        VALUES (NULL, ${fwData.code}, ${fwData.version}, ${fwData.name}, 'builtin')
+        ON CONFLICT ON CONSTRAINT frameworks_code_version_unique
+        DO UPDATE SET name = EXCLUDED.name
+        RETURNING id`;
+      const frameworkId = (fw as { id: string }).id;
+      let sortOrder = 0;
+      for (const req of fwData.requirements) {
+        await sql`
+          INSERT INTO requirements
+            (tenant_id, framework_id, ref_id, parent_id, title_internal, guidance_internal, applicable_default, sort_order)
+          VALUES (NULL, ${frameworkId}, ${req.ref}, NULL, ${req.title}, NULL, true, ${sortOrder})
+          ON CONFLICT ON CONSTRAINT requirements_framework_ref_unique
+          DO UPDATE SET title_internal = EXCLUDED.title_internal, sort_order = EXCLUDED.sort_order`;
         sortOrder += 1;
       }
     }

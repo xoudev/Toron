@@ -5,6 +5,7 @@ export { writeAuditEntry, type AuditEntry } from './audit.ts';
 export * as schema from './schema/index.ts';
 export {
   listFrameworks,
+  setFrameworkHidden,
   getFramework,
   getRequirementTree,
   listControls,

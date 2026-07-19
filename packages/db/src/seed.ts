@@ -52,6 +52,8 @@ export const DEMO = {
   supplierInfogerance: 'd0000000-0000-4000-8000-0000000000c3',
   auditSmsi: 'd0000000-0000-4000-8000-0000000000d1',
   reviewS1: 'd0000000-0000-4000-8000-0000000000e1',
+  processTransport: 'd0000000-0000-4000-8000-0000000000f1',
+  processPrepa: 'd0000000-0000-4000-8000-0000000000f2',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -871,6 +873,70 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         INSERT INTO review_decisions (tenant_id, review_id, body, action_id)
         SELECT ${DEMO.tenantId}, ${DEMO.reviewS1}, ${body}, ${actionId}
         WHERE NOT EXISTS (SELECT 1 FROM review_decisions WHERE review_id = ${DEMO.reviewS1} AND body = ${body})`;
+    }
+
+    // ── Module 7.1 : cartographie des processus (pack QMS) ──────────────
+    // Familles Management / Réalisation / Support. Deux processus détaillés
+    // (Transport, Préparation) avec SIPOC, indicateurs, exigences dont des
+    // contrôles 27001 mutualisés (fil orange), et risques rattachés au
+    // registre unique. Pilotes = utilisateurs réels du tenant démo.
+    const emptySipoc = { suppliers: [], inputs: [], activities: [], outputs: [], clients: [] };
+    const processSeed: {
+      id: string | null;
+      family: string;
+      name: string;
+      pilot: string | null;
+      version: string;
+      workflow: string;
+      sipoc: unknown;
+      kpis: unknown;
+      exig: unknown;
+      interactions: unknown;
+    }[] = [
+      { id: null, family: 'management', name: 'Pilotage stratégique', pilot: DEMO.userAntoine, version: 'v1.2', workflow: 'publie', sipoc: emptySipoc, kpis: [{ label: 'Objectifs qualité atteints', actual: '8/10', target: '10/10', tone: 'warn' }], exig: [{ framework: '9001', code: '§5.1', mutualized: false }, { framework: '9001', code: '§6.2', mutualized: false }], interactions: [{ dir: '↔', name: 'Amélioration continue' }] },
+      { id: null, family: 'management', name: 'Amélioration continue', pilot: DEMO.userCamille, version: 'v1.1', workflow: 'publie', sipoc: emptySipoc, kpis: [{ label: 'Actions correctives soldées', actual: '92 %', target: '90 %', tone: 'ok' }], exig: [{ framework: '9001', code: '§10.2', mutualized: false }, { framework: '27001', code: 'A.5.27', mutualized: true }], interactions: [{ dir: '↔', name: 'Pilotage stratégique' }] },
+      { id: null, family: 'realisation', name: 'Prise de commande', pilot: DEMO.userCamille, version: 'v1.3', workflow: 'publie', sipoc: emptySipoc, kpis: [{ label: 'Commandes conformes', actual: '99,1 %', target: '99 %', tone: 'ok' }], exig: [{ framework: '9001', code: '§8.2', mutualized: false }], interactions: [{ dir: '→', name: 'Préparation logistique' }] },
+      {
+        id: DEMO.processPrepa, family: 'realisation', name: 'Préparation logistique', pilot: DEMO.userCamille, version: 'v1.4', workflow: 'approuve',
+        sipoc: { suppliers: ['Prise de commande', 'Entrepôt'], inputs: ['Commande validée', 'Stock'], activities: ['Picking', 'Emballage', 'Contrôle'], outputs: ['Colis préparé', 'Étiquette'], clients: ['Transport & livraison'] },
+        kpis: [{ label: 'Taux de préparation juste', actual: '98,1 %', target: '99 %', tone: 'warn' }, { label: 'Délai de préparation', actual: '1,2 j', target: '< 1,5 j', tone: 'ok' }],
+        exig: [{ framework: '9001', code: '§8.5', mutualized: false }, { framework: '27001', code: 'A.7.1', mutualized: true }],
+        interactions: [{ dir: '←', name: 'Prise de commande' }, { dir: '→', name: 'Transport & livraison' }],
+      },
+      {
+        id: DEMO.processTransport, family: 'realisation', name: 'Transport & livraison', pilot: DEMO.userAntoine, version: 'v2.1', workflow: 'publie',
+        sipoc: { suppliers: ['Préparation logistique', 'Transporteurs'], inputs: ['Colis préparés', 'Bon de transport'], activities: ['Affrètement', 'Suivi de tournée', 'Preuve de livraison'], outputs: ['Colis livré', 'POD signée'], clients: ['Client final', 'SAV'] },
+        kpis: [{ label: 'Taux de service', actual: '96,2 %', target: '98 %', tone: 'warn' }, { label: 'Livraison à l’heure', actual: '94 %', target: '95 %', tone: 'warn' }, { label: 'Taux de casse', actual: '0,8 %', target: '< 1 %', tone: 'ok' }],
+        exig: [{ framework: '9001', code: '§8.5', mutualized: false }, { framework: '9001', code: '§8.6', mutualized: false }, { framework: '27001', code: 'A.8.16', mutualized: true }],
+        interactions: [{ dir: '←', name: 'Préparation logistique' }, { dir: '→', name: 'Service après-vente' }, { dir: '↔', name: 'Achats & fournisseurs' }],
+      },
+      { id: null, family: 'realisation', name: 'Service après-vente', pilot: DEMO.userCamille, version: 'v1.0', workflow: 'relecture', sipoc: emptySipoc, kpis: [{ label: 'Réclamations traitées < 48 h', actual: '81 %', target: '90 %', tone: 'danger' }], exig: [{ framework: '9001', code: '§8.7', mutualized: false }], interactions: [{ dir: '←', name: 'Transport & livraison' }] },
+      { id: null, family: 'support', name: 'Ressources humaines', pilot: DEMO.userAntoine, version: 'v1.1', workflow: 'publie', sipoc: emptySipoc, kpis: [{ label: 'Taux de sensibilisation', actual: '78 %', target: '90 %', tone: 'warn' }], exig: [{ framework: '9001', code: '§7.2', mutualized: false }, { framework: '27001', code: 'A.6.3', mutualized: true }], interactions: [{ dir: '↔', name: 'Pilotage stratégique' }] },
+      { id: null, family: 'support', name: 'Systèmes d’information', pilot: DEMO.userClaire, version: 'v1.5', workflow: 'publie', sipoc: emptySipoc, kpis: [{ label: 'Disponibilité SI', actual: '99,6 %', target: '99,9 %', tone: 'warn' }], exig: [{ framework: '9001', code: '§7.1.3', mutualized: false }, { framework: '27001', code: 'A.8.6', mutualized: true }], interactions: [{ dir: '↔', name: 'Transport & livraison' }] },
+    ];
+    for (const p of processSeed) {
+      const [row] = await sql`
+        INSERT INTO processes (id, tenant_id, family, name, pilot_user_id, version, workflow, sipoc, kpis, covered_requirements, interactions)
+        SELECT ${p.id ?? sql`gen_random_uuid()`}, ${DEMO.tenantId}, ${p.family}::process_family, ${p.name}, ${p.pilot},
+               ${p.version}, ${p.workflow}::process_workflow,
+               ${JSON.stringify(p.sipoc)}::jsonb, ${JSON.stringify(p.kpis)}::jsonb,
+               ${JSON.stringify(p.exig)}::jsonb, ${JSON.stringify(p.interactions)}::jsonb
+        WHERE NOT EXISTS (SELECT 1 FROM processes WHERE tenant_id = ${DEMO.tenantId} AND name = ${p.name})
+        RETURNING id`;
+      void row;
+    }
+    // Risques rattachés (registre unique) : Transport ↔ entrepôt/compte distant ;
+    // Préparation ↔ rançongiciel (erreur humaine en production).
+    const processRiskLinks: [string, string][] = [
+      [DEMO.processTransport, DEMO.riskEntrepot],
+      [DEMO.processTransport, DEMO.riskCompteDistant],
+      [DEMO.processPrepa, DEMO.riskRancongiciel],
+    ];
+    for (const [pid, rid] of processRiskLinks) {
+      await sql`
+        INSERT INTO process_risks (tenant_id, process_id, risk_id)
+        VALUES (${DEMO.tenantId}, ${pid}, ${rid})
+        ON CONFLICT (process_id, risk_id) DO NOTHING`;
     }
   } finally {
     await sql.end();

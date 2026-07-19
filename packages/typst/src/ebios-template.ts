@@ -1,7 +1,11 @@
 import type { EbiosModel } from './ebios-model.ts';
 
-function ts(s: string): string {
-  return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ')}"`;
+// Insère une chaîne comme TEXTE en mode markup Typst : on échappe les
+// caractères de syntaxe (#, [], *, _, `, $, <, >, @, ~, \) et on aplatit les
+// sauts de ligne. Ne PAS confondre avec un littéral chaîne « "..." » (mode
+// code) : ici on rend le texte, sans guillemets.
+function mk(s: string): string {
+  return s.replace(/[\r\n]+/g, ' ').replace(/[\\#[\]*_`$<>@~]/g, (c) => `\\${c}`);
 }
 
 /**
@@ -14,25 +18,30 @@ export function renderEbiosTypst(model: EbiosModel): string {
     .map((sc) => {
       const phases = sc.phases
         .map((p) => {
-          const acts = p.actions
-            .map((a) => `      text(size: 8pt, fill: rgb("#5b5d56"))[• ${a.tech ? `#text(fill: rgb("#cb4e0a"), font: "DejaVu Sans Mono")[${ts(a.tech)}] ` : ''}#box[${ts(a.label)}]],`)
-            .join('\n');
-          return `    block(above: 5pt)[
-      #text(size: 8.5pt, weight: "bold")[${ts(p.label)}]
-      #v(1pt)
-      #stack(spacing: 2pt,
-${acts || '        text(size: 8pt, fill: rgb("#8b8a82"))[—],'}
-      )
-    ]`;
+          const acts =
+            p.actions.length === 0
+              ? '  #text(size: 8pt, fill: rgb("#8b8a82"))[—]'
+              : p.actions
+                  .map(
+                    (a) =>
+                      `  #text(size: 8pt, fill: rgb("#5b5d56"))[• ${
+                        a.tech ? `#text(fill: rgb("#cb4e0a"), font: "DejaVu Sans Mono")[${mk(a.tech)}] ` : ''
+                      }${mk(a.label)}]`,
+                  )
+                  .join('\\\n');
+          return `  #block(above: 6pt, breakable: false)[
+    #text(size: 8.5pt, weight: "bold")[${mk(p.label)}]\\
+${acts}
+  ]`;
         })
         .join('\n');
-      return `  block(breakable: false, above: 12pt)[
-    #text(size: 11pt, weight: "bold")[${ts(sc.riskSource)} #text(fill: rgb("#7a7c73"))[→] ${ts(sc.targetObjective)}]
-    #h(6pt) #box(inset: (x: 5pt, y: 2pt), fill: rgb("#f2efe9"), radius: 2pt)[#text(size: 8pt)[${ts('Vraisemblance ' + sc.likelihoodLabel)}]]
-    ${sc.generated ? '#h(4pt) #text(size: 8pt, fill: rgb("#2e7d4f"))[· versé au registre]' : ''}
-    #v(3pt)
+      return `#block(breakable: false, above: 12pt)[
+  #text(size: 11pt, weight: "bold")[${mk(sc.riskSource)} #text(fill: rgb("#7a7c73"))[→] ${mk(sc.targetObjective)}]
+  #h(6pt)#box(inset: (x: 5pt, y: 2pt), fill: rgb("#f2efe9"), radius: 2pt)[#text(size: 8pt)[Vraisemblance ${mk(sc.likelihoodLabel)}]]${
+        sc.generated ? ' #text(size: 8pt, fill: rgb("#2e7d4f"))[· versé au registre]' : ''
+      }
 ${phases}
-  ]`;
+]`;
     })
     .join('\n');
 
@@ -46,8 +55,8 @@ ${phases}
     #v(4pt)
     #grid(
       columns: (1fr, auto),
-      [Document scellé par Toron · ${ts('poinçon ' + model.verifySlug)}],
-      [Vérifier l'intégrité : ${ts(model.verifyUrl)} · page #counter(page).display() / #context counter(page).final().first()],
+      [Document scellé par Toron · poinçon ${mk(model.verifySlug)}],
+      [Vérifier l'intégrité : ${mk(model.verifyUrl)} · page #counter(page).display() / #context counter(page).final().first()],
     )
   ],
 )
@@ -70,7 +79,7 @@ ${phases}
 #v(18pt)
 #text(size: 19pt, weight: "bold")[Livrable EBIOS RM]
 #v(2pt)
-#text(size: 11pt, fill: rgb("#5b5d56"))[${ts(model.title)}]
+#text(size: 11pt, fill: rgb("#5b5d56"))[${mk(model.title)}]
 #v(1pt)
 #text(size: 9pt, fill: rgb("#8b8a82"))[Méthode ANSSI · scénarios opérationnels]
 
@@ -79,10 +88,10 @@ ${phases}
   columns: (auto, 1fr),
   stroke: none,
   inset: (x: 0pt, y: 2pt),
-  text(fill: rgb("#7a7c73"))[Entité], [${ts(model.entityName)}],
-  text(fill: rgb("#7a7c73"))[Périmètre], [${ts(model.scopeLabel)}],
-  text(fill: rgb("#7a7c73"))[Avancement], [${ts(model.workshopLabel)}],
-  text(fill: rgb("#7a7c73"))[Généré le], [${ts(model.generatedAtLabel)}],
+  text(fill: rgb("#7a7c73"))[Entité], [${mk(model.entityName)}],
+  text(fill: rgb("#7a7c73"))[Périmètre], [${mk(model.scopeLabel)}],
+  text(fill: rgb("#7a7c73"))[Avancement], [${mk(model.workshopLabel)}],
+  text(fill: rgb("#7a7c73"))[Généré le], [${mk(model.generatedAtLabel)}],
 )
 
 #v(14pt)

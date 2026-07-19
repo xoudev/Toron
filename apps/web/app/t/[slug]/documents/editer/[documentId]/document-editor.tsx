@@ -70,6 +70,34 @@ export function DocumentEditor({
     if (editorRef.current) editorRef.current.innerHTML = sanitizeDocumentHtml(documentTemplate(docType));
   }
 
+  // Sommaire automatique (comme Word) : construit une table des matières à
+  // partir des titres H1/H2/H3 et l'insère en tête (remplace un sommaire
+  // existant). Se régénère à chaque clic.
+  function insertToc() {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const first = editor.firstElementChild;
+    if (first && /^sommaire$/i.test((first.textContent ?? '').trim()) && /^H[12]$/.test(first.tagName)) {
+      first.nextElementSibling?.remove();
+      first.remove();
+    }
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const headings = Array.from(editor.querySelectorAll('h1, h2, h3')).filter(
+      (h) => (h.textContent ?? '').trim() && !/^sommaire$/i.test((h.textContent ?? '').trim()),
+    );
+    if (headings.length === 0) { setError('Ajoutez d’abord des titres (H1/H2/H3) pour générer un sommaire.'); return; }
+    const items = headings
+      .map((h) => {
+        const level = Number(h.tagName[1]);
+        return `<p style="margin:2px 0">${'&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(level - 1)}${esc((h.textContent ?? '').trim())}</p>`;
+      })
+      .join('');
+    const toc = `<h2 style="color:#cb4e0a">Sommaire</h2><div style="border-left:3px solid #e2e0d8">${items}</div><hr>`;
+    editor.insertAdjacentHTML('afterbegin', sanitizeDocumentHtml(toc));
+    setError(null);
+    setStatus('Sommaire inséré (pensez à enregistrer).');
+  }
+
   const meta = `${entityMeta} · Version ${semver}${processName ? ` · Processus : ${processName}` : ''}`;
 
   // Empêche la perte de sélection au clic sur un bouton de la barre d'outils.
@@ -119,6 +147,7 @@ export function DocumentEditor({
         <span className="tb-sep" />
         <button className="tb-btn" title="Effacer la mise en forme" onMouseDown={keep(() => cmd('removeFormat'))}>⌫</button>
         <span className="spacer" />
+        <button className="tb-btn" title="Insérer un sommaire (table des matières)" onMouseDown={keep(insertToc)}>Sommaire</button>
         <button className="tb-btn" title="Réinsérer le modèle du type" onMouseDown={keep(insertTemplate)}>Modèle</button>
       </div>
 

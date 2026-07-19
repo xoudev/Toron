@@ -1,10 +1,10 @@
 import type { PvModel } from './pv-model.ts';
 
-// Échappe une chaîne pour un littéral Typst ("..."). On neutralise \ et ",
-// et on aplatit les sauts de ligne — les données sont ainsi injectées sans
-// risque d'injection de balisage.
-function ts(s: string): string {
-  return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ')}"`;
+// Insère une chaîne comme TEXTE en mode markup Typst (échappe la syntaxe, rend
+// le texte sans guillemets). À ne pas confondre avec un littéral chaîne mode
+// code « "..." ».
+function mk(s: string): string {
+  return s.replace(/[\r\n]+/g, ' ').replace(/[\\#[\]*_`$<>@~]/g, (c) => `\\${c}`);
 }
 
 /**
@@ -16,32 +16,32 @@ function ts(s: string): string {
 export function renderPvTypst(model: PvModel): string {
   const agenda = model.agenda
     .map((s) => {
-      const lines = s.lines.map((l) => `    text(size: 9pt, fill: rgb("#5b5d56"))[• #box[${ts(l)}]],`).join('\n');
-      return `  block(breakable: false, above: 10pt)[
-    #text(size: 8pt, fill: rgb("#8b8a82"), font: "DejaVu Sans Mono")[${ts(s.clause)}]
-    #text(size: 10.5pt, weight: "bold")[  ${s.n}. #box[${ts(s.title)}]]
-    #v(2pt)
-    #stack(spacing: 3pt,
+      const lines =
+        s.lines.length === 0
+          ? '  #text(size: 9pt, fill: rgb("#8b8a82"))[—]'
+          : s.lines.map((l) => `  #text(size: 9pt, fill: rgb("#5b5d56"))[• ${mk(l)}]`).join('\\\n');
+      return `#block(breakable: false, above: 10pt)[
+  #text(size: 8pt, fill: rgb("#8b8a82"), font: "DejaVu Sans Mono")[${mk(s.clause)}]\\
+  #text(size: 10.5pt, weight: "bold")[${s.n}. ${mk(s.title)}]\\
 ${lines}
-    )
-  ]`;
+]`;
     })
     .join('\n');
 
   const decisions =
     model.decisions.length === 0
-      ? `  text(size: 9pt, fill: rgb("#8b8a82"))[Aucune décision consignée.]`
+      ? '#text(size: 9pt, fill: rgb("#8b8a82"))[Aucune décision consignée.]'
       : model.decisions
           .map(
-            (d, i) => `  block(above: 6pt)[
-    #text(size: 9.5pt)[#text(weight: "bold")[D${i + 1}.] #box[${ts(d.body)}]]
-    ${d.actionNote ? `#linebreak() #text(size: 8pt, fill: rgb("#2e7d4f"))[${ts('→ ' + d.actionNote)}]` : ''}
-  ]`,
+            (d, i) => `#block(above: 6pt)[
+  #text(size: 9.5pt)[#text(weight: "bold")[D${i + 1}.] ${mk(d.body)}]${
+            d.actionNote ? `\\\n  #text(size: 8pt, fill: rgb("#2e7d4f"))[→ ${mk(d.actionNote)}]` : ''
+          }
+]`,
           )
           .join('\n');
 
-  const participants =
-    model.participants.length === 0 ? '—' : model.participants.join(', ');
+  const participants = model.participants.length === 0 ? '—' : model.participants.join(', ');
 
   return `#set document(title: "Procès-verbal de revue de direction", author: "Toron")
 #set page(
@@ -53,8 +53,8 @@ ${lines}
     #v(4pt)
     #grid(
       columns: (1fr, auto),
-      [Document scellé par Toron · ${ts('poinçon ' + model.verifySlug)}],
-      [Vérifier l'intégrité : ${ts(model.verifyUrl)} · page #counter(page).display() / #context counter(page).final().first()],
+      [Document scellé par Toron · poinçon ${mk(model.verifySlug)}],
+      [Vérifier l'intégrité : ${mk(model.verifyUrl)} · page #counter(page).display() / #context counter(page).final().first()],
     )
   ],
 )
@@ -77,7 +77,7 @@ ${lines}
 #v(18pt)
 #text(size: 19pt, weight: "bold")[Procès-verbal de revue de direction]
 #v(2pt)
-#text(size: 11pt, fill: rgb("#5b5d56"))[${ts(model.title)}]
+#text(size: 11pt, fill: rgb("#5b5d56"))[${mk(model.title)}]
 #v(1pt)
 #text(size: 9pt, fill: rgb("#8b8a82"))[Clause 9.3 · 27001 & 9001 · une seule revue]
 
@@ -86,11 +86,11 @@ ${lines}
   columns: (auto, 1fr),
   stroke: none,
   inset: (x: 0pt, y: 2pt),
-  text(fill: rgb("#7a7c73"))[Entité], [${ts(model.entityName)}],
-  text(fill: rgb("#7a7c73"))[Périmètre], [${ts(model.scopeLabel)}],
-  text(fill: rgb("#7a7c73"))[Séance du], [${ts(model.heldAtLabel)}],
-  text(fill: rgb("#7a7c73"))[Participants], [${ts(participants)}],
-  text(fill: rgb("#7a7c73"))[Généré le], [${ts(model.generatedAtLabel)}],
+  text(fill: rgb("#7a7c73"))[Entité], [${mk(model.entityName)}],
+  text(fill: rgb("#7a7c73"))[Périmètre], [${mk(model.scopeLabel)}],
+  text(fill: rgb("#7a7c73"))[Séance du], [${mk(model.heldAtLabel)}],
+  text(fill: rgb("#7a7c73"))[Participants], [${mk(participants)}],
+  text(fill: rgb("#7a7c73"))[Généré le], [${mk(model.generatedAtLabel)}],
 )
 
 #v(14pt)
@@ -109,6 +109,6 @@ ${agenda}
 
 ${decisions}
 
-${model.nextReviewLabel ? `#v(14pt)\n#text(size: 9pt, fill: rgb("#5b5d56"))[Prochaine revue prévue le ${model.nextReviewLabel}.]` : ''}
+${model.nextReviewLabel ? `#v(14pt)\n#text(size: 9pt, fill: rgb("#5b5d56"))[Prochaine revue prévue le ${mk(model.nextReviewLabel)}.]` : ''}
 `;
 }

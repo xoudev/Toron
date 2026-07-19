@@ -29,15 +29,27 @@ function documentHtml(title: string, meta: string, bodyHtml: string): string {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>${PAGE_CSS}</style></head><body><div class="page"><div class="doc-meta">${escapeHtml(meta)}</div>${bodyHtml}</div></body></html>`;
 }
 
-/** Ouvre la mise en page A4 dans une fenêtre et déclenche l'impression (→ PDF). */
+/**
+ * Rend la mise en page A4 dans un iframe caché et déclenche l'impression
+ * (→ « Enregistrer en PDF »). L'iframe contourne les bloqueurs de fenêtres
+ * pop-up qui neutralisaient window.open.
+ */
 export function printDocumentPdf(title: string, meta: string, bodyHtml: string): void {
-  const win = window.open('', '_blank', 'noopener,width=820,height=1000');
-  if (!win) return;
-  win.document.write(documentHtml(title, meta, bodyHtml));
-  win.document.close();
-  win.focus();
-  // Laisse le temps au rendu avant l'ouverture de la boîte d'impression.
-  setTimeout(() => win.print(), 250);
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+  document.body.appendChild(iframe);
+  const doc = iframe.contentWindow?.document;
+  if (!doc) { iframe.remove(); return; }
+  doc.open();
+  doc.write(documentHtml(title, meta, bodyHtml));
+  doc.close();
+  const cw = iframe.contentWindow!;
+  let removed = false;
+  const cleanup = () => { if (!removed) { removed = true; setTimeout(() => iframe.remove(), 500); } };
+  cw.onafterprint = cleanup;
+  // Laisse le temps au rendu (styles/polices) avant l'impression.
+  setTimeout(() => { cw.focus(); cw.print(); cleanup(); }, 350);
 }
 
 /** Télécharge le document au format Word (.doc, HTML compatible Word). */

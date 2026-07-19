@@ -822,3 +822,39 @@ input[type='file']::file-selector-button:hover {
   border-color: var(--border-strong);
   background: var(--surface);
 }
+
+/* ── Correctifs de débordement des formulaires en dialogue ───────────── */
+/* Les selects à options longues (référentiels…) forçaient la grille plus
+   large que le dialogue. On autorise les pistes et les champs à rétrécir. */
+.risk-form-grid > * {
+  min-width: 0;
+}
+.field {
+  min-width: 0;
+}
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Barre de l'éditeur documentaire : le titre tronque au lieu de pousser. */
+.doc-editor-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cases à cocher / radios — accent de marque, alignées (exclues de la base
+   des champs texte, elles restaient en rendu navigateur brut). */
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  vertical-align: middle;
+  flex: none;
+}

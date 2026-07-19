@@ -15,7 +15,8 @@ const ATTRS_BY_TAG: Record<string, Set<string>> = {
 };
 const ALLOWED_STYLE_PROPS = new Set([
   'color', 'background-color', 'text-align', 'font-weight', 'font-style',
-  'text-decoration', 'font-size',
+  'text-decoration', 'font-size', 'margin', 'margin-left', 'padding',
+  'padding-left', 'border-left', 'list-style-type',
 ]);
 
 function filterStyle(style: string): string {

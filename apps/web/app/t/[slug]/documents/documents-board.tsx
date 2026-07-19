@@ -261,12 +261,12 @@ function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: st
         <div className="drawer-section">
           <p className="drawer-section-label">Téléverser un fichier</p>
           <div className="upload-drop">
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.odt,.txt,.md,.ppt,.pptx,.xls,.xlsx" style={{ display: 'block', marginBottom: 10, maxWidth: '100%' }} />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
               <label className="field" style={{ maxWidth: 110, marginBottom: 0 }}>Version<input ref={semverRef} defaultValue={nextSemver} key={nextSemver} /></label>
-              <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.odt,.txt,.md,.ppt,.pptx,.xls,.xlsx" />
               <button className="btn btn-primary btn-sm" disabled={pending} onClick={upload}>{pending ? 'Téléversement…' : 'Téléverser'}</button>
             </div>
-            <p className="risk-mut-hint" style={{ margin: 0 }}>Ou rédigez directement dans <b>l’éditeur</b> (couleurs, titres, export PDF/Word). Une version publiée devient immuable.</p>
+            <p className="risk-mut-hint" style={{ margin: '10px 0 0' }}>Ou rédigez directement dans <b>l’éditeur</b> (couleurs, titres, export PDF/Word). Une version publiée devient immuable.</p>
           </div>
         </div>
       ) : null}

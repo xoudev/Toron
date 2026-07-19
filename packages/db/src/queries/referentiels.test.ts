@@ -9,6 +9,7 @@ import * as schema from '../schema/index.ts';
 import {
   DEMO,
   seedDemoTenant,
+  seedFrameworkCatalog,
   seedIso27001Framework,
   seedRecyfFramework,
 } from '../seed.ts';
@@ -26,6 +27,7 @@ import {
   listFrameworks,
   listScopes,
   mapControlToRequirement,
+  setFrameworkHidden,
   unmapControlFromRequirement,
 } from './referentiels.ts';
 
@@ -45,6 +47,7 @@ beforeAll(async () => {
   await applyMigrations(uri);
   await seedRecyfFramework(uri);
   await seedIso27001Framework(uri);
+  await seedFrameworkCatalog(uri);
   await seedDemoTenant(uri);
   admin = postgres(uri, { max: 1, onnotice: () => {} });
   await admin`CREATE ROLE app_login LOGIN PASSWORD 'app_login_test'`;
@@ -80,6 +83,28 @@ describe('catalogue (listFrameworks)', () => {
     const byCode = Object.fromEntries(frameworks.map((f) => [f.code, f]));
     expect(byCode['recyf']?.activatedScopeCount).toBeGreaterThanOrEqual(1);
     expect(byCode['iso27001']?.activatedScopeCount).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('catalogue intégré + visibilité (masquer/rétablir)', () => {
+  it('le catalogue propose de nombreux référentiels (ISO 9001, RGPD, DORA…)', async () => {
+    const frameworks = await withTenant(app.db, T, (tx) => listFrameworks(tx));
+    const codes = new Set(frameworks.map((f) => f.code));
+    for (const c of ['iso9001', 'rgpd', 'iso27701', 'iso22301', 'dora', 'secnumcloud']) {
+      expect(codes.has(c), c).toBe(true);
+    }
+    expect(frameworks.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('masque puis rétablit un référentiel, par tenant', async () => {
+    const [rgpd] = await withTenant(app.db, T, async (tx) => (await listFrameworks(tx)).filter((f) => f.code === 'rgpd'));
+    expect(rgpd?.hidden).toBe(false);
+    await withTenant(app.db, T, (tx) => setFrameworkHidden(tx, T, rgpd!.id, true));
+    const hiddenNow = (await withTenant(app.db, T, (tx) => listFrameworks(tx))).find((f) => f.code === 'rgpd');
+    expect(hiddenNow?.hidden).toBe(true);
+    await withTenant(app.db, T, (tx) => setFrameworkHidden(tx, T, rgpd!.id, false));
+    const restored = (await withTenant(app.db, T, (tx) => listFrameworks(tx))).find((f) => f.code === 'rgpd');
+    expect(restored?.hidden).toBe(false);
   });
 });
 

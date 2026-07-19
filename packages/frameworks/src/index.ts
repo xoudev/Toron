@@ -7,3 +7,4 @@ export {
   type Iso27001Control,
   type Iso27001Theme,
 } from './iso27001.ts';
+export { FRAMEWORK_CATALOG, type CatalogFramework, type CatalogRequirement } from './catalog.ts';

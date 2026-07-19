@@ -154,3 +154,21 @@ export const assessmentItems = pgTable(
   },
   (t) => [uniqueIndex('assessment_items_assessment_req_unique').on(t.assessmentId, t.requirementId)],
 );
+
+// ── Visibilité des référentiels par tenant (module 5.2, finitions) ─────
+// Une ligne = un référentiel EXPLICITEMENT masqué par le tenant. Absence de
+// ligne = visible. Permet de masquer/rétablir sans supprimer le catalogue.
+export const frameworkVisibility = pgTable(
+  'framework_visibility',
+  {
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id),
+    frameworkId: uuid('framework_id')
+      .notNull()
+      .references(() => frameworks.id, { onDelete: 'cascade' }),
+    hidden: boolean('hidden').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.frameworkId] })],
+);

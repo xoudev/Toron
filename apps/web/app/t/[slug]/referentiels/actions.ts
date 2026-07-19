@@ -10,6 +10,7 @@ import {
   getControlDeleteImpact,
   getFramework,
   mapControlToRequirement,
+  setFrameworkHidden,
   unmapControlFromRequirement,
   withTenant,
   writeAuditEntry,
@@ -261,6 +262,36 @@ export async function activateFrameworkAction(
       ok: false,
       error: logFailure(err, appError('ECHEC_ACTIVATION', 'L’activation a échoué — réessayez.')),
     };
+  }
+}
+
+export async function setFrameworkHiddenAction(
+  slug: string,
+  input: { frameworkId: string; hidden: boolean },
+): Promise<ActionResult> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ frameworkId: z.uuid(), hidden: z.boolean() }).safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: appError('SAISIE_INVALIDE', 'Sélection invalide.') };
+  }
+  try {
+    await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      await setFrameworkHidden(tx, auth.tenantId, parsed.data.frameworkId, parsed.data.hidden);
+      await writeAuditEntry(tx, {
+        tenantId: auth.tenantId,
+        actorUserId: auth.userId,
+        action: parsed.data.hidden ? 'framework.hide' : 'framework.restore',
+        objectType: 'framework',
+        objectId: parsed.data.frameworkId,
+        ip: auth.ip,
+        userAgent: auth.userAgent,
+      });
+    });
+    revalidatePath(`/t/${slug}/referentiels`, 'layout');
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_VISIBILITE', 'La mise à jour de la visibilité a échoué.')) };
   }
 }
 

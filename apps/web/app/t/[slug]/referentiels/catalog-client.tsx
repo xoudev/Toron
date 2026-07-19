@@ -5,7 +5,7 @@ import { Dialog } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
-import { activateFrameworkAction, createCustomFrameworkAction } from './actions';
+import { activateFrameworkAction, createCustomFrameworkAction, setFrameworkHiddenAction } from './actions';
 
 const SCOPE_KIND_LABEL: Record<string, string> = {
   smsi: 'SMSI',
@@ -70,6 +70,22 @@ export function CreateFrameworkButton({ slug }: { slug: string }) {
         </Dialog>
       ) : null}
     </>
+  );
+}
+
+export function FrameworkVisibilityButton({ slug, frameworkId, hidden }: { slug: string; frameworkId: string; hidden: boolean }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  function toggle() {
+    start(async () => {
+      const res = await setFrameworkHiddenAction(slug, { frameworkId, hidden: !hidden });
+      if (res.ok) router.refresh();
+    });
+  }
+  return (
+    <button className="btn btn-ghost btn-sm" disabled={pending} onClick={toggle} title={hidden ? 'Rétablir dans le catalogue' : 'Masquer du catalogue'}>
+      {hidden ? '↺ Rétablir' : '⊘ Masquer'}
+    </button>
   );
 }
 

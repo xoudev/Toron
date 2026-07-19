@@ -101,6 +101,24 @@ export {
   type AuditFindingRow,
   type AuditDetail,
 } from './queries/audits.ts';
+export {
+  createReview,
+  setReviewStatus,
+  addParticipant,
+  removeParticipant,
+  addDecision,
+  convertDecisionToAction,
+  listReviews,
+  getReview,
+  getReviewCounts,
+  getReviewEntityName,
+  type CreateReviewInput,
+  type ReviewSummary,
+  type ReviewDetail,
+  type ReviewParticipantRow,
+  type ReviewDecisionRow,
+  type ReviewCounts,
+} from './queries/reviews.ts';
 export { getDashboardMetrics, type DashboardMetrics } from './queries/dashboard.ts';
 export {
   createNc,

@@ -91,7 +91,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Revue de direction',
           href: `${base}/revue-direction`,
-          disabled: true,
+          active: isActive(`${base}/revue-direction`),
           iconPath: 'M4.5 6.5h15v13h-15z M4.5 10.5h15 M8.5 4v4 M15.5 4v4',
         },
       ],

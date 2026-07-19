@@ -3,6 +3,8 @@ import { createHash, randomBytes } from 'node:crypto';
 
 import type { SoaModel } from './soa-model.ts';
 import { renderSoaTypst } from './soa-template.ts';
+import type { PvModel } from './pv-model.ts';
+import { renderPvTypst } from './pv-template.ts';
 
 export interface CompileOptions {
   /** Chemin du binaire Typst (défaut : `typst` dans le PATH). */
@@ -42,6 +44,11 @@ export function compileTypst(source: string, opts: CompileOptions = {}): Promise
 /** Rend et compile la Déclaration d'applicabilité. */
 export function compileSoa(model: SoaModel, opts: CompileOptions = {}): Promise<Buffer> {
   return compileTypst(renderSoaTypst(model), opts);
+}
+
+/** Rend et compile le procès-verbal de revue de direction. */
+export function compilePv(model: PvModel, opts: CompileOptions = {}): Promise<Buffer> {
+  return compileTypst(renderPvTypst(model), opts);
 }
 
 /** Empreinte SHA-256 (hex) d'un PDF — le poinçon (ADR-6). */

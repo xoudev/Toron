@@ -1,6 +1,6 @@
 'use server';
 
-import { appError, nextSemver } from '@toron/core';
+import { appError, hardenDocumentHtml, nextSemver } from '@toron/core';
 import {
   addVersion,
   createDocument,
@@ -154,13 +154,15 @@ export async function writeVersionAction(slug: string, input: unknown): Promise<
   const auth = await authorizeManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z
-    .object({ documentId: z.uuid(), semver: Semver, body: z.string().trim().min(1, 'Le contenu est vide.').max(200000) })
+    .object({ documentId: z.uuid(), semver: Semver, body: z.string().trim().min(1, 'Le contenu est vide.').max(400000) })
     .safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', parsed.error.issues[0]?.message ?? 'Saisie invalide.') };
   const d = parsed.data;
+  // Durcissement anti-XSS avant stockage (le contenu est du HTML riche).
+  const body = hardenDocumentHtml(d.body);
   try {
     await withTenant(appDb().db, auth.tenantId, async (tx) => {
-      const versionId = await addVersion(tx, { tenantId: auth.tenantId, documentId: d.documentId, semver: d.semver, fileName: 'document.md', body: d.body, createdBy: auth.userId });
+      const versionId = await addVersion(tx, { tenantId: auth.tenantId, documentId: d.documentId, semver: d.semver, fileName: 'document.html', body, createdBy: auth.userId });
       await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'document.version_write', objectType: 'document_version', objectId: versionId, after: { documentId: d.documentId, semver: d.semver }, ip: auth.ip, userAgent: auth.userAgent });
     });
     revalidatePath(`/t/${slug}/documents`);

@@ -47,6 +47,9 @@ export const DEMO = {
   incidentPhishing: 'd0000000-0000-4000-8000-0000000000a1',
   ncEtiquetage: 'd0000000-0000-4000-8000-0000000000b1',
   actionNcEtiquetage: 'd0000000-0000-4000-8000-0000000000b2',
+  supplierHebergeur: 'd0000000-0000-4000-8000-0000000000c1',
+  supplierTransporteur: 'd0000000-0000-4000-8000-0000000000c2',
+  supplierInfogerance: 'd0000000-0000-4000-8000-0000000000c3',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -795,6 +798,24 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
          'Ajouter un point de contrôle qualité et la mise à jour des gabarits d’étiquettes.',
          'nc', ${DEMO.ncEtiquetage}, ${DEMO.userCamille}, 'p2', 'en_cours')
       ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, status = EXCLUDED.status`;
+
+    // ── Module 5.10 : fournisseurs du tenant démo ───────────────────────
+    const suppliers = [
+      [DEMO.supplierHebergeur, 'Hébergeur cloud souverain', 't1', 'Hébergement du SI et sauvegardes',
+       ['Données clients', 'Données RH'], 'conforme', DEMO.userClaire, '2027-01-31'],
+      [DEMO.supplierInfogerance, 'Prestataire d’infogérance', 't1', 'Administration SI, MFA, supervision',
+       ['Accès à privilèges'], 'conforme', DEMO.userClaire, '2026-11-30'],
+      [DEMO.supplierTransporteur, 'Transporteur régional', 't2', 'Livraison du dernier kilomètre',
+       ['Coordonnées des destinataires'], 'en_cours', DEMO.userAntoine, '2027-03-15'],
+    ] as const;
+    for (const [id, name, tier, services, cats, contract, owner, review] of suppliers) {
+      await sql`
+        INSERT INTO suppliers (id, tenant_id, name, tier, services, data_categories, contract_status, owner_user_id, next_review)
+        VALUES (${id}, ${DEMO.tenantId}, ${name}, ${tier}, ${services}, ${sql.array(cats as unknown as string[])}::text[],
+                ${contract}, ${owner}, ${review})
+        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, tier = EXCLUDED.tier,
+          contract_status = EXCLUDED.contract_status`;
+    }
   } finally {
     await sql.end();
   }

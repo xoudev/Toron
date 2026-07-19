@@ -138,3 +138,7 @@ export const ncStatus = pgEnum('nc_status', [
   'efficace',
   'rouverte',
 ]);
+
+export const supplierTier = pgEnum('supplier_tier', ['t1', 't2', 't3']);
+
+export const contractStatus = pgEnum('contract_status', ['a_faire', 'en_cours', 'conforme']);

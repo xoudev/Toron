@@ -207,7 +207,9 @@ export {
 } from './queries/evidences.ts';
 export {
   createDocument,
+  setDocumentProcess,
   addVersion,
+  getVersionBody,
   publishVersion,
   listDocuments,
   listVersions,

@@ -1,5 +1,5 @@
 import { canManageControls } from '@toron/core';
-import { listDocuments, listScopes, listTenantMembers, withTenant } from '@toron/db';
+import { listDocuments, listProcesses, listScopes, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
@@ -16,10 +16,11 @@ export default async function DocumentsPage({ params }: { params: Promise<{ slug
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
   const canManage = canManageControls(ctx.role);
 
-  const { documents, scopes, members } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
+  const { documents, scopes, members, processes } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
     documents: await listDocuments(tx),
     scopes: await listScopes(tx),
     members: await listTenantMembers(tx),
+    processes: (await listProcesses(tx)).map((p) => ({ id: p.id, name: p.name })),
   }));
 
   const late = documents.filter((d) => d.reviewOverdue).length;
@@ -57,7 +58,7 @@ export default async function DocumentsPage({ params }: { params: Promise<{ slug
           </div>
         ) : null}
 
-        <DocumentsBoard slug={slug} canManage={canManage} documents={documents} scopes={scopes} members={members} />
+        <DocumentsBoard slug={slug} canManage={canManage} documents={documents} scopes={scopes} members={members} processes={processes} />
       </main>
     </>
   );

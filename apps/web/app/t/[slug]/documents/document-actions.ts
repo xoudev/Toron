@@ -4,9 +4,11 @@ import { appError, nextSemver } from '@toron/core';
 import {
   addVersion,
   createDocument,
+  getVersionBody,
   latestSemver,
   listVersions,
   publishVersion,
+  setDocumentProcess,
   withTenant,
   writeAuditEntry,
   type DocumentVersionRow,
@@ -40,6 +42,7 @@ const CreateSchema = z.object({
   type: DocType,
   title: z.string().trim().min(2, '2 caractères minimum').max(200),
   scopeId: z.uuid().optional().nullable(),
+  processId: z.uuid().optional().nullable(),
   ownerUserId: z.uuid().optional().nullable(),
   reviewDue: DateStr,
 });
@@ -62,6 +65,7 @@ export async function createDocumentAction(
         type: d.type,
         title: d.title,
         scopeId: d.scopeId ?? null,
+        processId: d.processId ?? null,
         ownerUserId: d.ownerUserId ?? null,
         reviewDue: d.reviewDue ?? null,
       });
@@ -139,6 +143,57 @@ export async function addVersionAction(slug: string, formData: FormData): Promis
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_VERSION', 'L’ajout de la version a échoué — le numéro existe peut-être déjà.')) };
+  }
+}
+
+/**
+ * Rédige une version DANS Toron (éditeur intégré) : crée un brouillon dont le
+ * contenu est du texte, sans téléversement de fichier.
+ */
+export async function writeVersionAction(slug: string, input: unknown): Promise<ActionResult> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z
+    .object({ documentId: z.uuid(), semver: Semver, body: z.string().trim().min(1, 'Le contenu est vide.').max(200000) })
+    .safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', parsed.error.issues[0]?.message ?? 'Saisie invalide.') };
+  const d = parsed.data;
+  try {
+    await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const versionId = await addVersion(tx, { tenantId: auth.tenantId, documentId: d.documentId, semver: d.semver, fileName: 'document.md', body: d.body, createdBy: auth.userId });
+      await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'document.version_write', objectType: 'document_version', objectId: versionId, after: { documentId: d.documentId, semver: d.semver }, ip: auth.ip, userAgent: auth.userAgent });
+    });
+    revalidatePath(`/t/${slug}/documents`);
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_VERSION', 'L’enregistrement a échoué — le numéro de version existe peut-être déjà.')) };
+  }
+}
+
+export async function setDocumentProcessAction(slug: string, input: unknown): Promise<ActionResult> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ documentId: z.uuid(), processId: z.uuid().nullable() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Rattachement invalide.') };
+  try {
+    await withTenant(appDb().db, auth.tenantId, (tx) => setDocumentProcess(tx, parsed.data.documentId, parsed.data.processId));
+    revalidatePath(`/t/${slug}/documents`);
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_RATTACHEMENT', 'Le rattachement au processus a échoué.')) };
+  }
+}
+
+export async function getVersionBodyAction(slug: string, input: unknown): Promise<ActionResult<{ body: string | null }>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ versionId: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };
+  try {
+    const body = await withTenant(appDb().db, auth.tenantId, (tx) => getVersionBody(tx, parsed.data.versionId));
+    return { ok: true, data: { body } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_LECTURE', 'La lecture du contenu a échoué.')) };
   }
 }
 

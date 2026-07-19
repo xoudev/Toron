@@ -10,13 +10,16 @@ import { withTenant } from '../tenant.ts';
 import {
   addVersion,
   createDocument,
+  getVersionBody,
   getVersionContent,
   linkRequirement,
   listDocuments,
   listDocumentsCoveringRequirement,
   listVersions,
   publishVersion,
+  setDocumentProcess,
 } from './documents.ts';
+import { createProcess } from './processes.ts';
 
 const PG_IMAGE = 'postgres:16.14-alpine3.23';
 const T = DEMO.tenantId;
@@ -82,6 +85,32 @@ describe('cycle de vie d’un document versionné', () => {
     expect(res.published).toBe(1);
     expect(res.status).toBe('publie');
     expect(res.body).toBe('contenu de charte');
+  });
+});
+
+describe('éditeur intégré + rattachement processus (module 5.6)', () => {
+  it('rédige une version en contenu (body), lisible ensuite', async () => {
+    const body = await withTenant(app.db, T, async (tx) => {
+      const docId = await createDocument(tx, { tenantId: T, type: 'procedure', title: 'Test — rédigé' });
+      const vId = await addVersion(tx, { tenantId: T, documentId: docId, semver: '1.0', body: '# Procédure\nÉtape 1.', createdBy: DEMO.userClaire });
+      const versions = await listVersions(tx, docId);
+      expect(versions[0]?.hasBody).toBe(true);
+      return getVersionBody(tx, vId);
+    });
+    expect(body).toContain('Procédure');
+  });
+
+  it('rattache/détache un document à un processus et l’expose dans la liste', async () => {
+    const { withName, detached } = await withTenant(app.db, T, async (tx) => {
+      const pid = await createProcess(tx, { tenantId: T, family: 'support', name: 'Doc — processus' });
+      const docId = await createDocument(tx, { tenantId: T, type: 'procedure', title: 'Test — doc process', processId: pid });
+      const before = (await listDocuments(tx)).find((d) => d.id === docId);
+      await setDocumentProcess(tx, docId, null);
+      const after = (await listDocuments(tx)).find((d) => d.id === docId);
+      return { withName: before?.processName, detached: after?.processId };
+    });
+    expect(withName).toBe('Doc — processus');
+    expect(detached).toBeNull();
   });
 });
 

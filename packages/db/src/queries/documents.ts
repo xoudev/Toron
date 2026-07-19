@@ -18,6 +18,7 @@ export interface CreateDocumentInput {
   type: DocumentType;
   title: string;
   scopeId?: string | null;
+  processId?: string | null;
   ownerUserId?: string | null;
   reviewDue?: string | null;
 }
@@ -30,11 +31,22 @@ export async function createDocument(tx: TenantTx, input: CreateDocumentInput): 
       type: input.type,
       title: input.title,
       scopeId: input.scopeId ?? null,
+      processId: input.processId ?? null,
       ownerUserId: input.ownerUserId ?? null,
       reviewDue: input.reviewDue ?? null,
     })
     .returning({ id: schema.documents.id });
   return row!.id;
+}
+
+/** Rattache (ou détache si null) un document à un processus. */
+export async function setDocumentProcess(tx: TenantTx, documentId: string, processId: string | null): Promise<number> {
+  const u = await tx
+    .update(schema.documents)
+    .set({ processId })
+    .where(eq(schema.documents.id, documentId))
+    .returning({ id: schema.documents.id });
+  return u.length;
 }
 
 export interface AddVersionInput {
@@ -43,6 +55,8 @@ export interface AddVersionInput {
   semver: string;
   fileName?: string | null;
   content?: Buffer | null;
+  /** Contenu rédigé dans l'éditeur intégré (alternative à l'upload). */
+  body?: string | null;
   createdBy: string;
 }
 
@@ -56,10 +70,20 @@ export async function addVersion(tx: TenantTx, input: AddVersionInput): Promise<
       semver: input.semver,
       fileName: input.fileName ?? null,
       content: input.content ?? null,
+      body: input.body ?? null,
       createdBy: input.createdBy,
     })
     .returning({ id: schema.documentVersions.id });
   return row!.id;
+}
+
+/** Contenu rédigé (éditeur intégré) d'une version, ou null. */
+export async function getVersionBody(tx: TenantTx, versionId: string): Promise<string | null> {
+  const [row] = await tx
+    .select({ body: schema.documentVersions.body })
+    .from(schema.documentVersions)
+    .where(eq(schema.documentVersions.id, versionId));
+  return row?.body ?? null;
 }
 
 /**
@@ -86,6 +110,8 @@ export interface DocumentSummary {
   type: DocumentType;
   title: string;
   scopeName: string | null;
+  processId: string | null;
+  processName: string | null;
   ownerName: string | null;
   reviewDue: string | null;
   reviewOverdue: boolean;
@@ -101,6 +127,8 @@ interface RawDocument {
   type: DocumentType;
   title: string;
   scope_name: string | null;
+  process_id: string | null;
+  process_name: string | null;
   owner_name: string | null;
   review_due: string | null;
   version_count: number | string;
@@ -115,12 +143,14 @@ export async function listDocuments(tx: TenantTx): Promise<DocumentSummary[]> {
   const rows = await tx.execute(sql`
     SELECT
       d.id, d.type, d.title, s.name AS scope_name, o.name AS owner_name,
+      d.process_id, p.name AS process_name,
       d.review_due::text AS review_due,
       (SELECT count(*) FROM document_versions v WHERE v.document_id = d.id) AS version_count,
       (SELECT count(*) FROM document_requirements dr WHERE dr.document_id = d.id) AS requirement_count,
       lv.id AS latest_version_id, lv.semver AS latest_semver, lv.status AS latest_status
     FROM documents d
     LEFT JOIN scopes s ON s.id = d.scope_id
+    LEFT JOIN processes p ON p.id = d.process_id
     LEFT JOIN users o ON o.id = d.owner_user_id
     LEFT JOIN LATERAL (
       SELECT id, semver, status FROM document_versions v
@@ -134,6 +164,8 @@ export async function listDocuments(tx: TenantTx): Promise<DocumentSummary[]> {
     type: r.type,
     title: r.title,
     scopeName: r.scope_name,
+    processId: r.process_id,
+    processName: r.process_name,
     ownerName: r.owner_name,
     reviewDue: r.review_due,
     reviewOverdue: reviewOverdue(r.review_due ? new Date(r.review_due) : null, now),
@@ -151,6 +183,7 @@ export interface DocumentVersionRow {
   status: DocumentVersionStatus;
   fileName: string | null;
   hasContent: boolean;
+  hasBody: boolean;
   createdByName: string | null;
   createdAt: Date;
 }
@@ -159,6 +192,7 @@ export interface DocumentVersionRow {
 export async function listVersions(tx: TenantTx, documentId: string): Promise<DocumentVersionRow[]> {
   const rows = await tx.execute(sql`
     SELECT v.id, v.semver, v.status, v.file_name, (v.content IS NOT NULL) AS has_content,
+           (v.body IS NOT NULL) AS has_body,
            u.name AS created_by_name, v.created_at::text AS created_at
     FROM document_versions v LEFT JOIN users u ON u.id = v.created_by
     WHERE v.document_id = ${documentId}
@@ -171,6 +205,7 @@ export async function listVersions(tx: TenantTx, documentId: string): Promise<Do
       status: DocumentVersionStatus;
       file_name: string | null;
       has_content: boolean;
+      has_body: boolean;
       created_by_name: string | null;
       created_at: string;
     }[]
@@ -180,6 +215,7 @@ export async function listVersions(tx: TenantTx, documentId: string): Promise<Do
     status: r.status,
     fileName: r.file_name,
     hasContent: r.has_content,
+    hasBody: r.has_body,
     createdByName: r.created_by_name,
     createdAt: new Date(r.created_at),
   }));

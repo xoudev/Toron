@@ -974,6 +974,11 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         VALUES (${DEMO.tenantId}, ${pid}, ${rid})
         ON CONFLICT (process_id, risk_id) DO NOTHING`;
     }
+    // Rattache la procédure de sauvegarde au processus « Préparation logistique »
+    // (fait ici : les processus doivent exister avant la contrainte FK).
+    await sql`
+      UPDATE documents SET process_id = ${DEMO.processPrepa}
+      WHERE id = ${DEMO.docProcSauvegarde} AND process_id IS NULL`;
 
     // ── Module 5.4b : étude EBIOS RM de démonstration ───────────────────
     // Étude à l'atelier 4 : trois scénarios opérationnels hérités de couples

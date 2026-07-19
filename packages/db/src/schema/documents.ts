@@ -10,6 +10,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { documentType, documentVersionStatus } from './enums.ts';
+import { processes } from './processes.ts';
 import { requirements } from './referentiels.ts';
 import { scopes, tenants, users } from './tenancy.ts';
 
@@ -31,6 +32,7 @@ export const documents = pgTable('documents', {
   type: documentType('type').notNull().default('autre'),
   title: text('title').notNull(),
   scopeId: uuid('scope_id').references(() => scopes.id),
+  processId: uuid('process_id').references(() => processes.id, { onDelete: 'set null' }),
   ownerUserId: uuid('owner_user_id').references(() => users.id),
   reviewDue: date('review_due'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -51,6 +53,7 @@ export const documentVersions = pgTable(
     fileRef: text('file_ref'),
     fileName: text('file_name'),
     content: bytea('content'),
+    body: text('body'),
     status: documentVersionStatus('status').notNull().default('brouillon'),
     createdBy: uuid('created_by').references(() => users.id),
     publishedAt: timestamp('published_at', { withTimezone: true }),

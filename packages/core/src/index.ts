@@ -65,11 +65,15 @@ export {
 export {
   DOCUMENT_TYPES,
   DOCUMENT_VERSION_STATUSES,
+  DOCUMENT_TEMPLATES,
   canEditVersion,
   nextSemver,
   reviewOverdue,
+  documentTemplate,
+  hardenDocumentHtml,
   type DocumentType,
   type DocumentVersionStatus,
+  type DocumentTemplate,
 } from './documents.ts';
 export {
   EVIDENCE_TYPES,

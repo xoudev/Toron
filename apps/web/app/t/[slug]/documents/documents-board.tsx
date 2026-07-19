@@ -1,11 +1,14 @@
 'use client';
 
+import { DOCUMENT_TEMPLATES, type DocumentType } from '@toron/core';
 import type { DocumentSummary, DocumentVersionRow, ScopeSummary, TenantMember } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
+import { exportDocx } from '@/lib/document-export';
 import { initials, refCode } from '@/lib/format';
+import { sanitizeDocumentHtml } from '@/lib/sanitize-html';
 
 import {
   addVersionAction,
@@ -14,7 +17,6 @@ import {
   getVersionsAction,
   publishVersionAction,
   setDocumentProcessAction,
-  writeVersionAction,
 } from './document-actions';
 
 type ProcessOption = { id: string; name: string };
@@ -32,6 +34,7 @@ export function DocumentsBoard({ slug, canManage, documents, scopes, members, pr
   const [query, setQuery] = useState('');
   const [processFilter, setProcessFilter] = useState('');
   const [creating, setCreating] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -59,6 +62,7 @@ export function DocumentsBoard({ slug, canManage, documents, scopes, members, pr
           </select>
         ) : null}
         <span className="spacer" />
+        <button className="btn btn-ghost btn-sm" onClick={() => setTemplatesOpen(true)}>Modèles</button>
         {canManage ? <button className="btn btn-primary btn-sm" onClick={() => setCreating(true)}>+ Nouveau document</button> : null}
       </div>
 
@@ -99,9 +103,28 @@ export function DocumentsBoard({ slug, canManage, documents, scopes, members, pr
         </div>
       )}
 
+      {templatesOpen ? <TemplatesDialog onClose={() => setTemplatesOpen(false)} /> : null}
       {creating ? <CreateDialog slug={slug} scopes={scopes} members={members} processes={processes} onClose={() => setCreating(false)} /> : null}
       {open ? <VersionsDrawer slug={slug} doc={open} canManage={canManage} processes={processes} onClose={() => setOpenId(null)} /> : null}
     </>
+  );
+}
+
+function TemplatesDialog({ onClose }: { onClose: () => void }) {
+  const types = Object.keys(DOCUMENT_TEMPLATES) as DocumentType[];
+  return (
+    <Dialog title="Modèles de documents" onClose={onClose}>
+      <p className="risk-mut-hint" style={{ marginTop: 0 }}>Téléchargez un modèle prêt à remplir (Word), ou créez un document du type voulu pour l’éditer directement dans Toron.</p>
+      <div className="version-list">
+        {types.map((t) => (
+          <div className="version-row" key={t}>
+            <span className="grow" style={{ fontSize: 13 }}>{TYPE_LABEL[t] ?? t}</span>
+            <button className="btn btn-ghost btn-sm" onClick={() => exportDocx(`Modèle — ${TYPE_LABEL[t] ?? t}`, `Modèle de document Toron`, DOCUMENT_TEMPLATES[t].html)}>↓ Word (.doc)</button>
+          </div>
+        ))}
+      </div>
+      <div className="dialog-actions"><button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Fermer</button></div>
+    </Dialog>
   );
 }
 
@@ -111,9 +134,14 @@ function CreateDialog({ slug, scopes, members, processes, onClose }: { slug: str
   const [pending, start] = useTransition();
   function submit(fd: FormData) {
     setError(null);
+    const openEditor = fd.get('_editor') === '1';
     start(async () => {
       const res = await createDocumentAction(slug, { type: String(fd.get('type') ?? 'autre'), title: String(fd.get('title') ?? ''), scopeId: String(fd.get('scopeId') ?? '') || null, processId: String(fd.get('processId') ?? '') || null, ownerUserId: String(fd.get('ownerUserId') ?? '') || null, reviewDue: String(fd.get('reviewDue') ?? '') || null });
-      if (res.ok) { onClose(); router.refresh(); } else setError(res.error.message);
+      if (res.ok) {
+        onClose();
+        if (openEditor) router.push(`/t/${slug}/documents/editer/${res.data.documentId}`);
+        else router.refresh();
+      } else setError(res.error.message);
     });
   }
   return (
@@ -128,7 +156,11 @@ function CreateDialog({ slug, scopes, members, processes, onClose }: { slug: str
           <label className="field">Date de revue<input type="date" name="reviewDue" /></label>
         </div>
         {error ? <p className="form-error" role="alert">{error}</p> : null}
-        <div className="dialog-actions"><button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Annuler</button><button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Création…' : 'Créer'}</button></div>
+        <div className="dialog-actions">
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Annuler</button>
+          <button type="submit" className="btn btn-ghost btn-sm" disabled={pending}>Créer</button>
+          <button type="submit" name="_editor" value="1" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Création…' : 'Créer et éditer'}</button>
+        </div>
       </form>
     </Dialog>
   );
@@ -138,8 +170,6 @@ function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: st
   const router = useRouter();
   const [versions, setVersions] = useState<DocumentVersionRow[] | null>(null);
   const [nextSemver, setNextSemver] = useState('1.0');
-  const [mode, setMode] = useState<'upload' | 'write'>('upload');
-  const [bodyDraft, setBodyDraft] = useState('');
   const [viewing, setViewing] = useState<{ id: string; body: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -161,12 +191,6 @@ function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: st
     const fd = new FormData();
     fd.set('documentId', doc.id); fd.set('semver', semver); fd.set('file', file);
     start(async () => { const res = await addVersionAction(slug, fd); if (res.ok) { if (fileRef.current) fileRef.current.value = ''; await reload(); router.refresh(); } else setError(res.error.message); });
-  }
-  function write() {
-    setError(null);
-    const semver = semverRef.current?.value ?? nextSemver;
-    if (bodyDraft.trim().length === 0) { setError('Le contenu est vide.'); return; }
-    start(async () => { const res = await writeVersionAction(slug, { documentId: doc.id, semver, body: bodyDraft }); if (res.ok) { setBodyDraft(''); await reload(); router.refresh(); } else setError(res.error.message); });
   }
   function publish(versionId: string) {
     setError(null);
@@ -203,6 +227,9 @@ function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: st
             </select>
           ) : <span style={{ fontSize: 12.5 }}>{doc.processName ?? '—'}</span>}
         </div>
+        {canManage ? (
+          <a className="btn btn-primary btn-sm" style={{ marginTop: 10 }} href={`/t/${slug}/documents/editer/${doc.id}`}>✎ Ouvrir l’éditeur</a>
+        ) : null}
       </div>
 
       <div className="drawer-section">
@@ -225,36 +252,21 @@ function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: st
 
       {viewing ? (
         <div className="drawer-section">
-          <p className="drawer-section-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Contenu rédigé<button className="link-btn" style={{ marginLeft: 'auto' }} onClick={() => setViewing(null)}>Fermer</button></p>
-          <pre className="doc-body-view">{viewing.body}</pre>
+          <p className="drawer-section-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Aperçu du contenu<button className="link-btn" style={{ marginLeft: 'auto' }} onClick={() => setViewing(null)}>Fermer</button></p>
+          <div className="doc-body-view" dangerouslySetInnerHTML={{ __html: sanitizeDocumentHtml(viewing.body) }} />
         </div>
       ) : null}
 
       {canManage ? (
         <div className="drawer-section">
-          <div className="status-flow" style={{ marginBottom: 8 }}>
-            <button className="btn btn-ghost btn-sm" aria-pressed={mode === 'upload'} onClick={() => setMode('upload')}>Téléverser un fichier</button>
-            <button className="btn btn-ghost btn-sm" aria-pressed={mode === 'write'} onClick={() => setMode('write')}>Rédiger dans Toron</button>
-          </div>
+          <p className="drawer-section-label">Téléverser un fichier</p>
           <div className="upload-drop">
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: mode === 'write' ? 8 : 0 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <label className="field" style={{ maxWidth: 110, marginBottom: 0 }}>Version<input ref={semverRef} defaultValue={nextSemver} key={nextSemver} /></label>
-              {mode === 'upload' ? (
-                <>
-                  <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.odt,.txt,.md,.ppt,.pptx,.xls,.xlsx" />
-                  <button className="btn btn-primary btn-sm" disabled={pending} onClick={upload}>{pending ? 'Téléversement…' : 'Téléverser'}</button>
-                </>
-              ) : null}
+              <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.odt,.txt,.md,.ppt,.pptx,.xls,.xlsx" />
+              <button className="btn btn-primary btn-sm" disabled={pending} onClick={upload}>{pending ? 'Téléversement…' : 'Téléverser'}</button>
             </div>
-            {mode === 'write' ? (
-              <>
-                <textarea value={bodyDraft} onChange={(e) => setBodyDraft(e.target.value)} rows={10} placeholder="Rédigez le contenu du document ici (Markdown accepté)…" style={{ width: '100%', fontFamily: 'var(--mono, ui-monospace, monospace)', fontSize: 12.5 }} />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                  <button className="btn btn-primary btn-sm" disabled={pending || bodyDraft.trim().length === 0} onClick={write}>{pending ? 'Enregistrement…' : 'Enregistrer la version'}</button>
-                </div>
-              </>
-            ) : null}
-            <p className="risk-mut-hint" style={{ margin: 0 }}>Une version publiée devient immuable — créez-en une nouvelle pour modifier.</p>
+            <p className="risk-mut-hint" style={{ margin: 0 }}>Ou rédigez directement dans <b>l’éditeur</b> (couleurs, titres, export PDF/Word). Une version publiée devient immuable.</p>
           </div>
         </div>
       ) : null}

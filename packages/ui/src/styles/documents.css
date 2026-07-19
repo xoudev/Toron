@@ -127,3 +127,94 @@
   overflow: auto;
   margin: 0;
 }
+
+/* ── Éditeur documentaire riche (grande page) ────────────────────────── */
+.doc-editor-page { max-width: 1000px; }
+.doc-editor-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.doc-editor-title { font-weight: 650; font-size: 14px; }
+.doc-editor-semver {
+  font-size: 12px;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.doc-editor-semver input { width: 54px; padding: 4px 6px; }
+.doc-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m, 6px);
+  margin-bottom: 14px;
+}
+.tb-btn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.tb-btn:hover { background: var(--surface-2); border-color: var(--border); }
+.tb-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.tb-swatches { display: inline-flex; align-items: center; gap: 2px; padding: 0 3px; }
+.tb-swatch-label { font-size: 11px; color: var(--text-3); margin-right: 2px; }
+.tb-swatch {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  padding: 0;
+}
+.tb-swatch:hover { transform: scale(1.15); }
+/* Feuille A4 */
+.doc-page-sheet {
+  background: var(--surface-2, #f7f7f6);
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+}
+.doc-editable {
+  background: #ffffff;
+  color: #1c1e1d;
+  width: 100%;
+  max-width: 760px;
+  min-height: 60vh;
+  padding: 40px 48px;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  outline: none;
+  line-height: 1.55;
+  font-size: 13px;
+}
+.doc-editable:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent), 0 1px 4px rgba(0, 0, 0, 0.12); }
+.doc-editable h1 { font-size: 22px; margin: 0 0 6px; }
+.doc-editable h2 { font-size: 16px; margin: 18px 0 6px; }
+.doc-editable h3 { font-size: 14px; margin: 14px 0 4px; }
+.doc-editable ul, .doc-editable ol { padding-left: 24px; }
+.doc-editable p { margin: 6px 0; }
+.doc-editor-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.doc-editor-ok { color: var(--ok, #2e7d4f); font-size: 12.5px; }

@@ -50,6 +50,7 @@ export const DEMO = {
   supplierHebergeur: 'd0000000-0000-4000-8000-0000000000c1',
   supplierTransporteur: 'd0000000-0000-4000-8000-0000000000c2',
   supplierInfogerance: 'd0000000-0000-4000-8000-0000000000c3',
+  auditSmsi: 'd0000000-0000-4000-8000-0000000000d1',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -815,6 +816,27 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
                 ${contract}, ${owner}, ${review})
         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, tier = EXCLUDED.tier,
           contract_status = EXCLUDED.contract_status`;
+    }
+
+    // ── Module 5.8 : audit interne de démonstration ─────────────────────
+    // Piloté par Antoine (direction), pas par Claire (RSSI, propriétaire du
+    // SMSI) : séparation des tâches respectée.
+    await sql`
+      INSERT INTO audits (id, tenant_id, title, framework_id, scope_id, status, planned_at, lead_auditor)
+      SELECT ${DEMO.auditSmsi}, ${DEMO.tenantId}, 'Audit interne SMSI — S2 2026',
+             (SELECT id FROM frameworks WHERE tenant_id IS NULL AND code = 'iso27001'),
+             ${DEMO.scopeSmsi}, 'en_cours', '2026-07-10', ${DEMO.userAntoine}
+      WHERE NOT EXISTS (SELECT 1 FROM audits WHERE id = ${DEMO.auditSmsi})`;
+    const findings = [
+      ['A.8.5', 'conforme', 'MFA effectivement déployée sur les accès distants ; preuves à jour.'],
+      ['A.5.9', 'observation', 'Inventaire des actifs complet mais fréquence de revue à formaliser.'],
+      ['A.8.13', 'nc_mineure', 'Un test de restauration trimestriel manquant sur l’agence sud.'],
+    ] as const;
+    for (const [ref, type, desc] of findings) {
+      await sql`
+        INSERT INTO audit_findings (tenant_id, audit_id, requirement_ref, type, description)
+        SELECT ${DEMO.tenantId}, ${DEMO.auditSmsi}, ${ref}, ${type}, ${desc}
+        WHERE NOT EXISTS (SELECT 1 FROM audit_findings WHERE audit_id = ${DEMO.auditSmsi} AND requirement_ref = ${ref})`;
     }
   } finally {
     await sql.end();

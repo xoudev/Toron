@@ -135,3 +135,11 @@ export {
   type NcGravity,
   type NcStatus,
 } from './nonconformities.ts';
+export {
+  AUDIT_STATUSES,
+  FINDING_TYPES,
+  auditorSeparationOk,
+  findingRequiresAction,
+  type AuditStatus,
+  type FindingType,
+} from './audits.ts';

@@ -89,6 +89,18 @@ export {
   type UpdateSupplierInput,
   type SupplierSummary,
 } from './queries/suppliers.ts';
+export {
+  createAudit,
+  setAuditStatus,
+  addFinding,
+  convertFindingToAction,
+  listAudits,
+  getAudit,
+  type CreateAuditInput,
+  type AuditSummary,
+  type AuditFindingRow,
+  type AuditDetail,
+} from './queries/audits.ts';
 export { getDashboardMetrics, type DashboardMetrics } from './queries/dashboard.ts';
 export {
   createNc,

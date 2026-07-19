@@ -11,3 +11,4 @@ export * from './assets.ts';
 export * from './incidents.ts';
 export * from './nonconformities.ts';
 export * from './suppliers.ts';
+export * from './audits.ts';

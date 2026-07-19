@@ -125,7 +125,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Paramètres',
           href: `${base}/parametres`,
-          disabled: true,
+          active: isActive(`${base}/parametres`),
           iconPath: 'M4 8h9 M17 8h3 M4 16h3 M11 16h9 M14 6.5v3 M9 14.5v3',
         },
       ],

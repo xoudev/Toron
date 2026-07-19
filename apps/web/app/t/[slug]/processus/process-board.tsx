@@ -287,34 +287,55 @@ function EditForm({ slug, process, pending, onCancel, onRun }: { slug: string; p
   );
 }
 
+// Processus « métier » courants — création en un clic. La famille suit la
+// cartographie de processus (management / réalisation / support).
+const METIER_TEMPLATES: { name: string; family: ProcessFamily }[] = [
+  { name: 'Direction & pilotage', family: 'management' },
+  { name: 'Qualité & amélioration continue', family: 'management' },
+  { name: 'Commercial & ventes', family: 'realisation' },
+  { name: 'Production / Opérations', family: 'realisation' },
+  { name: 'Service client / SAV', family: 'realisation' },
+  { name: 'Ressources humaines', family: 'support' },
+  { name: 'Finance & comptabilité', family: 'support' },
+  { name: 'Systèmes d’information', family: 'support' },
+  { name: 'Achats & approvisionnements', family: 'support' },
+  { name: 'Juridique & conformité', family: 'support' },
+  { name: 'Maintenance', family: 'support' },
+];
+
 function CreateDialog({ slug, members, onClose, onCreated }: { slug: string; members: TenantMember[]; onClose: () => void; onCreated: (id: string) => void }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [family, setFamily] = useState<ProcessFamily>('realisation');
+  const [pilotUserId, setPilotUserId] = useState('');
+  const [version, setVersion] = useState('');
   const [pending, start] = useTransition();
-  function submit(fd: FormData) {
+  function submit() {
     setError(null);
     start(async () => {
-      const res = await createProcessAction(slug, {
-        family: String(fd.get('family') ?? ''),
-        name: String(fd.get('name') ?? ''),
-        pilotUserId: String(fd.get('pilotUserId') ?? '') || null,
-        version: String(fd.get('version') ?? '') || undefined,
-      });
+      const res = await createProcessAction(slug, { family, name, pilotUserId: pilotUserId || null, version: version || undefined });
       if (res.ok) { router.refresh(); onCreated(res.data.id); } else setError(res.error.message);
     });
   }
   return (
     <Dialog title="Nouveau processus" onClose={onClose}>
-      <form action={submit}>
-        <label className="field">Intitulé<input name="name" minLength={2} required placeholder="Préparation logistique" /></label>
-        <div className="risk-form-grid">
-          <label className="field">Famille<select name="family" defaultValue="realisation">{PROCESS_FAMILIES.map((f) => <option key={f} value={f}>{PROCESS_FAMILY_LABEL[f]}</option>)}</select></label>
-          <label className="field">Pilote<select name="pilotUserId" defaultValue=""><option value="">—</option>{members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</select></label>
-          <label className="field">Version<input name="version" placeholder="v1.0" /></label>
+      <div className="drawer-section" style={{ marginTop: 0 }}>
+        <p className="drawer-section-label">Modèles métier <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>· un clic pré-remplit</span></p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {METIER_TEMPLATES.map((t) => (
+            <button key={t.name} type="button" className="ds-chip" style={{ cursor: 'pointer' }} onClick={() => { setName(t.name); setFamily(t.family); }}>{t.name}</button>
+          ))}
         </div>
-        {error ? <p className="form-error" role="alert">{error}</p> : null}
-        <div className="dialog-actions"><button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Annuler</button><button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Création…' : 'Créer'}</button></div>
-      </form>
+      </div>
+      <label className="field">Intitulé<input value={name} onChange={(e) => setName(e.target.value)} minLength={2} required placeholder="Ressources humaines" /></label>
+      <div className="risk-form-grid">
+        <label className="field">Famille<select value={family} onChange={(e) => setFamily(e.target.value as ProcessFamily)}>{PROCESS_FAMILIES.map((f) => <option key={f} value={f}>{PROCESS_FAMILY_LABEL[f]}</option>)}</select></label>
+        <label className="field">Pilote<select value={pilotUserId} onChange={(e) => setPilotUserId(e.target.value)}><option value="">—</option>{members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</select></label>
+        <label className="field">Version<input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="v1.0" /></label>
+      </div>
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
+      <div className="dialog-actions"><button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Annuler</button><button type="button" className="btn btn-primary btn-sm" disabled={pending || name.trim().length < 2} onClick={submit}>{pending ? 'Création…' : 'Créer'}</button></div>
     </Dialog>
   );
 }

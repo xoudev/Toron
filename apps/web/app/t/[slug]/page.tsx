@@ -1,4 +1,4 @@
-import { getDashboardMetrics, withTenant } from '@toron/db';
+import { getDashboardExtras, getDashboardMetrics, listProcesses, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 
 import { appDb } from '@/lib/db';
@@ -51,9 +51,37 @@ export default async function TenantAccueilPage({
     );
   }
 
-  const m = await withTenant(appDb().db, ctx.tenantId, (tx) => getDashboardMetrics(tx));
+  const { m, x, processesAlert } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
+    const procs = await listProcesses(tx);
+    return {
+      m: await getDashboardMetrics(tx),
+      x: await getDashboardExtras(tx),
+      processesAlert: procs.filter((p) => p.health === 'en_alerte').length,
+    };
+  });
   const base = `/t/${slug}`;
   const maxBand = Math.max(1, ...Object.values(m.risksByBand));
+
+  // Priorités concrètes de la semaine, dérivées des indicateurs (seuls les
+  // points réellement à traiter sont listés).
+  const priorities = [
+    { n: m.actionsOverdue, one: 'action en retard', many: 'actions en retard', href: `${base}/plan-action`, tone: 'danger' as const },
+    { n: x.incidentsOpen, one: 'incident en cours (échéances NIS 2)', many: 'incidents en cours (échéances NIS 2)', href: `${base}/incidents`, tone: 'danger' as const },
+    { n: x.ncOpen, one: 'non-conformité ouverte', many: 'non-conformités ouvertes', href: `${base}/non-conformites`, tone: 'warn' as const },
+    { n: m.risksAttention, one: 'acceptation de risque à traiter', many: 'acceptations de risque à traiter', href: `${base}/risques`, tone: 'warn' as const },
+    { n: m.evidencesStale, one: 'preuve à renouveler', many: 'preuves à renouveler', href: `${base}/preuves`, tone: 'warn' as const },
+    { n: m.documentsReviewOverdue, one: 'document à revoir', many: 'documents à revoir', href: `${base}/documents`, tone: 'warn' as const },
+    { n: processesAlert, one: 'processus en alerte', many: 'processus en alerte', href: `${base}/processus`, tone: 'warn' as const },
+  ].filter((p) => p.n > 0);
+
+  const mgmt = [
+    { label: 'Audits en cours', value: x.auditsInProgress, href: `${base}/audits` },
+    { label: 'Non-conformités ouvertes', value: x.ncOpen, href: `${base}/non-conformites` },
+    { label: 'Incidents en cours', value: x.incidentsOpen, href: `${base}/incidents` },
+    { label: 'Processus cartographiés', value: x.processesTotal, sub: processesAlert > 0 ? `${processesAlert} en alerte` : 'santé OK', href: `${base}/processus` },
+    { label: 'Revues de direction tenues', value: x.reviewsHeld, href: `${base}/revue-direction` },
+    { label: 'Référentiels au catalogue', value: x.frameworksAvailable, sub: `${x.requirementsTotal} exigences`, href: `${base}/referentiels` },
+  ];
 
   return (
     <>
@@ -125,6 +153,45 @@ export default async function TenantAccueilPage({
               {m.documentsReviewOverdue > 0 ? `${m.documentsReviewOverdue} à revoir` : 'Revues à jour'}
             </span>
           </a>
+        </div>
+
+        <div className="dash-cols">
+          <article className="card dash-panel">
+            <div className="dash-panel-head">
+              <h2>Priorités de la semaine</h2>
+              <span className="dash-panel-count">{priorities.length}</span>
+            </div>
+            {priorities.length === 0 ? (
+              <p className="dash-allclear">✓ Rien d’urgent — tout est à jour. Beau travail.</p>
+            ) : (
+              <ul className="dash-list">
+                {priorities.map((p) => (
+                  <li key={p.href + p.one}>
+                    <a href={p.href}>
+                      <span className={`dash-dot dot--${p.tone}`} aria-hidden="true" />
+                      <b className="mono">{p.n}</b> {p.n > 1 ? p.many : p.one}
+                      <span className="dash-arrow" aria-hidden="true">→</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+
+          <article className="card dash-panel">
+            <div className="dash-panel-head">
+              <h2>Système de management</h2>
+            </div>
+            <div className="dash-tiles">
+              {mgmt.map((t) => (
+                <a className="dash-tile" href={t.href} key={t.label}>
+                  <span className="dash-tile-value mono">{t.value}</span>
+                  <span className="dash-tile-label">{t.label}</span>
+                  {t.sub ? <span className="dash-tile-sub">{t.sub}</span> : null}
+                </a>
+              ))}
+            </div>
+          </article>
         </div>
 
         <article className="card" style={{ padding: 16 }}>

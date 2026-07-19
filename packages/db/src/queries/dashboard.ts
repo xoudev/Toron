@@ -117,3 +117,43 @@ export async function getDashboardMetrics(tx: TenantTx): Promise<DashboardMetric
     documentsReviewOverdue: Number(raw!.documents_review_overdue),
   };
 }
+
+export interface DashboardExtras {
+  auditsInProgress: number;
+  ncOpen: number;
+  incidentsOpen: number;
+  processesTotal: number;
+  reviewsHeld: number;
+  frameworksAvailable: number;
+  requirementsTotal: number;
+}
+
+/**
+ * Compteurs complémentaires « système de management » pour enrichir le
+ * tableau de bord (audits, NC, incidents, processus, revues, catalogue). La
+ * santé des processus est dérivée côté application via listProcesses — on ne
+ * la calcule pas ici pour éviter d'interroger le jsonb des indicateurs.
+ */
+export async function getDashboardExtras(tx: TenantTx): Promise<DashboardExtras> {
+  const rows = await tx.execute(sql`
+    SELECT
+      (SELECT count(*) FROM audits WHERE status = 'en_cours') AS audits_in_progress,
+      (SELECT count(*) FROM nonconformities WHERE status IN ('ouverte','en_traitement','rouverte')) AS nc_open,
+      (SELECT count(*) FROM incidents WHERE status IN ('ouvert','qualifie')) AS incidents_open,
+      (SELECT count(*) FROM processes) AS processes_total,
+      (SELECT count(*) FROM management_reviews WHERE status = 'tenue') AS reviews_held,
+      (SELECT count(*) FROM frameworks f WHERE NOT EXISTS
+         (SELECT 1 FROM framework_visibility fv WHERE fv.framework_id = f.id AND fv.hidden)) AS frameworks_available,
+      (SELECT count(*) FROM requirements) AS requirements_total
+  `);
+  const r = (rows as unknown as Record<string, number | string>[])[0]!;
+  return {
+    auditsInProgress: Number(r['audits_in_progress']),
+    ncOpen: Number(r['nc_open']),
+    incidentsOpen: Number(r['incidents_open']),
+    processesTotal: Number(r['processes_total']),
+    reviewsHeld: Number(r['reviews_held']),
+    frameworksAvailable: Number(r['frameworks_available']),
+    requirementsTotal: Number(r['requirements_total']),
+  };
+}

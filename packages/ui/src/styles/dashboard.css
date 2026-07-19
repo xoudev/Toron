@@ -84,3 +84,118 @@
 .seg--critique {
   --seg: var(--danger);
 }
+
+/* ── Tableau de bord enrichi (priorités + système de management) ──────── */
+.dash-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 16px 0;
+}
+@media (max-width: 860px) {
+  .dash-cols {
+    grid-template-columns: 1fr;
+  }
+}
+.dash-panel {
+  padding: 14px 16px;
+}
+.dash-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dash-panel-head h2 {
+  font-size: 13px;
+  font-weight: 650;
+  margin: 0;
+}
+.dash-panel-count {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px;
+  background: var(--danger, #b23327);
+  color: #fff;
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.dash-allclear {
+  color: var(--ok, #2e7d4f);
+  font-size: 13px;
+  margin: 4px 0;
+}
+.dash-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dash-list li a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 4px;
+  font-size: 13px;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.dash-list li:last-child a {
+  border-bottom: none;
+}
+.dash-list li a:hover {
+  color: var(--accent);
+}
+.dash-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+.dot--danger {
+  background: var(--danger, #b23327);
+}
+.dot--warn {
+  background: var(--warn, #946200);
+}
+.dash-arrow {
+  margin-left: auto;
+  color: var(--text-3);
+}
+.dash-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+@media (max-width: 520px) {
+  .dash-tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.dash-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.12s ease;
+}
+.dash-tile:hover {
+  border-color: var(--text-2);
+}
+.dash-tile-value {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+.dash-tile-label {
+  font-size: 10.5px;
+  color: var(--text-2);
+  line-height: 1.25;
+}
+.dash-tile-sub {
+  font-size: 9.5px;
+  color: var(--text-3);
+}

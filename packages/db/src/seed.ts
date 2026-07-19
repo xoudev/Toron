@@ -51,6 +51,7 @@ export const DEMO = {
   supplierTransporteur: 'd0000000-0000-4000-8000-0000000000c2',
   supplierInfogerance: 'd0000000-0000-4000-8000-0000000000c3',
   auditSmsi: 'd0000000-0000-4000-8000-0000000000d1',
+  reviewS1: 'd0000000-0000-4000-8000-0000000000e1',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -837,6 +838,39 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         INSERT INTO audit_findings (tenant_id, audit_id, requirement_ref, type, description)
         SELECT ${DEMO.tenantId}, ${DEMO.auditSmsi}, ${ref}, ${type}, ${desc}
         WHERE NOT EXISTS (SELECT 1 FROM audit_findings WHERE audit_id = ${DEMO.auditSmsi} AND requirement_ref = ${ref})`;
+    }
+
+    // ── Module 5.9 : revue de direction de démonstration ────────────────
+    // Une seule revue couvre SMSI + QMS (clause 9.3). Séance tenue au T1,
+    // trois participants, décisions dont une déjà convertie en action tracée.
+    const reviewActionId = 'd0000000-0000-4000-8000-0000000000e2';
+    await sql`
+      INSERT INTO management_reviews (id, tenant_id, title, scope_label, status, held_at, next_review_at)
+      SELECT ${DEMO.reviewS1}, ${DEMO.tenantId}, 'Revue de direction — S1 2026', 'SMSI + QMS',
+             'tenue', '2026-01-15', '2026-07-24'
+      WHERE NOT EXISTS (SELECT 1 FROM management_reviews WHERE id = ${DEMO.reviewS1})`;
+    for (const uid of [DEMO.userClaire, DEMO.userAntoine, DEMO.userCamille]) {
+      await sql`
+        INSERT INTO review_participants (tenant_id, review_id, user_id)
+        VALUES (${DEMO.tenantId}, ${DEMO.reviewS1}, ${uid})
+        ON CONFLICT (review_id, user_id) DO NOTHING`;
+    }
+    await sql`
+      INSERT INTO actions (id, tenant_id, title, origin_type, origin_id, owner_user_id, priority, status)
+      VALUES (${reviewActionId}, ${DEMO.tenantId},
+              'Valider la Déclaration d’applicabilité v3 (27001) et le plan d’action du T3',
+              'review', ${DEMO.reviewS1}, ${DEMO.userClaire}, 'p1', 'en_cours')
+      ON CONFLICT (id) DO NOTHING`;
+    const decisions = [
+      ['Valider la Déclaration d’applicabilité v3 (27001) et le plan d’action du T3.', reviewActionId],
+      ['Renforcer le budget du déploiement MFA — priorité P1 sur les accès distants.', null],
+      ['Acter l’acceptation formelle du risque de dépendance SaaS jusqu’à la prochaine revue.', null],
+    ] as const;
+    for (const [body, actionId] of decisions) {
+      await sql`
+        INSERT INTO review_decisions (tenant_id, review_id, body, action_id)
+        SELECT ${DEMO.tenantId}, ${DEMO.reviewS1}, ${body}, ${actionId}
+        WHERE NOT EXISTS (SELECT 1 FROM review_decisions WHERE review_id = ${DEMO.reviewS1} AND body = ${body})`;
     }
   } finally {
     await sql.end();

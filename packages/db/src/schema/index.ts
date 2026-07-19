@@ -12,3 +12,4 @@ export * from './incidents.ts';
 export * from './nonconformities.ts';
 export * from './suppliers.ts';
 export * from './audits.ts';
+export * from './reviews.ts';

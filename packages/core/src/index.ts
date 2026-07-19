@@ -107,3 +107,19 @@ export {
   type ValidationResult,
   type ParsedTable,
 } from './import.ts';
+export {
+  INCIDENT_SEVERITIES,
+  INCIDENT_STATUSES,
+  NOTIF_KINDS,
+  DEADLINE_STATES,
+  SOON_HOURS,
+  nis2Deadlines,
+  deadlineState,
+  hoursUntil,
+  canCloseIncident,
+  type IncidentSeverity,
+  type IncidentStatus,
+  type NotifKind,
+  type DeadlinePlan,
+  type DeadlineState,
+} from './incidents.ts';

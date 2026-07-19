@@ -80,6 +80,20 @@ export {
 export { listTenantMembers, type TenantMember } from './queries/members.ts';
 export { getDashboardMetrics, type DashboardMetrics } from './queries/dashboard.ts';
 export {
+  createIncident,
+  qualifyIncident,
+  addEvent,
+  markNotificationSent,
+  closeIncident,
+  listIncidents,
+  getIncident,
+  type CreateIncidentInput,
+  type QualifyInput,
+  type CloseResult,
+  type IncidentSummary,
+  type IncidentDetail,
+} from './queries/incidents.ts';
+export {
   createAsset,
   bulkCreateAssets,
   listAssets,

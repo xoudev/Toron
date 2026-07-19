@@ -6,6 +6,12 @@ description courte, phase cible pressentie.
 
 ## Entrées
 
+- **2026-07-19 · Rate limiting distribué (multi-instances)** — §8.1 pose un
+  limiteur EN MÉMOIRE dans le middleware (par instance) sur `/api/auth/*` et
+  `/verifier/*`. Suffisant en mono-nœud ; pour un déploiement multi-instances,
+  passer à un limiteur partagé (Redis/Upstash) au moment du scale. Phase cible :
+  V1 (déploiement).
+
 - **2026-07-18 · pg-boss pour la file d'export (5.3c)** — Le worker Typst
   consomme la file via la table `exports` (statut `en_cours` →
   `en_traitement` → `scelle`/`echec`, réclamation atomique `FOR UPDATE SKIP

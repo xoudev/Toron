@@ -9,6 +9,7 @@ import '@toron/ui/preuves.css';
 import '@toron/ui/dashboard.css';
 import '@toron/ui/actifs.css';
 import '@toron/ui/import.css';
+import '@toron/ui/incidents.css';
 
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';

@@ -9,6 +9,43 @@
 export const IMPORT_TARGETS = ['risk', 'action', 'asset'] as const;
 export type ImportTarget = (typeof IMPORT_TARGETS)[number];
 
+export interface ParsedTable {
+  headers: string[];
+  rows: string[][];
+}
+
+function splitLine(line: string, sep: string): string[] {
+  const out: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { cur += '"'; i += 1; }
+      else inQuotes = !inQuotes;
+    } else if (ch === sep && !inQuotes) { out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  out.push(cur);
+  return out.map((s) => s.trim());
+}
+
+/**
+ * Parse un fichier tabulaire délimité (CSV, TSV, point-virgule — exports Excel).
+ * Détecte le séparateur sur la première ligne. La 1ʳᵉ ligne est l'en-tête.
+ */
+export function parseDelimited(text: string): ParsedTable {
+  // Retire un éventuel BOM (U+FEFF) en tête, sans caractère littéral.
+  const body = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+  const lines = body.split(/\r?\n/).filter((l) => l.length > 0);
+  if (lines.length === 0) return { headers: [], rows: [] };
+  const head = lines[0]!;
+  const sep = head.includes('\t') ? '\t' : head.includes(';') && !head.includes(',') ? ';' : ',';
+  const headers = splitLine(head, sep);
+  const rows = lines.slice(1).map((l) => splitLine(l, sep));
+  return { headers, rows };
+}
+
 type FieldKind = 'text' | 'int14' | 'int16' | 'date' | 'enum';
 
 export interface FieldSpec {

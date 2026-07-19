@@ -79,6 +79,16 @@ export {
 } from './queries/risks.ts';
 export { listTenantMembers, type TenantMember } from './queries/members.ts';
 export { listAuditLog, type AuditRow } from './queries/audit.ts';
+export {
+  createSupplier,
+  updateSupplier,
+  listSuppliers,
+  type SupplierTier,
+  type ContractStatus,
+  type CreateSupplierInput,
+  type UpdateSupplierInput,
+  type SupplierSummary,
+} from './queries/suppliers.ts';
 export { getDashboardMetrics, type DashboardMetrics } from './queries/dashboard.ts';
 export {
   createNc,

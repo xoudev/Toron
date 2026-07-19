@@ -7,7 +7,9 @@
  * sert d'identifiant humain dans les tables et les tiroirs (maquettes §9).
  */
 export function refCode(prefix: string, id: string): string {
-  const hex = id.replace(/-/g, '').slice(0, 8);
+  // On dérive des DERNIERS hex de l'UUID : les identifiants de démo partagent
+  // tous le même préfixe (d0000000-…), seul le suffixe varie.
+  const hex = id.replace(/-/g, '').slice(-6);
   const n = Number.parseInt(hex, 16) % 1000;
   return `${prefix}-${String(n).padStart(3, '0')}`;
 }

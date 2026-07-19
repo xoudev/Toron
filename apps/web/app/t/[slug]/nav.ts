@@ -85,7 +85,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Fournisseurs',
           href: `${base}/fournisseurs`,
-          disabled: true,
+          active: isActive(`${base}/fournisseurs`),
           iconPath: 'M4 8.5 12 4.5l8 4v8l-8 4-8-4z M4 8.5l8 4 8-4 M12 12.5v8',
         },
         {

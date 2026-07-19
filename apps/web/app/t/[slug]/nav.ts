@@ -79,7 +79,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Audits',
           href: `${base}/audits`,
-          disabled: true,
+          active: isActive(`${base}/audits`),
           iconPath: 'M9 5.5h6 M7 6.5h10v13H7z M9.5 12.5l1.8 1.8 3.5-3.8',
         },
         {

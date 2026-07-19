@@ -148,7 +148,7 @@ export {
   type EbiosScenarioRow,
   type EbiosActionRow,
 } from './queries/ebios.ts';
-export { getDashboardMetrics, type DashboardMetrics } from './queries/dashboard.ts';
+export { getDashboardMetrics, getDashboardExtras, type DashboardMetrics, type DashboardExtras } from './queries/dashboard.ts';
 export {
   createNc,
   updateNcSteps,

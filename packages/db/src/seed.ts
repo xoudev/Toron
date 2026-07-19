@@ -45,6 +45,8 @@ export const DEMO = {
   assetDonneesClients: 'd0000000-0000-4000-8000-000000000093',
   assetFluxEdi: 'd0000000-0000-4000-8000-000000000094',
   incidentPhishing: 'd0000000-0000-4000-8000-0000000000a1',
+  ncEtiquetage: 'd0000000-0000-4000-8000-0000000000b1',
+  actionNcEtiquetage: 'd0000000-0000-4000-8000-0000000000b2',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -756,6 +758,43 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
                 ${qualifiedAt}::timestamptz + ${interval}::interval, ${sentAt})
         ON CONFLICT ON CONSTRAINT incident_notifications_unique DO NOTHING`;
     }
+
+    // ── Module 7.2 : non-conformité de démonstration (pack QMS) ─────────
+    // NC interne en traitement, avec action immédiate, analyse 5 pourquoi et
+    // une action corrective portée par le moteur commun (origin_type = 'nc').
+    await sql`
+      INSERT INTO nonconformities
+        (id, tenant_id, title, description, source, process_ref, gravity, cost_estimate,
+         immediate_action, root_cause, status, detected_by, owner_user_id)
+      VALUES
+        (${DEMO.ncEtiquetage}, ${DEMO.tenantId},
+         'Écarts d’étiquetage sur les colis — agence de Vitrolles',
+         'Étiquettes transporteur erronées détectées lors d’un audit interne, retours clients en hausse.',
+         'interne', 'Réalisation · Préparation & expédition', 'majeure', 3200.00,
+         'Blocage des expéditions de l’agence, revérification manuelle du lot en cours.',
+         ${JSON.stringify({
+           probleme: 'Étiquettes transporteur erronées',
+           pourquoi: [
+             'Le poste d’étiquetage imprime un mauvais gabarit.',
+             'Le gabarit par défaut n’a pas été mis à jour après changement de transporteur.',
+             'La procédure de changement de transporteur n’intègre pas la mise à jour des gabarits.',
+             'Aucun point de contrôle qualité en fin de configuration.',
+           ],
+           cause_racine: 'Procédure de changement de transporteur incomplète (pas de vérification des gabarits).',
+         })}::jsonb,
+         'en_traitement', ${DEMO.userCamille}, ${DEMO.userCamille})
+      ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, status = EXCLUDED.status,
+        immediate_action = EXCLUDED.immediate_action, root_cause = EXCLUDED.root_cause`;
+
+    await sql`
+      INSERT INTO actions
+        (id, tenant_id, title, description, origin_type, origin_id, owner_user_id, priority, status)
+      VALUES
+        (${DEMO.actionNcEtiquetage}, ${DEMO.tenantId},
+         'Compléter la procédure de changement de transporteur (contrôle des gabarits)',
+         'Ajouter un point de contrôle qualité et la mise à jour des gabarits d’étiquettes.',
+         'nc', ${DEMO.ncEtiquetage}, ${DEMO.userCamille}, 'p2', 'en_cours')
+      ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, status = EXCLUDED.status`;
   } finally {
     await sql.end();
   }

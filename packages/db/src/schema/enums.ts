@@ -126,3 +126,15 @@ export const incidentNotifKind = pgEnum('incident_notif_kind', [
   'rapport_30j',
   'cnil_72h',
 ]);
+
+export const ncSource = pgEnum('nc_source', ['interne', 'fournisseur', 'reclamation_client']);
+
+export const ncGravity = pgEnum('nc_gravity', ['mineure', 'majeure', 'critique']);
+
+export const ncStatus = pgEnum('nc_status', [
+  'ouverte',
+  'en_traitement',
+  'cloturee_a_verifier',
+  'efficace',
+  'rouverte',
+]);

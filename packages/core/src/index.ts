@@ -123,3 +123,15 @@ export {
   type DeadlinePlan,
   type DeadlineState,
 } from './incidents.ts';
+export {
+  NC_SOURCES,
+  NC_GRAVITIES,
+  NC_STATUSES,
+  EFFECTIVENESS_DELAY_DAYS,
+  effectivenessCheckDate,
+  isNcOpen,
+  effectivenessDue,
+  type NcSource,
+  type NcGravity,
+  type NcStatus,
+} from './nonconformities.ts';

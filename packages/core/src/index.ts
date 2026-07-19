@@ -157,3 +157,20 @@ export {
   type ReviewInputs,
   type Tone,
 } from './reviews.ts';
+export {
+  PROCESS_FAMILIES,
+  PROCESS_FAMILY_LABEL,
+  WORKFLOW_STATUSES,
+  WORKFLOW_LABEL,
+  PROCESS_HEALTH_LABEL,
+  SIPOC_COLUMNS,
+  deriveProcessHealth,
+  processMutualizationCount,
+  type ProcessFamily,
+  type ProcessWorkflow,
+  type ProcessHealth,
+  type Sipoc,
+  type ProcessKpi,
+  type ProcessRequirement,
+  type ProcessInteraction,
+} from './processes.ts';

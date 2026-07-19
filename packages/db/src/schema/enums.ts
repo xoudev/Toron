@@ -153,3 +153,7 @@ export const findingType = pgEnum('finding_type', [
 ]);
 
 export const reviewStatus = pgEnum('review_status', ['planifie', 'tenue', 'close']);
+
+export const processFamily = pgEnum('process_family', ['management', 'realisation', 'support']);
+
+export const processWorkflow = pgEnum('process_workflow', ['brouillon', 'relecture', 'approuve', 'publie']);

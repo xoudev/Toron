@@ -484,3 +484,154 @@
   vertical-align: middle;
   background: currentColor;
 }
+
+/* ── Processus (module 7.1) — cartographie QMS ───────────────────────── */
+.pr-family {
+  margin-bottom: 18px;
+}
+.pr-family-label {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+.pr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+.pr-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+.pr-card:hover {
+  border-color: var(--text-2);
+}
+.pr-card-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+.pr-health {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.pr-health.h--sain {
+  background: var(--ok, #2e7d4f);
+}
+.pr-health.h--a_surveiller {
+  background: var(--warn, #946200);
+}
+.pr-health.h--en_alerte {
+  background: var(--danger, #b23327);
+}
+.pr-name {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.pr-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.pr-mut {
+  margin-left: auto;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10px;
+  color: var(--accent);
+}
+/* Cartouche SIPOC */
+.sipoc {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.sipoc-col {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 8px;
+  min-width: 0;
+}
+.sipoc-col h4 {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  margin: 0 0 5px;
+  text-transform: uppercase;
+}
+.sipoc-col li {
+  font-size: 11px;
+  line-height: 1.3;
+  list-style: none;
+  margin-bottom: 3px;
+}
+.sipoc-col ul {
+  margin: 0;
+  padding: 0;
+}
+/* Indicateurs (barre réel/cible) */
+.kpi-row {
+  margin-bottom: 9px;
+}
+.kpi-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+.kpi-target {
+  color: var(--text-2);
+  font-size: 11px;
+}
+/* Exigences couvertes — le fil orange marque la mutualisation 27001 */
+.exig-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.exig {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-family: var(--mono, ui-monospace, monospace);
+  background: var(--surface-2, transparent);
+}
+.exig.mut {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.exig .fil {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.pr-interactions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pr-interaction {
+  font-size: 12px;
+}
+.pr-interaction .dir {
+  font-family: var(--mono, ui-monospace, monospace);
+  color: var(--text-2);
+  margin-right: 6px;
+}

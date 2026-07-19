@@ -119,6 +119,18 @@ export {
   type ReviewDecisionRow,
   type ReviewCounts,
 } from './queries/reviews.ts';
+export {
+  createProcess,
+  setProcessWorkflow,
+  addProcessRisk,
+  removeProcessRisk,
+  listProcesses,
+  getProcess,
+  type CreateProcessInput,
+  type ProcessSummary,
+  type ProcessDetail,
+  type ProcessRiskRow,
+} from './queries/processes.ts';
 export { getDashboardMetrics, type DashboardMetrics } from './queries/dashboard.ts';
 export {
   createNc,

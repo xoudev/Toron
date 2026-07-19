@@ -7,6 +7,13 @@ function ts(s: string): string {
   return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ')}"`;
 }
 
+// Insère une chaîne comme TEXTE en mode markup (échappe la syntaxe, rend sans
+// guillemets). ts() sert au tableau #let data (mode code) ; mk() aux
+// insertions markup (en-tête, pied, cellules de méta).
+function mk(s: string): string {
+  return s.replace(/[\r\n]+/g, ' ').replace(/[\\#[\]*_`$<>@~]/g, (c) => `\\${c}`);
+}
+
 const STATUS_COLOR: Record<string, string> = {
   Conforme: 'rgb("#2e7d4f")',
   Écart: 'rgb("#b23327")',
@@ -42,8 +49,8 @@ export function renderSoaTypst(model: SoaModel): string {
     #v(4pt)
     #grid(
       columns: (1fr, auto),
-      [Document scellé par Toron · ${ts('poinçon ' + model.verifySlug)}],
-      [Vérifier l'intégrité : ${ts(model.verifyUrl)} · page #counter(page).display() / #context counter(page).final().first()],
+      [Document scellé par Toron · poinçon ${mk(model.verifySlug)}],
+      [Vérifier l'intégrité : ${mk(model.verifyUrl)} · page #counter(page).display() / #context counter(page).final().first()],
     )
   ],
 )
@@ -66,17 +73,17 @@ export function renderSoaTypst(model: SoaModel): string {
 #v(18pt)
 #text(size: 19pt, weight: "bold")[Déclaration d'applicabilité]
 #v(2pt)
-#text(size: 11pt, fill: rgb("#5b5d56"))[${ts(model.frameworkName)}]
+#text(size: 11pt, fill: rgb("#5b5d56"))[${mk(model.frameworkName)}]
 
 #v(10pt)
 #table(
   columns: (auto, 1fr),
   stroke: none,
   inset: (x: 0pt, y: 2pt),
-  text(fill: rgb("#7a7c73"))[Entité], [${ts(model.entityName)}],
-  text(fill: rgb("#7a7c73"))[Périmètre], [${ts(model.scopeName)}],
-  text(fill: rgb("#7a7c73"))[Généré le], [${ts(model.generatedAtLabel)}],
-  text(fill: rgb("#7a7c73"))[Couverture], [${ts(coverage)} · ${model.gaps} écart(s)],
+  text(fill: rgb("#7a7c73"))[Entité], [${mk(model.entityName)}],
+  text(fill: rgb("#7a7c73"))[Périmètre], [${mk(model.scopeName)}],
+  text(fill: rgb("#7a7c73"))[Généré le], [${mk(model.generatedAtLabel)}],
+  text(fill: rgb("#7a7c73"))[Couverture], [${mk(coverage)} · ${model.gaps} écart(s)],
 )
 
 #v(14pt)

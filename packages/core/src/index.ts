@@ -98,10 +98,12 @@ export {
   TARGET_SPECS,
   detectMapping,
   validateRows,
+  parseDelimited,
   type ImportTarget,
   type FieldSpec,
   type TargetSpec,
   type ColumnMapping,
   type RejectedRow,
   type ValidationResult,
+  type ParsedTable,
 } from './import.ts';

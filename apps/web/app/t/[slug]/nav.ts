@@ -117,6 +117,12 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
       title: 'Système',
       items: [
         {
+          label: 'Importer depuis Excel',
+          href: `${base}/import`,
+          active: isActive(`${base}/import`),
+          iconPath: 'M12 3.5v10 M8.5 10 12 13.5 15.5 10 M5 15.5v3.5h14v-3.5',
+        },
+        {
           label: 'Paramètres',
           href: `${base}/parametres`,
           disabled: true,

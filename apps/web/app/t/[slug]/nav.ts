@@ -50,7 +50,7 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
         {
           label: 'Incidents',
           href: `${base}/incidents`,
-          disabled: true,
+          active: isActive(`${base}/incidents`),
           iconPath: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z M12 8v4.6 M12 15.8v.2',
         },
         {

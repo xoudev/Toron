@@ -15,7 +15,8 @@
     "./preuves.css": "./src/styles/preuves.css",
     "./dashboard.css": "./src/styles/dashboard.css",
     "./actifs.css": "./src/styles/actifs.css",
-    "./import.css": "./src/styles/import.css"
+    "./import.css": "./src/styles/import.css",
+    "./incidents.css": "./src/styles/incidents.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

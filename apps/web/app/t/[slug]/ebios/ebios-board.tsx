@@ -55,6 +55,15 @@ export function EbiosBoard({ slug, canManage, studies, scopes }: { slug: string;
     return () => { a = false; };
   }, [slug, studyId]);
 
+  // Auto-actualisation tant qu'un livrable est en cours de génération par le
+  // worker (le scellement dure quelques secondes) — le lien apparaît seul.
+  const generating = exports.some((e) => e.status === 'en_cours');
+  useEffect(() => {
+    if (!generating || !studyId) return;
+    const timer = setInterval(() => { void loadExports(studyId); }, 2500);
+    return () => clearInterval(timer);
+  }, [generating, studyId, slug]);
+
   function run(fn: () => Promise<{ ok: boolean; error?: { message: string } }>) {
     setError(null);
     start(async () => { const res = await fn(); if (res.ok) { reload(); router.refresh(); } else setError(res.error?.message ?? 'Refusé.'); });

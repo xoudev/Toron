@@ -2,6 +2,7 @@
 
 import {
   TARGET_SPECS,
+  csvTemplate,
   detectMapping,
   parseDelimited,
   validateRows,
@@ -68,6 +69,15 @@ export function ImportWizard({ slug }: { slug: string }) {
     setTarget(t);
     if (table) setMapping(detectMapping(table.headers, t));
   }
+  function downloadTemplate(t: ImportTarget) {
+    const blob = new Blob(['﻿' + csvTemplate(t)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `modele-toron-${t === 'risk' ? 'risques' : t === 'action' ? 'actions' : 'actifs'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
   function setCol(field: string, columnIndex: number | null) {
     setMapping((m) => m.map((x) => (x.field === field ? { ...x, columnIndex, confidence: columnIndex === null ? 0 : 1 } : x)));
   }
@@ -105,6 +115,16 @@ export function ImportWizard({ slug }: { slug: string }) {
             <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
           </div>
           {parseError ? <p className="form-error" role="alert" style={{ marginTop: 12 }}>{parseError}</p> : null}
+          <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <p style={{ margin: '0 0 8px', fontSize: 12.5, color: 'var(--text-2)' }}>
+              Pas sûr du format ? Téléchargez un modèle pré-rempli, complétez-le dans Excel, puis déposez-le ici.
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => downloadTemplate('risk')}>↓ Modèle risques</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => downloadTemplate('action')}>↓ Modèle actions</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => downloadTemplate('asset')}>↓ Modèle actifs</button>
+            </div>
+          </div>
           <p className="reassure" style={{ marginTop: 14 }}>Vos années de travail sous Excel ne sont pas perdues — elles deviennent votre socle.</p>
         </div>
       ) : null}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { detectMapping, validateRows } from './import.ts';
+import { csvTemplate, detectMapping, IMPORT_TARGETS, parseDelimited, validateRows } from './import.ts';
 
 describe('détection des colonnes', () => {
   it('mappe les en-têtes FR (avec accents) vers les champs, avec confiance', () => {
@@ -17,6 +17,21 @@ describe('détection des colonnes', () => {
     const map = detectMapping(['a', 'b'], 'asset');
     expect(map.find((m) => m.field === 'name')!.columnIndex).toBeNull();
     expect(map.find((m) => m.field === 'name')!.confidence).toBe(0);
+  });
+});
+
+describe('modèle CSV téléchargeable', () => {
+  it('chaque modèle est reconnu à 100 % et sa ligne d’exemple est valide', () => {
+    for (const target of IMPORT_TARGETS) {
+      const table = parseDelimited(csvTemplate(target));
+      const mapping = detectMapping(table.headers, target);
+      // Tous les champs requis sont détectés avec pleine confiance.
+      const requiredUnmatched = mapping.filter((m) => m.columnIndex === null);
+      expect(requiredUnmatched, `cible ${target}`).toHaveLength(0);
+      const res = validateRows(table.rows, target, mapping);
+      expect(res.rejected, `cible ${target}`).toHaveLength(0);
+      expect(res.rows.length).toBe(1);
+    }
   });
 });
 

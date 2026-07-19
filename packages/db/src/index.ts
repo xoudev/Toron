@@ -131,6 +131,20 @@ export {
   type ProcessDetail,
   type ProcessRiskRow,
 } from './queries/processes.ts';
+export {
+  createStudy,
+  setWorkshop,
+  addScenario,
+  addAction,
+  recomputeLikelihood,
+  generateRiskFromScenario,
+  listStudies,
+  getStudy,
+  type StudySummary,
+  type StudyDetail,
+  type EbiosScenarioRow,
+  type EbiosActionRow,
+} from './queries/ebios.ts';
 export { getDashboardMetrics, type DashboardMetrics } from './queries/dashboard.ts';
 export {
   createNc,

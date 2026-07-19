@@ -174,3 +174,17 @@ export {
   type ProcessRequirement,
   type ProcessInteraction,
 } from './processes.ts';
+export {
+  EBIOS_WORKSHOPS,
+  KILL_CHAIN_PHASES,
+  LIKELIHOOD_LABEL,
+  SCENARIO_STATUS_LABEL,
+  likelihoodValue,
+  deriveScenarioLikelihood,
+  scenarioStatus,
+  scenarioRiskRating,
+  type EbiosPhase,
+  type EbiosLikelihood,
+  type ScenarioStatus,
+  type EbiosWorkshop,
+} from './ebios.ts';

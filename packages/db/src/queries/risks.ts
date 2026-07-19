@@ -105,6 +105,8 @@ export interface CreateRiskInput {
   ownerUserId?: string | null;
   nextReview?: string | null;
   ratedBy: string;
+  /** Provenance : 'manual' (saisie directe) ou 'ebios' (généré depuis un atelier). */
+  source?: 'manual' | 'ebios';
 }
 
 /**
@@ -132,6 +134,7 @@ export async function createRisk(tx: TenantTx, input: CreateRiskInput): Promise<
       residualTarget: input.residualTarget ?? null,
       ownerUserId: input.ownerUserId ?? null,
       nextReview: input.nextReview ?? null,
+      source: input.source ?? 'manual',
     })
     .returning({ id: schema.risks.id });
   const riskId = row!.id;

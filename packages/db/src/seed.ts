@@ -54,6 +54,10 @@ export const DEMO = {
   reviewS1: 'd0000000-0000-4000-8000-0000000000e1',
   processTransport: 'd0000000-0000-4000-8000-0000000000f1',
   processPrepa: 'd0000000-0000-4000-8000-0000000000f2',
+  ebiosStudy: 'd0000000-0000-4000-8000-000000000101',
+  ebiosSc1: 'd0000000-0000-4000-8000-000000000102',
+  ebiosSc2: 'd0000000-0000-4000-8000-000000000103',
+  ebiosSc3: 'd0000000-0000-4000-8000-000000000104',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -937,6 +941,52 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         INSERT INTO process_risks (tenant_id, process_id, risk_id)
         VALUES (${DEMO.tenantId}, ${pid}, ${rid})
         ON CONFLICT (process_id, risk_id) DO NOTHING`;
+    }
+
+    // ── Module 5.4b : étude EBIOS RM de démonstration ───────────────────
+    // Étude à l'atelier 4 : trois scénarios opérationnels hérités de couples
+    // source de risque / objectif visé (atelier 2), avec kill chain MITRE
+    // ATT&CK. Vraisemblance cohérente avec la complétude des phases.
+    await sql`
+      INSERT INTO ebios_studies (id, tenant_id, title, scope_id, workshop)
+      SELECT ${DEMO.ebiosStudy}, ${DEMO.tenantId}, 'SI de production 2026', ${DEMO.scopeSmsi}, 4
+      WHERE NOT EXISTS (SELECT 1 FROM ebios_studies WHERE id = ${DEMO.ebiosStudy})`;
+
+    const scenarios: [string, string, string, string][] = [
+      // [id, source de risque, objectif visé, vraisemblance]
+      [DEMO.ebiosSc1, 'Cybercriminel organisé', 'Rançonner l’entreprise', 'v3'],
+      [DEMO.ebiosSc2, 'Concurrent', 'Voler des données R&D', 'v2'],
+      [DEMO.ebiosSc3, 'État (attaquant étatique)', 'Espionner durablement', 'v2'],
+    ];
+    for (const [id, src, obj, vrais] of scenarios) {
+      await sql`
+        INSERT INTO ebios_scenarios (id, tenant_id, study_id, kind, risk_source, target_objective, likelihood)
+        SELECT ${id}, ${DEMO.tenantId}, ${DEMO.ebiosStudy}, 'operationnel', ${src}, ${obj}, ${vrais}::ebios_likelihood
+        WHERE NOT EXISTS (SELECT 1 FROM ebios_scenarios WHERE id = ${id})`;
+    }
+
+    const ebiosActionRows: [string, string, number, string, string, string][] = [
+      // [scenarioId, phase, position, mitreId, mitreName, label]
+      [DEMO.ebiosSc1, 'connaitre', 0, 'T1591', 'Ciblage org.', 'Reconnaissance de l’organisation cible'],
+      [DEMO.ebiosSc1, 'connaitre', 1, 'T1589', 'Identités', 'Collecte d’adresses e-mail des dirigeants'],
+      [DEMO.ebiosSc1, 'rentrer', 0, 'T1566', 'Phishing', 'Hameçonnage ciblé du service financier'],
+      [DEMO.ebiosSc1, 'rentrer', 1, 'T1204', 'Exécution', 'Ouverture de la pièce jointe piégée'],
+      [DEMO.ebiosSc1, 'trouver', 0, 'T1078', 'Comptes valides', 'Réutilisation d’identifiants dérobés'],
+      [DEMO.ebiosSc1, 'trouver', 1, 'T1068', 'Élévation', 'Escalade de privilèges sur un serveur'],
+      [DEMO.ebiosSc1, 'exploiter', 0, 'T1041', 'Exfiltration', 'Vol des données sensibles avant chiffrement'],
+      [DEMO.ebiosSc1, 'exploiter', 1, 'T1486', 'Impact', 'Chiffrement pour impact (rançongiciel)'],
+      [DEMO.ebiosSc2, 'connaitre', 0, 'T1591', 'Ciblage org.', 'Identification des équipes R&D'],
+      [DEMO.ebiosSc2, 'rentrer', 0, 'T1566', 'Phishing', 'E-mail piégé vers un ingénieur'],
+      [DEMO.ebiosSc2, 'trouver', 0, 'T1083', 'Découverte', 'Exploration des partages de fichiers'],
+      [DEMO.ebiosSc3, 'connaitre', 0, 'T1598', 'Phishing info', 'Collecte de renseignements sur le SI'],
+      [DEMO.ebiosSc3, 'rentrer', 0, 'T1133', 'Services distants', 'Exploitation d’un accès distant exposé'],
+      [DEMO.ebiosSc3, 'trouver', 0, 'T1021', 'Mouvement latéral', 'Propagation vers les serveurs sensibles'],
+    ];
+    for (const [sid, phase, pos, tid, tname, label] of ebiosActionRows) {
+      await sql`
+        INSERT INTO ebios_actions (tenant_id, scenario_id, phase, position, mitre_id, mitre_name, label)
+        SELECT ${DEMO.tenantId}, ${sid}, ${phase}::ebios_phase, ${pos}, ${tid}, ${tname}, ${label}
+        WHERE NOT EXISTS (SELECT 1 FROM ebios_actions WHERE scenario_id = ${sid} AND label = ${label})`;
     }
   } finally {
     await sql.end();

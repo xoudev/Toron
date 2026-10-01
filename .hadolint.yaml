@@ -1,0 +1,9 @@
+# Configuration hadolint (job « Dockerfiles » de la CI).
+# Les avertissements bloquent ; chaque exception est justifiée ici.
+failure-threshold: warning
+
+ignored:
+  # Versions apk non épinglées : les dépôts Alpine ne conservent pas les
+  # anciennes révisions, un épinglage casserait le build au premier correctif.
+  # L'image de base est, elle, épinglée par digest et suivie par Dependabot.
+  - DL3018

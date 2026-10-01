@@ -7,9 +7,15 @@ FROM node:24.21.0-alpine3.23@sha256:9ec4a2e289874ed0d722e1772ec2de45d2801541db86
 RUN corepack enable pnpm
 
 # ── Binaire Typst (build statique musl, épinglé) ─────────────────────────
+# Version ET empreinte figées : une archive republiée ou altérée fait échouer
+# le build. Empreinte relevée sur l'archive officielle de la release, dont le
+# binaire déclare le commit 737895d7 du tag v0.12.0. Changer les deux ensemble.
 ARG TYPST_VERSION=0.12.0
+ARG TYPST_SHA256=605130a770ebd59a4a579673079cb913a13e75985231657a71d6239a57539ec3
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk add --no-cache xz \
  && wget -qO /tmp/typst.tar.xz "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-x86_64-unknown-linux-musl.tar.xz" \
+ && echo "${TYPST_SHA256}  /tmp/typst.tar.xz" | sha256sum -c - \
  && tar -xJf /tmp/typst.tar.xz -C /tmp \
  && mv /tmp/typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst \
  && rm -rf /tmp/typst* \

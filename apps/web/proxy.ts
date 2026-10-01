@@ -51,7 +51,7 @@ function clientIp(req: NextRequest): string {
   return xff?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
 }
 
-export function middleware(req: NextRequest): NextResponse {
+export function proxy(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
   const now = Date.now();
 

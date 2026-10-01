@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 // Applique le thème mémorisé avant le premier rendu (évite le flash). Servi
-// avec le nonce de la CSP stricte (§8.1), fourni par le middleware.
+// avec le nonce de la CSP stricte (§8.1), fourni par le proxy (proxy.ts).
 const themeInit = `try{var t=localStorage.getItem('toron-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}`;
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

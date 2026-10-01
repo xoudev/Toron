@@ -3,7 +3,7 @@
 # (type stripping natif de Node 24) ; pas d'étape de build.
 # Contexte de build : la racine du monorepo.
 
-FROM node:24.18.0-alpine3.23
+FROM node:24.21.0-alpine3.23@sha256:9ec4a2e289874ed0d722e1772ec2de45d2801541db8612f3638b26f128c69ac2
 RUN corepack enable pnpm
 
 # ── Binaire Typst (build statique musl, épinglé) ─────────────────────────

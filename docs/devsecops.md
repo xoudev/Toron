@@ -51,9 +51,12 @@ chaque semaine.
 
    Sans ce ruleset, une PR peut être fusionnée avant la fin de la CI
    (cas de la PR #51, fusionnée 8 secondes après sa création).
-2. **Settings > Code security** : Dependabot alerts, Dependabot security
-   updates, Secret scanning, Push protection, Private vulnerability
-   reporting (utilisé par `SECURITY.md`).
+2. **Settings > Code security** (page `settings/security_analysis`) :
+   **Dependency graph** (prérequis du gate
+   « Revue des dépendances », qui échoue sinon avec « Dependency review is
+   not supported on this repository »), Dependabot alerts, Dependabot
+   security updates, Secret scanning, Push protection, Private
+   vulnerability reporting (utilisé par `SECURITY.md`).
 3. **Settings > General** : *Automatically delete head branches*.
 
 ## Exceptions (acceptation de risque)

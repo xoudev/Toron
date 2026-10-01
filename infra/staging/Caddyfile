@@ -1,0 +1,22 @@
+# Toron staging : TLS automatique (Let's Encrypt / ZeroSSL), compression,
+# accès restreint par authentification HTTP. Les en-têtes de sécurité (CSP à
+# nonce, HSTS, etc.) sont posés par l'application elle-même (§8.1).
+# L'API d'administration reste sur le localhost du conteneur (rechargement à
+# chaud par deployer.sh) : elle n'est joignable ni depuis l'hôte ni par web.
+
+{$STAGING_DOMAIN} {
+	encode zstd gzip
+
+	# Staging privé : les comptes de démo du seed ont un mot de passe public
+	# (dépôt open source). Identifiants générés par bootstrap.sh.
+	import /etc/caddy/acces.caddy
+
+	reverse_proxy web:3000
+
+	header -Server
+
+	log {
+		output stdout
+		format json
+	}
+}

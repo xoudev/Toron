@@ -45,6 +45,9 @@ description courte, phase cible pressentie.
   le hop injecté par le reverse proxy (Caddy, ADR-9) n'est pas le seul retenu.
   Fixer la stratégie « trusted proxy » au déploiement. Phase cible : MVP
   (déploiement staging).
+  Mise à jour 2026-10-01 : traité pour le staging (`infra/staging/`), web
+  n'est joignable qu'à travers Caddy, qui remplace tout X-Forwarded-For
+  fourni par le client. À reconduire tel quel en production.
 - **2026-07-18 · Contraste AA des libellés mono en --text-3** — Les libellés
   de section en mono MAJUSCULES (~9-10px) restent en --text-3 (contraste sous
   AA). Les identifiants porteurs de données ont été passés en --text-2. Décider

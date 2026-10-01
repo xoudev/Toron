@@ -1,0 +1,145 @@
+name: Déploiement staging
+
+# Application (web + worker) déployée sur le serveur de staging (ADR-9) à
+# chaque fusion sur main : images construites ici, publiées sur GHCR avec
+# attestation de provenance, puis tirées PAR DIGEST sur le serveur.
+# Mise en place : docs/deploiement-staging.md
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  images:
+    name: Images (build, GHCR, provenance)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Job « skipped » (visible) tant que la variable de dépôt STAGING_HOST
+    # n'est pas définie.
+    if: vars.STAGING_HOST != '' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write # publication des images sur GHCR
+      id-token: write # signature Sigstore de l'attestation de provenance
+      attestations: write # enregistrement de l'attestation de provenance
+    outputs:
+      web: ${{ steps.publication.outputs.web }}
+      worker: ${{ steps.publication.outputs.worker }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build des images de production
+        run: |
+          for img in web worker; do
+            docker build -f "infra/${img}.Dockerfile" \
+              --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+              --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+              -t "ghcr.io/xoudev/toron-${img}:${GITHUB_SHA}" .
+          done
+      - name: Publication sur GHCR
+        id: publication
+        env:
+          JETON_GHCR: ${{ github.token }}
+        run: |
+          printf '%s' "$JETON_GHCR" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          for img in web worker; do
+            docker push --quiet "ghcr.io/xoudev/toron-${img}:${GITHUB_SHA}"
+            ref=$(docker inspect --format '{{index .RepoDigests 0}}' "ghcr.io/xoudev/toron-${img}:${GITHUB_SHA}")
+            echo "${img}=${ref}" >> "$GITHUB_OUTPUT"
+            echo "${img}-digest=${ref##*@}" >> "$GITHUB_OUTPUT"
+          done
+          docker logout ghcr.io
+      # Vérifiable par : gh attestation verify oci://<image>@<digest> -R xoudev/Toron
+      - name: Provenance de l'image web
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/xoudev/toron-web
+          subject-digest: ${{ steps.publication.outputs.web-digest }}
+          push-to-registry: false
+          create-storage-record: false
+      - name: Provenance de l'image worker
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/xoudev/toron-worker
+          subject-digest: ${{ steps.publication.outputs.worker-digest }}
+          push-to-registry: false
+          create-storage-record: false
+
+  deploy:
+    name: Déploiement sur le serveur
+    needs: images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    permissions:
+      contents: read
+      packages: read # jeton éphémère transmis au serveur pour tirer les images
+    env:
+      STAGING_HOST: ${{ vars.STAGING_HOST }}
+      STAGING_URL: ${{ vars.STAGING_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Identité SSH et empreinte du serveur
+        env:
+          CLE_SSH: ${{ secrets.STAGING_SSH_KEY }}
+          EMPREINTE_SERVEUR: ${{ vars.STAGING_SSH_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$CLE_SSH" ] || [ -z "$EMPREINTE_SERVEUR" ] || [ -z "$STAGING_URL" ]; then
+            echo "::error::Configuration incomplète : secret STAGING_SSH_KEY, variables STAGING_SSH_KNOWN_HOSTS et STAGING_URL attendus (docs/deploiement-staging.md)."
+            exit 1
+          fi
+          if ! [[ "$STAGING_HOST" =~ ^[A-Za-z0-9.:-]+$ ]]; then
+            echo "::error::STAGING_HOST invalide : nom d'hôte ou adresse IP attendu."
+            exit 1
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$CLE_SSH" > ~/.ssh/id_staging
+          chmod 600 ~/.ssh/id_staging
+          # Empreinte épinglée : jamais d'acceptation automatique d'une clé d'hôte.
+          printf '%s\n' "$EMPREINTE_SERVEUR" > ~/.ssh/known_hosts
+          {
+            echo "Host staging"
+            echo "  HostName ${STAGING_HOST}"
+            echo "  User deploy"
+            echo "  IdentityFile ~/.ssh/id_staging"
+            echo "  IdentitiesOnly yes"
+            echo "  StrictHostKeyChecking yes"
+            echo "  UserKnownHostsFile ~/.ssh/known_hosts"
+          } > ~/.ssh/config
+      - name: Configuration du serveur (compose, Caddyfile, scripts)
+        run: tar -C infra/staging -czf - compose.yaml Caddyfile deployer.sh initdb | ssh staging 'umask 022 && tar -xzf - -C /opt/toron'
+      - name: Déploiement
+        env:
+          JETON_GHCR: ${{ github.token }}
+          IMAGE_WEB: ${{ needs.images.outputs.web }}
+          IMAGE_WORKER: ${{ needs.images.outputs.worker }}
+        run: |
+          # Références développées côté runner, volontairement : validées ici,
+          # puis à nouveau par deployer.sh (format @sha256 strict).
+          motif='^ghcr\.io/xoudev/toron-(web|worker)@sha256:[0-9a-f]{64}$'
+          if ! [[ "$IMAGE_WEB" =~ $motif && "$IMAGE_WORKER" =~ $motif ]]; then
+            echo "::error::Références d'images inattendues : déploiement refusé."
+            exit 1
+          fi
+          # shellcheck disable=SC2029
+          printf '%s\n' "$JETON_GHCR" | ssh staging "bash /opt/toron/deployer.sh '${IMAGE_WEB}' '${IMAGE_WORKER}'"
+      - name: Vérification publique (TLS + accès protégé)
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' "${STAGING_URL}/connexion")
+          echo "GET ${STAGING_URL}/connexion -> ${code} (401 attendu : staging protégé par authentification)"
+          [ "$code" = "401" ]
+      - name: Nettoyage de la clé SSH
+        if: ${{ always() }}
+        run: rm -f ~/.ssh/id_staging

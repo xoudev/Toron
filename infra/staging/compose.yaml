@@ -1,0 +1,132 @@
+# Toron : environnement de staging (ADR-9), déployé à chaque fusion sur main.
+# Exécuté sur le serveur dans /opt/toron par deployer.sh, jamais en local.
+# Secrets : /opt/toron/.env, généré sur le serveur par bootstrap.sh (jamais
+# dans le dépôt). Images : /opt/toron/images.env, écrit à chaque déploiement
+# avec des références figées par digest.
+#
+# Réseau : seul Caddy publie des ports (80/443). L'application n'est jamais
+# joignable directement, ce qui garantit que X-Forwarded-For est posé par
+# Caddy et non par le client (rate limiting, journal d'audit). La base et le
+# worker sont sur un réseau interne sans accès Internet.
+
+name: toron
+
+services:
+  caddy:
+    image: caddy:2.11.4-alpine@sha256:6aeddd44c3078b0f9a35206472a11420648a79c184603ef95957d0a20044cb2b
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      STAGING_DOMAIN: ${STAGING_DOMAIN:?STAGING_DOMAIN manquant dans .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Identifiants d'accès au staging (hash bcrypt), générés par bootstrap.sh.
+      - ./acces.caddy:/etc/caddy/acces.caddy:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    tmpfs:
+      - /tmp
+    networks: [edge]
+    depends_on:
+      web:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+
+  web:
+    image: ${TORON_WEB_IMAGE:?TORON_WEB_IMAGE manquant (images.env)}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL_APP: postgres://toron_app_login:${TORON_APP_DB_PASSWORD:?}@db:5432/toron
+      DATABASE_URL_AUTH: postgres://toron_auth_login:${TORON_AUTH_DB_PASSWORD:?}@db:5432/toron
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?}
+      BETTER_AUTH_URL: https://${STAGING_DOMAIN:?}
+      NEXT_TELEMETRY_DISABLED: "1"
+    networks: [edge, backend]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/connexion"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    read_only: true
+    tmpfs:
+      - /tmp
+      # Cache Next.js (ISR, images) : non persistant, réinitialisé au redémarrage.
+      - /app/apps/web/.next/cache:mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  worker:
+    image: ${TORON_WORKER_IMAGE:?TORON_WORKER_IMAGE manquant (images.env)}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL_APP: postgres://toron_app_login:${TORON_APP_DB_PASSWORD:?}@db:5432/toron
+      PUBLIC_BASE_URL: https://${STAGING_DOMAIN:?}
+    networks: [backend]
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  # Tâche ponctuelle lancée par deployer.sh : migrations puis seed (idempotent)
+  # avec le rôle propriétaire du schéma, jamais avec le rôle applicatif (S5).
+  migrations:
+    image: ${TORON_WORKER_IMAGE:?TORON_WORKER_IMAGE manquant (images.env)}
+    profiles: [outils]
+    environment:
+      DATABASE_URL_MIGRATIONS: postgres://toron_admin:${POSTGRES_PASSWORD:?}@db:5432/toron
+    command: ["sh", "-c", "node packages/db/src/migrate-cli.ts && node packages/db/src/seed-cli.ts"]
+    networks: [backend]
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  db:
+    image: postgres:16.15-alpine3.23@sha256:621a761097839bdb50207afd6b87a72f38e2d718dd46c3d744828d8917c4f1e0
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: toron
+      POSTGRES_USER: toron_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      # Lus uniquement par initdb/01-roles.sh, au premier démarrage.
+      TORON_APP_DB_PASSWORD: ${TORON_APP_DB_PASSWORD:?}
+      TORON_AUTH_DB_PASSWORD: ${TORON_AUTH_DB_PASSWORD:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U toron_admin -d toron"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    security_opt: [no-new-privileges:true]
+
+networks:
+  edge: {}
+  backend:
+    internal: true
+
+volumes:
+  pgdata: {}
+  caddy-data: {}
+  caddy-config: {}

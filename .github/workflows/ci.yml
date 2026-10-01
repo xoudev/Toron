@@ -220,7 +220,8 @@ jobs:
           echo "GET /t/meridiane-logistics -> $code (redirection connexion attendue)"
           case "$code" in 302|303|307|308) ;; *) echo "code inattendu"; exit 1;; esac
       - run: bash .github/scripts/installer-outil.sh grype
-      - run: bash .github/scripts/installer-outil.sh syft
+      - id: syft
+        run: bash .github/scripts/installer-outil.sh syft
       - name: Scan de vulnérabilités des images (bloquant dès « high » corrigeable)
         run: |
           mkdir -p rapports
@@ -231,15 +232,17 @@ jobs:
           done
           exit "$statut"
       # Inventaire des composants livrés (NIS 2 / CRA), conservé 90 jours.
+      # Seulement si les images existent (syft installé après le smoke test) :
+      # un build en échec ne doit pas ajouter d'erreurs parasites.
       - name: SBOM CycloneDX des images
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.syft.outcome == 'success' }}
         run: |
           mkdir -p rapports
           for img in web worker; do
             syft "docker:toron-${img}:latest" -o "cyclonedx-json=rapports/sbom-${img}.cdx.json"
           done
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.syft.outcome == 'success' }}
         with:
           name: sbom-et-scans-images
           path: rapports/

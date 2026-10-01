@@ -15,6 +15,10 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    // TypeScript 6 ne charge plus automatiquement les paquets @types/* :
+    // les définitions Node (runtime de tous les paquets serveur) sont
+    // déclarées explicitement.
+    "types": ["node"]
   }
 }

@@ -1,16 +1,15 @@
 # Toron — image du worker de livrables scellés (ADR-5/7).
 # Node + binaire Typst (musl). Le worker exécute le TypeScript directement
-# (type stripping natif de Node 24) ; pas d'étape de build.
+# (type stripping natif de Node) ; pas d'étape de build.
 # Contexte de build : la racine du monorepo.
 #
 # Multi-stage : pnpm et son cache restent dans l'étage « deps » ; l'image
-# livrée ne contient ni pnpm, ni npm, ni corepack.
+# livrée ne contient ni pnpm ni npm.
 
 FROM node:26.10.0-alpine3.23@sha256:c3c6e314fd42e41962360b2482fc18d150beb47976c3aa7b8b9689d7ef42a5c2 AS base
 
 # ── Dépendances et sources ───────────────────────────────────────────────
 FROM base AS deps
-RUN corepack enable pnpm
 WORKDIR /repo
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/web/package.json apps/web/
@@ -21,6 +20,11 @@ COPY packages/ui/package.json packages/ui/
 COPY packages/frameworks/package.json packages/frameworks/
 COPY packages/typst/package.json packages/typst/
 COPY workers/package.json workers/
+# Corepack n'est plus livré avec Node 26 : pnpm est installé par npm, à la
+# version exacte du champ packageManager de package.json (source unique, la
+# même qu'en CI), sans exécution de scripts d'installation.
+RUN npm install --global --ignore-scripts --no-audit --no-fund \
+      "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]")"
 RUN pnpm install --frozen-lockfile
 COPY tsconfig.base.json ./
 COPY packages packages

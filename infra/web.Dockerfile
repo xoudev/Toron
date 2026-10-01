@@ -3,7 +3,6 @@
 # Contexte de build : la racine du monorepo (docker build -f infra/web.Dockerfile .)
 
 FROM node:26.10.0-alpine3.23@sha256:c3c6e314fd42e41962360b2482fc18d150beb47976c3aa7b8b9689d7ef42a5c2 AS base
-RUN corepack enable pnpm
 
 # ── Dépendances + build ──────────────────────────────────────────────
 FROM base AS build
@@ -17,6 +16,11 @@ COPY packages/ui/package.json packages/ui/
 COPY packages/frameworks/package.json packages/frameworks/
 COPY packages/typst/package.json packages/typst/
 COPY workers/package.json workers/
+# Corepack n'est plus livré avec Node 26 : pnpm est installé par npm, à la
+# version exacte du champ packageManager de package.json (source unique, la
+# même qu'en CI), sans exécution de scripts d'installation.
+RUN npm install --global --ignore-scripts --no-audit --no-fund \
+      "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]")"
 RUN pnpm install --frozen-lockfile
 COPY tsconfig.base.json ./
 COPY apps/web apps/web

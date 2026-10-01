@@ -22,6 +22,12 @@ export default function Activation2faPage() {
       setErreur('Activation impossible — vérifiez votre mot de passe puis réessayez.');
       return;
     }
+    // better-auth renvoie, selon la méthode configurée, un OTP ou un TOTP : seul
+    // le TOTP est utilisé ici, toute autre réponse est refusée explicitement.
+    if (!('totpURI' in data)) {
+      setErreur("Activation impossible : la méthode TOTP n'est pas disponible pour ce compte. Contactez l'administrateur de votre organisation.");
+      return;
+    }
     setTotpUri(data.totpURI);
     setBackupCodes(data.backupCodes);
     setEtape('verification');

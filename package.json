@@ -14,7 +14,7 @@
     "test": "pnpm -r run test"
   },
   "devDependencies": {
-    "@eslint/js": "^9.30.0",
+    "@eslint/js": "^9.39.5",
     "eslint": "^9.30.0",
     "globals": "^16.0.0",
     "typescript": "~5.9.3",

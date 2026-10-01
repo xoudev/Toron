@@ -71,3 +71,5 @@ description courte, phase cible pressentie.
   (compilateur natif), ESLint 10, Vitest 4 sont disponibles. Le monorepo
   reste volontairement sur Next 15 (ADR-1) / TS 5.9 / ESLint 9 / Vitest 3.
   Évaluer la migration groupée une fois le MVP stabilisé. Phase cible : V1.
+  Mise à jour 2026-10-01 : Vitest 4.1 adopté par anticipation pour corriger
+  une faille (path traversal dans @vitest/mocker) ; Next reste en 15.5.

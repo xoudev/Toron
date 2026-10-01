@@ -1,78 +1,197 @@
 name: CI
 
+# Pipeline DevSecOps (PLAN.md §13, docs/devsecops.md). Chaque job est un
+# gate ; « CI OK » les agrège et sert de vérification requise unique pour la
+# protection de main. Rejoué chaque nuit sur main : une CVE publiée après la
+# fusion fait passer la CI au rouge sans attendre un nouveau commit.
+
 on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: '23 4 * * *'
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Sur une PR, un nouveau push rend le run précédent obsolète. Sur main,
+  # chaque commit fusionné est vérifié jusqu'au bout.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-  contents: read
+# Aucun droit par défaut : chaque job déclare le strict nécessaire.
+permissions: {}
 
 jobs:
   build-test:
     name: Lint · Typecheck · Tests · Build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
+      # Inclut les tests d'isolation cross-tenant (gate de merge, ADR-3).
       - run: pnpm test
       - run: pnpm build
+      - name: Politique de licences (dépendances de production)
+        run: |
+          interdites=$(pnpm licenses list --prod --json | jq -r 'keys[] | select(test("^(A?GPL|SSPL|BUSL)"; "i"))')
+          if [ -n "$interdites" ]; then
+            echo "::error::Licence incompatible avec un SaaS commercial en production : ${interdites}. Remplacez la dépendance ou documentez une exception dans docs/devsecops.md."
+            exit 1
+          fi
+          echo "Aucune licence copyleft forte ni source-available en production."
 
   semgrep:
     name: SAST (semgrep)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write # publication SARIF dans l'onglet Security
     container:
-      image: semgrep/semgrep
+      image: semgrep/semgrep:1.178.0@sha256:32e459968daabe7ab86968184a29109b9564aa00392401156f9788452b42786b
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - run: semgrep scan --config p/default --config p/typescript --error --exclude docs
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Analyse (règles par défaut + TypeScript)
+        run: semgrep scan --config p/default --config p/typescript --error --exclude docs --sarif-output=semgrep.sarif
         env:
           SEMGREP_SEND_METRICS: "off"
+      # Les PR venant de forks n'ont pas le droit d'écrire dans l'onglet Security.
+      - name: Publication dans l'onglet Security
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
 
   gitleaks:
     name: Secrets (gitleaks)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
+      - run: bash .github/scripts/installer-outil.sh gitleaks
+      # Tout l'historique, pas seulement le diff : un secret supprimé dans un
+      # commit ultérieur reste lisible dans git.
+      - name: Analyse de tout l'historique git
+        run: gitleaks git --redact --no-banner --exit-code 1 --log-opts="--all" .
 
   audit:
     name: Audit dépendances
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm audit --prod --audit-level high
+      # Lecture du seul lockfile : aucun script d'installation n'est exécuté.
+      - name: Production (bloquant dès « moderate »)
+        run: pnpm audit --prod --audit-level moderate
+      - name: Toutes dépendances, outillage de build et de test compris (bloquant dès « high »)
+        if: ${{ !cancelled() }}
+        run: pnpm audit --audit-level high
 
-  # DoD M0 : « l'app tourne en Docker » — build de l'image de production,
-  # Postgres compose + migrations + seed, puis smoke test HTTP réel.
-  docker-smoke:
-    name: Docker (build + smoke test)
+  dependency-review:
+    name: Revue des dépendances (PR)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      # Bloque une PR qui introduit une dépendance vulnérable ou sous licence
+      # incompatible avec un SaaS commercial, avant même la fusion.
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate
+          deny-licenses: AGPL-1.0-only, AGPL-1.0-or-later, AGPL-3.0-only, AGPL-3.0-or-later, GPL-2.0-only, GPL-2.0-or-later, GPL-3.0-only, GPL-3.0-or-later, SSPL-1.0, BUSL-1.1
+          show-openssf-scorecard: true
+          warn-on-openssf-scorecard-level: 3
+
+  workflows:
+    name: Sécurité des workflows (zizmor, actionlint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Injections de template, permissions excessives, actions non épinglées,
+      # identifiants persistés, configuration Dependabot. Le jeton (lecture
+      # seule) active les audits en ligne : commits imposteurs, actions vulnérables.
+      - name: zizmor
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          docker run --rm -e GH_TOKEN -v "$PWD:/src:ro" -w /src
+          ghcr.io/zizmorcore/zizmor:1.30.1@sha256:a2eb396d886c053073405c7a980f2139ba2248ec172243cfa3841e57196e8101
+          --format github .github/
+      - run: bash .github/scripts/installer-outil.sh actionlint
+      - name: actionlint (syntaxe, expressions, shellcheck des scripts)
+        run: actionlint -color
+
+  dockerfiles:
+    name: Dockerfiles (hadolint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Configuration et exceptions justifiées : .hadolint.yaml
+      - name: hadolint
+        run: >-
+          docker run --rm -v "$PWD:/src:ro" -w /src
+          hadolint/hadolint:v2.15.1@sha256:32dac94127fd60b7b7e3fbfc65e1383b9b5e25c9bfd7b8536de7a539fe68a12d
+          /bin/hadolint infra/web.Dockerfile infra/worker.Dockerfile
+
+  # DoD M0 : « l'app tourne en Docker ». Build des images de production,
+  # Postgres compose + migrations + seed, smoke test HTTP réel, puis scan de
+  # vulnérabilités et SBOM des images réellement livrées.
+  docker:
+    name: Docker (build, smoke test, scan, SBOM)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write # publication SARIF dans l'onglet Security
+    env:
+      COMPOSE_PROJECT_NAME: toron
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: pnpm
@@ -85,8 +204,10 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm --filter @toron/db migrate
           pnpm --filter @toron/db seed
-      - name: Application (image de production)
-        run: docker compose -f infra/compose.yaml up -d --build web
+      - name: Images de production (web + worker)
+        run: docker compose -f infra/compose.yaml build web worker
+      - name: Application
+        run: docker compose -f infra/compose.yaml up -d web
       - name: Smoke test HTTP
         run: |
           for i in $(seq 1 45); do
@@ -98,3 +219,63 @@ jobs:
           code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/t/meridiane-logistics)
           echo "GET /t/meridiane-logistics -> $code (redirection connexion attendue)"
           case "$code" in 302|303|307|308) ;; *) echo "code inattendu"; exit 1;; esac
+      - run: bash .github/scripts/installer-outil.sh grype
+      - run: bash .github/scripts/installer-outil.sh syft
+      - name: Scan de vulnérabilités des images (bloquant dès « high » corrigeable)
+        run: |
+          mkdir -p rapports
+          statut=0
+          for img in web worker; do
+            grype "docker:toron-${img}:latest" --only-fixed --fail-on high \
+              -o table -o "sarif=rapports/grype-${img}.sarif" || statut=1
+          done
+          exit "$statut"
+      # Inventaire des composants livrés (NIS 2 / CRA), conservé 90 jours.
+      - name: SBOM CycloneDX des images
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p rapports
+          for img in web worker; do
+            syft "docker:toron-${img}:latest" -o "cyclonedx-json=rapports/sbom-${img}.cdx.json"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: sbom-et-scans-images
+          path: rapports/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publication du scan web dans l'onglet Security
+        if: ${{ !cancelled() && hashFiles('rapports/grype-web.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          sarif_file: rapports/grype-web.sarif
+          category: grype-web
+      - name: Publication du scan worker dans l'onglet Security
+        if: ${{ !cancelled() && hashFiles('rapports/grype-worker.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          sarif_file: rapports/grype-worker.sarif
+          category: grype-worker
+
+  # Vérification requise unique pour la protection de branche : la liste des
+  # gates évolue ici, sans retoucher les réglages du dépôt.
+  ci-ok:
+    name: CI OK
+    if: ${{ always() }}
+    needs: [build-test, semgrep, gitleaks, audit, dependency-review, workflows, dockerfiles, docker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Tous les gates sont verts
+        env:
+          RESULTATS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Résultats des gates : ${RESULTATS}"
+          for r in $RESULTATS; do
+            case "$r" in
+              success|skipped) ;;
+              *) echo "::error::Au moins un gate n'est pas vert (${r}). Corrigez avant fusion."; exit 1 ;;
+            esac
+          done

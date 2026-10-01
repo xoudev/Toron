@@ -28,7 +28,12 @@ RUN pnpm --filter @toron/web build
 FROM node:24.21.0-alpine3.23@sha256:9ec4a2e289874ed0d722e1772ec2de45d2801541db8612f3638b26f128c69ac2 AS run
 ENV NODE_ENV=production
 WORKDIR /app
-RUN addgroup -S toron && adduser -S toron -G toron
+# Gestionnaires de paquets inutiles à l'exécution (CMD lance node seul) : npm
+# embarque ses propres dépendances, souvent en retard sur les correctifs, et
+# chaque outil retiré réduit la surface d'attaque de l'image livrée.
+RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
+      /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-v* \
+ && addgroup -S toron && adduser -S toron -G toron
 COPY --from=build --chown=toron:toron /repo/apps/web/.next/standalone ./
 COPY --from=build --chown=toron:toron /repo/apps/web/.next/static ./apps/web/.next/static
 USER toron

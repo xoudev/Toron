@@ -78,6 +78,8 @@ description courte, phase cible pressentie.
   une faille (path traversal dans @vitest/mocker) ; Next reste en 15.5.
   Mise à jour 2026-10-01 : Next.js 16, Node.js 26 et PostgreSQL 18 adoptés.
   Restent à évaluer : TypeScript 7 et ESLint 10.
+  Mise à jour 2026-10-01 : TypeScript 6, ESLint 10 et Vitest 5 adoptés.
+  Reste à évaluer : TypeScript 7 (compilateur natif).
 - **2026-10-01 · Image worker sans dépendances de dev** : `infra/worker.Dockerfile`
   exécute un `pnpm install` complet, l'image livrée embarque donc vitest,
   testcontainers, eslint, etc. Installer uniquement les dépendances de

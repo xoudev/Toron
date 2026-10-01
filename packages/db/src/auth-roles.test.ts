@@ -3,14 +3,13 @@ import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { applyMigrations } from './migrate.ts';
+import { PG_IMAGE } from './test-image.ts';
 
 /**
  * Séparation des rôles d'authentification (M0-3, ADR-4/S5) :
  * - toron_auth : identités globales, sessions, résolution tenant/membership ;
  * - toron_app : AUCUN droit sur les tables d'auth, isolation RLS inchangée.
  */
-
-const PG_IMAGE = 'postgres:16.14-alpine3.23';
 
 let container: StartedPostgreSqlContainer;
 let admin: postgres.Sql;

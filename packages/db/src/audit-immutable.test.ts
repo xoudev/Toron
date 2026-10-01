@@ -6,13 +6,12 @@ import { writeAuditEntry } from './audit.ts';
 import { createDb, type DbHandle } from './client.ts';
 import { applyMigrations } from './migrate.ts';
 import { withTenant } from './tenant.ts';
+import { PG_IMAGE } from './test-image.ts';
 
 /**
  * Immuabilité du journal d'audit (M0-4, S6/§8.2) : INSERT only pour TOUS
  * les rôles — y compris le superutilisateur propriétaire de la table.
  */
-
-const PG_IMAGE = 'postgres:16.14-alpine3.23';
 
 let container: StartedPostgreSqlContainer;
 let admin: postgres.Sql;

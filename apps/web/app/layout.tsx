@@ -14,20 +14,28 @@ import '@toron/ui/nc.css';
 
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 
-// Polices auto-hébergées au build (next/font) : aucun appel réseau tiers
-// au runtime — cohérent avec la souveraineté et la future CSP stricte.
-const plexSans = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+// Polices auto-hébergées (next/font/local) : aucun appel réseau tiers, ni au
+// runtime ni au build. IBM Plex (licence OFL 1.1) vient des paquets @fontsource,
+// sous-ensemble latin, fichiers figés par le lockfile.
+const plexSans = localFont({
+  src: [
+    { path: '../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: '../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff2', weight: '500', style: 'normal' },
+    { path: '../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2', weight: '600', style: 'normal' },
+    { path: '../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-700-normal.woff2', weight: '700', style: 'normal' },
+  ],
   variable: '--font-plex-sans',
 });
 
-const plexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+const plexMono = localFont({
+  src: [
+    { path: '../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: '../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2', weight: '500', style: 'normal' },
+    { path: '../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2', weight: '600', style: 'normal' },
+  ],
   variable: '--font-plex-mono',
 });
 
@@ -38,7 +46,7 @@ export const metadata: Metadata = {
 };
 
 // Applique le thème mémorisé avant le premier rendu (évite le flash). Servi
-// avec le nonce de la CSP stricte (§8.1), fourni par le middleware.
+// avec le nonce de la CSP stricte (§8.1), fourni par le proxy (proxy.ts).
 const themeInit = `try{var t=localStorage.getItem('toron-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}`;
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

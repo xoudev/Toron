@@ -42,7 +42,8 @@ updates:
       prefix: chore(infra)
 
   - package-ecosystem: docker-compose
-    directory: /infra
+    # Compose local (dev, CI) et staging : mêmes versions d'images partout.
+    directories: [/infra, /infra/staging]
     schedule:
       interval: weekly
       day: monday

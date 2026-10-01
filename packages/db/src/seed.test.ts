@@ -13,10 +13,9 @@ import {
   seedRecyfFramework,
 } from './seed.ts';
 import { withTenant } from './tenant.ts';
+import { PG_IMAGE } from './test-image.ts';
 
 /** Seeds M0-6 : ReCyF complet + tenant démo, idempotents, visibles côté rôle applicatif. */
-
-const PG_IMAGE = 'postgres:16.14-alpine3.23';
 
 let container: StartedPostgreSqlContainer;
 let admin: postgres.Sql;

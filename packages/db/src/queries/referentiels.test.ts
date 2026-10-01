@@ -30,11 +30,10 @@ import {
   setFrameworkHidden,
   unmapControlFromRequirement,
 } from './referentiels.ts';
+import { PG_IMAGE } from '../test-image.ts';
 
 // Couche d'accès du moteur de référentiels (5.2b), contre un vrai Postgres.
 // Le tenant démo fournit ReCyF + ISO 27001 + 3 contrôles mutualisés.
-
-const PG_IMAGE = 'postgres:16.14-alpine3.23';
 
 let container: StartedPostgreSqlContainer;
 let admin: postgres.Sql;

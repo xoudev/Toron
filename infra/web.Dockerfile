@@ -2,8 +2,7 @@
 # Multi-stage, versions épinglées, utilisateur non-root.
 # Contexte de build : la racine du monorepo (docker build -f infra/web.Dockerfile .)
 
-FROM node:24.21.0-alpine3.23@sha256:9ec4a2e289874ed0d722e1772ec2de45d2801541db8612f3638b26f128c69ac2 AS base
-RUN corepack enable pnpm
+FROM node:26.10.0-alpine3.23@sha256:c3c6e314fd42e41962360b2482fc18d150beb47976c3aa7b8b9689d7ef42a5c2 AS base
 
 # ── Dépendances + build ──────────────────────────────────────────────
 FROM base AS build
@@ -17,6 +16,11 @@ COPY packages/ui/package.json packages/ui/
 COPY packages/frameworks/package.json packages/frameworks/
 COPY packages/typst/package.json packages/typst/
 COPY workers/package.json workers/
+# Corepack n'est plus livré avec Node 26 : pnpm est installé par npm, à la
+# version exacte du champ packageManager de package.json (source unique, la
+# même qu'en CI), sans exécution de scripts d'installation.
+RUN npm install --global --ignore-scripts --no-audit --no-fund \
+      "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]")"
 RUN pnpm install --frozen-lockfile
 COPY tsconfig.base.json ./
 COPY apps/web apps/web
@@ -25,7 +29,7 @@ COPY workers workers
 RUN pnpm --filter @toron/web build
 
 # ── Image d'exécution minimale ───────────────────────────────────────
-FROM node:24.21.0-alpine3.23@sha256:9ec4a2e289874ed0d722e1772ec2de45d2801541db8612f3638b26f128c69ac2 AS run
+FROM node:26.10.0-alpine3.23@sha256:c3c6e314fd42e41962360b2482fc18d150beb47976c3aa7b8b9689d7ef42a5c2 AS run
 ENV NODE_ENV=production
 WORKDIR /app
 # Gestionnaires de paquets inutiles à l'exécution (CMD lance node seul) : npm

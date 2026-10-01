@@ -76,6 +76,8 @@ description courte, phase cible pressentie.
   Évaluer la migration groupée une fois le MVP stabilisé. Phase cible : V1.
   Mise à jour 2026-10-01 : Vitest 4.1 adopté par anticipation pour corriger
   une faille (path traversal dans @vitest/mocker) ; Next reste en 15.5.
+  Mise à jour 2026-10-01 : Next.js 16, Node.js 26 et PostgreSQL 18 adoptés.
+  Restent à évaluer : TypeScript 7 et ESLint 10.
 - **2026-10-01 · Image worker sans dépendances de dev** : `infra/worker.Dockerfile`
   exécute un `pnpm install` complet, l'image livrée embarque donc vitest,
   testcontainers, eslint, etc. Installer uniquement les dépendances de
@@ -88,7 +90,5 @@ description courte, phase cible pressentie.
 - **2026-10-01 · DAST sur staging** : scan OWASP ZAP baseline (passif) de
   l'environnement de staging après chaque déploiement, règles bloquantes
   ciblées (CSP, cookies, en-têtes). Phase cible : MVP (staging).
-- **2026-10-01 · Image Postgres des tests** : `postgres:16.14-alpine3.23` est
-  dupliqué dans une vingtaine de fichiers de test `packages/db` ; extraire une
-  constante partagée et l'aligner sur l'image du compose (16.15). Phase
-  cible : V1.
+- **2026-10-01 · Image Postgres des tests** : traité le 2026-10-01, constante
+  unique `packages/db/src/test-image.ts` alignée sur les compose (18.6).

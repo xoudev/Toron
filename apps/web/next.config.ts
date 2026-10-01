@@ -22,14 +22,6 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: HARDENED_HEADERS }];
   },
-  webpack: (config) => {
-    // Spécificateurs ESM « ./module.js » résolus vers les sources .ts —
-    // requis car les paquets internes s'exécutent aussi sous Node natif.
-    config.resolve.extensionAlias = {
-      '.js': ['.ts', '.tsx', '.js'],
-    };
-    return config;
-  },
 };
 
 export default nextConfig;

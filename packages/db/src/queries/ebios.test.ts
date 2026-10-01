@@ -8,8 +8,8 @@ import { applyMigrations } from '../migrate.ts';
 import { DEMO, seedDemoTenant, seedIso27001Framework, seedRecyfFramework } from '../seed.ts';
 import { withTenant } from '../tenant.ts';
 import { addAction, addScenario, createStudy, generateRiskFromScenario, getStudy, listStudies } from './ebios.ts';
+import { PG_IMAGE } from '../test-image.ts';
 
-const PG_IMAGE = 'postgres:16.14-alpine3.23';
 const T = DEMO.tenantId;
 
 let container: StartedPostgreSqlContainer;

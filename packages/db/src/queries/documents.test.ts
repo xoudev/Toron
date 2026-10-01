@@ -20,8 +20,8 @@ import {
   setDocumentProcess,
 } from './documents.ts';
 import { createProcess } from './processes.ts';
+import { PG_IMAGE } from '../test-image.ts';
 
-const PG_IMAGE = 'postgres:16.14-alpine3.23';
 const T = DEMO.tenantId;
 
 let container: StartedPostgreSqlContainer;

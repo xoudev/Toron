@@ -100,7 +100,7 @@ services:
     security_opt: [no-new-privileges:true]
 
   db:
-    image: postgres:16.15-alpine3.23@sha256:621a761097839bdb50207afd6b87a72f38e2d718dd46c3d744828d8917c4f1e0
+    image: postgres:18.6-alpine3.23@sha256:885cf05d376c7cf27afef02073e6bdac3841252537f16e244fd1c1e6a7c99fb1
     restart: unless-stopped
     environment:
       POSTGRES_DB: toron
@@ -111,7 +111,9 @@ services:
       TORON_APP_DB_PASSWORD: ${TORON_APP_DB_PASSWORD:?}
       TORON_AUTH_DB_PASSWORD: ${TORON_AUTH_DB_PASSWORD:?}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # PostgreSQL 18+ : données dans /var/lib/postgresql/18/docker, volume
+      # monté sur /var/lib/postgresql (l'image refuse l'ancien chemin .../data).
+      - pgdata:/var/lib/postgresql
       - ./initdb:/docker-entrypoint-initdb.d:ro
     networks: [backend]
     healthcheck:

@@ -12,7 +12,9 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # PostgreSQL 18+ : données dans /var/lib/postgresql/18/docker, volume
+      # monté sur /var/lib/postgresql (l'image refuse l'ancien chemin .../data).
+      - pgdata:/var/lib/postgresql
       - ./initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U toron_local -d toron"]

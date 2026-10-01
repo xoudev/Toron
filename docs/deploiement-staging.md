@@ -9,7 +9,7 @@ chaque fusion sur `main` (ADR-9), à l'adresse **https://app.toron.nullsec.fr**
 
 Aucune offre gratuite ne convient sans enfreindre une règle du projet :
 l'application a besoin d'un serveur Node permanent, du worker Typst et de
-PostgreSQL 16 avec ses propres rôles (RLS), et les offres gratuites
+PostgreSQL 18 avec ses propres rôles (RLS), et les offres gratuites
 sérieuses sont américaines (Vercel, Render, Neon, Supabase, Oracle).
 
 Une petite VM européenne suffit : 2 vCPU, 2 à 4 Go de RAM, 40 Go de disque,

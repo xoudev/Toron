@@ -37,7 +37,7 @@ d'entrée. Cible : RSSI, dirigeants, consultants. Langue produit : FR.
 
 ## Stack (détails et justifications : PLAN.md §3)
 
-Next.js 15 (App Router) + TypeScript strict · PostgreSQL 16 + RLS managé
+Next.js 16 (App Router) + TypeScript strict · PostgreSQL 18 + RLS managé
 Scaleway · Drizzle **exclusivement via le wrapper `withTenant()`** ·
 Better Auth (auth dans notre Postgres, TOTP) · Scaleway Object Storage
 (URLs signées) · Scaleway TEM (e-mails) · pg-boss (jobs) · Typst
@@ -92,8 +92,9 @@ Cloudflare Pages), `packages/{db,core,ui,frameworks,typst}`, `workers/`,
 - `pnpm lint` · `pnpm typecheck` · `pnpm test` — les trois gates locaux.
   Toujours les lancer avant de conclure une tâche.
 - `pnpm build` — build de tous les paquets.
-- `docker compose -f infra/compose.yaml up --build` — app + Postgres 16
-  en local (DoD M0).
+- `docker compose -f infra/compose.yaml up --build` : app + Postgres 18
+  en local (DoD M0). Volume créé avant Postgres 18 : le recréer avec
+  `docker compose -f infra/compose.yaml down -v` (données de démo).
 - `DATABASE_URL_MIGRATIONS=… pnpm --filter @toron/db migrate` — applique
   les migrations SQL (rôle DDL, jamais le rôle applicatif).
 - `DATABASE_URL_MIGRATIONS=… pnpm --filter @toron/db seed` — seed ReCyF

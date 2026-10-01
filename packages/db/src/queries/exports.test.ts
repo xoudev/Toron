@@ -15,8 +15,8 @@ import {
   sealExport,
   verifyExport,
 } from './exports.ts';
+import { PG_IMAGE } from '../test-image.ts';
 
-const PG_IMAGE = 'postgres:16.14-alpine3.23';
 const T = DEMO.tenantId;
 const SHA = 'a'.repeat(64);
 

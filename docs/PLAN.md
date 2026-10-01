@@ -82,12 +82,14 @@ pas un LMS, pas un outil de production qualité réglementée. Voir section 11.
 
 ### 3.1 Décisions (format ADR court)
 
-**ADR-1 · Stack applicative : Next.js 15 (App Router) + TypeScript strict.**
+**ADR-1 · Stack applicative : Next.js 16 (App Router) + TypeScript strict.**
 Justification : vélocité maximale (stack déjà maîtrisée sur CyberLearn),
 SSR pour un outil métier dense, écosystème mature. Monolithe modulaire —
 pas de microservices.
+Mise à jour 2026-10-01 : Next.js 15 vers 16 (bundler Turbopack, `proxy.ts`
+remplace `middleware.ts`) et Node.js 24 vers 26.
 
-**ADR-2 · Données : PostgreSQL 16 + RLS managé Scaleway, ORM Drizzle.**
+**ADR-2 · Données : PostgreSQL 18 + RLS managé Scaleway, ORM Drizzle.**
 Postgres est l'invariant du projet. Souveraineté intégrale dès le jour un :
 Postgres managé **Scaleway** (sauvegardes + PITR inclus) et **Scaleway
 Object Storage** (S3, URLs signées courtes) pour les fichiers de preuves
@@ -96,6 +98,9 @@ commercial autant que technique (CLOUD Act). ORM : **Drizzle** — proche
 du SQL, sans binaire moteur, migrations en SQL lisible, intégration
 naturelle du pattern RLS `SET LOCAL`. Règle de portabilité inchangée :
 rien de propriétaire, `pg_dump` doit suffire à partir.
+Mise à jour 2026-10-01 : PostgreSQL 16 vers 18 (dev, CI, tests, staging).
+Le choix de l'offre managée de production doit proposer PostgreSQL 18 ;
+à défaut, aligner dev et staging sur la version managée disponible.
 
 **ADR-3 · Isolation tenant : RLS par variable de session.**
 Pattern unique dans tout le code :

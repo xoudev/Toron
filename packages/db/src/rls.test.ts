@@ -7,15 +7,14 @@ import { createDb, type DbHandle } from './client.ts';
 import { applyMigrations } from './migrate.ts';
 import * as schema from './schema/index.ts';
 import { withTenant } from './tenant.ts';
+import { PG_IMAGE } from './test-image.ts';
 
 /**
  * Tests d'isolation cross-tenant (S1, ADR-3) — gate de merge.
- * Exécutés contre un vrai PostgreSQL 16 (testcontainers), avec le rôle
+ * Exécutés contre un vrai PostgreSQL (testcontainers, cf. test-image.ts), avec le rôle
  * applicatif réel (membre de toron_app, sans BYPASSRLS) : aucune
  * simulation, la DoD M0 exige la preuve.
  */
-
-const PG_IMAGE = 'postgres:16.14-alpine3.23';
 
 /**
  * Drizzle enveloppe les erreurs Postgres (DrizzleQueryError « Failed

@@ -58,6 +58,7 @@ export const DEMO = {
   ebiosSc1: 'd0000000-0000-4000-8000-000000000102',
   ebiosSc2: 'd0000000-0000-4000-8000-000000000103',
   ebiosSc3: 'd0000000-0000-4000-8000-000000000104',
+  assessmentIso: 'd0000000-0000-4000-8000-000000000111',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -1025,6 +1026,62 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         INSERT INTO ebios_actions (tenant_id, scenario_id, phase, position, mitre_id, mitre_name, label)
         SELECT ${DEMO.tenantId}, ${sid}, ${phase}::ebios_phase, ${pos}, ${tid}, ${tname}, ${label}
         WHERE NOT EXISTS (SELECT 1 FROM ebios_actions WHERE scenario_id = ${sid} AND label = ${label})`;
+    }
+
+    // ── Campagne d'évaluation ISO 27001 en cours (module 5.3) ─────────────
+    // Écarts cohérents avec le reste de la démo : inventaire incomplet de
+    // l'agence sud, tests de restauration non documentés, revue des accès en
+    // retard, continuité de l'entrepôt, obsolescence. Exclusions justifiées
+    // (pas de développement logiciel interne). Sécurité physique à évaluer
+    // lors des visites de sites : la campagne n'est pas close.
+    await sql`
+      INSERT INTO assessments (id, tenant_id, framework_id, scope_id, campaign_label, status, started_at)
+      SELECT ${DEMO.assessmentIso}, ${DEMO.tenantId}, f.id, ${DEMO.scopeSmsi}, 'Évaluation SMSI — S2 2026', 'en_cours', '2026-09-01T08:00:00Z'
+      FROM frameworks f WHERE f.tenant_id IS NULL AND f.code = 'iso27001'
+      ON CONFLICT (id) DO NOTHING`;
+    await sql`
+      INSERT INTO assessment_items (tenant_id, assessment_id, requirement_id)
+      SELECT ${DEMO.tenantId}, ${DEMO.assessmentIso}, r.id
+      FROM requirements r JOIN frameworks f ON f.id = r.framework_id
+      WHERE f.tenant_id IS NULL AND f.code = 'iso27001'
+        AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id)
+      ON CONFLICT ON CONSTRAINT assessment_items_assessment_req_unique DO NOTHING`;
+
+    const gaps: [string, string][] = [
+      ['A.5.9', 'Inventaire complet au siège et à Meyzieu ; actifs de l’agence de Vitrolles non recensés (RSK-085).'],
+      ['A.5.18', 'Revue trimestrielle des droits d’accès non réalisée depuis le T2 (action en retard).'],
+      ['A.5.30', 'Pas de plan de continuité éprouvé pour l’entrepôt régional de Meyzieu.'],
+      ['A.8.8', 'Serveurs de l’entrepôt hors support éditeur ; correctifs non appliqués.'],
+      ['A.8.13', 'Sauvegardes quotidiennes en place ; aucun test de restauration documenté depuis mars 2026.'],
+    ];
+    const excluded: [string, string][] = [
+      ['A.8.25', 'Aucun développement logiciel interne : WMS et applications sont des progiciels maintenus par leurs éditeurs.'],
+      ['A.8.26', 'Exigences de sécurité applicatives portées par les contrats éditeurs ; aucun développement interne.'],
+      ['A.8.27', 'Aucune architecture logicielle conçue en interne.'],
+      ['A.8.28', 'Aucun code source produit en interne.'],
+      ['A.8.29', 'Pas de cycle de développement interne à tester ; recette fonctionnelle éditeur seulement.'],
+      ['A.8.31', 'Pas d’environnements de développement ni de test internes.'],
+    ];
+    const pending = ['A.7.5', 'A.7.6', 'A.7.7', 'A.7.8', 'A.7.9', 'A.7.10', 'A.7.11', 'A.7.12', 'A.7.13', 'A.7.14'];
+
+    // Statuts appliqués seulement aux éléments jamais évalués : relancer le
+    // seed n'écrase pas une évaluation faite depuis l'interface.
+    const setItem = async (ref: string, status: string, statement: string | null, included: boolean, justification: string | null) => {
+      await sql`
+        UPDATE assessment_items ai SET status = ${status}::assessment_item_status, statement = ${statement},
+          soa_included = ${included}, soa_justification = ${justification},
+          assessed_by = ${DEMO.userClaire}, assessed_at = '2026-09-15T14:00:00Z'
+        FROM requirements r
+        WHERE ai.assessment_id = ${DEMO.assessmentIso} AND ai.requirement_id = r.id AND r.ref_id = ${ref}
+          AND ai.assessed_at IS NULL`;
+    };
+    for (const [ref, statement] of gaps) await setItem(ref, 'ecart', statement, true, null);
+    for (const [ref, justification] of excluded) await setItem(ref, 'non_applicable', null, false, justification);
+    const leaves = (await sql`
+      SELECT r.ref_id FROM assessment_items ai JOIN requirements r ON r.id = ai.requirement_id
+      WHERE ai.assessment_id = ${DEMO.assessmentIso} AND ai.assessed_at IS NULL`) as unknown as { ref_id: string }[];
+    for (const { ref_id: ref } of leaves) {
+      if (!pending.includes(ref)) await setItem(ref, 'conforme', null, true, null);
     }
   } finally {
     await sql.end();

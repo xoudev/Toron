@@ -128,7 +128,7 @@ async function setProcessors(tx: TenantTx, tenantId: string, processingId: strin
 }
 
 export async function createProcessing(tx: TenantTx, tenantId: string, input: ProcessingInput, supplierIds: readonly string[]): Promise<string> {
-  const [row] = await tx.insert(schema.processingActivities).values({ tenantId, ...input }).returning({ id: schema.processingActivities.id });
+  const [row] = await tx.insert(schema.processingActivities).values({ ...input, tenantId }).returning({ id: schema.processingActivities.id });
   await setProcessors(tx, tenantId, row!.id, supplierIds);
   return row!.id;
 }

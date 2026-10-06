@@ -1,6 +1,6 @@
 'use client';
 
-import { deadlineState, hoursUntil, type NotifKind } from '@toron/core';
+import { deadlineDelay, deadlineState, type NotifKind } from '@toron/core';
 import type { IncidentDetail, IncidentSummary } from '@toron/db';
 import { Dialog } from '@toron/ui';
 import { useRouter } from 'next/navigation';
@@ -37,10 +37,8 @@ function fmtDateTime(d: Date): string {
 }
 function countdownText(dueAt: Date, sentAt: Date | null, now: Date): string {
   if (sentAt) return `Transmise le ${fmtDateTime(sentAt)}`;
-  const h = hoursUntil(dueAt, now);
-  if (h < 0) return `Échéance dépassée (il y a ${Math.abs(h)} h)`;
-  if (h < 48) return `Échéance dans ${h} h`;
-  return `Échéance dans ${Math.round(h / 24)} j`;
+  const d = deadlineDelay(dueAt, now);
+  return d.past ? `Échéance dépassée depuis ${d.label}` : `Échéance dans ${d.label}`;
 }
 
 export function IncidentsBoard({ slug, canManage, incidents }: { slug: string; canManage: boolean; incidents: IncidentSummary[] }) {
@@ -153,7 +151,7 @@ function IncidentDetailPanel({ slug, incidentId, canManage }: { slug: string; in
                       </div>
                       {canManage && !n.sentAt && d.status !== 'clos' ? (
                         <button className="btn btn-ghost btn-sm" disabled={pending} onClick={() => run(() => markNotifSentAction(slug, { incidentId: d.id, kind: n.kind }))}>Marquer transmise</button>
-                      ) : <span className="countdown">{n.sentAt ? '✓' : `${hoursUntil(n.dueAt, now)} h`}</span>}
+                      ) : <span className="countdown">{n.sentAt ? '✓' : `${deadlineDelay(n.dueAt, now).past ? '−' : ''}${deadlineDelay(n.dueAt, now).label}`}</span>}
                     </div>
                   );
                 })}

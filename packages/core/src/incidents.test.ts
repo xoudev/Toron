@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { canCloseIncident, deadlineState, hoursUntil, nis2Deadlines } from './incidents.ts';
+import { canCloseIncident, deadlineDelay, deadlineState, hoursUntil, nis2Deadlines } from './incidents.ts';
 
 const qualifiedAt = new Date('2026-07-18T08:00:00Z');
 
@@ -45,5 +45,17 @@ describe('clôture — REX obligatoire si important (RM §6.1)', () => {
     expect(canCloseIncident({ nis2Important: true, rex: null })).toBe(false);
     expect(canCloseIncident({ nis2Important: true, rex: '   ' })).toBe(false);
     expect(canCloseIncident({ nis2Important: true, rex: 'Cause racine corrigée, MFA généralisé.' })).toBe(true);
+  });
+});
+
+describe('délai lisible des échéances réglementaires', () => {
+  const due = new Date('2026-07-20T10:00:00Z');
+  it('reste en heures sous 48 h, dans les deux sens', () => {
+    expect(deadlineDelay(due, new Date('2026-07-19T10:00:00Z'))).toEqual({ past: false, label: '24 h' });
+    expect(deadlineDelay(due, new Date('2026-07-20T15:00:00Z'))).toEqual({ past: true, label: '5 h' });
+  });
+  it('passe en jours au-delà de 48 h', () => {
+    expect(deadlineDelay(due, new Date('2026-10-06T16:00:00Z'))).toEqual({ past: true, label: '78 jours' });
+    expect(deadlineDelay(due, new Date('2026-07-17T10:00:00Z'))).toEqual({ past: false, label: '3 jours' });
   });
 });

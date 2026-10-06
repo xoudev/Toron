@@ -141,6 +141,7 @@ export {
   nis2Deadlines,
   deadlineState,
   hoursUntil,
+  deadlineDelay,
   canCloseIncident,
   type IncidentSeverity,
   type IncidentStatus,

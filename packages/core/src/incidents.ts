@@ -64,6 +64,18 @@ export function hoursUntil(dueAt: Date, now: Date): number {
 }
 
 /**
+ * Délai lisible jusqu'à une échéance réglementaire : en heures sous 48 h
+ * (la granularité qui compte pour 24 h / 72 h), en jours au-delà.
+ */
+export function deadlineDelay(dueAt: Date, now: Date): { past: boolean; label: string } {
+  const h = hoursUntil(dueAt, now);
+  const abs = Math.abs(h);
+  if (abs < 48) return { past: h < 0, label: `${abs} h` };
+  const days = Math.round(abs / 24);
+  return { past: h < 0, label: `${days} jour${days > 1 ? 's' : ''}` };
+}
+
+/**
  * Clôture autorisée ? (RM §6.1) : un incident qualifié « important NIS 2 » ne
  * peut être clos sans retour d'expérience (REX) renseigné.
  */

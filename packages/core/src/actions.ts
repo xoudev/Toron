@@ -28,6 +28,7 @@ export const ACTION_ORIGINS = [
   'assessment',
   'review',
   'manual',
+  'supplier',
 ] as const;
 export type ActionOrigin = (typeof ACTION_ORIGINS)[number];
 

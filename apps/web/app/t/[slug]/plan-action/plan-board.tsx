@@ -30,7 +30,7 @@ const STATUS_LABEL: Record<ActionEffectiveStatus, string> = {
 const STORED_STATUSES: ActionStatus[] = ['planifie', 'en_cours', 'verification', 'termine'];
 const PRIORITY_LABEL: Record<string, string> = { p1: 'P1', p2: 'P2', p3: 'P3' };
 const ORIGIN_LABEL: Record<string, string> = {
-  risk: 'Risque', assessment: 'Écart', nc: 'NC', finding: 'Constat', incident: 'Incident', review: 'Revue', manual: 'Manuel',
+  risk: 'Risque', assessment: 'Écart', nc: 'NC', finding: 'Constat', incident: 'Incident', review: 'Revue', manual: 'Manuel', supplier: 'Fournisseur',
 };
 
 function fmtDate(d: string | null): string {

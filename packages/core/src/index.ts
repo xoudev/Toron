@@ -7,6 +7,7 @@ export * from './search.ts';
 export * from './csv.ts';
 export * from './acknowledgements.ts';
 export * from './modules.ts';
+export * from './suppliers.ts';
 export {
   frameworksCovered,
   isMutualized,

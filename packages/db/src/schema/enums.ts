@@ -64,6 +64,7 @@ export const actionOrigin = pgEnum('action_origin', [
   'assessment',
   'review',
   'manual',
+  'supplier',
 ]);
 
 export const actionPriority = pgEnum('action_priority', ['p1', 'p2', 'p3']);

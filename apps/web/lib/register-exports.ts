@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { refCodeFor, type CsvColumn, type SearchKind } from '@toron/core';
+import { SUPPLIER_RATING_LABEL, refCodeFor, type CsvColumn, type SearchKind } from '@toron/core';
 import {
   listActions, listAssets, listControls, listDocuments, listEvidences, listIncidents, listNc, listRisks,
   listSuppliers, type TenantTx,
@@ -109,6 +109,11 @@ export const REGISTER_EXPORTS = {
       { header: 'Services', value: (r) => r.services },
       { header: 'Données confiées', value: (r) => r.dataCategories.join(', ') },
       { header: 'Clauses contractuelles', value: (r) => label(CONTRACT, r.contractStatus) },
+      { header: 'Dernière évaluation', value: (r) => r.lastAssessedOn },
+      { header: 'Note /100', value: (r) => r.lastScore },
+      { header: 'Appréciation', value: (r) => (r.lastRating ? SUPPLIER_RATING_LABEL[r.lastRating] : null) },
+      { header: 'Prochaine échéance d’attestation', value: (r) => r.nextAttestationExpiry },
+      { header: 'Actions ouvertes', value: (r) => r.openActionCount },
       { header: 'Propriétaire', value: (r) => r.ownerName },
       { header: 'Prochaine revue', value: (r) => r.nextReview },
     ],

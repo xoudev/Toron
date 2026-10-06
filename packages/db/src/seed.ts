@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { hash } from '@node-rs/argon2';
-import { defaultRiskScale, riskBand, type RiskBand } from '@toron/core';
+import { assessSupplier, supplierQuestion, defaultRiskScale, riskBand, type RiskBand, type SupplierAnswers } from '@toron/core';
 import { FRAMEWORK_CATALOG, iso27001, recyf } from '@toron/frameworks';
 import postgres from 'postgres';
 
@@ -59,6 +59,14 @@ export const DEMO = {
   ebiosSc2: 'd0000000-0000-4000-8000-000000000103',
   ebiosSc3: 'd0000000-0000-4000-8000-000000000104',
   assessmentIso: 'd0000000-0000-4000-8000-000000000111',
+  supplierEvalHebergeur: 'd0000000-0000-4000-8000-000000000121',
+  supplierEvalInfogerance: 'd0000000-0000-4000-8000-000000000122',
+  attestSecNumCloud: 'd0000000-0000-4000-8000-000000000131',
+  attestIsoHebergeur: 'd0000000-0000-4000-8000-000000000132',
+  attestDpaHebergeur: 'd0000000-0000-4000-8000-000000000133',
+  attestIsoInfogerance: 'd0000000-0000-4000-8000-000000000134',
+  attestAssuranceTransporteur: 'd0000000-0000-4000-8000-000000000135',
+  actionSupplierIncidents: 'd0000000-0000-4000-8000-000000000141',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -858,6 +866,51 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, tier = EXCLUDED.tier,
           contract_status = EXCLUDED.contract_status`;
     }
+
+    // Évaluations : l'hébergeur est à jour et satisfaisant ; l'infogérant,
+    // évalué il y a plus d'un an, n'engage pas de notification sous 24 h —
+    // point bloquant pour un fournisseur critique, action corrective ouverte.
+    const yes = (overrides: SupplierAnswers): SupplierAnswers => ({
+      gouvernance: 'oui', mfa: 'oui', chiffrement: 'oui', localisation: 'oui', incidents: 'oui', continuite: 'oui',
+      vulnerabilites: 'oui', sous_traitance: 'oui', rgpd: 'oui', reversibilite: 'oui', audit: 'oui', ...overrides,
+    });
+    const evaluations = [
+      [DEMO.supplierEvalHebergeur, DEMO.supplierHebergeur, 't1', '2026-03-12', yes({ sous_traitance: 'partiel', reversibilite: 'partiel' }),
+       'Qualification SecNumCloud vérifiée. Liste des sous-traitants ultérieurs à compléter au renouvellement.'],
+      [DEMO.supplierEvalInfogerance, DEMO.supplierInfogerance, 't1', '2025-06-20', yes({ incidents: 'non', vulnerabilites: 'partiel', audit: 'non' }),
+       'Pas d’engagement de délai de notification des incidents dans le contrat actuel.'],
+    ] as const;
+    for (const [id, supplierId, tier, on, answers, notes] of evaluations) {
+      const result = assessSupplier(answers, tier);
+      if (!result.ok) throw new Error('Évaluation de démonstration incomplète');
+      await sql`
+        INSERT INTO supplier_assessments (id, tenant_id, supplier_id, assessed_on, assessor_user_id, answers, score, rating, notes)
+        VALUES (${id}, ${DEMO.tenantId}, ${supplierId}, ${on}, ${DEMO.userClaire}, ${sql.json(answers)},
+                ${result.score}, ${result.rating}, ${notes})
+        ON CONFLICT (id) DO NOTHING`;
+    }
+
+    const attestations = [
+      [DEMO.attestSecNumCloud, DEMO.supplierHebergeur, 'secnumcloud', 'Offre IaaS qualifiée', '2024-06-30', '2027-06-30'],
+      [DEMO.attestIsoHebergeur, DEMO.supplierHebergeur, 'iso27001', 'Périmètre : centres de données France', '2023-10-28', '2026-10-28'],
+      [DEMO.attestDpaHebergeur, DEMO.supplierHebergeur, 'dpa', 'Annexe 3 du contrat cadre', '2024-07-01', null],
+      [DEMO.attestIsoInfogerance, DEMO.supplierInfogerance, 'iso27001', 'Périmètre : centre de services Lyon', '2023-09-15', '2026-09-15'],
+      [DEMO.attestAssuranceTransporteur, DEMO.supplierTransporteur, 'assurance', 'Responsabilité civile professionnelle', '2026-02-01', '2027-01-31'],
+    ] as const;
+    for (const [id, supplierId, kind, label, issued, until] of attestations) {
+      await sql`
+        INSERT INTO supplier_attestations (id, tenant_id, supplier_id, kind, label, issued_on, valid_until, created_by)
+        VALUES (${id}, ${DEMO.tenantId}, ${supplierId}, ${kind}, ${label}, ${issued}, ${until}, ${DEMO.userClaire})
+        ON CONFLICT (id) DO NOTHING`;
+    }
+
+    await sql`
+      INSERT INTO actions (id, tenant_id, title, description, origin_type, origin_id, owner_user_id, due_date, priority, status)
+      VALUES (${DEMO.actionSupplierIncidents}, ${DEMO.tenantId},
+              ${`Prestataire d’infogérance — ${supplierQuestion('incidents')!.correctiveAction}`},
+              'Avenant à négocier avant le renouvellement ; NIS 2 impose l’alerte précoce sous 24 h.',
+              'supplier', ${DEMO.supplierInfogerance}, ${DEMO.userClaire}, '2026-11-15', 'p1', 'en_cours')
+      ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, status = EXCLUDED.status`;
 
     // ── Module 5.8 : audit interne de démonstration ─────────────────────
     // Piloté par Antoine (direction), pas par Claire (RSSI, propriétaire du

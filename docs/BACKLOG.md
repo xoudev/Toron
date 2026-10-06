@@ -6,6 +6,13 @@ description courte, phase cible pressentie.
 
 ## Entrées
 
+- **2026-10-06 · Questionnaire fournisseur rempli par le fournisseur (5.10)**
+  — L'évaluation livrée en V1 est remplie par l'organisation à partir des
+  pièces du fournisseur. Envoyer le même questionnaire au fournisseur
+  (compte invité restreint, lien à durée de vie courte, relances, pièces
+  jointes versées au coffre de preuves) relève du portail fournisseur.
+  Phase cible : V2.
+
 - **2026-10-06 · source-map-js 1.2.2 (GHSA-68fv-2mgg-jv7q)** — Avis élevé
   (déni de service sur des source maps malveillantes) sur une dépendance
   transitive de PostCSS (Next.js, Vite). Le correctif 1.2.2 a été publié le

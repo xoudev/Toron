@@ -1,4 +1,4 @@
-import type { WorkItem, WorkKind } from '@toron/core';
+import { REASSESSMENT_MONTHS, type WorkItem, type WorkKind } from '@toron/core';
 import { sql } from 'drizzle-orm';
 
 import type { TenantTx } from '../tenant.ts';
@@ -72,8 +72,21 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
     SELECT 'audit', au.id, au.title, au.planned_at::text, au.status::text
       FROM audits au WHERE au.lead_auditor = ${userId} AND au.status <> 'clos'
     UNION ALL
-    SELECT 'fournisseur', s.id, s.name, s.next_review::text, NULL
-      FROM suppliers s WHERE s.owner_user_id = ${userId}
+    SELECT 'fournisseur', s.id, s.name, d.due::text, d.reason
+      FROM suppliers s
+      LEFT JOIN LATERAL (
+        SELECT v.due, v.reason FROM (VALUES
+          (s.next_review, 'revue'),
+          ((SELECT min(t.valid_until) FROM supplier_attestations t WHERE t.supplier_id = s.id), 'attestation'),
+          ((SELECT (max(sa.assessed_on) + make_interval(months => CASE s.tier
+                      WHEN 't1' THEN ${REASSESSMENT_MONTHS.t1}::int
+                      WHEN 't2' THEN ${REASSESSMENT_MONTHS.t2}::int
+                      ELSE ${REASSESSMENT_MONTHS.t3}::int END))::date
+              FROM supplier_assessments sa WHERE sa.supplier_id = s.id), 'evaluation')
+        ) AS v(due, reason)
+        WHERE v.due IS NOT NULL ORDER BY v.due LIMIT 1
+      ) d ON true
+      WHERE s.owner_user_id = ${userId}
     UNION ALL
     SELECT 'controle', c.id, c.title, NULL, NULL
       FROM controls c WHERE c.owner_user_id = ${userId} AND c.status = 'actif'
@@ -101,7 +114,7 @@ function detailFor(r: Row): string {
     case 'preuve': return 'Renouvellement de la preuve';
     case 'document': return 'Revue documentaire';
     case 'audit': return r.detail === 'en_cours' ? 'Audit en cours' : 'Audit à conduire';
-    case 'fournisseur': return 'Revue du fournisseur';
+    case 'fournisseur': return r.detail === 'attestation' ? 'Attestation à renouveler' : r.detail === 'evaluation' ? 'Évaluation à refaire' : 'Revue du fournisseur';
     case 'controle': return 'Contrôle sous votre responsabilité';
     case 'processus': return 'Processus que vous pilotez';
   }

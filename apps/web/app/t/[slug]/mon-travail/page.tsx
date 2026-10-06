@@ -40,8 +40,8 @@ export default async function MonTravailPage({ params }: { params: Promise<{ slu
             <h1>Mon travail</h1>
             <p className="sub">
               Tout ce dont vous êtes responsable dans {ctx.tenantName}, quel que soit le module :
-              actions, incidents, non-conformités, revues de risques, preuves à renouveler, documents à
-              revoir, audits et fournisseurs.
+              actions, incidents, non-conformités, documents à lire ou à revoir, revues de risques, preuves à
+              renouveler, audits et fournisseurs.
               {urgent > 0 ? <> <b>{urgent} élément{urgent > 1 ? 's demandent' : ' demande'} votre attention cette semaine.</b></> : null}
             </p>
           </div>

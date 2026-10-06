@@ -37,7 +37,7 @@ export function WorkList({ slug, today, groups, total }: { slug: string; today: 
       <div className="empty-state">
         <h2>Rien ne vous est assigné pour l’instant</h2>
         <p>
-          Dès qu’on vous confie une action, un risque à revoir, une preuve à renouveler ou un incident,
+          Dès qu’on vous confie une action, un risque à revoir, une preuve à renouveler, un incident ou un document à lire,
           il apparaît ici avec son échéance. Les responsables affectent les éléments depuis chaque module.
         </p>
         <a className="btn btn-ghost btn-sm" href={`/t/${slug}/plan-action`}>Voir le plan d’action</a>

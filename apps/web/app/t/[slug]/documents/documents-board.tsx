@@ -1,6 +1,6 @@
 'use client';
 
-import { DOCUMENT_TEMPLATES, type DocumentType } from '@toron/core';
+import { DOCUMENT_TEMPLATES, acknowledgementProgress, type DocumentType } from '@toron/core';
 import type { DocumentSummary, DocumentVersionRow, ScopeSummary, TenantMember } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
@@ -12,8 +12,12 @@ import { sanitizeDocumentHtml } from '@/lib/sanitize-html';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
+  acknowledgeDocumentAction,
   addVersionAction,
   createDocumentAction,
+  getAcknowledgementsAction,
+  setAcknowledgementRequiredAction,
+  type AcknowledgementView,
   getVersionBodyAction,
   getVersionsAction,
   publishVersionAction,
@@ -83,6 +87,7 @@ export function DocumentsBoard({ slug, canManage, documents, scopes, members, pr
                   <th style={{ width: 100 }}>Statut</th>
                   <th style={{ width: 150 }}>Propriétaire</th>
                   <th style={{ width: 150 }}>Revue</th>
+                  <th style={{ width: 110 }}>Lecture</th>
                 </tr>
               </thead>
               <tbody>
@@ -96,6 +101,11 @@ export function DocumentsBoard({ slug, canManage, documents, scopes, members, pr
                     <td>{d.latestStatus ? <span className={`doc-status doc-status--${d.latestStatus}`}>{d.latestStatus === 'publie' ? 'Publié' : 'Brouillon'}</span> : <span className="ds-mono">—</span>}</td>
                     <td><div className="ds-owner"><span className="ds-avatar" title={d.ownerName ?? undefined}>{initials(d.ownerName)}</span><span>{d.ownerName ?? '—'}</span></div></td>
                     <td className={`ds-mono${d.reviewOverdue ? '' : ''}`} style={{ color: d.reviewOverdue ? 'var(--danger)' : undefined, fontWeight: d.reviewOverdue ? 600 : undefined }}>{fmtDate(d.reviewDue)}{d.reviewOverdue ? ' · échue' : ''}</td>
+                    <td>{d.acknowledgementRequired && d.publishedVersionId ? (
+                      <span className={`ds-chip${acknowledgementProgress(d.ackCount, d.memberCount).complete ? '' : ' accent'}`} title={`Acceptations de la v${d.publishedSemver} : ${d.ackCount} sur ${d.memberCount}`}>
+                        {d.ackCount}/{d.memberCount}
+                      </span>
+                    ) : d.acknowledgementRequired ? <span className="ds-muted">À publier</span> : <span className="ds-mono">—</span>}</td>
                   </tr>
                 ))}
               </tbody>
@@ -233,6 +243,8 @@ function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: st
         ) : null}
       </div>
 
+      <AcknowledgementSection slug={slug} doc={doc} canManage={canManage} />
+
       <div className="drawer-section">
         <p className="drawer-section-label">Versions</p>
         {versions === null ? <p className="risk-mut-hint">Chargement…</p> : versions.length === 0 ? <p className="risk-mut-hint">Aucune version — téléversez la première.</p> : (
@@ -273,5 +285,79 @@ function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: st
       ) : null}
       {error ? <p className="form-error" role="alert">{error}</p> : null}
     </Drawer>
+  );
+}
+
+function AcknowledgementSection({ slug, doc, canManage }: { slug: string; doc: DocumentSummary; canManage: boolean }) {
+  const router = useRouter();
+  const [view, setView] = useState<AcknowledgementView | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  const reload = () => getAcknowledgementsAction(slug, { documentId: doc.id }).then((res) => { if (res.ok) setView(res.data); });
+  useEffect(() => {
+    let alive = true;
+    getAcknowledgementsAction(slug, { documentId: doc.id }).then((res) => { if (alive && res.ok) setView(res.data); });
+    return () => { alive = false; };
+  }, [slug, doc.id]);
+
+  if (!view) return null;
+  if (!view.required && !canManage) return null;
+
+  function toggle(required: boolean) {
+    setError(null);
+    start(async () => {
+      const res = await setAcknowledgementRequiredAction(slug, { documentId: doc.id, required });
+      if (res.ok) { await reload(); router.refresh(); } else setError(res.error.message);
+    });
+  }
+  function acknowledge() {
+    setError(null);
+    start(async () => {
+      const res = await acknowledgeDocumentAction(slug, { documentId: doc.id });
+      if (res.ok) { await reload(); router.refresh(); } else setError(res.error.message);
+    });
+  }
+
+  const progress = acknowledgementProgress(view.acknowledged, view.total);
+  const missing = view.members?.filter((m) => !m.acknowledgedAt) ?? [];
+
+  return (
+    <div className="drawer-section ack-section">
+      <p className="drawer-section-label">Lecture obligatoire</p>
+      {canManage ? (
+        <label className="ack-toggle">
+          <input type="checkbox" checked={view.required} disabled={pending} onChange={(e) => toggle(e.target.checked)} />
+          Exiger que chaque membre lise et accepte la version publiée
+        </label>
+      ) : null}
+      {view.required ? (
+        view.semver ? (
+          <>
+            <div className="ack-progress">
+              <span className="coverage-bar" aria-hidden="true"><span style={{ width: `${progress.pct ?? 0}%` }} /></span>
+              <span className="ds-muted">
+                {progress.acknowledged === 0
+                  ? `Aucun membre n’a encore accepté la v${view.semver}`
+                  : `${progress.acknowledged} membre${progress.acknowledged > 1 ? 's' : ''} sur ${progress.total} ${progress.acknowledged > 1 ? 'ont' : 'a'} accepté la v${view.semver}`}
+              </span>
+            </div>
+            {view.acknowledgedByMe ? (
+              <p className="ack-done">Vous avez accepté la v{view.semver} le {new Date(view.acknowledgedByMe).toLocaleDateString('fr-FR')}.</p>
+            ) : (
+              <button className="btn btn-primary btn-sm" disabled={pending} onClick={acknowledge}>
+                {pending ? 'Enregistrement…' : `J’ai lu et j’accepte la version ${view.semver}`}
+              </button>
+            )}
+            {canManage && missing.length > 0 ? (
+              <p className="ds-muted ack-missing">En attente : {missing.map((m) => m.name).join(', ')}</p>
+            ) : null}
+          </>
+        ) : (
+          <p className="ds-muted">Publiez une version pour lancer la campagne de lecture : chaque membre la retrouvera dans « Mon travail ».</p>
+        )
+      ) : null}
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
+    </div>
   );
 }

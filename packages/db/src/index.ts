@@ -14,6 +14,10 @@ export {
 } from './queries/invitations.ts';
 export { exportTenantData, exportedTableNames, type TenantExport } from './queries/tenant-export.ts';
 export { listMyWork } from './queries/work.ts';
+export {
+  setAcknowledgementRequired, acknowledgeDocument, getAcknowledgementStatus, hasAcknowledged,
+  type AcknowledgeResult, type AcknowledgementStatus, type AcknowledgementMember,
+} from './queries/acknowledgements.ts';
 export { searchTenant, type SearchHit } from './queries/search.ts';
 export { withTenant, type TenantTx } from './tenant.ts';
 export { applyMigrations } from './migrate.ts';

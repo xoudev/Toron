@@ -5,6 +5,7 @@ export * from './onboarding.ts';
 export * from './work.ts';
 export * from './search.ts';
 export * from './csv.ts';
+export * from './acknowledgements.ts';
 export {
   frameworksCovered,
   isMutualized,

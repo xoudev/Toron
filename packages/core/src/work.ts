@@ -3,7 +3,7 @@
 // classement et les libellés se décident ici.
 
 export const WORK_KINDS = [
-  'action', 'incident', 'nc', 'risque', 'preuve', 'document', 'audit', 'fournisseur', 'controle', 'processus',
+  'action', 'incident', 'nc', 'lecture', 'risque', 'preuve', 'document', 'audit', 'fournisseur', 'controle', 'processus',
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
 
@@ -11,6 +11,7 @@ export const WORK_KIND_META: Record<WorkKind, { label: string; plural: string; p
   action: { label: 'Action', plural: 'Actions', path: '/plan-action' },
   incident: { label: 'Incident', plural: 'Incidents', path: '/incidents' },
   nc: { label: 'Non-conformité', plural: 'Non-conformités', path: '/non-conformites' },
+  lecture: { label: 'À lire', plural: 'Lectures', path: '/documents' },
   risque: { label: 'Risque', plural: 'Risques', path: '/risques' },
   preuve: { label: 'Preuve', plural: 'Preuves', path: '/preuves' },
   document: { label: 'Document', plural: 'Documents', path: '/documents' },

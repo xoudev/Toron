@@ -78,12 +78,18 @@ export async function addVersion(tx: TenantTx, input: AddVersionInput): Promise<
 }
 
 /** Contenu rédigé (éditeur intégré) d'une version, ou null. */
-export async function getVersionBody(tx: TenantTx, versionId: string): Promise<string | null> {
+/** Options de lecture : un lecteur ne voit que les versions publiées. */
+export interface VersionReadOptions {
+  publishedOnly?: boolean;
+}
+
+export async function getVersionBody(tx: TenantTx, versionId: string, opts: VersionReadOptions = {}): Promise<string | null> {
   const [row] = await tx
-    .select({ body: schema.documentVersions.body })
+    .select({ body: schema.documentVersions.body, status: schema.documentVersions.status })
     .from(schema.documentVersions)
     .where(eq(schema.documentVersions.id, versionId));
-  return row?.body ?? null;
+  if (!row || (opts.publishedOnly && row.status !== 'publie')) return null;
+  return row.body ?? null;
 }
 
 /**
@@ -120,6 +126,13 @@ export interface DocumentSummary {
   latestSemver: string | null;
   latestStatus: DocumentVersionStatus | null;
   requirementCount: number;
+  /** Lecture obligatoire par tous les membres (accusé par version publiée). */
+  acknowledgementRequired: boolean;
+  publishedVersionId: string | null;
+  publishedSemver: string | null;
+  /** Accusés reçus sur la version publiée courante. */
+  ackCount: number;
+  memberCount: number;
 }
 
 interface RawDocument {
@@ -136,6 +149,11 @@ interface RawDocument {
   latest_semver: string | null;
   latest_status: DocumentVersionStatus | null;
   requirement_count: number | string;
+  acknowledgement_required: boolean;
+  published_version_id: string | null;
+  published_semver: string | null;
+  ack_count: number | string;
+  member_count: number | string;
 }
 
 /** Liste les documents du tenant avec leur dernière version et l'alerte de revue. */
@@ -147,7 +165,10 @@ export async function listDocuments(tx: TenantTx): Promise<DocumentSummary[]> {
       d.review_due::text AS review_due,
       (SELECT count(*) FROM document_versions v WHERE v.document_id = d.id) AS version_count,
       (SELECT count(*) FROM document_requirements dr WHERE dr.document_id = d.id) AS requirement_count,
-      lv.id AS latest_version_id, lv.semver AS latest_semver, lv.status AS latest_status
+      lv.id AS latest_version_id, lv.semver AS latest_semver, lv.status AS latest_status,
+      d.acknowledgement_required, pv.id AS published_version_id, pv.semver AS published_semver,
+      (SELECT count(*) FROM document_acknowledgements a WHERE a.version_id = pv.id) AS ack_count,
+      (SELECT count(*) FROM memberships) AS member_count
     FROM documents d
     LEFT JOIN scopes s ON s.id = d.scope_id
     LEFT JOIN processes p ON p.id = d.process_id
@@ -156,6 +177,10 @@ export async function listDocuments(tx: TenantTx): Promise<DocumentSummary[]> {
       SELECT id, semver, status FROM document_versions v
       WHERE v.document_id = d.id ORDER BY v.created_at DESC LIMIT 1
     ) lv ON true
+    LEFT JOIN LATERAL (
+      SELECT id, semver FROM document_versions v
+      WHERE v.document_id = d.id AND v.status = 'publie' ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC LIMIT 1
+    ) pv ON true
     ORDER BY d.type, d.title
   `);
   const now = new Date();
@@ -174,6 +199,11 @@ export async function listDocuments(tx: TenantTx): Promise<DocumentSummary[]> {
     latestSemver: r.latest_semver,
     latestStatus: r.latest_status,
     requirementCount: Number(r.requirement_count),
+    acknowledgementRequired: r.acknowledgement_required,
+    publishedVersionId: r.published_version_id,
+    publishedSemver: r.published_semver,
+    ackCount: Number(r.ack_count),
+    memberCount: Number(r.member_count),
   }));
 }
 
@@ -189,13 +219,14 @@ export interface DocumentVersionRow {
 }
 
 /** Versions d'un document (la plus récente d'abord). */
-export async function listVersions(tx: TenantTx, documentId: string): Promise<DocumentVersionRow[]> {
+export async function listVersions(tx: TenantTx, documentId: string, opts: VersionReadOptions = {}): Promise<DocumentVersionRow[]> {
   const rows = await tx.execute(sql`
     SELECT v.id, v.semver, v.status, v.file_name, (v.content IS NOT NULL) AS has_content,
            (v.body IS NOT NULL) AS has_body,
            u.name AS created_by_name, v.created_at::text AS created_at
     FROM document_versions v LEFT JOIN users u ON u.id = v.created_by
     WHERE v.document_id = ${documentId}
+      ${opts.publishedOnly ? sql`AND v.status = 'publie'` : sql``}
     ORDER BY v.created_at DESC
   `);
   return (
@@ -240,12 +271,13 @@ export interface VersionContent {
 export async function getVersionContent(
   tx: TenantTx,
   versionId: string,
+  opts: VersionReadOptions = {},
 ): Promise<VersionContent | null> {
   const [row] = await tx
-    .select({ content: schema.documentVersions.content, fileName: schema.documentVersions.fileName })
+    .select({ content: schema.documentVersions.content, fileName: schema.documentVersions.fileName, status: schema.documentVersions.status })
     .from(schema.documentVersions)
     .where(eq(schema.documentVersions.id, versionId));
-  if (!row || !row.content) return null;
+  if (!row || !row.content || (opts.publishedOnly && row.status !== 'publie')) return null;
   return { content: row.content, fileName: row.fileName };
 }
 

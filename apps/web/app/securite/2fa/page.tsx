@@ -1,112 +1,17 @@
-'use client';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-import { useState } from 'react';
+import { auth } from '@/lib/auth';
 
-import { authClient } from '@/lib/auth-client';
+import { Activation2fa } from './activation-2fa';
 
-type Etape = 'mot_de_passe' | 'verification' | 'active';
+export const dynamic = 'force-dynamic';
 
-export default function Activation2faPage() {
-  const [etape, setEtape] = useState<Etape>('mot_de_passe');
-  const [password, setPassword] = useState('');
-  const [totpUri, setTotpUri] = useState('');
-  const [backupCodes, setBackupCodes] = useState<string[]>([]);
-  const [code, setCode] = useState('');
-  const [erreur, setErreur] = useState<string | null>(null);
+const SUITE = '/securite/2fa';
 
-  async function demarrer(e: React.FormEvent) {
-    e.preventDefault();
-    setErreur(null);
-    const { data, error } = await authClient.twoFactor.enable({ password });
-    if (error || !data) {
-      setErreur('Activation impossible — vérifiez votre mot de passe puis réessayez.');
-      return;
-    }
-    // better-auth renvoie, selon la méthode configurée, un OTP ou un TOTP : seul
-    // le TOTP est utilisé ici, toute autre réponse est refusée explicitement.
-    if (!('totpURI' in data)) {
-      setErreur("Activation impossible : la méthode TOTP n'est pas disponible pour ce compte. Contactez l'administrateur de votre organisation.");
-      return;
-    }
-    setTotpUri(data.totpURI);
-    setBackupCodes(data.backupCodes);
-    setEtape('verification');
-  }
-
-  async function confirmer(e: React.FormEvent) {
-    e.preventDefault();
-    setErreur(null);
-    const { error } = await authClient.twoFactor.verifyTotp({ code });
-    if (error) {
-      setErreur('Code invalide — scannez la clé dans votre application puis saisissez le code affiché.');
-      return;
-    }
-    setEtape('active');
-  }
-
-  return (
-    <main className="auth-page">
-      <div className="auth-card">
-      <h1>Activer la double authentification</h1>
-
-      {etape === 'mot_de_passe' ? (
-        <form onSubmit={demarrer}>
-          <p>
-            Votre rôle (Direction, RSSI ou propriétaire) exige le TOTP. Confirmez votre mot de
-            passe pour générer la clé.
-          </p>
-          <label>
-            Mot de passe
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
-          </label>
-          {erreur ? <p role="alert">{erreur}</p> : null}
-          <button className="btn btn-primary" type="submit">Générer la clé</button>
-        </form>
-      ) : null}
-
-      {etape === 'verification' ? (
-        <form onSubmit={confirmer}>
-          <p>
-            Ajoutez cette clé dans votre application d’authentification (saisie manuelle depuis
-            l’URI ci-dessous), puis confirmez avec un premier code.
-          </p>
-          <p>
-            <code>{totpUri}</code>
-          </p>
-          <p>
-            Codes de secours à conserver en lieu sûr : <code>{backupCodes.join(' · ')}</code>
-          </p>
-          <label>
-            Code à 6 chiffres
-            <input
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              autoComplete="one-time-code"
-              required
-            />
-          </label>
-          {erreur ? <p role="alert">{erreur}</p> : null}
-          <button className="btn btn-primary" type="submit">Confirmer l’activation</button>
-        </form>
-      ) : null}
-
-      {etape === 'active' ? (
-        <>
-          <p>Double authentification activée.</p>
-          <p className="auth-alt">
-            <a href="/organisations">Retour à vos organisations</a>
-          </p>
-        </>
-      ) : null}
-      </div>
-    </main>
-  );
+/** L'activation du TOTP exige une session ouverte : sinon, connexion puis retour ici. */
+export default async function Activation2faPage() {
+  const session = await auth().api.getSession({ headers: await headers() });
+  if (!session) redirect(`/connexion?suite=${encodeURIComponent(SUITE)}`);
+  return <Activation2fa suite={SUITE} />;
 }

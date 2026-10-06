@@ -17,7 +17,8 @@
     "./actifs.css": "./src/styles/actifs.css",
     "./import.css": "./src/styles/import.css",
     "./incidents.css": "./src/styles/incidents.css",
-    "./nc.css": "./src/styles/nc.css"
+    "./nc.css": "./src/styles/nc.css",
+    "./parametres.css": "./src/styles/parametres.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

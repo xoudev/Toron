@@ -1,89 +1,82 @@
 'use client';
 
-import type { AuditRow, TenantMember } from '@toron/db';
-import { useMemo, useState } from 'react';
+import type { MembershipRole } from '@toron/core';
+import type {
+  AuditRow, InvitationRow, LegalEntityRow, OrganisationProfile, ScopeDetail, SiteRow, TenantMemberDetail,
+} from '@toron/db';
 
-import { initials } from '@/lib/format';
+import { SectionDonnees } from './section-donnees';
+import { SectionJournal } from './section-journal';
+import { SectionMembres } from './section-membres';
+import { SectionOrganisation } from './section-organisation';
+import { SectionPerimetres } from './section-perimetres';
+import { SectionSecurite } from './section-securite';
+import { SECTIONS, type Section } from './sections';
 
-const ROLE_LABEL: Record<string, string> = {
-  owner: 'Propriétaire', direction: 'Direction', rssi: 'RSSI', resp_qualite: 'Resp. qualité',
-  pilote: 'Pilote', auditeur: 'Auditeur', contributeur: 'Contributeur', lecteur: 'Lecteur',
-};
-const ACTION_FILTERS: { label: string; prefix: string }[] = [
-  { label: 'Tout', prefix: '' },
-  { label: 'Risques', prefix: 'risk.' },
-  { label: 'Actions', prefix: 'action.' },
-  { label: 'Documents', prefix: 'document.' },
-  { label: 'Preuves', prefix: 'evidence.' },
-  { label: 'Incidents', prefix: 'incident.' },
-  { label: 'Non-conformités', prefix: 'nc.' },
-  { label: 'Contrôles', prefix: 'control.' },
-  { label: 'Import', prefix: 'import.' },
-];
-
-function fmt(d: Date): string {
-  return new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+export interface Viewer {
+  userId: string;
+  role: MembershipRole;
+  twoFactorEnabled: boolean;
+  canConfigure: boolean;
+  canManageMembers: boolean;
 }
 
-export function ParametresClient({ members, audit }: { members: TenantMember[]; audit: AuditRow[] }) {
-  const [tab, setTab] = useState<'membres' | 'audit'>('membres');
-  const [prefix, setPrefix] = useState('');
-  const shown = useMemo(() => (prefix ? audit.filter((a) => a.action.startsWith(prefix)) : audit), [audit, prefix]);
+export interface JournalPage {
+  rows: AuditRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  filtre: string;
+}
+
+export function ParametresClient(props: {
+  slug: string;
+  section: Section;
+  viewer: Viewer;
+  profile: OrganisationProfile;
+  entities: LegalEntityRow[];
+  sites: SiteRow[];
+  scopes: ScopeDetail[];
+  members: TenantMemberDetail[];
+  invitations: InvitationRow[];
+  pendingInvitations: number;
+  journal: JournalPage;
+  exportTables: string[];
+}) {
+  const { slug, section } = props;
+  const badges: Partial<Record<Section, string>> = {
+    perimetres: String(props.scopes.length),
+    membres: props.pendingInvitations > 0 ? `${props.members.length} · ${props.pendingInvitations} inv.` : String(props.members.length),
+  };
 
   return (
-    <>
-      <div className="ds-toolbar">
-        <div className="view-toggle" role="group" aria-label="Volet">
-          <button aria-pressed={tab === 'membres'} onClick={() => setTab('membres')}>Membres ({members.length})</button>
-          <button aria-pressed={tab === 'audit'} onClick={() => setTab('audit')}>Journal d’audit</button>
-        </div>
-        {tab === 'audit' ? (
-          <>
-            <span className="spacer" />
-            <label className="field" style={{ margin: 0, minWidth: 170 }}>
-              <select value={prefix} onChange={(e) => setPrefix(e.target.value)} aria-label="Filtrer le journal">
-                {ACTION_FILTERS.map((f) => <option key={f.prefix} value={f.prefix}>{f.label}</option>)}
-              </select>
-            </label>
-          </>
+    <div className="settings">
+      <nav className="settings-nav" aria-label="Sections des paramètres">
+        {SECTIONS.map((s) => (
+          <a key={s.key} href={`/t/${slug}/parametres?section=${s.key}`} aria-current={s.key === section ? 'page' : undefined}>
+            {s.label}
+            {badges[s.key] ? <span className="nav-badge">{badges[s.key]}</span> : null}
+          </a>
+        ))}
+      </nav>
+      <div className="settings-panel">
+        {section === 'organisation' ? (
+          <SectionOrganisation slug={slug} viewer={props.viewer} profile={props.profile} entities={props.entities} sites={props.sites} />
+        ) : null}
+        {section === 'perimetres' ? (
+          <SectionPerimetres slug={slug} viewer={props.viewer} scopes={props.scopes} entities={props.entities} sites={props.sites} />
+        ) : null}
+        {section === 'membres' ? (
+          <SectionMembres slug={slug} viewer={props.viewer} members={props.members} invitations={props.invitations} />
+        ) : null}
+        {section === 'securite' ? (
+          <SectionSecurite viewer={props.viewer} members={props.members} profile={props.profile} />
+        ) : null}
+        {section === 'journal' ? <SectionJournal slug={slug} journal={props.journal} /> : null}
+        {section === 'donnees' ? (
+          <SectionDonnees slug={slug} viewer={props.viewer} profile={props.profile} tables={props.exportTables} />
         ) : null}
       </div>
-
-      {tab === 'membres' ? (
-        <div className="ds-table-card"><div className="ds-scroll">
-          <table className="ds-table" style={{ minWidth: 520 }}>
-            <thead><tr><th>Membre</th><th>Rôle</th></tr></thead>
-            <tbody>
-              {members.map((m) => (
-                <tr key={m.userId} style={{ cursor: 'default' }}>
-                  <td><div className="ds-owner"><span className="ds-avatar">{initials(m.name)}</span><span className="ds-primary">{m.name}</span></div></td>
-                  <td><span className="ds-chip">{ROLE_LABEL[m.role] ?? m.role}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div></div>
-      ) : (
-        <div className="ds-table-card"><div className="ds-scroll">
-          <table className="ds-table" style={{ minWidth: 720 }}>
-            <thead><tr><th style={{ width: 150 }}>Horodatage</th><th style={{ width: 150 }}>Acteur</th><th>Action</th><th style={{ width: 130 }}>Objet</th><th style={{ width: 120 }}>IP</th></tr></thead>
-            <tbody>
-              {shown.length === 0 ? (
-                <tr><td colSpan={5} className="ds-empty">Aucune entrée pour ce filtre.</td></tr>
-              ) : shown.map((a) => (
-                <tr key={a.id} style={{ cursor: 'default' }}>
-                  <td className="ds-mono">{fmt(a.at)}</td>
-                  <td>{a.actorName ?? '—'}</td>
-                  <td><span className="ds-id">{a.action}</span></td>
-                  <td className="ds-muted">{a.objectType}</td>
-                  <td className="ds-mono">{a.ip ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div></div>
-      )}
-      <p className="risk-mut-hint" style={{ marginTop: 10 }}>Journal INSERT-only, sans aucune API d’effacement (S6) — 200 entrées les plus récentes.</p>
-    </>
+    </div>
   );
 }

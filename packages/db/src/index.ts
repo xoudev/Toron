@@ -1,4 +1,18 @@
 export { createDb, type Db, type DbHandle } from './client.ts';
+export {
+  getOrganisationProfile, updateOrganisationProfile,
+  listLegalEntities, saveLegalEntity, deleteLegalEntity,
+  listSites, saveSite, deleteSite,
+  listScopeDetails, saveOrganisationScope, deleteOrganisationScope,
+  createTenantWithOwner,
+  type OrganisationProfile, type LegalEntityRow, type SiteRow, type ScopeDetail,
+} from './queries/organisation.ts';
+export {
+  listInvitations, createInvitation, revokeInvitation, isEmailMember,
+  listPendingInvitationsForEmail, acceptInvitation,
+  type InvitationRow, type PendingInvitation, type AcceptInvitationResult,
+} from './queries/invitations.ts';
+export { exportTenantData, exportedTableNames, type TenantExport } from './queries/tenant-export.ts';
 export { withTenant, type TenantTx } from './tenant.ts';
 export { applyMigrations } from './migrate.ts';
 export { writeAuditEntry, type AuditEntry } from './audit.ts';
@@ -78,8 +92,11 @@ export {
   type AcceptRiskInput,
   type RiskHistoryRow,
 } from './queries/risks.ts';
-export { listTenantMembers, type TenantMember } from './queries/members.ts';
-export { listAuditLog, type AuditRow } from './queries/audit.ts';
+export {
+  listTenantMembers, listTenantMemberDetails, getMembership, countOwners, updateMemberRole, removeMember,
+  type TenantMember, type TenantMemberDetail,
+} from './queries/members.ts';
+export { listAuditLog, countAuditLog, type AuditRow } from './queries/audit.ts';
 export {
   createSupplier,
   updateSupplier,

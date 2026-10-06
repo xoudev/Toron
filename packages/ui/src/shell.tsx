@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 
 import { BrandMark } from './brand.tsx';
+import { NavToggle } from './nav-toggle.tsx';
 
 // Shell applicatif (M0-5) : sidebar 236px + topbar 52px, d'après la
-// maquette de référence. Composants serveur — la seule interactivité
-// (bascule de thème) vit dans theme-toggle.tsx.
+// maquette de référence. Composants serveur — l'interactivité (bascule de
+// thème, ouverture de la navigation sur écran étroit) vit dans des
+// composants client dédiés.
 
 export interface NavItem {
   label: string;
@@ -37,15 +39,18 @@ export function Sidebar({
   groups,
   userName,
   userRole,
+  footerActions,
 }: {
   tenantName: string;
   tenantDetail: string;
   groups: NavGroup[];
   userName: string;
   userRole: string;
+  /** Liens et boutons de compte (changer d'organisation, se déconnecter). */
+  footerActions?: ReactNode;
 }) {
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" id="navigation-principale">
       <div className="sidebar-brand">
         <span style={{ color: 'var(--text)' }}>
           <BrandMark size={24} />
@@ -84,6 +89,7 @@ export function Sidebar({
             <small className="sidebar-user-role">{userRole}</small>
           </span>
         </div>
+        {footerActions ? <div className="sidebar-actions">{footerActions}</div> : null}
       </div>
     </aside>
   );
@@ -135,6 +141,7 @@ export function Topbar({
 }) {
   return (
     <header className="topbar">
+      <NavToggle />
       <span className="topbar-crumb">
         {crumbRoot} / <b>{crumbCurrent}</b>
       </span>

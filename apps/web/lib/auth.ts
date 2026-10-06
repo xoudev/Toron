@@ -22,6 +22,8 @@ let instance: ReturnType<typeof buildAuth> | undefined;
 
 function buildAuth() {
   return betterAuth({
+    // Nom affiché comme émetteur dans les applications d'authentification.
+    appName: 'Toron',
     baseURL: env().BETTER_AUTH_URL,
     secret: env().BETTER_AUTH_SECRET,
     telemetry: { enabled: false },
@@ -55,7 +57,7 @@ function buildAuth() {
         generateId: () => crypto.randomUUID(),
       },
     },
-    plugins: [twoFactor(), nextCookies()],
+    plugins: [twoFactor({ issuer: 'Toron' }), nextCookies()],
   });
 }
 

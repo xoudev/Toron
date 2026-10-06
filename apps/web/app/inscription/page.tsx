@@ -1,10 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 
 import { authClient } from '@/lib/auth-client';
+import { safeInternalPath } from '@/lib/safe-path';
 
 export default function InscriptionPage() {
+  return (
+    <Suspense fallback={null}>
+      <InscriptionForm />
+    </Suspense>
+  );
+}
+
+function InscriptionForm() {
+  const suite = safeInternalPath(useSearchParams().get('suite'));
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,16 +34,19 @@ export default function InscriptionPage() {
       name,
       email,
       password,
-      callbackURL: '/organisations',
+      callbackURL: suite,
     });
-    setEnCours(false);
     if (error) {
+      setEnCours(false);
       setErreur(
-        error.message === 'User already exists'
+        error.code?.startsWith('USER_ALREADY_EXISTS')
           ? 'Un compte existe déjà avec cette adresse — connectez-vous plutôt.'
           : 'Création impossible — vérifiez les champs saisis puis réessayez.',
       );
+      return;
     }
+    // La session est ouverte : on poursuit vers la destination demandée.
+    window.location.assign(suite);
   }
 
   return (
@@ -71,7 +85,8 @@ export default function InscriptionPage() {
         </button>
       </form>
       <p className="auth-alt">
-        Déjà un compte ? <a href="/connexion">Se connecter</a>
+        Déjà un compte ?{' '}
+        <a href={suite === '/organisations' ? '/connexion' : `/connexion?suite=${encodeURIComponent(suite)}`}>Se connecter</a>
       </p>
       </div>
     </main>

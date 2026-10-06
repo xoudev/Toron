@@ -2,6 +2,7 @@
 
 import { Sidebar } from '@toron/ui';
 import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
 
 import { buildNav } from './nav';
 
@@ -16,12 +17,14 @@ export function TenantSidebar({
   tenantDetail,
   userName,
   userRole,
+  footerActions,
 }: {
   slug: string;
   tenantName: string;
   tenantDetail: string;
   userName: string;
   userRole: string;
+  footerActions?: ReactNode;
 }) {
   const pathname = usePathname();
   return (
@@ -31,6 +34,7 @@ export function TenantSidebar({
       groups={buildNav(slug, pathname)}
       userName={userName}
       userRole={userRole}
+      footerActions={footerActions}
     />
   );
 }

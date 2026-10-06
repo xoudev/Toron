@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
@@ -30,7 +31,7 @@ const STATUS_LABEL: Record<ActionEffectiveStatus, string> = {
 const STORED_STATUSES: ActionStatus[] = ['planifie', 'en_cours', 'verification', 'termine'];
 const PRIORITY_LABEL: Record<string, string> = { p1: 'P1', p2: 'P2', p3: 'P3' };
 const ORIGIN_LABEL: Record<string, string> = {
-  risk: 'Risque', assessment: 'Écart', nc: 'NC', finding: 'Constat', incident: 'Incident', review: 'Revue', manual: 'Manuel',
+  risk: 'Risque', assessment: 'Écart', nc: 'NC', finding: 'Constat', incident: 'Incident', review: 'Revue', manual: 'Manuel', supplier: 'Fournisseur',
 };
 
 function fmtDate(d: string | null): string {
@@ -240,7 +241,7 @@ function ActionCreateDialog({ slug, members, onClose }: { slug: string; members:
   }
   return (
     <Dialog title="Nouvelle action" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="Corriger l’écart…" /></label>
         <label className="field">Description<textarea name="description" rows={2} /></label>
         <div className="risk-form-grid">
@@ -289,7 +290,7 @@ function ActionDrawer({ slug, members, action, canManage, onClose }: { slug: str
 
   return (
     <Drawer header={header} labelId="act-drawer-title" onClose={onClose}>
-      <form action={saveDetails} className="drawer-section">
+      <form onSubmit={keepValues(saveDetails)} className="drawer-section">
         <label className="field">Intitulé<input name="title" defaultValue={action.title} minLength={2} required disabled={!canManage} /></label>
         <label className="field">Description<textarea name="description" defaultValue={action.description ?? ''} rows={2} disabled={!canManage} /></label>
         <div className="risk-form-grid">

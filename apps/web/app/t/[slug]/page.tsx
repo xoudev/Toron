@@ -1,4 +1,4 @@
-import { canManageControls, onboardingProgress, onboardingSteps } from '@toron/core';
+import { canManageControls, onboardingProgress, onboardingSteps, type OptionalModule } from '@toron/core';
 import { getDashboardExtras, getDashboardMetrics, getFrameworkCoverage, listProcesses, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 
@@ -77,24 +77,25 @@ export default async function TenantAccueilPage({
 
   // Priorités concrètes de la semaine, dérivées des indicateurs (seuls les
   // points réellement à traiter sont listés).
-  const priorities = [
+  const on = (module?: OptionalModule) => !module || overview.enabled(module);
+  const priorities: { n: number; one: string; many: string; href: string; tone: 'danger' | 'warn'; module?: OptionalModule }[] = [
     { n: m.actionsOverdue, one: 'action en retard', many: 'actions en retard', href: `${base}/plan-action?statut=en_retard`, tone: 'danger' as const },
-    { n: x.incidentsOpen, one: 'incident en cours (échéances NIS 2)', many: 'incidents en cours (échéances NIS 2)', href: `${base}/incidents`, tone: 'danger' as const },
-    { n: x.ncOpen, one: 'non-conformité ouverte', many: 'non-conformités ouvertes', href: `${base}/non-conformites`, tone: 'warn' as const },
-    { n: m.risksAttention, one: 'acceptation de risque à traiter', many: 'acceptations de risque à traiter', href: `${base}/risques`, tone: 'warn' as const },
+    { n: x.incidentsOpen, one: 'incident en cours (échéances NIS 2)', many: 'incidents en cours (échéances NIS 2)', href: `${base}/incidents`, tone: 'danger' as const, module: 'incidents' as const },
+    { n: x.ncOpen, one: 'non-conformité ouverte', many: 'non-conformités ouvertes', href: `${base}/non-conformites`, tone: 'warn' as const, module: 'non_conformites' as const },
+    { n: m.risksAttention, one: 'acceptation de risque à traiter', many: 'acceptations de risque à traiter', href: `${base}/risques`, tone: 'warn' as const, module: 'risques' as const },
     { n: m.evidencesStale, one: 'preuve à renouveler', many: 'preuves à renouveler', href: `${base}/preuves`, tone: 'warn' as const },
     { n: m.documentsReviewOverdue, one: 'document à revoir', many: 'documents à revoir', href: `${base}/documents`, tone: 'warn' as const },
-    { n: processesAlert, one: 'processus en alerte', many: 'processus en alerte', href: `${base}/processus`, tone: 'warn' as const },
-  ].filter((p) => p.n > 0);
+    { n: processesAlert, one: 'processus en alerte', many: 'processus en alerte', href: `${base}/processus`, tone: 'warn' as const, module: 'processus' as const },
+  ].filter((p) => p.n > 0 && on(p.module));
 
-  const mgmt = [
-    { label: 'Audits en cours', value: x.auditsInProgress, href: `${base}/audits` },
-    { label: 'Non-conformités ouvertes', value: x.ncOpen, href: `${base}/non-conformites` },
-    { label: 'Incidents en cours', value: x.incidentsOpen, href: `${base}/incidents` },
-    { label: 'Processus cartographiés', value: x.processesTotal, sub: x.processesTotal === 0 ? undefined : processesAlert > 0 ? `${processesAlert} en alerte` : 'santé OK', href: `${base}/processus` },
-    { label: 'Revues de direction tenues', value: x.reviewsHeld, href: `${base}/revue-direction` },
+  const mgmt: { label: string; value: number; sub?: string; href: string; module?: OptionalModule }[] = [
+    { label: 'Audits en cours', value: x.auditsInProgress, href: `${base}/audits`, module: 'audits' as const },
+    { label: 'Non-conformités ouvertes', value: x.ncOpen, href: `${base}/non-conformites`, module: 'non_conformites' as const },
+    { label: 'Incidents en cours', value: x.incidentsOpen, href: `${base}/incidents`, module: 'incidents' as const },
+    { label: 'Processus cartographiés', value: x.processesTotal, sub: x.processesTotal === 0 ? undefined : processesAlert > 0 ? `${processesAlert} en alerte` : 'santé OK', href: `${base}/processus`, module: 'processus' as const },
+    { label: 'Revues de direction tenues', value: x.reviewsHeld, href: `${base}/revue-direction`, module: 'revue_direction' as const },
     { label: 'Référentiels au catalogue', value: x.frameworksAvailable, sub: `${x.requirementsTotal} exigences`, href: `${base}/referentiels` },
-  ];
+  ].filter((t) => on(t.module));
 
   return (
     <>
@@ -132,7 +133,7 @@ export default async function TenantAccueilPage({
           </section>
         ) : null}
 
-        <div className="kpi-grid">
+        <div className={`kpi-grid${on('risques') ? '' : ' kpi-grid--5'}`}>
           <a className={`card kpi ${m.coveragePct === null ? '' : 'kpi--ok'}`} href={`${base}/referentiels`}>
             <span className="kpi-label">Couverture de conformité</span>
             <span className="kpi-value">{m.coveragePct === null ? '—' : `${m.coveragePct}%`}</span>
@@ -150,6 +151,7 @@ export default async function TenantAccueilPage({
             <span className="kpi-sub">{m.controlsTotal === 0 ? 'Aucun contrôle décrit' : `${m.controlsMutualized} mutualisé${m.controlsMutualized > 1 ? 's' : ''} — prouvé${m.controlsMutualized > 1 ? 's' : ''} une fois`}</span>
           </a>
 
+          {on('risques') ? (
           <a className={`card kpi ${m.risksAttention > 0 ? 'kpi--danger' : ''}`} href={`${base}/risques`}>
             <span className="kpi-label">Risques</span>
             <span className="kpi-value">{m.risksTotal}</span>
@@ -167,6 +169,7 @@ export default async function TenantAccueilPage({
               {m.risksTotal === 0 ? 'Registre à constituer' : m.risksAttention > 0 ? `${m.risksAttention} acceptation${m.risksAttention > 1 ? 's' : ''} à traiter` : 'Acceptations à jour'}
             </span>
           </a>
+          ) : null}
 
           <a className={`card kpi ${m.actionsOverdue > 0 ? 'kpi--danger' : m.actionsOpen > 0 ? 'kpi--warn' : ''}`} href={`${base}/plan-action`}>
             <span className="kpi-label">Plan d’action</span>

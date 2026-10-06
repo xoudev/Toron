@@ -2,12 +2,12 @@
 
 import {
   MEMBERSHIP_ROLES, SCOPE_KINDS, appError, assignableRoles, canConfigureOrganisation, canManageMembers,
-  memberRemovalVerdict, memberRoleChangeVerdict, normalizeEmail,
+  memberRemovalVerdict, memberRoleChangeVerdict, normalizeEmail, OPTIONAL_MODULES,
 } from '@toron/core';
 import {
   countOwners, createInvitation, deleteLegalEntity, deleteOrganisationScope, deleteSite, getMembership,
   getOrganisationProfile, isEmailMember, removeMember, revokeInvitation, saveLegalEntity, saveOrganisationScope,
-  saveSite, updateMemberRole, updateOrganisationProfile, withTenant, writeAuditEntry,
+  saveSite, setDisabledModules, updateMemberRole, updateOrganisationProfile, withTenant, writeAuditEntry,
 } from '@toron/db';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -325,5 +325,29 @@ export async function removeMemberAction(slug: string, input: unknown): Promise<
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_RETRAIT', 'Le retrait du membre a échoué — réessayez.')) };
+  }
+}
+
+// ── Modules ─────────────────────────────────────────────────────────────
+
+export async function setModulesAction(slug: string, input: unknown): Promise<ActionResult<{ disabled: string[] }>> {
+  const auth = await authorizeRole(slug, canConfigureOrganisation, CONFIG_REFUSAL);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ disabled: z.array(z.enum(OPTIONAL_MODULES)).max(OPTIONAL_MODULES.length) }).safeParse(input);
+  if (!parsed.success) return invalid('Sélection de modules invalide — rechargez la page.');
+  try {
+    const disabled = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const before = (await getOrganisationProfile(tx)).disabledModules;
+      const saved = await setDisabledModules(tx, parsed.data.disabled);
+      await writeAuditEntry(tx, {
+        tenantId: auth.tenantId, actorUserId: auth.userId, action: 'organisation.modules', objectType: 'organisation',
+        objectId: auth.tenantId, before: { disabled: before }, after: { disabled: saved }, ip: auth.ip, userAgent: auth.userAgent,
+      });
+      return saved;
+    });
+    revalidateTenant(slug);
+    return { ok: true, data: { disabled } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_MISE_A_JOUR', 'Les modules n’ont pas été enregistrés — réessayez.')) };
   }
 }

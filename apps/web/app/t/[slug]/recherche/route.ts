@@ -1,7 +1,8 @@
-import { SEARCH_KIND_META, parseSearchQuery, refCodeFor } from '@toron/core';
+import { SEARCH_KIND_META, parseSearchQuery, refCodeFor, workKindEnabled } from '@toron/core';
 import { searchTenant, withTenant } from '@toron/db';
 
 import { appDb } from '@/lib/db';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 // Recherche transverse pour la palette Ctrl+K : lecture seule, réservée aux
@@ -23,7 +24,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
   const raw = new URL(req.url).searchParams.get('q') ?? '';
   const query = parseSearchQuery(raw.slice(0, 200));
-  const hits = await withTenant(appDb().db, ctx.tenantId, (tx) => searchTenant(tx, query));
+  const { disabledModules } = await getOrganisationOverview(ctx.tenantId);
+  const hits = (await withTenant(appDb().db, ctx.tenantId, (tx) => searchTenant(tx, query)))
+    .filter((h) => workKindEnabled(h.kind, disabledModules));
   const base = `/t/${slug}`;
 
   const results: SearchResult[] = hits.map((h) => {

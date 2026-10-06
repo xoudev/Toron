@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
@@ -239,7 +240,7 @@ function CreateDialog({ slug, onClose, onCreated }: { slug: string; onClose: () 
   }
   return (
     <Dialog title="Déclarer une non-conformité" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="Écarts d’étiquetage…" /></label>
         <label className="field">Description<textarea name="description" rows={2} /></label>
         <div className="risk-form-grid">

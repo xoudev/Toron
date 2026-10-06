@@ -5,6 +5,8 @@ import { Dialog } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
+import { keepValues } from '@/lib/forms';
+
 import { activateFrameworkAction, createCustomFrameworkAction, setFrameworkHiddenAction } from './actions';
 
 const SCOPE_KIND_LABEL: Record<string, string> = {
@@ -43,7 +45,7 @@ export function CreateFrameworkButton({ slug }: { slug: string }) {
       </button>
       {open ? (
         <Dialog title="Créer un référentiel interne" onClose={() => setOpen(false)}>
-          <form action={submit}>
+          <form onSubmit={keepValues(submit)}>
             <p>Un référentiel d’exigences propre à votre organisation (exigences groupe, politique interne).</p>
             <label className="field">
               Code

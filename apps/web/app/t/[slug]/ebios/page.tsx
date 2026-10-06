@@ -4,6 +4,8 @@ import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
+import { ModuleDisabled } from '@/components/module-disabled';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { EbiosBoard } from './ebios-board';
@@ -14,6 +16,7 @@ export default async function EbiosPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
+  if (!(await getOrganisationOverview(ctx.tenantId)).enabled('ebios')) return <ModuleDisabled slug={slug} module="ebios" role={ctx.role} />;
   const canManage = canManageControls(ctx.role);
 
   const { studies, scopes } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({

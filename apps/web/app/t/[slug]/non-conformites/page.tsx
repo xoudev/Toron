@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
+import { ModuleDisabled } from '@/components/module-disabled';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { NcBoard } from './nc-board';
@@ -15,6 +17,7 @@ export default async function NonConformitesPage({ params }: { params: Promise<{
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
+  if (!(await getOrganisationOverview(ctx.tenantId)).enabled('non_conformites')) return <ModuleDisabled slug={slug} module="non_conformites" role={ctx.role} />;
   const canManage = canManageControls(ctx.role);
 
   const ncs = await withTenant(appDb().db, ctx.tenantId, (tx) => listNc(tx));

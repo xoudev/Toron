@@ -1,4 +1,4 @@
-import { MEMBERSHIP_ROLE_LABEL, urgentWorkCount } from '@toron/core';
+import { MEMBERSHIP_ROLE_LABEL, urgentWorkCount, workKindEnabled } from '@toron/core';
 import { listMyWork, withTenant } from '@toron/db';
 import { AppShell } from '@toron/ui';
 import { redirect } from 'next/navigation';
@@ -42,7 +42,8 @@ export default async function TenantLayout({
           tenantDetail={overview.headline}
           userName={ctx.userName}
           userRole={MEMBERSHIP_ROLE_LABEL[ctx.role]}
-          urgentWork={urgentWorkCount(myWork, todayParis())}
+          urgentWork={urgentWorkCount(myWork.filter((i) => workKindEnabled(i.kind, overview.disabledModules)), todayParis())}
+          disabledModules={overview.disabledModules}
           footerActions={
             <>
               <a className="sidebar-link" href="/organisations">Changer d’organisation</a>

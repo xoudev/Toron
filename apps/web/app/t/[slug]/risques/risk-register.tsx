@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
@@ -335,7 +336,7 @@ function RiskDrawer({
 
   return (
     <Drawer header={header} labelId="risk-drawer-title" onClose={onClose}>
-      <form action={saveDetails}>
+      <form onSubmit={keepValues(saveDetails)}>
         <div className="drawer-section">
           <label className="field">Intitulé
             <input name="title" defaultValue={risk.title} minLength={2} required disabled={!canManage} />
@@ -443,7 +444,7 @@ function RiskCreateDialog({
 
   return (
     <Dialog title="Nouveau risque" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field field--full">Intitulé du risque
           <input name="title" placeholder="Rançongiciel paralysant le SI…" minLength={2} required />
         </label>
@@ -515,7 +516,7 @@ function AcceptanceSection({ slug, risk, canManage, onDone }: { slug: string; ri
         <div className="acc-signature" style={{ borderColor: 'color-mix(in srgb, var(--warn) 40%, transparent)', background: 'color-mix(in srgb, var(--warn) 8%, transparent)' }}>Marqué « accepter » sans acceptation signée — <b>à remonter en revue de direction</b>.</div>
       )}
       {canManage ? (open ? (
-        <form action={submit} style={{ marginTop: 10 }}>
+        <form onSubmit={keepValues(submit)} style={{ marginTop: 10 }}>
           <label className="field">Motivation<textarea name="rationale" rows={2} minLength={10} required placeholder="Pourquoi ce risque résiduel est-il tolérable…" /></label>
           <label className="field">Échéance de revalidation (optionnelle)<input type="date" name="expiresAt" /></label>
           {error ? <p className="form-error" role="alert">{error}</p> : null}

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import { addFindingAction, convertFindingAction, createAuditAction, getAuditAction, setAuditStatusAction } from './audit-actions';
@@ -147,7 +148,7 @@ function CreateDialog({ slug, frameworks, scopes, members, onClose, onCreated }:
   }
   return (
     <Dialog title="Programmer un audit" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="Audit interne SMSI — S2 2026" /></label>
         <div className="risk-form-grid">
           <label className="field">Référentiel<select name="frameworkId" defaultValue=""><option value="">—</option>{frameworks.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>

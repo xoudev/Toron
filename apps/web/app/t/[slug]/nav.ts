@@ -1,14 +1,15 @@
+import { moduleForSegment } from '@toron/core';
 import type { NavGroup } from '@toron/ui';
 
 // Navigation du produit (correspondance §9 du PLAN). L'item actif est
 // déterminé par le chemin courant ; « Mon travail » porte le nombre
 // d'échéances dépassées ou à moins de 7 jours.
-export function buildNav(slug: string, pathname: string, urgentWork = 0): NavGroup[] {
+export function buildNav(slug: string, pathname: string, urgentWork = 0, disabledModules: readonly string[] = []): NavGroup[] {
   const base = `/t/${slug}`;
   const isActive = (href: string): boolean =>
     href === base ? pathname === base : pathname === href || pathname.startsWith(`${href}/`);
 
-  return [
+  const groups: NavGroup[] = [
     {
       title: 'Pilotage',
       items: [
@@ -138,4 +139,12 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0): NavGro
       ],
     },
   ];
+  // Les modules masqués par l'organisation disparaissent de la navigation.
+  const hidden = (href: string) => {
+    const m = moduleForSegment(href.slice(base.length + 1));
+    return m !== null && disabledModules.includes(m);
+  };
+  return groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => !hidden(i.href)) }))
+    .filter((g) => g.items.length > 0);
 }

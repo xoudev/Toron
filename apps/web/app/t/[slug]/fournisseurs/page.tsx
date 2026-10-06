@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
+import { ModuleDisabled } from '@/components/module-disabled';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { SupplierBoard } from './supplier-board';
@@ -15,6 +17,7 @@ export default async function FournisseursPage({ params }: { params: Promise<{ s
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
+  if (!(await getOrganisationOverview(ctx.tenantId)).enabled('fournisseurs')) return <ModuleDisabled slug={slug} module="fournisseurs" role={ctx.role} />;
   const canManage = canManageControls(ctx.role);
 
   const { suppliers, members } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({

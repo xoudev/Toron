@@ -1,6 +1,6 @@
 export { createDb, type Db, type DbHandle } from './client.ts';
 export {
-  getOrganisationProfile, updateOrganisationProfile,
+  getOrganisationProfile, updateOrganisationProfile, setDisabledModules,
   listLegalEntities, saveLegalEntity, deleteLegalEntity,
   listSites, saveSite, deleteSite,
   listScopeDetails, saveOrganisationScope, deleteOrganisationScope,

@@ -6,6 +6,7 @@ export * from './work.ts';
 export * from './search.ts';
 export * from './csv.ts';
 export * from './acknowledgements.ts';
+export * from './modules.ts';
 export {
   frameworksCovered,
   isMutualized,

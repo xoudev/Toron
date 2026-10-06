@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import type { ScopeKind } from '@toron/core';
+import { defaultDisabledModules, normalizeDisabledModules, type OptionalModule, type ScopeKind } from '@toron/core';
 import { eq, sql } from 'drizzle-orm';
 
 import { writeAuditEntry } from '../audit.ts';
@@ -11,6 +11,7 @@ import { withTenant, type TenantTx } from '../tenant.ts';
 export interface OrganisationProfile {
   id: string; name: string; slug: string; employeeCount: number | null;
   sector: string | null; region: string; plan: string; createdAt: Date;
+  disabledModules: OptionalModule[];
   scopeCount: number; siteCount: number; entityCount: number;
 }
 
@@ -19,12 +20,20 @@ export async function getOrganisationProfile(tx: TenantTx): Promise<Organisation
     id: schema.tenants.id, name: schema.tenants.name, slug: schema.tenants.slug,
     employeeCount: schema.tenants.employeeCount, sector: schema.tenants.sector,
     region: schema.tenants.region, plan: schema.tenants.plan, createdAt: schema.tenants.createdAt,
+    disabledModules: schema.tenants.disabledModules,
     scopeCount: sql<number>`(select count(*)::integer from scopes)`,
     siteCount: sql<number>`(select count(*)::integer from sites)`,
     entityCount: sql<number>`(select count(*)::integer from legal_entities)`,
   }).from(schema.tenants);
   if (!row) throw new Error('Organisation introuvable.');
-  return row;
+  return { ...row, disabledModules: normalizeDisabledModules(row.disabledModules) };
+}
+
+/** Modules masqués de l'organisation courante (liste normalisée, dépendances comprises). */
+export async function setDisabledModules(tx: TenantTx, modules: readonly string[]): Promise<OptionalModule[]> {
+  const normalized = normalizeDisabledModules(modules);
+  await tx.update(schema.tenants).set({ disabledModules: normalized });
+  return normalized;
 }
 
 export async function updateOrganisationProfile(tx: TenantTx, input: {
@@ -176,7 +185,7 @@ export async function createTenantWithOwner(db: Db, input: {
     // reçoivent chacune une URL disponible, sans tenant orphelin.
     for (let attempt = 0; attempt < 20; attempt += 1) {
       const slug = attempt === 0 ? input.baseSlug : `${input.baseSlug}-${attempt + 1}`;
-      [tenant] = await tx.insert(schema.tenants).values({ id: tenantId, name: input.name, slug })
+      [tenant] = await tx.insert(schema.tenants).values({ id: tenantId, name: input.name, slug, disabledModules: defaultDisabledModules(input.scopeKind) })
         .onConflictDoNothing({ target: schema.tenants.slug })
         .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
       if (tenant) break;

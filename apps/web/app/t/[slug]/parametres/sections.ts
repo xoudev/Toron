@@ -4,6 +4,7 @@
 export const SECTIONS = [
   { key: 'organisation', label: 'Organisation' },
   { key: 'perimetres', label: 'Périmètres' },
+  { key: 'modules', label: 'Modules' },
   { key: 'membres', label: 'Utilisateurs & rôles' },
   { key: 'securite', label: 'Sécurité' },
   { key: 'journal', label: 'Journal d’audit' },

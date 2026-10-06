@@ -27,6 +27,7 @@ export const tenants = pgTable(
     region: text('region').notNull().default('eu-fr'),
     employeeCount: integer('employee_count'),
     sector: text('sector'),
+    disabledModules: text('disabled_modules').array().notNull().default([]),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

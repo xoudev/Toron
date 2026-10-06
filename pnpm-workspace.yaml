@@ -21,6 +21,11 @@ overrides:
   sharp: ^0.35.5
 # Attend 7 jours avant de résoudre une version fraîchement publiée
 minimumReleaseAge: 10080
+# Exception ponctuelle : correctif de sécurité source-map-js 1.2.2
+# (GHSA-68fv-2mgg-jv7q, publié le 30/09), autorisé avant la fin du délai.
+# Version exacte uniquement ; à retirer à la prochaine mise à jour.
+minimumReleaseAgeExclude:
+  - source-map-js@1.2.2
 # Bloque les sous-dépendances hors registre npm (git, http, …)
 blockExoticSubdeps: true
 # Empêche une mise à jour de paquet d'assouplir ces réglages

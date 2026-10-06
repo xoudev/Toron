@@ -6,14 +6,11 @@ description courte, phase cible pressentie.
 
 ## Entrées
 
-- **2026-10-06 · source-map-js 1.2.2 (GHSA-68fv-2mgg-jv7q)** — Avis élevé
-  (déni de service sur des source maps malveillantes) sur une dépendance
-  transitive de PostCSS (Next.js, Vite). Le correctif 1.2.2 a été publié le
-  30/09 ; la politique `minimumReleaseAge` (7 jours) le rend résolvable à
-  partir du 07/10 14 h UTC. Mettre à jour le lockfile à cette date (`pnpm
-  update -r --depth Infinity source-map-js`) pour faire repasser l'audit des
-  dépendances. Exposition : outillage de build, pas d'exécution en
-  production. Phase cible : immédiate.
+- **2026-10-06 · Retirer l'exception `minimumReleaseAgeExclude`** — Le
+  correctif source-map-js 1.2.2 (GHSA-68fv-2mgg-jv7q) a été installé avant la
+  fin du délai de 7 jours, par une exception limitée à cette version exacte
+  dans `pnpm-workspace.yaml`. La retirer à la prochaine mise à jour des
+  dépendances : le délai est écoulé depuis le 07/10. Phase cible : immédiate.
 
 - **2026-07-19 · Rate limiting distribué (multi-instances)** — §8.1 pose un
   limiteur EN MÉMOIRE dans le middleware (par instance) sur `/api/auth/*` et

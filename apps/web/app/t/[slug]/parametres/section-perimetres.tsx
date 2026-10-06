@@ -6,6 +6,8 @@ import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
+import { keepValues } from '@/lib/forms';
+
 import { deleteScopeAction, saveScopeAction } from './actions';
 import type { Viewer } from './parametres-client';
 
@@ -117,7 +119,7 @@ function ScopeDrawer({ slug, scope, entities, sites, onClose }: {
 
   return (
     <Drawer header={<><span className="ds-id" id="scope-title">{scope ? 'Périmètre' : 'Nouveau périmètre'}</span><span className="ds-chip">Système de management</span></>} labelId="scope-title" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Nom du périmètre<input name="name" defaultValue={scope?.name ?? ''} minLength={2} maxLength={160} required autoFocus placeholder="Ex. SMSI — activités logistiques" /></label>
         <label className="field">Nature
           <select name="kind" defaultValue={scope?.kind ?? 'mixte'} required>

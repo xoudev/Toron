@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 
 import { addActionAction, addScenarioAction, createStudyAction, generateRiskAction, getStudyAction, listStudyExportsAction, requestEbiosExportAction, setWorkshopAction } from './ebios-actions';
 
@@ -231,7 +232,7 @@ function ScenarioAdd({ slug, studyId, onDone }: { slug: string; studyId: string;
       <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>+ Scénario</button>
       {open ? (
         <Dialog title="Ajouter un scénario opérationnel" onClose={() => setOpen(false)}>
-          <form action={submit}>
+          <form onSubmit={keepValues(submit)}>
             <p className="risk-mut-hint">Le couple source de risque / objectif visé est hérité de l’atelier 2.</p>
             <label className="field">Source de risque<input name="riskSource" minLength={2} required placeholder="Cybercriminel organisé" /></label>
             <label className="field">Objectif visé<input name="targetObjective" minLength={2} required placeholder="Rançonner l’entreprise" /></label>
@@ -257,7 +258,7 @@ function CreateDialog({ slug, scopes, onClose, onCreated }: { slug: string; scop
   }
   return (
     <Dialog title="Lancer une étude EBIOS RM" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="SI de production 2026" /></label>
         <label className="field">Périmètre<select name="scopeId" defaultValue={scopes[0]?.id ?? ''}><option value="">—</option>{scopes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
         <p className="risk-mut-hint">Les cinq ateliers ANSSI ; les scénarios opérationnels alimentent le registre de risques unique.</p>

@@ -14,10 +14,11 @@ allowBuilds:
   ssh2: false
 # Correctifs de sécurité imposés aux dépendances transitives : next épingle
 # postcss 8.4.31 (GHSA-r28c-9q8g-f849, GHSA-6g55-p6wh-862q) et accepte sharp
-# 0.34 (vulnérabilités libvips/libheif). À retirer quand next les remonte.
+# 0.34 (vulnérabilités libvips/libheif) ; sharp 0.35.5 corrige librsvg
+# (GHSA-wq5f-xc86-pv6w). À retirer quand next les remonte.
 overrides:
   postcss: ^8.5.28
-  sharp: ^0.35.4
+  sharp: ^0.35.5
 # Attend 7 jours avant de résoudre une version fraîchement publiée
 minimumReleaseAge: 10080
 # Bloque les sous-dépendances hors registre npm (git, http, …)

@@ -78,7 +78,7 @@ export default async function TenantAccueilPage({
   // Priorités concrètes de la semaine, dérivées des indicateurs (seuls les
   // points réellement à traiter sont listés).
   const priorities = [
-    { n: m.actionsOverdue, one: 'action en retard', many: 'actions en retard', href: `${base}/plan-action`, tone: 'danger' as const },
+    { n: m.actionsOverdue, one: 'action en retard', many: 'actions en retard', href: `${base}/plan-action?statut=en_retard`, tone: 'danger' as const },
     { n: x.incidentsOpen, one: 'incident en cours (échéances NIS 2)', many: 'incidents en cours (échéances NIS 2)', href: `${base}/incidents`, tone: 'danger' as const },
     { n: x.ncOpen, one: 'non-conformité ouverte', many: 'non-conformités ouvertes', href: `${base}/non-conformites`, tone: 'warn' as const },
     { n: m.risksAttention, one: 'acceptation de risque à traiter', many: 'acceptations de risque à traiter', href: `${base}/risques`, tone: 'warn' as const },

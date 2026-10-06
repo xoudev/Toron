@@ -3,7 +3,7 @@
 import { KANBAN_COLUMNS, type ActionEffectiveStatus, type ActionStatus } from '@toron/core';
 import type { ActionDetail, ActionSummary, TenantMember } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
@@ -42,9 +42,34 @@ function StatusTag({ status }: { status: ActionEffectiveStatus }) {
   return <span className={`status-tag st--${status}`}>{STATUS_LABEL[status]}</span>;
 }
 
-export function PlanBoard({ slug, canManage, actions, members }: { slug: string; canManage: boolean; actions: ActionSummary[]; members: TenantMember[] }) {
+// Filtres rapides : « ouvertes » par défaut, initialisables depuis l'URL
+// (?statut=en_retard, ?responsable=moi) pour les liens du tableau de bord.
+const STATUS_FILTERS = [
+  { key: 'ouvertes', label: 'Ouvertes' },
+  { key: 'en_retard', label: 'En retard' },
+  { key: 'planifie', label: 'Planifiées' },
+  { key: 'en_cours', label: 'En cours' },
+  { key: 'verification', label: 'En vérification' },
+  { key: 'termine', label: 'Terminées' },
+  { key: 'toutes', label: 'Toutes' },
+] as const;
+type StatusFilter = (typeof STATUS_FILTERS)[number]['key'];
+
+function matchesStatus(a: ActionSummary, f: StatusFilter): boolean {
+  if (f === 'toutes') return true;
+  if (f === 'ouvertes') return a.status !== 'termine';
+  if (f === 'en_retard') return a.effectiveStatus === 'en_retard';
+  return a.status === f;
+}
+
+export function PlanBoard({ slug, canManage, actions, members, viewerId }: { slug: string; canManage: boolean; actions: ActionSummary[]; members: TenantMember[]; viewerId: string }) {
+  const params = useSearchParams();
+  const initialStatus = STATUS_FILTERS.find((f) => f.key === params.get('statut'))?.key ?? 'ouvertes';
   const [view, setView] = useState<'table' | 'kanban'>('table');
   const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatus);
+  const [owner, setOwner] = useState<string>(params.get('responsable') === 'moi' ? viewerId : '');
+  const [priority, setPriority] = useState<string>('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useOpenItem(actions.map((x) => x.id));
@@ -52,9 +77,16 @@ export function PlanBoard({ slug, canManage, actions, members }: { slug: string;
   const toggleSel = (id: string) => setSelected((s) => { const c = new Set(s); if (c.has(id)) c.delete(id); else c.add(id); return c; });
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return actions;
-    return actions.filter((a) => a.title.toLowerCase().includes(q) || refCode('ACT', a.id).toLowerCase().includes(q));
-  }, [actions, query]);
+    return actions.filter((a) => {
+      if (!matchesStatus(a, statusFilter)) return false;
+      if (owner === '__none' && a.ownerUserId) return false;
+      if (owner && owner !== '__none' && a.ownerUserId !== owner) return false;
+      if (priority && a.priority !== priority) return false;
+      if (q && !(a.title.toLowerCase().includes(q) || refCode('ACT', a.id).toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }, [actions, query, statusFilter, owner, priority]);
+  const filtered = statusFilter !== 'ouvertes' || owner !== '' || priority !== '' || query.trim() !== '';
   const open = openId ? actions.find((a) => a.id === openId) ?? null : null;
 
   return (
@@ -64,6 +96,26 @@ export function PlanBoard({ slug, canManage, actions, members }: { slug: string;
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M16.5 16.5 20.5 20.5" /></svg>
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher — ACT-142, intitulé" />
         </div>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)} aria-label="Filtrer par statut">
+          {STATUS_FILTERS.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
+        </select>
+        <select value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="Filtrer par responsable" style={{ maxWidth: 190 }}>
+          <option value="">Tous les responsables</option>
+          <option value={viewerId}>Mes actions</option>
+          <option value="__none">Non attribuées</option>
+          {members.filter((m) => m.userId !== viewerId).map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}
+        </select>
+        <select value={priority} onChange={(e) => setPriority(e.target.value)} aria-label="Filtrer par priorité">
+          <option value="">Toutes priorités</option>
+          <option value="p1">P1 — haute</option>
+          <option value="p2">P2 — moyenne</option>
+          <option value="p3">P3 — basse</option>
+        </select>
+        {filtered ? (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setStatusFilter('ouvertes'); setOwner(''); setPriority(''); setQuery(''); }}>
+            Réinitialiser · {shown.length}/{actions.length}
+          </button>
+        ) : null}
         <div className="view-toggle" role="group" aria-label="Affichage">
           <button aria-pressed={view === 'table'} onClick={() => setView('table')}>Table</button>
           <button aria-pressed={view === 'kanban'} onClick={() => setView('kanban')}>Kanban</button>
@@ -73,7 +125,7 @@ export function PlanBoard({ slug, canManage, actions, members }: { slug: string;
       </div>
 
       {view === 'table' ? (
-        <TableView actions={shown} canManage={canManage} selected={selected} onToggleSel={toggleSel} onOpen={setOpenId} />
+        <TableView actions={shown} canManage={canManage} selected={selected} onToggleSel={toggleSel} onOpen={setOpenId} filtered={filtered} />
       ) : (
         <KanbanView actions={shown} onOpen={setOpenId} />
       )}
@@ -88,9 +140,11 @@ export function PlanBoard({ slug, canManage, actions, members }: { slug: string;
   );
 }
 
-function TableView({ actions, canManage, selected, onToggleSel, onOpen }: { actions: ActionSummary[]; canManage: boolean; selected: Set<string>; onToggleSel: (id: string) => void; onOpen: (id: string) => void }) {
+function TableView({ actions, canManage, selected, onToggleSel, onOpen, filtered }: { actions: ActionSummary[]; canManage: boolean; selected: Set<string>; onToggleSel: (id: string) => void; onOpen: (id: string) => void; filtered: boolean }) {
   if (actions.length === 0) {
-    return <div className="empty-state"><h2>Aucune action</h2><p>Elles naîtront de vos évaluations, audits et incidents — ou créez-en une.</p></div>;
+    return filtered
+      ? <div className="empty-state"><h2>Aucune action ne correspond</h2><p>Élargissez les filtres ou réinitialisez-les.</p></div>
+      : <div className="empty-state"><h2>Aucune action</h2><p>Elles naîtront de vos évaluations, audits et incidents — ou créez-en une.</p></div>;
   }
   return (
     <div className="ds-table-card">

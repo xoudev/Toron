@@ -1,8 +1,6 @@
+import { redirect } from 'next/navigation';
+
+/** L'entrée de l'application poursuit le parcours authentifié. */
 export default function Home() {
-  return (
-    <main>
-      <h1>Toron</h1>
-      <p>Application en construction — phase M0 (fondations).</p>
-    </main>
-  );
+  redirect('/organisations');
 }

@@ -1,6 +1,6 @@
 'use server';
 
-import { appError } from '@toron/core';
+import { appError, canEditModule, canRecordAuditFindings } from '@toron/core';
 import {
   addFinding,
   convertFindingToAction,
@@ -14,16 +14,23 @@ import {
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { authorizeManager, isActionError, logFailure, type ActionResult } from '@/lib/action-guard';
+import { authorizeRole, isActionError, logFailure, type ActionResult } from '@/lib/action-guard';
 import { appDb } from '@/lib/db';
 
 export type { ActionResult };
+
+const MANAGE_REFUSAL = 'Programmer ou clore un audit et convertir un constat sont réservés aux gestionnaires du système de management.';
+const FINDING_REFUSAL = 'Votre rôle ne permet pas de rédiger des constats — demandez le rôle Auditeur ou un rôle de gestion.';
+const authorizeAuditManager = (slug: string) => authorizeRole(slug, (r) => canEditModule(r, 'audits'), MANAGE_REFUSAL);
+const authorizeFindings = (slug: string) => authorizeRole(slug, canRecordAuditFindings, FINDING_REFUSAL);
+// Consulter un audit et ses constats est ouvert à tout membre de l'organisation.
+const authorizeReader = (slug: string) => authorizeRole(slug, () => true, 'Accès refusé.');
 
 const Status = z.enum(['planifie', 'en_cours', 'clos']);
 const FType = z.enum(['conforme', 'observation', 'nc_mineure', 'nc_majeure']);
 
 export async function createAuditAction(slug: string, input: unknown): Promise<ActionResult<{ id: string }>> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeAuditManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ title: z.string().trim().min(2).max(200), frameworkId: z.uuid().optional().nullable(), scopeId: z.uuid().optional().nullable(), plannedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(), leadAuditor: z.uuid().optional().nullable() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Audit invalide — un intitulé est requis.') };
@@ -42,7 +49,7 @@ export async function createAuditAction(slug: string, input: unknown): Promise<A
 }
 
 export async function setAuditStatusAction(slug: string, input: unknown): Promise<ActionResult> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeAuditManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ auditId: z.uuid(), status: Status }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Statut invalide.') };
@@ -56,13 +63,16 @@ export async function setAuditStatusAction(slug: string, input: unknown): Promis
 }
 
 export async function addFindingAction(slug: string, input: unknown): Promise<ActionResult> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeFindings(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ auditId: z.uuid(), requirementRef: z.string().trim().max(40).optional().nullable(), type: FType, description: z.string().trim().min(2).max(2000) }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Constat invalide.') };
   const d = parsed.data;
   try {
-    await withTenant(appDb().db, auth.tenantId, (tx) => addFinding(tx, { tenantId: auth.tenantId, auditId: d.auditId, requirementRef: d.requirementRef ?? null, type: d.type, description: d.description }));
+    await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      await addFinding(tx, { tenantId: auth.tenantId, auditId: d.auditId, requirementRef: d.requirementRef ?? null, type: d.type, description: d.description });
+      await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'audit.finding_add', objectType: 'audit', objectId: d.auditId, after: { type: d.type, requirementRef: d.requirementRef ?? null }, ip: auth.ip, userAgent: auth.userAgent });
+    });
     revalidatePath(`/t/${slug}/audits`);
     return { ok: true, data: undefined };
   } catch (err) {
@@ -71,7 +81,7 @@ export async function addFindingAction(slug: string, input: unknown): Promise<Ac
 }
 
 export async function convertFindingAction(slug: string, input: unknown): Promise<ActionResult> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeAuditManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ findingId: z.uuid(), auditId: z.uuid(), title: z.string().trim().min(2).max(200) }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Conversion invalide.') };
@@ -90,7 +100,7 @@ export async function convertFindingAction(slug: string, input: unknown): Promis
 }
 
 export async function getAuditAction(slug: string, auditId: string): Promise<ActionResult<AuditDetail>> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReader(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.uuid().safeParse(auditId);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };

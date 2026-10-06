@@ -78,15 +78,6 @@ button {
   margin: 0 auto;
 }
 
-@media (max-width: 1080px) {
-  .app-shell {
-    grid-template-columns: 1fr;
-  }
-  .sidebar {
-    display: none;
-  }
-}
-
 /* ─── Sidebar ───────────────────────────────────────────────────────── */
 
 .sidebar {
@@ -284,6 +275,27 @@ a.nav-item:hover {
   font-size: 11px;
 }
 
+.sidebar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.sidebar-link {
+  font-size: 11.5px;
+  color: var(--text-2);
+  padding: 0;
+  text-decoration: none;
+}
+.sidebar-link:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.sidebar-link[disabled] {
+  color: var(--text-3);
+  cursor: default;
+}
+
 /* ─── Topbar ────────────────────────────────────────────────────────── */
 
 .topbar {
@@ -438,4 +450,209 @@ a.nav-item:hover {
 .auth-card .auth-alt {
   font-size: 12px;
   color: var(--text-2);
+}
+
+.auth-card select {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 7px 10px;
+}
+
+/* ─── Choix de l'organisation (hors shell) ───────────────────────────── */
+
+.org-page {
+  align-items: start;
+  padding-top: 48px;
+}
+
+.org-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  padding: 22px 24px 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.org-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.org-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+.org-brand b {
+  font-size: 15px;
+  letter-spacing: 0.06em;
+}
+
+.org-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.org-card h1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.org-card h2 {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+
+.org-help,
+.org-empty {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.org-help b {
+  color: var(--text);
+}
+
+.org-list {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.org-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+}
+.org-item b {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.org-item small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-2);
+  margin-top: 1px;
+}
+
+.org-inline-form {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+.org-inline-form p[role='alert'] {
+  color: var(--danger);
+  font-size: 11.5px;
+  max-width: 260px;
+  text-align: right;
+}
+
+.org-create {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.org-create h2 {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  margin: 0;
+}
+.org-create label {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.org-create input,
+.org-create select {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 7px 10px;
+}
+.org-create input:focus,
+.org-create select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+.org-create p[role='alert'] {
+  color: var(--danger);
+  font-size: 12px;
+}
+.org-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ─── Écran étroit ──────────────────────────────────────────────────────
+   La navigation devient un volet ouvert depuis la topbar. Bloc placé en fin
+   de feuille pour primer sur les règles de base de la sidebar. */
+.nav-toggle {
+  display: none;
+}
+.nav-scrim {
+  display: none;
+}
+
+@media (max-width: 1080px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none;
+  }
+  .nav-toggle {
+    display: grid;
+  }
+  html[data-nav-open='true'] .sidebar {
+    display: flex;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 236px;
+    z-index: 40;
+    box-shadow: 0 0 0 1px var(--border), 12px 0 32px rgba(0, 0, 0, 0.25);
+  }
+  html[data-nav-open='true'] .nav-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: var(--scrim);
+    border: none;
+  }
+  html[data-nav-open='true'] {
+    overflow: hidden;
+  }
 }

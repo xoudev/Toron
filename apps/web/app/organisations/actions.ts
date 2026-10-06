@@ -1,8 +1,7 @@
 'use server';
 
-import { slugifyTenantName } from '@toron/core';
-import { schema } from '@toron/db';
-import { eq } from 'drizzle-orm';
+import { SCOPE_KINDS, slugifyTenantName } from '@toron/core';
+import { acceptInvitation, createTenantWithOwner } from '@toron/db';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -16,6 +15,8 @@ const CreateTenantSchema = z.object({
     .trim()
     .min(2, 'Nom d’organisation trop court — 2 caractères minimum.')
     .max(120, 'Nom d’organisation trop long — 120 caractères maximum.'),
+  scopeName: z.string().trim().min(2, 'Nommez votre premier périmètre (2 caractères minimum).').max(120),
+  scopeKind: z.enum(SCOPE_KINDS, { error: 'Choisissez la nature du périmètre.' }),
 });
 
 export interface CreateTenantState {
@@ -23,9 +24,9 @@ export interface CreateTenantState {
 }
 
 /**
- * Création d'une organisation (tenant) + membership owner pour
- * l'utilisateur connecté. Opération système exécutée sous toron_auth —
- * le rôle applicatif ne peut pas créer de tenant (politique RLS M0-2).
+ * Création d'une organisation par l'utilisateur connecté, qui en devient
+ * propriétaire. Le slug est dérivé du nom (RM §5.1 : contexte explicite
+ * dans l'URL) et dédoublonné si nécessaire.
  */
 export async function createTenantAction(
   _prev: CreateTenantState,
@@ -34,45 +35,60 @@ export async function createTenantAction(
   const session = await auth().api.getSession({ headers: await headers() });
   if (!session) redirect('/connexion');
 
-  const parsed = CreateTenantSchema.safeParse({ name: formData.get('name') });
+  const parsed = CreateTenantSchema.safeParse({
+    name: formData.get('name'), scopeName: formData.get('scopeName'), scopeKind: formData.get('scopeKind'),
+  });
   if (!parsed.success) {
     return { erreur: parsed.error.issues[0]?.message ?? 'Saisie invalide.' };
   }
 
   const base = slugifyTenantName(parsed.data.name);
-  if (base === '') {
+  if (!base) {
     return {
-      erreur:
-        'Nom d’organisation invalide — utilisez au moins un caractère alphanumérique.',
+      erreur: 'Nom d’organisation invalide — utilisez au moins une lettre ou un chiffre.',
     };
   }
 
-  const db = authDb().db;
-  let slug = base;
-  for (let tentative = 0; ; tentative += 1) {
-    const existing = await db
-      .select({ id: schema.tenants.id })
-      .from(schema.tenants)
-      .where(eq(schema.tenants.slug, slug));
-    if (existing.length === 0) break;
-    if (tentative >= 5) {
-      return {
-        erreur:
-          'Ce nom d’organisation est déjà très utilisé — choisissez un intitulé plus distinctif.',
-      };
-    }
-    slug = `${base}-${tentative + 2}`;
+  let slug: string;
+  try {
+    const tenant = await createTenantWithOwner(authDb().db, {
+      ...parsed.data, baseSlug: base, userId: session.user.id,
+    });
+    slug = tenant.slug;
+  } catch {
+    const correlationId = crypto.randomUUID();
+    console.error('[toron] création d’organisation impossible', { correlationId });
+    return { erreur: `Création impossible — réessayez ou choisissez un nom plus distinctif. Référence : ${correlationId}.` };
   }
+  // redirect lève un signal Next ; il doit rester hors du catch métier.
+  redirect(`/t/${slug}`);
+}
 
-  const [tenant] = await db
-    .insert(schema.tenants)
-    .values({ name: parsed.data.name, slug })
-    .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
-  await db.insert(schema.memberships).values({
-    tenantId: tenant!.id,
-    userId: session.user.id,
-    role: 'owner',
-  });
+export interface AcceptInvitationState {
+  erreur: string | null;
+}
 
-  redirect(`/t/${tenant!.slug}`);
+/** Rejoint une organisation depuis la liste des invitations en attente. */
+export async function acceptInvitationAction(
+  _prev: AcceptInvitationState,
+  formData: FormData,
+): Promise<AcceptInvitationState> {
+  const session = await auth().api.getSession({ headers: await headers() });
+  if (!session) redirect('/connexion');
+  const invitationId = z.uuid().safeParse(formData.get('invitationId'));
+  if (!invitationId.success) return { erreur: 'Invitation invalide — rechargez la page.' };
+
+  let slug: string;
+  try {
+    const result = await acceptInvitation(authDb().db, {
+      invitationId: invitationId.data, userId: session.user.id, sessionEmail: session.user.email,
+    });
+    if (!result.ok) return { erreur: result.reason };
+    slug = result.tenantSlug;
+  } catch {
+    const correlationId = crypto.randomUUID();
+    console.error('[toron] acceptation d’invitation impossible', { correlationId });
+    return { erreur: `Impossible de rejoindre l’organisation — réessayez. Référence : ${correlationId}.` };
+  }
+  redirect(`/t/${slug}`);
 }

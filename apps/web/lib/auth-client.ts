@@ -7,7 +7,8 @@ export const authClient = createAuthClient({
   plugins: [
     twoFactorClient({
       onTwoFactorRedirect() {
-        window.location.href = '/connexion/2fa';
+        // La page de connexion conduit elle-même à l'étape du second facteur,
+        // avec la destination déjà validée comme chemin interne.
       },
     }),
   ],

@@ -11,6 +11,7 @@ import '@toron/ui/actifs.css';
 import '@toron/ui/import.css';
 import '@toron/ui/incidents.css';
 import '@toron/ui/nc.css';
+import '@toron/ui/parametres.css';
 
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
@@ -54,7 +55,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="fr" data-theme="dark" className={`${plexSans.variable} ${plexMono.variable}`}>
       <body>
-        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeInit }} />
+        {/* Le navigateur masque la valeur du nonce dans le DOM : l’écart d’hydratation est attendu. */}
+        <script nonce={nonce} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: themeInit }} />
         {children}
       </body>
     </html>

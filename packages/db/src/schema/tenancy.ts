@@ -1,6 +1,7 @@
 import {
   boolean,
   inet,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -24,6 +25,8 @@ export const tenants = pgTable(
     slug: text('slug').notNull(),
     plan: tenantPlan('plan').notNull().default('decouverte'),
     region: text('region').notNull().default('eu-fr'),
+    employeeCount: integer('employee_count'),
+    sector: text('sector'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -103,6 +106,29 @@ export const scopes = pgTable('scopes', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+// Invitations de membres (module 5.1) : seule l'empreinte du jeton est
+// conservée ; le lien complet n'est montré qu'une fois à l'inviteur.
+export const invitations = pgTable(
+  'invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id),
+    email: text('email').notNull(),
+    role: membershipRole('role').notNull().default('lecteur'),
+    tokenHash: text('token_hash').notNull(),
+    invitedBy: uuid('invited_by').references(() => users.id),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    acceptedBy: uuid('accepted_by').references(() => users.id),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('invitations_token_hash_unique').on(t.tokenHash)],
+);
 
 // Journal d'audit immuable (S6) — INSERT only.
 // La protection (droits + trigger) est posée par la migration M0-4.

@@ -1,5 +1,7 @@
 export { appError, type AppError } from './errors.ts';
 export { slugifyTenantName } from './slug.ts';
+export * from './organisation.ts';
+export * from './onboarding.ts';
 export {
   frameworksCovered,
   isMutualized,
@@ -25,11 +27,24 @@ export {
 } from './assessments.ts';
 export {
   MEMBERSHIP_ROLES,
+  MEMBERSHIP_ROLE_LABEL,
+  MEMBERSHIP_ROLE_PURPOSE,
+  PERMISSION_MODULES,
   tenantAccessVerdict,
   totpRequiredForRole,
   canManageControls,
+  canManageMembers,
+  assignableRoles,
+  memberRoleChangeVerdict,
+  memberRemovalVerdict,
+  modulePermission,
+  canEditModule,
+  canRecordAuditFindings,
   type MembershipRole,
   type TenantAccessVerdict,
+  type MemberChangeVerdict,
+  type ModulePermission,
+  type PermissionModule,
 } from './authz.ts';
 export {
   RISK_TREATMENTS,

@@ -20,7 +20,7 @@ function fmt(d: string | null): string {
   return `${day}/${m}/${y}`;
 }
 
-export function AuditBoard({ slug, canManage, audits, frameworks, scopes, members }: { slug: string; canManage: boolean; audits: AuditSummary[]; frameworks: FrameworkSummary[]; scopes: ScopeSummary[]; members: TenantMember[] }) {
+export function AuditBoard({ slug, canManage, canRecord, audits, frameworks, scopes, members }: { slug: string; canManage: boolean; canRecord: boolean; audits: AuditSummary[]; frameworks: FrameworkSummary[]; scopes: ScopeSummary[]; members: TenantMember[] }) {
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -56,12 +56,12 @@ export function AuditBoard({ slug, canManage, audits, frameworks, scopes, member
       )}
 
       {creating ? <CreateDialog slug={slug} frameworks={frameworks} scopes={scopes} members={members} onClose={() => setCreating(false)} onCreated={(id) => { setCreating(false); setOpenId(id); }} /> : null}
-      {openId ? <AuditDrawer slug={slug} auditId={openId} canManage={canManage} onClose={() => setOpenId(null)} /> : null}
+      {openId ? <AuditDrawer slug={slug} auditId={openId} canManage={canManage} canRecord={canRecord} onClose={() => setOpenId(null)} /> : null}
     </>
   );
 }
 
-function AuditDrawer({ slug, auditId, canManage, onClose }: { slug: string; auditId: string; canManage: boolean; onClose: () => void }) {
+function AuditDrawer({ slug, auditId, canManage, canRecord, onClose }: { slug: string; auditId: string; canManage: boolean; canRecord: boolean; onClose: () => void }) {
   const router = useRouter();
   const [d, setD] = useState<AuditDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +117,7 @@ function AuditDrawer({ slug, auditId, canManage, onClose }: { slug: string; audi
         ))}
       </div>
 
-      {canManage ? (
+      {canRecord && d.status !== 'clos' ? (
         <div className="drawer-section">
           <p className="drawer-section-label">Nouveau constat</p>
           <div className="risk-form-grid">

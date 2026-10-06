@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { appError, canManageControls, type AppError } from '@toron/core';
+import { appError, canManageControls, type AppError, type MembershipRole } from '@toron/core';
 import { headers } from 'next/headers';
 
 import { getTenantContext } from './tenant-context-cache.ts';
@@ -16,6 +16,7 @@ export type ActionResult<T = undefined> =
 export interface Authorized {
   tenantId: string;
   userId: string;
+  role: MembershipRole;
   ip?: string;
   userAgent?: string;
 }
@@ -25,11 +26,14 @@ export function isActionError(v: Authorized | AppError): v is AppError {
 }
 
 /**
- * Autorise une mutation : tenant courant + rôle habilité à gérer la
- * conformité (canManageControls ; lecteur/auditeur en lecture seule). Le
- * tenantId renvoyé provient TOUJOURS d'ici, jamais du formulaire.
+ * Autorise une mutation pour tout rôle qui satisfait `allowed`. Le tenantId
+ * renvoyé provient TOUJOURS d'ici, jamais du formulaire.
  */
-export async function authorizeManager(slug: string): Promise<Authorized | AppError> {
+export async function authorizeRole(
+  slug: string,
+  allowed: (role: MembershipRole) => boolean,
+  refusal: string,
+): Promise<Authorized | AppError> {
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') {
     return appError(
@@ -37,19 +41,27 @@ export async function authorizeManager(slug: string): Promise<Authorized | AppEr
       'Accès refusé — reconnectez-vous, puis réessayez depuis votre organisation.',
     );
   }
-  if (!canManageControls(ctx.role)) {
-    return appError(
-      'ROLE_INSUFFISANT',
-      'Votre rôle est en lecture seule — demandez à un RSSI ou responsable qualité d’effectuer cette action.',
-    );
-  }
+  if (!allowed(ctx.role)) return appError('ROLE_INSUFFISANT', refusal);
   const h = await headers();
   return {
     tenantId: ctx.tenantId,
     userId: ctx.userId,
+    role: ctx.role,
     ip: normalizeIp(h.get('x-forwarded-for')),
     userAgent: h.get('user-agent') || undefined,
   };
+}
+
+/**
+ * Autorise une mutation : tenant courant + rôle habilité à gérer la
+ * conformité (canManageControls ; lecteur/auditeur en lecture seule).
+ */
+export function authorizeManager(slug: string): Promise<Authorized | AppError> {
+  return authorizeRole(
+    slug,
+    canManageControls,
+    'Votre rôle est en lecture seule — demandez à un RSSI ou responsable qualité d’effectuer cette action.',
+  );
 }
 
 /**

@@ -1,7 +1,9 @@
+import { canManageControls, onboardingProgress, onboardingSteps } from '@toron/core';
 import { getDashboardExtras, getDashboardMetrics, listProcesses, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 
 import { appDb } from '@/lib/db';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 export const dynamic = 'force-dynamic';
@@ -59,7 +61,17 @@ export default async function TenantAccueilPage({
       processesAlert: procs.filter((p) => p.health === 'en_alerte').length,
     };
   });
+  const overview = await getOrganisationOverview(ctx.tenantId);
   const base = `/t/${slug}`;
+  const steps = onboardingSteps({
+    scopes: x.scopesTotal, frameworksActive: m.frameworksActive, members: x.membersTotal,
+    controls: m.controlsTotal, risks: m.risksTotal, assessments: x.assessmentsTotal,
+    evidences: m.evidencesTotal, documents: m.documentsTotal,
+  });
+  const progress = onboardingProgress(steps);
+  // Sans données, « rien d'urgent » n'aurait aucun sens : on ne l'affirme
+  // que si l'organisation suit effectivement quelque chose.
+  const hasData = m.risksTotal + m.actionsOpen + m.evidencesTotal + m.documentsTotal + m.controlsTotal + x.incidentsOpen + x.ncOpen > 0;
   const maxBand = Math.max(1, ...Object.values(m.risksByBand));
 
   // Priorités concrètes de la semaine, dérivées des indicateurs (seuls les
@@ -78,7 +90,7 @@ export default async function TenantAccueilPage({
     { label: 'Audits en cours', value: x.auditsInProgress, href: `${base}/audits` },
     { label: 'Non-conformités ouvertes', value: x.ncOpen, href: `${base}/non-conformites` },
     { label: 'Incidents en cours', value: x.incidentsOpen, href: `${base}/incidents` },
-    { label: 'Processus cartographiés', value: x.processesTotal, sub: processesAlert > 0 ? `${processesAlert} en alerte` : 'santé OK', href: `${base}/processus` },
+    { label: 'Processus cartographiés', value: x.processesTotal, sub: x.processesTotal === 0 ? undefined : processesAlert > 0 ? `${processesAlert} en alerte` : 'santé OK', href: `${base}/processus` },
     { label: 'Revues de direction tenues', value: x.reviewsHeld, href: `${base}/revue-direction` },
     { label: 'Référentiels au catalogue', value: x.frameworksAvailable, sub: `${x.requirementsTotal} exigences`, href: `${base}/referentiels` },
   ];
@@ -90,12 +102,37 @@ export default async function TenantAccueilPage({
         <div className="page-head">
           <div>
             <h1>Tableau de bord</h1>
-            <p className="sub">Périmètre SMSI + QMS · 148 salariés · 3 sites</p>
+            <p className="sub">{overview.headline}</p>
           </div>
         </div>
 
+        {!progress.complete && canManageControls(ctx.role) ? (
+          <section className="card onboarding" aria-labelledby="onboarding-title">
+            <div className="onboarding-head">
+              <div>
+                <h2 id="onboarding-title">Mise en route</h2>
+                <p>Les étapes qui donnent du sens à ce tableau de bord. Chacune se coche d’elle-même dès que la donnée existe.</p>
+              </div>
+              <span className="onboarding-count mono">{progress.done}/{progress.total}</span>
+            </div>
+            <div className="onboarding-bar" aria-hidden="true"><span style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }} /></div>
+            <ol className="onboarding-steps">
+              {steps.map((s) => (
+                <li key={s.key} className={s.done ? 'is-done' : undefined}>
+                  <span className="onboarding-check" aria-hidden="true">{s.done ? '✓' : ''}</span>
+                  <div>
+                    <b>{s.title}</b>
+                    <small>{s.detail}</small>
+                  </div>
+                  {s.done ? <span className="onboarding-state">Fait</span> : <a className="btn btn-ghost btn-sm" href={`${base}${s.path}`}>{s.cta}</a>}
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
+
         <div className="kpi-grid">
-          <a className="card kpi kpi--ok" href={`${base}/referentiels`}>
+          <a className={`card kpi ${m.coveragePct === null ? '' : 'kpi--ok'}`} href={`${base}/referentiels`}>
             <span className="kpi-label">Couverture de conformité</span>
             <span className="kpi-value">{m.coveragePct === null ? '—' : `${m.coveragePct}%`}</span>
             <div className="coverage-bar" aria-hidden="true">
@@ -109,7 +146,7 @@ export default async function TenantAccueilPage({
           <a className="card kpi" href={`${base}/referentiels`}>
             <span className="kpi-label">Contrôles</span>
             <span className="kpi-value">{m.controlsTotal}</span>
-            <span className="kpi-sub">{m.controlsMutualized} mutualisé{m.controlsMutualized > 1 ? 's' : ''} — prouvés une fois</span>
+            <span className="kpi-sub">{m.controlsTotal === 0 ? 'Aucun contrôle décrit' : `${m.controlsMutualized} mutualisé${m.controlsMutualized > 1 ? 's' : ''} — prouvé${m.controlsMutualized > 1 ? 's' : ''} une fois`}</span>
           </a>
 
           <a className={`card kpi ${m.risksAttention > 0 ? 'kpi--danger' : ''}`} href={`${base}/risques`}>
@@ -126,23 +163,23 @@ export default async function TenantAccueilPage({
               ))}
             </div>
             <span className={`kpi-sub${m.risksAttention > 0 ? ' alert' : ''}`}>
-              {m.risksAttention > 0 ? `${m.risksAttention} acceptation${m.risksAttention > 1 ? 's' : ''} à traiter` : 'Acceptations à jour'}
+              {m.risksTotal === 0 ? 'Registre à constituer' : m.risksAttention > 0 ? `${m.risksAttention} acceptation${m.risksAttention > 1 ? 's' : ''} à traiter` : 'Acceptations à jour'}
             </span>
           </a>
 
-          <a className={`card kpi ${m.actionsOverdue > 0 ? 'kpi--danger' : 'kpi--warn'}`} href={`${base}/plan-action`}>
+          <a className={`card kpi ${m.actionsOverdue > 0 ? 'kpi--danger' : m.actionsOpen > 0 ? 'kpi--warn' : ''}`} href={`${base}/plan-action`}>
             <span className="kpi-label">Plan d’action</span>
             <span className="kpi-value">{m.actionsOpen}</span>
             <span className={`kpi-sub${m.actionsOverdue > 0 ? ' alert' : ''}`}>
-              {m.actionsOverdue > 0 ? `${m.actionsOverdue} en retard` : 'Aucune en retard'}
+              {m.actionsOpen === 0 ? 'Aucune action ouverte' : m.actionsOverdue > 0 ? `${m.actionsOverdue} en retard` : 'Aucune en retard'}
             </span>
           </a>
 
-          <a className={`card kpi ${m.evidencesStale > 0 ? 'kpi--warn' : 'kpi--ok'}`} href={`${base}/preuves`}>
+          <a className={`card kpi ${m.evidencesStale > 0 ? 'kpi--warn' : m.evidencesTotal > 0 ? 'kpi--ok' : ''}`} href={`${base}/preuves`}>
             <span className="kpi-label">Preuves</span>
             <span className="kpi-value">{m.evidencesTotal}</span>
             <span className={`kpi-sub${m.evidencesStale > 0 ? ' alert' : ''}`}>
-              {m.evidencesStale > 0 ? `${m.evidencesStale} à renouveler` : 'Toutes fraîches'}
+              {m.evidencesTotal === 0 ? 'Aucune preuve déposée' : m.evidencesStale > 0 ? `${m.evidencesStale} à renouveler` : 'Toutes valides'}
             </span>
           </a>
 
@@ -150,7 +187,7 @@ export default async function TenantAccueilPage({
             <span className="kpi-label">Documents</span>
             <span className="kpi-value">{m.documentsTotal}</span>
             <span className={`kpi-sub${m.documentsReviewOverdue > 0 ? ' alert' : ''}`}>
-              {m.documentsReviewOverdue > 0 ? `${m.documentsReviewOverdue} à revoir` : 'Revues à jour'}
+              {m.documentsTotal === 0 ? 'Aucun document' : m.documentsReviewOverdue > 0 ? `${m.documentsReviewOverdue} à revoir` : 'Revues à jour'}
             </span>
           </a>
         </div>
@@ -159,10 +196,14 @@ export default async function TenantAccueilPage({
           <article className="card dash-panel">
             <div className="dash-panel-head">
               <h2>Priorités de la semaine</h2>
-              <span className="dash-panel-count">{priorities.length}</span>
+              <span className={`dash-panel-count${priorities.length === 0 ? ' dash-panel-count--zero' : ''}`}>{priorities.length}</span>
             </div>
             {priorities.length === 0 ? (
-              <p className="dash-allclear">✓ Rien d’urgent — tout est à jour. Beau travail.</p>
+              hasData ? (
+                <p className="dash-allclear">Aucune échéance dépassée ni point bloquant cette semaine.</p>
+              ) : (
+                <p className="dash-empty-note">Les priorités apparaîtront ici dès que vos risques, actions, preuves et documents seront suivis dans Toron.</p>
+              )
             ) : (
               <ul className="dash-list">
                 {priorities.map((p) => (

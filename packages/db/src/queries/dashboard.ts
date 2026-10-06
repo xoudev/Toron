@@ -126,6 +126,9 @@ export interface DashboardExtras {
   reviewsHeld: number;
   frameworksAvailable: number;
   requirementsTotal: number;
+  scopesTotal: number;
+  membersTotal: number;
+  assessmentsTotal: number;
 }
 
 /**
@@ -144,7 +147,10 @@ export async function getDashboardExtras(tx: TenantTx): Promise<DashboardExtras>
       (SELECT count(*) FROM management_reviews WHERE status = 'tenue') AS reviews_held,
       (SELECT count(*) FROM frameworks f WHERE NOT EXISTS
          (SELECT 1 FROM framework_visibility fv WHERE fv.framework_id = f.id AND fv.hidden)) AS frameworks_available,
-      (SELECT count(*) FROM requirements) AS requirements_total
+      (SELECT count(*) FROM requirements) AS requirements_total,
+      (SELECT count(*) FROM scopes) AS scopes_total,
+      (SELECT count(*) FROM memberships) AS members_total,
+      (SELECT count(*) FROM assessments) AS assessments_total
   `);
   const r = (rows as unknown as Record<string, number | string>[])[0]!;
   return {
@@ -155,5 +161,8 @@ export async function getDashboardExtras(tx: TenantTx): Promise<DashboardExtras>
     reviewsHeld: Number(r['reviews_held']),
     frameworksAvailable: Number(r['frameworks_available']),
     requirementsTotal: Number(r['requirements_total']),
+    scopesTotal: Number(r['scopes_total']),
+    membersTotal: Number(r['members_total']),
+    assessmentsTotal: Number(r['assessments_total']),
   };
 }

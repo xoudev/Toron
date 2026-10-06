@@ -226,9 +226,10 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
   const sql = postgres(connectionString, { max: 1, onnotice: () => {} });
   try {
     await sql`
-      INSERT INTO tenants (id, name, slug, plan)
-      VALUES (${DEMO.tenantId}, 'Meridiane Logistics', ${DEMO.slug}, 'standard')
-      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, slug = EXCLUDED.slug`;
+      INSERT INTO tenants (id, name, slug, plan, employee_count, sector)
+      VALUES (${DEMO.tenantId}, 'Meridiane Logistics', ${DEMO.slug}, 'standard', 148, 'Logistique et transport')
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, slug = EXCLUDED.slug,
+        employee_count = EXCLUDED.employee_count, sector = EXCLUDED.sector`;
 
     await sql`
       INSERT INTO legal_entities (id, tenant_id, name, siren)

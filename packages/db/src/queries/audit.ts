@@ -16,6 +16,16 @@ export interface AuditRow {
   ip: string | null;
 }
 
+/** Nombre total d'entrées correspondant au filtre, pour la pagination. */
+export async function countAuditLog(tx: TenantTx, opts: { actionPrefix?: string } = {}): Promise<number> {
+  const prefix = opts.actionPrefix?.trim();
+  const rows = await tx.execute(sql`
+    SELECT count(*)::integer AS n FROM audit_log a
+    ${prefix ? sql`WHERE a.action LIKE ${prefix + '%'}` : sql``}
+  `);
+  return (rows as unknown as { n: number }[])[0]?.n ?? 0;
+}
+
 /**
  * Entrées du journal d'audit du tenant, les plus récentes d'abord, paginées.
  * Filtre optionnel par préfixe d'action (ex. « risk. », « incident. »).

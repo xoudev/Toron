@@ -1,4 +1,4 @@
-import { buildReviewAgenda, canManageControls, reviewInputsReady, suggestNextReview } from '@toron/core';
+import { buildReviewAgenda, canEditModule, reviewInputsReady, suggestNextReview } from '@toron/core';
 import { getDashboardMetrics, getReviewCounts, listReviews, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
@@ -14,7 +14,7 @@ export default async function RevueDirectionPage({ params }: { params: Promise<{
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
-  const canManage = canManageControls(ctx.role);
+  const canManage = canEditModule(ctx.role, 'revue_direction');
 
   const { reviews, metrics, counts, members } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
     reviews: await listReviews(tx),

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
@@ -147,7 +148,7 @@ function CreateDialog({ slug, scopes, onClose }: { slug: string; scopes: ScopeSu
 
   return (
     <Dialog title="Nouvel actif" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">
           Intitulé
           <input name="name" minLength={2} required placeholder="Serveur applicatif…" />

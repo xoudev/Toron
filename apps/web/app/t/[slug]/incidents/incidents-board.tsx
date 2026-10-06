@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
@@ -260,7 +261,7 @@ function CreateDialog({ slug, onClose, onCreated }: { slug: string; onClose: () 
   }
   return (
     <Dialog title="Déclarer un incident" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="Hameçonnage ciblé…" /></label>
         <label className="field">Description<textarea name="description" rows={2} /></label>
         <label className="field">Sévérité<select name="severity" defaultValue="majeur"><option value="mineur">Mineur</option><option value="majeur">Majeur</option><option value="critique">Critique</option></select></label>

@@ -73,6 +73,7 @@ export function RiskRegister({
   members: TenantMember[];
 }) {
   const [filter, setFilter] = useState<{ g: number; v: number } | null>(null);
+  const [facet, setFacet] = useState<{ kind: 'band'; value: RiskBand } | { kind: 'treatment'; value: string } | null>(null);
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useOpenItem(risks.map((x) => x.id));
@@ -85,6 +86,8 @@ export function RiskRegister({
   const shown = useMemo(() => {
     let list = risks;
     if (filter) list = list.filter((r) => r.netG === filter.g && r.netV === filter.v);
+    if (facet?.kind === 'band') list = list.filter((r) => r.netBand === facet.value);
+    if (facet?.kind === 'treatment') list = list.filter((r) => r.treatment === facet.value);
     const q = query.trim().toLowerCase();
     if (q) {
       list = list.filter(
@@ -95,9 +98,14 @@ export function RiskRegister({
       );
     }
     return list;
-  }, [risks, filter, query]);
+  }, [risks, filter, facet, query]);
 
   const levels = Array.from({ length: scale.size }, (_, i) => i + 1);
+  const BANDS: RiskBand[] = ['critique', 'eleve', 'moyen', 'faible'];
+  const bandCounts = BANDS.map((b) => ({ band: b, n: risks.filter((r) => r.netBand === b).length }));
+  const treatments = Object.keys(TREATMENT_LABEL).map((t) => ({ t, n: risks.filter((r) => r.treatment === t).length })).filter((x) => x.n > 0);
+  const toggleFacet = (f: { kind: 'band'; value: RiskBand } | { kind: 'treatment'; value: string }) =>
+    setFacet((cur) => (cur && cur.kind === f.kind && cur.value === f.value ? null : f));
   const open = openId ? risks.find((r) => r.id === openId) ?? null : null;
 
   return (
@@ -128,13 +136,16 @@ export function RiskRegister({
       <div className="card" style={{ padding: 15, marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <span className="drawer-section-label" style={{ margin: 0 }}>Matrice · cotation nette (G × V)</span>
-          {filter ? (
-            <button className="ds-chip accent" onClick={() => setFilter(null)}>Filtre G{filter.g}×V{filter.v} — réinitialiser</button>
+          {filter || facet ? (
+            <button className="ds-chip accent" onClick={() => { setFilter(null); setFacet(null); }}>
+              Filtre {filter ? `G${filter.g}×V${filter.v}` : ''}{filter && facet ? ' · ' : ''}{facet?.kind === 'band' ? BAND_LABEL[facet.value] : facet?.kind === 'treatment' ? TREATMENT_LABEL[facet.value] : ''} — réinitialiser
+            </button>
           ) : (
-            <span className="ds-mono" style={{ marginLeft: 'auto' }}>CLIQUEZ UNE CASE POUR FILTRER</span>
+            <span className="ds-mono" style={{ marginLeft: 'auto' }}>CLIQUEZ UNE CASE OU UN NIVEAU POUR FILTRER</span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div className="risk-overview">
+        <div className="risk-overview-matrix">
           <div className="matrix-axis-y">GRAVITÉ</div>
           <div style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
             <div className="risk-matrix" style={{ gridTemplateColumns: `20px repeat(${scale.size}, minmax(52px,1fr))`, minWidth: 300 }}>
@@ -148,6 +159,37 @@ export function RiskRegister({
             </div>
             <div style={{ textAlign: 'center', marginTop: 8, paddingLeft: 22 }} className="ds-mono">VRAISEMBLANCE</div>
           </div>
+        </div>
+        <div className="risk-overview-side">
+          <p className="drawer-section-label">Niveau net</p>
+          <ul className="risk-facets">
+            {bandCounts.map(({ band, n }) => (
+              <li key={band}>
+                <button type="button" aria-pressed={facet?.kind === 'band' && facet.value === band} disabled={n === 0} onClick={() => toggleFacet({ kind: 'band', value: band })}>
+                  <span className={`ds-legend-swatch sw--${band}`} />
+                  <span className="grow">{BAND_LABEL[band]}</span>
+                  <span className="risk-facet-bar" aria-hidden="true"><span className={`sw--${band}`} style={{ width: `${risks.length ? (n / risks.length) * 100 : 0}%` }} /></span>
+                  <b className="mono">{n}</b>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {treatments.length > 0 ? (
+            <>
+              <p className="drawer-section-label" style={{ marginTop: 12 }}>Traitement</p>
+              <ul className="risk-facets">
+                {treatments.map(({ t, n }) => (
+                  <li key={t}>
+                    <button type="button" aria-pressed={facet?.kind === 'treatment' && facet.value === t} onClick={() => toggleFacet({ kind: 'treatment', value: t })}>
+                      <span className="grow">{TREATMENT_LABEL[t] ?? t}</span>
+                      <b className="mono">{n}</b>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+        </div>
         </div>
       </div>
 
@@ -170,7 +212,7 @@ export function RiskRegister({
             </thead>
             <tbody>
               {shown.length === 0 ? (
-                <tr><td colSpan={9} className="ds-empty">{filter || query ? 'Aucun risque ne correspond.' : 'Aucun risque enregistré.'}</td></tr>
+                <tr><td colSpan={9} className="ds-empty">{filter || facet || query ? 'Aucun risque ne correspond.' : 'Aucun risque enregistré.'}</td></tr>
               ) : (
                 shown.map((r) => (
                   <tr key={r.id} onClick={() => setOpenId(r.id)}>

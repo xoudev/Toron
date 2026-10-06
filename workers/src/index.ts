@@ -39,7 +39,8 @@ async function loop(): Promise<void> {
         } catch (err) {
           console.error('[worker] export en échec', {
             id: job.id,
-            cause: err instanceof Error ? err.message : String(err),
+            // Jamais le détail du compilateur : il cite la source, donc des titres et des noms.
+            cause: err instanceof Error ? err.message.split(' : ')[0] : 'erreur inconnue',
           });
         }
       }

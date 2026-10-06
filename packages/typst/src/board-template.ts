@@ -1,10 +1,5 @@
 import type { BoardModel } from './board-model.ts';
-
-// Insère une chaîne comme TEXTE en mode markup Typst (même échappement que
-// les autres livrables).
-function mk(s: string): string {
-  return s.replace(/[\r\n]+/g, ' ').replace(/[\\#[\]*_`$<>@~]/g, (c) => `\\${c}`);
-}
+import { typstText as mk } from './escape.ts';
 
 const TONE: Record<BoardModel['messages'][number]['tone'], { label: string; color: string }> = {
   alerte: { label: 'ALERTE', color: '#b3261e' },

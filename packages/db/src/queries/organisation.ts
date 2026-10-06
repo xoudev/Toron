@@ -32,7 +32,10 @@ export async function getOrganisationProfile(tx: TenantTx): Promise<Organisation
 /** Modules masqués de l'organisation courante (liste normalisée, dépendances comprises). */
 export async function setDisabledModules(tx: TenantTx, modules: readonly string[]): Promise<OptionalModule[]> {
   const normalized = normalizeDisabledModules(modules);
-  await tx.update(schema.tenants).set({ disabledModules: normalized });
+  // La politique RLS borne déjà la mise à jour à l'organisation courante ; le
+  // filtre explicite le garantit aussi si la politique venait à changer.
+  await tx.update(schema.tenants).set({ disabledModules: normalized })
+    .where(sql`${schema.tenants.id} = current_setting('app.tenant_id')::uuid`);
   return normalized;
 }
 

@@ -134,5 +134,9 @@ describe('export complet des données', () => {
     expect(exported['pdf_bytes']).toBe(5);
     expect(typeof exported['pdf_sha256']).toBe('string');
     expect(fromB.tables['memberships']!.every((m) => (m as { tenant_id: string }).tenant_id === b.id)).toBe(true);
+    expect(names).toContain('membres');
+    const membres = fromB.tables['membres']! as { email: string; role: string }[];
+    expect(membres.map((m) => m.email)).toEqual(['setup@example.test']);
+    expect(Object.keys(membres[0]!).sort()).toEqual(['email', 'id', 'membre_depuis', 'name', 'role']);
   });
 });

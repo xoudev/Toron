@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   acceptRiskAction,
@@ -74,7 +75,7 @@ export function RiskRegister({
   const [filter, setFilter] = useState<{ g: number; v: number } | null>(null);
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenItem(risks.map((x) => x.id));
 
   const bandOf = (g: number, v: number): RiskBand | null =>
     g >= 1 && v >= 1 && g <= scale.size && v <= scale.size ? scale.bands[g - 1]?.[v - 1] ?? null : null;

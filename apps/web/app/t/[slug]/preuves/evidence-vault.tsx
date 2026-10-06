@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   createEvidenceAction,
@@ -32,7 +33,7 @@ function FreshTag({ f }: { f: FreshnessState }) {
 export function EvidenceVault({ slug, canManage, evidences, controls }: { slug: string; canManage: boolean; evidences: EvidenceSummary[]; controls: ControlLite[] }) {
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenItem(evidences.map((x) => x.id));
 
   const stats = useMemo(() => {
     const total = evidences.length;

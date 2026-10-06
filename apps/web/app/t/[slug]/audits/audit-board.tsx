@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import { addFindingAction, convertFindingAction, createAuditAction, getAuditAction, setAuditStatusAction } from './audit-actions';
 
@@ -22,7 +23,7 @@ function fmt(d: string | null): string {
 
 export function AuditBoard({ slug, canManage, canRecord, audits, frameworks, scopes, members }: { slug: string; canManage: boolean; canRecord: boolean; audits: AuditSummary[]; frameworks: FrameworkSummary[]; scopes: ScopeSummary[]; members: TenantMember[] }) {
   const [creating, setCreating] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenItem(audits.map((x) => x.id));
 
   return (
     <>

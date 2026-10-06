@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import { createSupplierAction, updateSupplierAction } from './supplier-actions';
 
@@ -20,7 +21,9 @@ function fmt(d: string | null): string {
 
 export function SupplierBoard({ slug, canManage, suppliers, members }: { slug: string; canManage: boolean; suppliers: SupplierSummary[]; members: TenantMember[] }) {
   const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState<SupplierSummary | null>(null);
+  const [openId, setOpenId] = useOpenItem(suppliers.map((x) => x.id));
+  const editing = suppliers.find((x) => x.id === openId) ?? null;
+  const setEditing = (s: SupplierSummary | null) => setOpenId(s?.id ?? null);
 
   return (
     <>

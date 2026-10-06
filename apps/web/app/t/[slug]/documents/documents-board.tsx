@@ -9,6 +9,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { exportDocx } from '@/lib/document-export';
 import { initials, refCode } from '@/lib/format';
 import { sanitizeDocumentHtml } from '@/lib/sanitize-html';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   addVersionAction,
@@ -35,7 +36,7 @@ export function DocumentsBoard({ slug, canManage, documents, scopes, members, pr
   const [processFilter, setProcessFilter] = useState('');
   const [creating, setCreating] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenItem(documents.map((x) => x.id));
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return documents.filter((d) => {

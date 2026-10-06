@@ -68,6 +68,11 @@ export const DEMO = {
   attestAssuranceTransporteur: 'd0000000-0000-4000-8000-000000000135',
   actionSupplierIncidents: 'd0000000-0000-4000-8000-000000000141',
   obligationContratClient: 'd0000000-0000-4000-8000-000000000151',
+  processingRh: 'd0000000-0000-4000-8000-000000000161',
+  processingLivraisons: 'd0000000-0000-4000-8000-000000000162',
+  processingGeoloc: 'd0000000-0000-4000-8000-000000000163',
+  processingVideo: 'd0000000-0000-4000-8000-000000000164',
+  processingReclamations: 'd0000000-0000-4000-8000-000000000165',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -951,6 +956,67 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
               'Le client exige la preuve d’une restauration réussie des données de traçabilité.',
               ${DEMO.userClaire}, 'en_cours', '2027-01-31')
       ON CONFLICT (id) DO NOTHING`;
+
+    // ── Registre des activités de traitement (RGPD art. 30) ─────────────
+    // Cinq fiches ; la vidéosurveillance et les réclamations sont encore
+    // incomplètes, le transporteur n'a pas d'accord de traitement enregistré.
+    const processing = [
+      {
+        id: DEMO.processingRh, name: 'Gestion du personnel et paie', owner: DEMO.userAntoine, reviewed: '2026-02-12',
+        purpose: 'Recrutement, gestion administrative des salariés, paie et déclarations sociales.',
+        basis: 'obligation_legale', basisDetail: null,
+        subjects: ['Salariés', 'Candidats'], categories: ['Identité', 'Coordonnées', 'Données bancaires', 'NIR', 'Rémunération'],
+        sensitive: false, recipients: 'Service RH, cabinet de paie, organismes sociaux', retention: 'Durée du contrat puis 5 ans ; bulletins de paie selon les obligations légales',
+        security: 'Accès restreint au service RH, MFA, chiffrement des sauvegardes', processors: [DEMO.supplierHebergeur],
+      },
+      {
+        id: DEMO.processingLivraisons, name: 'Suivi des livraisons et preuve de remise', owner: DEMO.userCamille, reviewed: '2025-11-14',
+        purpose: 'Planifier les tournées, informer les destinataires et prouver la remise des colis.',
+        basis: 'contrat', basisDetail: null,
+        subjects: ['Destinataires des colis'], categories: ['Identité', 'Adresse de livraison', 'Téléphone', 'Signature'],
+        sensitive: false, recipients: 'Clients donneurs d’ordre, transporteurs partenaires', retention: '3 ans après la livraison',
+        security: 'Accès nominatifs au WMS, journalisation, chiffrement au repos', processors: [DEMO.supplierHebergeur, DEMO.supplierTransporteur],
+      },
+      {
+        id: DEMO.processingGeoloc, name: 'Géolocalisation des véhicules', owner: DEMO.userClaire, reviewed: '2026-03-02',
+        purpose: 'Optimiser les tournées et répondre aux demandes de suivi des clients.',
+        basis: 'interet_legitime', basisDetail: 'Organisation des tournées et information des clients sur l’heure de passage ; pas de suivi en dehors du temps de travail.',
+        subjects: ['Conducteurs'], categories: ['Position du véhicule', 'Horaires de tournée'],
+        sensitive: false, recipients: 'Exploitation transport', retention: '2 mois pour les positions ; 1 an pour les rapports agrégés',
+        security: 'Désactivation hors temps de travail, accès limité à l’exploitation', processors: [DEMO.supplierHebergeur],
+      },
+      {
+        id: DEMO.processingVideo, name: 'Vidéosurveillance des entrepôts', owner: DEMO.userClaire, reviewed: null,
+        purpose: 'Sécurité des biens et des personnes sur les quais et dans les entrepôts.',
+        basis: 'interet_legitime', basisDetail: 'Prévention des vols et des atteintes aux personnes.',
+        subjects: ['Salariés', 'Visiteurs', 'Chauffeurs externes'], categories: ['Images'],
+        sensitive: false, recipients: 'Responsable sûreté ; forces de l’ordre sur réquisition', retention: '30 jours',
+        security: null, processors: [],
+      },
+      {
+        id: DEMO.processingReclamations, name: 'Gestion des réclamations clients', owner: DEMO.userCamille, reviewed: null,
+        purpose: 'Traiter les réclamations et litiges de livraison.',
+        basis: 'contrat', basisDetail: null,
+        subjects: ['Clients', 'Destinataires des colis'], categories: ['Identité', 'Coordonnées', 'Description du litige'],
+        sensitive: false, recipients: null, retention: null,
+        security: 'Accès limité au service client', processors: [DEMO.supplierInfogerance],
+      },
+    ] as const;
+    for (const t of processing) {
+      await sql`
+        INSERT INTO processing_activities (id, tenant_id, entity_id, name, purpose, legal_basis, legal_basis_detail,
+          data_subjects, data_categories, sensitive_data, recipients, retention, security_measures, owner_user_id, last_reviewed_on)
+        VALUES (${t.id}, ${DEMO.tenantId}, ${DEMO.entityId}, ${t.name}, ${t.purpose}, ${t.basis}, ${t.basisDetail},
+          ${sql.array(t.subjects as unknown as string[])}::text[], ${sql.array(t.categories as unknown as string[])}::text[],
+          ${t.sensitive}, ${t.recipients}, ${t.retention}, ${t.security}, ${t.owner}, ${t.reviewed})
+        ON CONFLICT (id) DO NOTHING`;
+      for (const supplierId of t.processors) {
+        await sql`
+          INSERT INTO processing_processors (tenant_id, processing_id, supplier_id)
+          VALUES (${DEMO.tenantId}, ${t.id}, ${supplierId})
+          ON CONFLICT DO NOTHING`;
+      }
+    }
 
     // ── Module 5.8 : audit interne de démonstration ─────────────────────
     // Piloté par Antoine (direction), pas par Claire (RSSI, propriétaire du

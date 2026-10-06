@@ -4,7 +4,7 @@
 
 export const SEARCH_KINDS = [
   'risque', 'action', 'incident', 'nc', 'document', 'preuve', 'exigence', 'controle',
-  'audit', 'fournisseur', 'obligation', 'actif', 'processus', 'revue',
+  'audit', 'fournisseur', 'obligation', 'traitement', 'actif', 'processus', 'revue',
 ] as const;
 export type SearchKind = (typeof SEARCH_KINDS)[number];
 
@@ -20,6 +20,7 @@ export const SEARCH_KIND_META: Record<SearchKind, { label: string; prefix: strin
   audit: { label: 'Audit', prefix: 'AUD', path: '/audits' },
   fournisseur: { label: 'Fournisseur', prefix: 'FRN', path: '/fournisseurs' },
   obligation: { label: 'Obligation', prefix: 'OBL', path: '/obligations' },
+  traitement: { label: 'Traitement', prefix: 'TRT', path: '/traitements' },
   actif: { label: 'Actif', prefix: 'AST', path: '/actifs' },
   processus: { label: 'Processus', prefix: 'PRC', path: '/processus' },
   revue: { label: 'Revue de direction', prefix: 'REV', path: '/revue-direction' },

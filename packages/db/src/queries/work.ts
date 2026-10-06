@@ -1,4 +1,4 @@
-import { REASSESSMENT_MONTHS, type WorkItem, type WorkKind } from '@toron/core';
+import { PROCESSING_REVIEW_MONTHS, REASSESSMENT_MONTHS, type WorkItem, type WorkKind } from '@toron/core';
 import { sql } from 'drizzle-orm';
 
 import type { TenantTx } from '../tenant.ts';
@@ -91,6 +91,10 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
     SELECT 'obligation', o.id, o.title, o.due_date::text, o.status
       FROM obligations o WHERE o.owner_user_id = ${userId} AND o.status IN ('a_evaluer', 'en_cours')
     UNION ALL
+    SELECT 'traitement', p.id, p.name,
+           (p.last_reviewed_on + make_interval(months => ${PROCESSING_REVIEW_MONTHS}::int))::date::text, NULL
+      FROM processing_activities p WHERE p.owner_user_id = ${userId}
+    UNION ALL
     SELECT 'controle', c.id, c.title, NULL, NULL
       FROM controls c WHERE c.owner_user_id = ${userId} AND c.status = 'actif'
     UNION ALL
@@ -119,6 +123,7 @@ function detailFor(r: Row): string {
     case 'audit': return r.detail === 'en_cours' ? 'Audit en cours' : 'Audit à conduire';
     case 'fournisseur': return r.detail === 'attestation' ? 'Attestation à renouveler' : r.detail === 'evaluation' ? 'Évaluation à refaire' : 'Revue du fournisseur';
     case 'obligation': return r.detail === 'a_evaluer' ? 'Obligation à évaluer' : 'Obligation en cours de mise en conformité';
+    case 'traitement': return r.due ? 'Révision annuelle de la fiche' : 'Fiche de traitement à relire';
     case 'controle': return 'Contrôle sous votre responsabilité';
     case 'processus': return 'Processus que vous pilotez';
   }

@@ -300,3 +300,12 @@ export {
   type ObligationRow,
   type ObligationInput,
 } from './queries/obligations.ts';
+export {
+  listProcessing,
+  createProcessing,
+  updateProcessing,
+  deleteProcessing,
+  type ProcessingRow,
+  type ProcessingInput,
+  type ProcessorRef,
+} from './queries/processing.ts';

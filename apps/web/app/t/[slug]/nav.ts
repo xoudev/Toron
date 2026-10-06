@@ -39,6 +39,12 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0, disable
           iconPath: 'M7 3.5h10v17H7z M10 9.5l1.6 1.6L14.5 8 M10 15h4.5',
         },
         {
+          label: 'Traitements RGPD',
+          href: `${base}/traitements`,
+          active: isActive(`${base}/traitements`),
+          iconPath: 'M12 3.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z M5 20.5c.6-3.6 3.4-6 7-6s6.4 2.4 7 6',
+        },
+        {
           label: 'Plan d’action',
           href: `${base}/plan-action`,
           active: isActive(`${base}/plan-action`),

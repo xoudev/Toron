@@ -6,6 +6,8 @@ import { Dialog } from '@toron/ui';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
+import { keepValues } from '@/lib/forms';
+
 import { createAssessmentAction, requestSoaExportAction } from './assessment-actions';
 
 const SCOPE_KIND_LABEL: Record<string, string> = { smsi: 'SMSI', qms: 'QMS', mixte: 'Mixte' };
@@ -186,7 +188,7 @@ export function CampaignBar({
 
       {open ? (
         <Dialog title="Lancer une évaluation" onClose={() => setOpen(false)}>
-          <form action={create}>
+          <form onSubmit={keepValues(create)}>
             <p>Une campagne pré-remplit une exigence « à évaluer » par exigence du référentiel.</p>
             <label className="field">
               Intitulé de la campagne

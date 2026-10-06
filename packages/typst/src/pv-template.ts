@@ -1,11 +1,5 @@
 import type { PvModel } from './pv-model.ts';
-
-// Insère une chaîne comme TEXTE en mode markup Typst (échappe la syntaxe, rend
-// le texte sans guillemets). À ne pas confondre avec un littéral chaîne mode
-// code « "..." ».
-function mk(s: string): string {
-  return s.replace(/[\r\n]+/g, ' ').replace(/[\\#[\]*_`$<>@~]/g, (c) => `\\${c}`);
-}
+import { typstText as mk } from './escape.ts';
 
 /**
  * Génère la source Typst du procès-verbal de revue de direction. Rendu

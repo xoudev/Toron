@@ -1,17 +1,11 @@
 import type { SoaModel } from './soa-model.ts';
+import { typstText as mk } from './escape.ts';
 
 // Échappe une chaîne pour un littéral Typst ("..."). On neutralise \ et ",
 // et on aplatit les sauts de ligne — les données (intitulés reformulés,
 // justifications) sont ainsi injectées sans risque d'injection de balisage.
 function ts(s: string): string {
   return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ')}"`;
-}
-
-// Insère une chaîne comme TEXTE en mode markup (échappe la syntaxe, rend sans
-// guillemets). ts() sert au tableau #let data (mode code) ; mk() aux
-// insertions markup (en-tête, pied, cellules de méta).
-function mk(s: string): string {
-  return s.replace(/[\r\n]+/g, ' ').replace(/[\\#[\]*_`$<>@~]/g, (c) => `\\${c}`);
 }
 
 const STATUS_COLOR: Record<string, string> = {

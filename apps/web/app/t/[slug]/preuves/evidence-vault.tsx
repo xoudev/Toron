@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
 import { refCode, todayParis } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
@@ -138,7 +139,7 @@ function CreateDialog({ slug, controls, onClose }: { slug: string; controls: Con
   }
   return (
     <Dialog title="Nouvelle preuve" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="PV de test de restauration…" /></label>
         <div className="risk-form-grid">
           <label className="field">Type<select name="type" defaultValue="export">{Object.entries(TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>

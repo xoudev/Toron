@@ -19,9 +19,10 @@ import {
 import type { SupplierDetail, SupplierSummary, TenantMember } from '@toron/db';
 import { Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useTransition, type FormEvent } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
@@ -37,14 +38,6 @@ import {
 const TIER_LABEL: Record<string, string> = { t1: 'T1 · critique', t2: 'T2', t3: 'T3' };
 const CONTRACT_LABEL: Record<string, string> = { a_faire: 'À faire', en_cours: 'En cours', conforme: 'Conforme' };
 const ACTION_STATUS_LABEL: Record<string, string> = { planifie: 'Planifiée', en_cours: 'En cours', verification: 'Vérification', termine: 'Terminée' };
-
-// Soumission sans réinitialisation : en cas d'erreur, la saisie reste en place.
-function keepValues(handler: (fd: FormData) => void) {
-  return (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    handler(new FormData(e.currentTarget));
-  };
-}
 
 function fmt(d: string | null): string {
   if (!d) return '—';
@@ -163,7 +156,7 @@ function SupplierDrawer({ slug, members, supplier, canManage, today, onClose }: 
 
   return (
     <Drawer header={header} labelId="frn-title" onClose={onClose}>
-      <div className="sup-wide">
+      <div className="drawer-wide">
         {supplier ? (
           <>
             <h2 className="sup-title">{supplier.name}</h2>

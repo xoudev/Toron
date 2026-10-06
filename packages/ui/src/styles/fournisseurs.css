@@ -1,9 +1,5 @@
 /* Tiers & fournisseurs (module 5.10) : évaluation et attestations. Tokens uniquement. */
 
-.drawer:has(.sup-wide) {
-  width: 560px;
-}
-
 .sup-tabs {
   display: flex;
   margin-bottom: 16px;

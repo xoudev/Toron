@@ -1,7 +1,9 @@
 'use client';
 
 import { SCOPE_KINDS, SCOPE_KIND_LABEL } from '@toron/core';
-import { useActionState, useState } from 'react';
+import { startTransition, useActionState, useState } from 'react';
+
+import { keepValues } from '@/lib/forms';
 
 import { createTenantAction, type CreateTenantState } from './actions';
 
@@ -20,7 +22,7 @@ export function CreateTenantForm({ open: initiallyOpen }: { open: boolean }) {
   }
 
   return (
-    <form action={formAction} className="org-create">
+    <form onSubmit={keepValues((fd) => startTransition(() => formAction(fd)))} className="org-create">
       <h2>Créer une organisation</h2>
       <p className="org-help">
         Vous en devenez propriétaire. Un premier périmètre de management est créé avec elle :

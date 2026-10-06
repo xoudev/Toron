@@ -2,6 +2,13 @@ import { getExportPdf, withTenant } from '@toron/db';
 import { z } from 'zod';
 
 import { appDb } from '@/lib/db';
+
+const FILE_NAME: Record<string, string> = {
+  soa: 'declaration-applicabilite.pdf',
+  pv: 'proces-verbal-revue-direction.pdf',
+  ebios: 'livrable-ebios-rm.pdf',
+  rapport: 'rapport-de-direction.pdf',
+};
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 // Téléchargement du PDF scellé : lecture réservée aux membres du tenant
@@ -25,7 +32,7 @@ export async function GET(
   return new Response(new Uint8Array(found.pdf), {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="declaration-applicabilite.pdf"',
+      'Content-Disposition': `attachment; filename="${FILE_NAME[found.type] ?? 'document-scelle.pdf'}"`,
       'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'private, no-store',
     },

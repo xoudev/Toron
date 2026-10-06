@@ -8,6 +8,9 @@ export * from './csv.ts';
 export * from './acknowledgements.ts';
 export * from './modules.ts';
 export * from './suppliers.ts';
+export * from './obligations.ts';
+export * from './processing.ts';
+export * from './board.ts';
 export {
   frameworksCovered,
   isMutualized,

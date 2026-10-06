@@ -7,6 +7,8 @@ import type { PvModel } from './pv-model.ts';
 import { renderPvTypst } from './pv-template.ts';
 import type { EbiosModel } from './ebios-model.ts';
 import { renderEbiosTypst } from './ebios-template.ts';
+import type { BoardModel } from './board-model.ts';
+import { renderBoardTypst } from './board-template.ts';
 
 export interface CompileOptions {
   /** Chemin du binaire Typst (défaut : `typst` dans le PATH). */
@@ -56,6 +58,11 @@ export function compilePv(model: PvModel, opts: CompileOptions = {}): Promise<Bu
 /** Rend et compile le livrable EBIOS RM. */
 export function compileEbios(model: EbiosModel, opts: CompileOptions = {}): Promise<Buffer> {
   return compileTypst(renderEbiosTypst(model), opts);
+}
+
+/** Rend et compile le rapport de direction. */
+export function compileBoard(model: BoardModel, opts: CompileOptions = {}): Promise<Buffer> {
+  return compileTypst(renderBoardTypst(model), opts);
 }
 
 /** Empreinte SHA-256 (hex) d'un PDF — le poinçon (ADR-6). */

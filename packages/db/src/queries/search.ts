@@ -36,6 +36,8 @@ const SOURCES: Source[] = [
   { kind: 'controle', table: 'controls', title: 'title' },
   { kind: 'audit', table: 'audits', title: 'title' },
   { kind: 'fournisseur', table: 'suppliers', title: 'name' },
+  { kind: 'obligation', table: 'obligations', title: 'title' },
+  { kind: 'traitement', table: 'processing_activities', title: 'name' },
   { kind: 'actif', table: 'assets', title: 'name' },
   { kind: 'processus', table: 'processes', title: 'name' },
   { kind: 'revue', table: 'management_reviews', title: 'title' },

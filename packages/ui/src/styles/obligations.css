@@ -1,0 +1,251 @@
+/* Registre des obligations & qualification NIS 2 (module 6.4). Tokens uniquement. */
+
+.obl-entities {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.obl-entity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.obl-entity-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.obl-entity-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.obl-entity-reason {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.obl-entity-meta {
+  margin: 0;
+  font-size: 12px;
+}
+.obl-entity-meta dt {
+  display: inline;
+  color: var(--text-3);
+}
+.obl-entity-meta dt::after {
+  content: ' : ';
+}
+.obl-entity-meta dd {
+  display: inline;
+  margin: 0;
+  color: var(--text);
+}
+.obl-suggest {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.obl-entity-msg {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.nis2-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--nc, var(--text-2));
+  background: color-mix(in srgb, var(--nc, var(--border)) 13%, transparent);
+}
+.nis2-chip--ee {
+  --nc: var(--danger);
+}
+.nis2-chip--ei {
+  --nc: var(--warn);
+}
+.nis2-chip--non_concernee {
+  --nc: var(--ok);
+}
+.nis2-chip--indeterminee {
+  --nc: var(--text-3);
+}
+
+.obl-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 14px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+/* ── Synthèse ────────────────────────────────────────────────────────── */
+.obl-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.obl-summary b {
+  color: var(--text);
+  font-family: var(--mono, ui-monospace, monospace);
+}
+.obl-meter {
+  flex: 1;
+  min-width: 120px;
+  max-width: 320px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.obl-meter span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}
+.obl-late {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* ── Statuts et échéances ────────────────────────────────────────────── */
+.obl-status {
+  display: inline-flex;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--os, var(--text-2));
+  background: color-mix(in srgb, var(--os, var(--border)) 13%, transparent);
+}
+.obl-status--a_evaluer {
+  --os: var(--text-3);
+}
+.obl-status--en_cours {
+  --os: var(--accent);
+}
+.obl-status--conforme {
+  --os: var(--ok);
+}
+.obl-status--non_applicable {
+  --os: var(--text-3);
+}
+.obl-due--en_retard {
+  color: var(--danger);
+  font-weight: 600;
+}
+.obl-due--proche {
+  color: var(--warn);
+}
+
+.obl-confirm {
+  align-self: center;
+  font-size: 12.5px;
+  color: var(--danger);
+}
+.dialog-actions .spacer {
+  flex: 1;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Registre des traitements (RGPD art. 30) ─────────────────────────── */
+.trt-processors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12.5px;
+}
+.trt-processors li::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: var(--ag, var(--text-3));
+}
+.trt-agreement--couvert {
+  --ag: var(--ok);
+}
+.trt-agreement--expire,
+.trt-agreement--absent {
+  --ag: var(--danger);
+}
+.trt-agreement-note {
+  color: var(--danger);
+  font-size: 12px;
+}
+.trt-check {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+}
+.trt-check--ok {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+.trt-warnings {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.trt-check-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 10px;
+  font-size: 13px;
+  color: var(--text);
+}
+.trt-processors-pick {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.trt-processors-pick legend {
+  padding: 0 4px;
+  font-size: 12px;
+  color: var(--text-3);
+}

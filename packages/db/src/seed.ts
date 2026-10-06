@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { hash } from '@node-rs/argon2';
-import { defaultRiskScale, riskBand, type RiskBand } from '@toron/core';
+import { OBLIGATION_CATALOG, assessSupplier, supplierQuestion, defaultRiskScale, riskBand, type RiskBand, type SupplierAnswers } from '@toron/core';
 import { FRAMEWORK_CATALOG, iso27001, recyf } from '@toron/frameworks';
 import postgres from 'postgres';
 
@@ -59,6 +59,20 @@ export const DEMO = {
   ebiosSc2: 'd0000000-0000-4000-8000-000000000103',
   ebiosSc3: 'd0000000-0000-4000-8000-000000000104',
   assessmentIso: 'd0000000-0000-4000-8000-000000000111',
+  supplierEvalHebergeur: 'd0000000-0000-4000-8000-000000000121',
+  supplierEvalInfogerance: 'd0000000-0000-4000-8000-000000000122',
+  attestSecNumCloud: 'd0000000-0000-4000-8000-000000000131',
+  attestIsoHebergeur: 'd0000000-0000-4000-8000-000000000132',
+  attestDpaHebergeur: 'd0000000-0000-4000-8000-000000000133',
+  attestIsoInfogerance: 'd0000000-0000-4000-8000-000000000134',
+  attestAssuranceTransporteur: 'd0000000-0000-4000-8000-000000000135',
+  actionSupplierIncidents: 'd0000000-0000-4000-8000-000000000141',
+  obligationContratClient: 'd0000000-0000-4000-8000-000000000151',
+  processingRh: 'd0000000-0000-4000-8000-000000000161',
+  processingLivraisons: 'd0000000-0000-4000-8000-000000000162',
+  processingGeoloc: 'd0000000-0000-4000-8000-000000000163',
+  processingVideo: 'd0000000-0000-4000-8000-000000000164',
+  processingReclamations: 'd0000000-0000-4000-8000-000000000165',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -233,9 +247,13 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         employee_count = EXCLUDED.employee_count, sector = EXCLUDED.sector`;
 
     await sql`
-      INSERT INTO legal_entities (id, tenant_id, name, siren)
-      VALUES (${DEMO.entityId}, ${DEMO.tenantId}, 'Meridiane Logistics SAS', NULL)
-      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`;
+      INSERT INTO legal_entities (id, tenant_id, name, siren, nis2_sector, employee_count, turnover_meur,
+                                  balance_sheet_meur, nis2_registration)
+      VALUES (${DEMO.entityId}, ${DEMO.tenantId}, 'Meridiane Logistics SAS', NULL, 'postal_expedition', 148, 31.5,
+              18.2, 'en_cours')
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, nis2_sector = EXCLUDED.nis2_sector,
+        employee_count = EXCLUDED.employee_count, turnover_meur = EXCLUDED.turnover_meur,
+        balance_sheet_meur = EXCLUDED.balance_sheet_meur, nis2_registration = EXCLUDED.nis2_registration`;
 
     const sites = [
       [DEMO.siteSiege, 'Siège & plateforme logistique — Corbas', '12 rue des Frères Lumière, 69960 Corbas'],
@@ -857,6 +875,147 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
                 ${contract}, ${owner}, ${review})
         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, tier = EXCLUDED.tier,
           contract_status = EXCLUDED.contract_status`;
+    }
+
+    // Évaluations : l'hébergeur est à jour et satisfaisant ; l'infogérant,
+    // évalué il y a plus d'un an, n'engage pas de notification sous 24 h —
+    // point bloquant pour un fournisseur critique, action corrective ouverte.
+    const yes = (overrides: SupplierAnswers): SupplierAnswers => ({
+      gouvernance: 'oui', mfa: 'oui', chiffrement: 'oui', localisation: 'oui', incidents: 'oui', continuite: 'oui',
+      vulnerabilites: 'oui', sous_traitance: 'oui', rgpd: 'oui', reversibilite: 'oui', audit: 'oui', ...overrides,
+    });
+    const evaluations = [
+      [DEMO.supplierEvalHebergeur, DEMO.supplierHebergeur, 't1', '2026-03-12', yes({ sous_traitance: 'partiel', reversibilite: 'partiel' }),
+       'Qualification SecNumCloud vérifiée. Liste des sous-traitants ultérieurs à compléter au renouvellement.'],
+      [DEMO.supplierEvalInfogerance, DEMO.supplierInfogerance, 't1', '2025-06-20', yes({ incidents: 'non', vulnerabilites: 'partiel', audit: 'non' }),
+       'Pas d’engagement de délai de notification des incidents dans le contrat actuel.'],
+    ] as const;
+    for (const [id, supplierId, tier, on, answers, notes] of evaluations) {
+      const result = assessSupplier(answers, tier);
+      if (!result.ok) throw new Error('Évaluation de démonstration incomplète');
+      await sql`
+        INSERT INTO supplier_assessments (id, tenant_id, supplier_id, assessed_on, assessor_user_id, answers, score, rating, notes)
+        VALUES (${id}, ${DEMO.tenantId}, ${supplierId}, ${on}, ${DEMO.userClaire}, ${sql.json(answers)},
+                ${result.score}, ${result.rating}, ${notes})
+        ON CONFLICT (id) DO NOTHING`;
+    }
+
+    const attestations = [
+      [DEMO.attestSecNumCloud, DEMO.supplierHebergeur, 'secnumcloud', 'Offre IaaS qualifiée', '2024-06-30', '2027-06-30'],
+      [DEMO.attestIsoHebergeur, DEMO.supplierHebergeur, 'iso27001', 'Périmètre : centres de données France', '2023-10-28', '2026-10-28'],
+      [DEMO.attestDpaHebergeur, DEMO.supplierHebergeur, 'dpa', 'Annexe 3 du contrat cadre', '2024-07-01', null],
+      [DEMO.attestIsoInfogerance, DEMO.supplierInfogerance, 'iso27001', 'Périmètre : centre de services Lyon', '2023-09-15', '2026-09-15'],
+      [DEMO.attestAssuranceTransporteur, DEMO.supplierTransporteur, 'assurance', 'Responsabilité civile professionnelle', '2026-02-01', '2027-01-31'],
+    ] as const;
+    for (const [id, supplierId, kind, label, issued, until] of attestations) {
+      await sql`
+        INSERT INTO supplier_attestations (id, tenant_id, supplier_id, kind, label, issued_on, valid_until, created_by)
+        VALUES (${id}, ${DEMO.tenantId}, ${supplierId}, ${kind}, ${label}, ${issued}, ${until}, ${DEMO.userClaire})
+        ON CONFLICT (id) DO NOTHING`;
+    }
+
+    await sql`
+      INSERT INTO actions (id, tenant_id, title, description, origin_type, origin_id, owner_user_id, due_date, priority, status)
+      VALUES (${DEMO.actionSupplierIncidents}, ${DEMO.tenantId},
+              ${`Prestataire d’infogérance — ${supplierQuestion('incidents')!.correctiveAction}`},
+              'Avenant à négocier avant le renouvellement ; NIS 2 impose l’alerte précoce sous 24 h.',
+              'supplier', ${DEMO.supplierInfogerance}, ${DEMO.userClaire}, '2026-11-15', 'p1', 'en_cours')
+      ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, status = EXCLUDED.status`;
+
+    // ── Module 6.4 : registre des obligations ───────────────────────────
+    // Meridiane Logistics est une entité importante NIS 2 (services
+    // d'expédition, entreprise moyenne) : catalogue complet, avancement réaliste.
+    const obligationState: Record<string, [string, string, string | null, string | null]> = {
+      nis2_enregistrement: ['en_cours', DEMO.userClaire, '2026-11-30', null],
+      nis2_gouvernance: ['en_cours', DEMO.userAntoine, '2026-12-15', null],
+      nis2_mesures: ['en_cours', DEMO.userClaire, null, null],
+      nis2_chaine: ['en_cours', DEMO.userClaire, '2027-03-31', null],
+      nis2_notification: ['conforme', DEMO.userClaire, null, null],
+      nis2_controle: ['a_evaluer', DEMO.userClaire, null, null],
+      rgpd_registre: ['en_cours', DEMO.userClaire, '2026-10-30', null],
+      rgpd_information: ['conforme', DEMO.userCamille, null, null],
+      rgpd_droits: ['conforme', DEMO.userCamille, null, null],
+      rgpd_sous_traitants: ['en_cours', DEMO.userClaire, '2026-12-31', null],
+      rgpd_violations: ['conforme', DEMO.userClaire, null, null],
+      rgpd_dpo: ['non_applicable', DEMO.userAntoine, null,
+        'Analyse du 12/02/2026 : ni suivi régulier et systématique à grande échelle, ni données sensibles à grande échelle. Un référent RGPD interne est désigné.'],
+    };
+    for (const t of OBLIGATION_CATALOG) {
+      const [status, owner, due, justification] = obligationState[t.key] ?? ['a_evaluer', DEMO.userClaire, null, null];
+      await sql`
+        INSERT INTO obligations (tenant_id, entity_id, regime, catalog_key, title, source, owner_user_id, status, due_date, justification)
+        VALUES (${DEMO.tenantId}, ${DEMO.entityId}, ${t.regime}, ${t.key}, ${t.title}, ${t.source}, ${owner}, ${status}, ${due}, ${justification})
+        ON CONFLICT (tenant_id, coalesce(entity_id, '00000000-0000-0000-0000-000000000000'::uuid), catalog_key)
+          WHERE catalog_key IS NOT NULL DO NOTHING`;
+    }
+    await sql`
+      INSERT INTO obligations (id, tenant_id, entity_id, regime, title, source, description, owner_user_id, status, due_date)
+      VALUES (${DEMO.obligationContratClient}, ${DEMO.tenantId}, ${DEMO.entityId}, 'contractuel',
+              'Remettre chaque année au client distributeur le compte rendu du test de restauration',
+              'Contrat logistique cadre, annexe sécurité, art. 7',
+              'Le client exige la preuve d’une restauration réussie des données de traçabilité.',
+              ${DEMO.userClaire}, 'en_cours', '2027-01-31')
+      ON CONFLICT (id) DO NOTHING`;
+
+    // ── Registre des activités de traitement (RGPD art. 30) ─────────────
+    // Cinq fiches ; la vidéosurveillance et les réclamations sont encore
+    // incomplètes, le transporteur n'a pas d'accord de traitement enregistré.
+    const processing = [
+      {
+        id: DEMO.processingRh, name: 'Gestion du personnel et paie', owner: DEMO.userAntoine, reviewed: '2026-02-12',
+        purpose: 'Recrutement, gestion administrative des salariés, paie et déclarations sociales.',
+        basis: 'obligation_legale', basisDetail: null,
+        subjects: ['Salariés', 'Candidats'], categories: ['Identité', 'Coordonnées', 'Données bancaires', 'NIR', 'Rémunération'],
+        sensitive: false, recipients: 'Service RH, cabinet de paie, organismes sociaux', retention: 'Durée du contrat puis 5 ans ; bulletins de paie selon les obligations légales',
+        security: 'Accès restreint au service RH, MFA, chiffrement des sauvegardes', processors: [DEMO.supplierHebergeur],
+      },
+      {
+        id: DEMO.processingLivraisons, name: 'Suivi des livraisons et preuve de remise', owner: DEMO.userCamille, reviewed: '2025-11-14',
+        purpose: 'Planifier les tournées, informer les destinataires et prouver la remise des colis.',
+        basis: 'contrat', basisDetail: null,
+        subjects: ['Destinataires des colis'], categories: ['Identité', 'Adresse de livraison', 'Téléphone', 'Signature'],
+        sensitive: false, recipients: 'Clients donneurs d’ordre, transporteurs partenaires', retention: '3 ans après la livraison',
+        security: 'Accès nominatifs au WMS, journalisation, chiffrement au repos', processors: [DEMO.supplierHebergeur, DEMO.supplierTransporteur],
+      },
+      {
+        id: DEMO.processingGeoloc, name: 'Géolocalisation des véhicules', owner: DEMO.userClaire, reviewed: '2026-03-02',
+        purpose: 'Optimiser les tournées et répondre aux demandes de suivi des clients.',
+        basis: 'interet_legitime', basisDetail: 'Organisation des tournées et information des clients sur l’heure de passage ; pas de suivi en dehors du temps de travail.',
+        subjects: ['Conducteurs'], categories: ['Position du véhicule', 'Horaires de tournée'],
+        sensitive: false, recipients: 'Exploitation transport', retention: '2 mois pour les positions ; 1 an pour les rapports agrégés',
+        security: 'Désactivation hors temps de travail, accès limité à l’exploitation', processors: [DEMO.supplierHebergeur],
+      },
+      {
+        id: DEMO.processingVideo, name: 'Vidéosurveillance des entrepôts', owner: DEMO.userClaire, reviewed: null,
+        purpose: 'Sécurité des biens et des personnes sur les quais et dans les entrepôts.',
+        basis: 'interet_legitime', basisDetail: 'Prévention des vols et des atteintes aux personnes.',
+        subjects: ['Salariés', 'Visiteurs', 'Chauffeurs externes'], categories: ['Images'],
+        sensitive: false, recipients: 'Responsable sûreté ; forces de l’ordre sur réquisition', retention: '30 jours',
+        security: null, processors: [],
+      },
+      {
+        id: DEMO.processingReclamations, name: 'Gestion des réclamations clients', owner: DEMO.userCamille, reviewed: null,
+        purpose: 'Traiter les réclamations et litiges de livraison.',
+        basis: 'contrat', basisDetail: null,
+        subjects: ['Clients', 'Destinataires des colis'], categories: ['Identité', 'Coordonnées', 'Description du litige'],
+        sensitive: false, recipients: null, retention: null,
+        security: 'Accès limité au service client', processors: [DEMO.supplierInfogerance],
+      },
+    ] as const;
+    for (const t of processing) {
+      await sql`
+        INSERT INTO processing_activities (id, tenant_id, entity_id, name, purpose, legal_basis, legal_basis_detail,
+          data_subjects, data_categories, sensitive_data, recipients, retention, security_measures, owner_user_id, last_reviewed_on)
+        VALUES (${t.id}, ${DEMO.tenantId}, ${DEMO.entityId}, ${t.name}, ${t.purpose}, ${t.basis}, ${t.basisDetail},
+          ${sql.array(t.subjects as unknown as string[])}::text[], ${sql.array(t.categories as unknown as string[])}::text[],
+          ${t.sensitive}, ${t.recipients}, ${t.retention}, ${t.security}, ${t.owner}, ${t.reviewed})
+        ON CONFLICT (id) DO NOTHING`;
+      for (const supplierId of t.processors) {
+        await sql`
+          INSERT INTO processing_processors (tenant_id, processing_id, supplier_id)
+          VALUES (${DEMO.tenantId}, ${t.id}, ${supplierId})
+          ON CONFLICT DO NOTHING`;
+      }
     }
 
     // ── Module 5.8 : audit interne de démonstration ─────────────────────

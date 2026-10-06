@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
 import { initials } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 
 import { changeMemberRoleAction, inviteMemberAction, removeMemberAction, revokeInvitationAction } from './actions';
 import type { Viewer } from './parametres-client';
@@ -136,11 +137,11 @@ function InviteCard({ slug, viewer, invitations }: { slug: string; viewer: Viewe
   const roles = assignableRoles(viewer.role).filter((r) => r !== 'owner');
   const visible = invitations.filter((i) => invitationState(i, now) !== 'revoquee').slice(0, 20);
 
-  function submit(fd: FormData) {
+  function submit(fd: FormData, form: HTMLFormElement) {
     setError(null); setCreated(null); setCopied(false);
     start(async () => {
       const res = await inviteMemberAction(slug, { email: String(fd.get('email') ?? ''), role: String(fd.get('role') ?? '') });
-      if (res.ok) { setCreated(res.data); router.refresh(); } else setError(res.error.message);
+      if (res.ok) { form.reset(); setCreated(res.data); router.refresh(); } else setError(res.error.message);
     });
   }
   function revoke(id: string) {
@@ -171,7 +172,7 @@ function InviteCard({ slug, viewer, invitations }: { slug: string; viewer: Viewe
           </p>
         </div>
       </div>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <div className="settings-grid">
           <label className="field">Adresse e-mail professionnelle<input name="email" type="email" required maxLength={254} placeholder="prenom.nom@entreprise.fr" /></label>
           <label className="field">Rôle

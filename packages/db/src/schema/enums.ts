@@ -43,7 +43,7 @@ export const assessmentItemStatus = pgEnum('assessment_item_status', [
 
 export const exportStatus = pgEnum('export_status', ['en_cours', 'scelle', 'echec']);
 
-export const exportType = pgEnum('export_type', ['soa', 'pv', 'ebios']);
+export const exportType = pgEnum('export_type', ['soa', 'pv', 'ebios', 'rapport']);
 
 export const riskTreatment = pgEnum('risk_treatment', [
   'reduire',
@@ -64,6 +64,7 @@ export const actionOrigin = pgEnum('action_origin', [
   'assessment',
   'review',
   'manual',
+  'supplier',
 ]);
 
 export const actionPriority = pgEnum('action_priority', ['p1', 'p2', 'p3']);

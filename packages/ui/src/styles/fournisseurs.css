@@ -1,0 +1,194 @@
+/* Tiers & fournisseurs (module 5.10) : évaluation et attestations. Tokens uniquement. */
+
+.sup-tabs {
+  display: flex;
+  margin-bottom: 16px;
+}
+.sup-tabs button {
+  flex: 1;
+}
+
+/* ── Appréciation ─────────────────────────────────────────────────────── */
+.sup-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--rt, var(--text-2));
+  background: color-mix(in srgb, var(--rt, var(--border)) 13%, transparent);
+}
+.sup-rating b {
+  font-family: var(--mono, ui-monospace, monospace);
+}
+.sup-rating--satisfaisant {
+  --rt: var(--ok);
+}
+.sup-rating--sous_reserve {
+  --rt: var(--warn);
+}
+.sup-rating--insuffisant {
+  --rt: var(--danger);
+}
+.sup-due {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--warn);
+}
+
+/* ── Synthèse de la dernière évaluation ──────────────────────────────── */
+.sup-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+.sup-score {
+  grid-row: span 2;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--rt, var(--text));
+  line-height: 1;
+}
+.sup-score small {
+  font-size: 13px;
+  color: var(--text-3);
+  font-weight: 400;
+}
+.sup-summary-meta {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.sup-notes {
+  font-size: 12.5px;
+  color: var(--text-2);
+  margin: 0 0 14px;
+  white-space: pre-wrap;
+}
+
+.sup-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.sup-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+}
+.sup-list li + li {
+  border-top: 1px solid var(--border);
+}
+.sup-list .grow {
+  flex: 1;
+  min-width: 0;
+}
+.sup-list small {
+  display: block;
+  color: var(--text-3);
+  font-size: 11.5px;
+  margin-top: 2px;
+}
+.sup-blocking {
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ── Questionnaire ───────────────────────────────────────────────────── */
+.sup-theme {
+  margin: 18px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.sup-question {
+  border: none;
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sup-question legend {
+  padding: 0;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.sup-question legend .sup-blocking {
+  margin-left: 6px;
+}
+.sup-answers {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sup-answers label {
+  position: relative;
+  padding: 4px 11px;
+  font-size: 12px;
+  color: var(--text-2);
+  background: var(--surface);
+  cursor: pointer;
+}
+.sup-answers label + label {
+  border-left: 1px solid var(--border);
+}
+.sup-answers input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+.sup-answers label:has(input:checked) {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 600;
+}
+.sup-answers label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.sup-preview {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.sup-preview .spacer {
+  flex: 1;
+}
+
+.sup-title {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+.sup-hint {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}

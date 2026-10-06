@@ -6,6 +6,15 @@ description courte, phase cible pressentie.
 
 ## Entrées
 
+- **2026-10-06 · Responsables limités aux membres de l'organisation** —
+  Les colonnes `owner_user_id` (risques, actions, fournisseurs, obligations,
+  traitements…) référencent `users(id)` par une clé étrangère simple, qui
+  ignore la RLS : un gestionnaire peut désigner l'UUID d'un utilisateur d'une
+  autre organisation. Aucune fuite (la RLS de `users` masque le nom), mais
+  l'intégrité n'est pas garantie. Vérifier l'appartenance côté serveur pour
+  tous les modules, ou clé composite vers `memberships (user_id, tenant_id)`.
+  Phase cible : V1 (durcissement transverse).
+
 - **2026-10-06 · Questionnaire fournisseur rempli par le fournisseur (5.10)**
   — L'évaluation livrée en V1 est remplie par l'organisation à partir des
   pièces du fournisseur. Envoyer le même questionnaire au fournisseur

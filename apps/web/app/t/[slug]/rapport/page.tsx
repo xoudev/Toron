@@ -1,4 +1,5 @@
 import {
+  canConfigureOrganisation,
   NIS2_REGISTRATION_LABEL,
   NIS2_STATUS_LABEL,
   OBLIGATION_REGIME_LABEL,
@@ -6,27 +7,36 @@ import {
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
-import { buildBoardReport } from '@/lib/board-report';
+import { listExportsForObject, loadBoardReport, withTenant } from '@toron/db';
+
+import { appDb } from '@/lib/db';
 import { frDate, refCode, todayParis } from '@/lib/format';
-import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { PrintButton } from './print-button';
+import { SealedVersions, type SealedVersion } from './sealed-versions';
 
 export const dynamic = 'force-dynamic';
 
 const BAND_LABEL: Record<string, string> = { critique: 'Critique', eleve: 'Élevé', moyen: 'Moyen', faible: 'Faible' };
 const TREATMENT_LABEL: Record<string, string> = { reduire: 'Réduire', transferer: 'Transférer', accepter: 'Accepter', eviter: 'Éviter' };
 const TONE_LABEL = { alerte: 'Alerte', vigilance: 'Vigilance', positif: 'Point positif' } as const;
+const STAMP = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Paris' });
 
 export default async function RapportDirectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
 
-  const overview = await getOrganisationOverview(ctx.tenantId);
   const today = todayParis();
-  const r = await buildBoardReport(ctx.tenantId, overview, today);
+  const { r, exports } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
+    r: await loadBoardReport(tx, today),
+    exports: (await listExportsForObject(tx, ctx.tenantId)).filter((e) => e.type === 'rapport'),
+  }));
+  const versions: SealedVersion[] = exports.map((e) => ({
+    id: e.id, status: e.status, sha256: e.sha256, verifySlug: e.verifySlug,
+    sealedAtLabel: e.sealedAt ? STAMP.format(e.sealedAt) : null, requestedAtLabel: STAMP.format(e.createdAt),
+  }));
   const i = r.input;
   const pct = (n: number, d: number) => (d > 0 ? `${Math.round((n / d) * 100)} %` : '—');
 
@@ -36,8 +46,8 @@ export default async function RapportDirectionPage({ params }: { params: Promise
       <main className="app-page board">
         <header className="board-head">
           <p className="board-kicker">Rapport de direction</p>
-          <h1>{overview.profile.name}</h1>
-          <p className="sub">{overview.headline} · situation au {frDate(today)}</p>
+          <h1>{r.organisationName}</h1>
+          <p className="sub">{r.headline} · situation au {frDate(today)}</p>
         </header>
 
         <section className="board-section" aria-labelledby="b-messages">
@@ -106,6 +116,8 @@ export default async function RapportDirectionPage({ params }: { params: Promise
             </table>
           )}
         </section>
+
+        <SealedVersions slug={slug} versions={versions} canSeal={canConfigureOrganisation(ctx.role)} />
 
         <p className="board-foot">
           Établi à partir des registres de Toron le {frDate(today)}. Les qualifications NIS 2 sont indicatives ;

@@ -1,5 +1,3 @@
-import 'server-only';
-
 import {
   OBLIGATION_REGIMES,
   acceptanceNeedsAttention,
@@ -17,29 +15,31 @@ import {
   type Nis2Registration,
   type ObligationRegime,
   type RiskBand,
+  type ScopeKind,
+  isModuleEnabled,
+  organisationHeadline,
 } from '@toron/core';
-import {
-  getDashboardMetrics,
-  getFrameworkCoverage,
-  listActions,
-  listEntitiesNis2,
-  listIncidents,
-  listObligations,
-  listProcessing,
-  listRisks,
-  listSuppliers,
-  withTenant,
-  type ActionSummary,
-  type RiskSummary,
-} from '@toron/db';
 
-import { appDb } from '@/lib/db';
-import type { OrganisationOverview } from '@/lib/organisation-overview';
+import type { TenantTx } from '../tenant.ts';
+import { listActions, type ActionSummary } from './actions.ts';
+import { getDashboardMetrics, getFrameworkCoverage } from './dashboard.ts';
+import { listIncidents } from './incidents.ts';
+import { listEntitiesNis2, listObligations } from './obligations.ts';
+import { getOrganisationProfile } from './organisation.ts';
+import { listProcessing } from './processing.ts';
+import { listScopes } from './referentiels.ts';
+import { listRisks, type RiskSummary } from './risks.ts';
+import { listSuppliers } from './suppliers.ts';
 
 const BAND_RANK: Record<RiskBand, number> = { critique: 0, eleve: 1, moyen: 2, faible: 3 };
 const PRIORITY_RANK: Record<string, number> = { p1: 0, p2: 1, p3: 2 };
 
+// ── Rapport de direction (module 5.11) ──────────────────────────────────
+// Assemblé une seule fois ici, pour l'écran et pour le livrable scellé.
+
 export interface BoardReport {
+  organisationName: string;
+  headline: string;
   messages: BoardMessage[];
   decisions: string[];
   input: BoardInput;
@@ -51,9 +51,11 @@ export interface BoardReport {
 }
 
 /** Indicateurs du rapport de direction, en respectant les modules masqués. */
-export async function buildBoardReport(tenantId: string, overview: OrganisationOverview, today: string): Promise<BoardReport> {
-  const on = overview.enabled;
-  const d = await withTenant(appDb().db, tenantId, async (tx) => ({
+export async function loadBoardReport(tx: TenantTx, today: string): Promise<BoardReport> {
+  const profile = await getOrganisationProfile(tx);
+  const scopeKinds = (await listScopes(tx)).map((sc) => sc.kind as ScopeKind);
+  const on = (m: Parameters<typeof isModuleEnabled>[1]) => isModuleEnabled(profile.disabledModules, m);
+  const d = {
     metrics: await getDashboardMetrics(tx),
     coverage: await getFrameworkCoverage(tx),
     risks: on('risques') ? await listRisks(tx) : null,
@@ -63,7 +65,7 @@ export async function buildBoardReport(tenantId: string, overview: OrganisationO
     entities: await listEntitiesNis2(tx),
     suppliers: on('fournisseurs') ? await listSuppliers(tx) : null,
     processing: await listProcessing(tx),
-  }));
+  };
 
   const overdue = d.actions.filter((a) => a.effectiveStatus === 'en_retard');
   const applicable = d.obligations.filter((o) => o.status !== 'non_applicable');
@@ -103,6 +105,8 @@ export async function buildBoardReport(tenantId: string, overview: OrganisationO
   };
 
   return {
+    organisationName: profile.name,
+    headline: organisationHeadline({ scopeKinds, siteCount: profile.siteCount, employeeCount: profile.employeeCount }),
     messages: boardMessages(input),
     decisions: boardDecisions(input),
     input,

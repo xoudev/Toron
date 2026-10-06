@@ -78,6 +78,16 @@ export const INVITATION_STATE_LABEL: Record<InvitationState, string> = {
   expiree: 'Expirée',
 };
 
+/**
+ * Adresse partiellement masquée (« h***@exemple.fr ») : aide la personne
+ * invitée à choisir le bon compte sans exposer l'adresse complète.
+ */
+export function maskEmail(email: string): string {
+  const [local, domain] = normalizeEmail(email).split('@');
+  if (!local || !domain) return '***';
+  return `${local.charAt(0)}***@${domain}`;
+}
+
 /** Adresse normalisée pour la comparaison invitation ↔ session. */
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();

@@ -6,7 +6,7 @@ import { createDb, type DbHandle } from '../client.ts';
 import { applyMigrations } from '../migrate.ts';
 import { PG_IMAGE } from '../test-image.ts';
 import { withTenant } from '../tenant.ts';
-import { acceptInvitation, createInvitation, isEmailMember, listInvitations, listPendingInvitationsForEmail, revokeInvitation } from './invitations.ts';
+import { acceptInvitation, createInvitation, isEmailMember, listInvitations, listPendingInvitationsForEmail, previewInvitation, revokeInvitation } from './invitations.ts';
 import { countOwners, listTenantMemberDetails, removeMember, updateMemberRole } from './members.ts';
 import { createTenantWithOwner } from './organisation.ts';
 
@@ -49,6 +49,9 @@ describe('invitations de membres', () => {
     const [stored] = await admin`SELECT token_hash, email FROM invitations WHERE id = ${created.id}`;
     expect(stored!.token_hash).not.toContain(created.token);
     expect(stored!.email).toBe('invitee@example.test');
+
+    expect(await previewInvitation(auth.db, created.token)).toEqual({ tenantName: 'Alpha', role: 'rssi', maskedEmail: 'i***@example.test', state: 'en_attente' });
+    expect(await previewInvitation(auth.db, 'jeton-inconnu')).toBeNull();
 
     const pending = await listPendingInvitationsForEmail(auth.db, 'INVITEE@example.test');
     expect(pending.map((p) => p.tenantSlug)).toEqual([tenantA.slug]);

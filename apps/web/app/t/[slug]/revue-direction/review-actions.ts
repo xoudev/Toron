@@ -1,6 +1,6 @@
 'use server';
 
-import { appError } from '@toron/core';
+import { appError, canEditModule } from '@toron/core';
 import {
   addDecision,
   addParticipant,
@@ -19,15 +19,20 @@ import {
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { authorizeManager, isActionError, logFailure, type ActionResult } from '@/lib/action-guard';
+import { authorizeRole, isActionError, logFailure, type ActionResult } from '@/lib/action-guard';
 import { appDb } from '@/lib/db';
 
 export type { ActionResult };
 
+const REVIEW_REFUSAL = 'La revue de direction est pilotée par la direction, le RSSI et le responsable qualité — votre rôle la consulte.';
+const authorizeReviewManager = (slug: string) => authorizeRole(slug, (r) => canEditModule(r, 'revue_direction'), REVIEW_REFUSAL);
+// Consulter une revue et son ordre du jour est ouvert à tout membre.
+const authorizeReader = (slug: string) => authorizeRole(slug, () => true, 'Accès refusé.');
+
 const Status = z.enum(['planifie', 'tenue', 'close']);
 
 export async function createReviewAction(slug: string, input: unknown): Promise<ActionResult<{ id: string }>> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReviewManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z
     .object({
@@ -52,7 +57,7 @@ export async function createReviewAction(slug: string, input: unknown): Promise<
 }
 
 export async function setReviewStatusAction(slug: string, input: unknown): Promise<ActionResult> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReviewManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ reviewId: z.uuid(), status: Status }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Statut invalide.') };
@@ -66,7 +71,7 @@ export async function setReviewStatusAction(slug: string, input: unknown): Promi
 }
 
 export async function addDecisionAction(slug: string, input: unknown): Promise<ActionResult> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReviewManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ reviewId: z.uuid(), body: z.string().trim().min(2).max(2000) }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Décision invalide.') };
@@ -80,7 +85,7 @@ export async function addDecisionAction(slug: string, input: unknown): Promise<A
 }
 
 export async function convertDecisionAction(slug: string, input: unknown): Promise<ActionResult> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReviewManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ reviewId: z.uuid(), decisionId: z.uuid(), title: z.string().trim().min(2).max(200) }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Conversion invalide.') };
@@ -99,7 +104,7 @@ export async function convertDecisionAction(slug: string, input: unknown): Promi
 }
 
 export async function addParticipantAction(slug: string, input: unknown): Promise<ActionResult> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReviewManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ reviewId: z.uuid(), userId: z.uuid() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Participant invalide.') };
@@ -113,7 +118,7 @@ export async function addParticipantAction(slug: string, input: unknown): Promis
 }
 
 export async function removeParticipantAction(slug: string, input: unknown): Promise<ActionResult> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReviewManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ reviewId: z.uuid(), userId: z.uuid() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Participant invalide.') };
@@ -131,7 +136,7 @@ export async function removeParticipantAction(slug: string, input: unknown): Pro
  * compilera et scellera (poinçon SHA-256 + page /verifier).
  */
 export async function requestPvExportAction(slug: string, input: unknown): Promise<ActionResult<{ exportId: string }>> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReviewManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ reviewId: z.uuid() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence de revue invalide.') };
@@ -152,7 +157,7 @@ export async function getReviewAction(
   slug: string,
   reviewId: string,
 ): Promise<ActionResult<{ review: ReviewDetail; exports: ExportSummary[] }>> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReader(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.uuid().safeParse(reviewId);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };

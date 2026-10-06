@@ -1,7 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto';
 
 import {
-  invitationAcceptanceVerdict, invitationExpiry, normalizeEmail, type MembershipRole,
+  invitationAcceptanceVerdict, invitationExpiry, invitationState, maskEmail, normalizeEmail,
+  type InvitationState, type MembershipRole,
 } from '@toron/core';
 import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 
@@ -97,6 +98,29 @@ export async function listPendingInvitationsForEmail(db: Db, email: string, now 
     ))
     .orderBy(desc(schema.invitations.createdAt));
   return rows.map((r) => ({ ...r, role: r.role as MembershipRole }));
+}
+
+export interface InvitationPreview {
+  tenantName: string; role: MembershipRole; maskedEmail: string; state: InvitationState;
+}
+
+/**
+ * Aperçu d'une invitation pour la personne qui détient le lien (jeton secret
+ * de 256 bits) : organisation, rôle proposé, adresse attendue masquée.
+ * Aucune écriture ; un jeton inconnu renvoie null.
+ */
+export async function previewInvitation(db: Db, token: string, now = new Date()): Promise<InvitationPreview | null> {
+  const [row] = await db.select({
+    tenantName: schema.tenants.name, role: schema.invitations.role, email: schema.invitations.email,
+    expiresAt: schema.invitations.expiresAt, acceptedAt: schema.invitations.acceptedAt, revokedAt: schema.invitations.revokedAt,
+  }).from(schema.invitations)
+    .innerJoin(schema.tenants, eq(schema.tenants.id, schema.invitations.tenantId))
+    .where(eq(schema.invitations.tokenHash, hashInvitationToken(token)));
+  if (!row) return null;
+  return {
+    tenantName: row.tenantName, role: row.role as MembershipRole, maskedEmail: maskEmail(row.email),
+    state: invitationState(row, now),
+  };
 }
 
 export type AcceptInvitationResult =

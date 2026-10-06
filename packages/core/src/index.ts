@@ -38,6 +38,8 @@ export {
   memberRoleChangeVerdict,
   memberRemovalVerdict,
   modulePermission,
+  canEditModule,
+  canRecordAuditFindings,
   type MembershipRole,
   type TenantAccessVerdict,
   type MemberChangeVerdict,

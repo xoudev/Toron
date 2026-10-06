@@ -1,4 +1,5 @@
-import { acceptInvitation } from '@toron/db';
+import { INVITATION_STATE_LABEL, MEMBERSHIP_ROLE_LABEL } from '@toron/core';
+import { acceptInvitation, previewInvitation } from '@toron/db';
 import { BrandMark } from '@toron/ui';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -22,14 +23,34 @@ export default async function InvitationPage({ params }: { params: Promise<{ tok
   const session = await auth().api.getSession({ headers: await headers() });
 
   if (!session) {
+    const preview = TOKEN_RE.test(token) ? await previewInvitation(authDb().db, token) : null;
+    if (!preview || preview.state !== 'en_attente') {
+      return (
+        <main className="auth-page">
+          <div className="auth-card">
+            <span className="org-brand"><BrandMark size={22} /><b>toron</b></span>
+            <h1>Invitation inutilisable</h1>
+            <p role="alert">
+              {!preview
+                ? 'Lien d’invitation inconnu ou incomplet — ouvrez le lien tel qu’il vous a été transmis, ou demandez-en un nouveau.'
+                : preview.state === 'acceptee'
+                  ? `Cette invitation a déjà été utilisée — connectez-vous pour ouvrir ${preview.tenantName}.`
+                  : `Cette invitation est ${INVITATION_STATE_LABEL[preview.state].toLowerCase()} — demandez un nouveau lien à ${preview.tenantName}.`}
+            </p>
+            <p className="auth-alt"><a href="/connexion">Se connecter</a></p>
+          </div>
+        </main>
+      );
+    }
     return (
       <main className="auth-page">
         <div className="auth-card">
           <span className="org-brand"><BrandMark size={22} /><b>toron</b></span>
-          <h1>Vous êtes invité à rejoindre une organisation</h1>
+          <h1>{preview.tenantName} vous invite sur Toron</h1>
           <p>
-            Connectez-vous avec l’adresse e-mail qui a reçu l’invitation, ou créez votre compte
-            avec cette adresse. Vous reviendrez ensuite automatiquement ici.
+            Rôle proposé : <b>{MEMBERSHIP_ROLE_LABEL[preview.role]}</b>. L’invitation est réservée à
+            l’adresse <b>{preview.maskedEmail}</b> : connectez-vous avec ce compte, ou créez-le avec
+            cette adresse. Vous reviendrez ensuite automatiquement ici.
           </p>
           <a className="btn btn-primary" href={`/connexion?suite=${encodeURIComponent(suite)}`}>Se connecter</a>
           <p className="auth-alt">

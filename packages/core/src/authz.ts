@@ -191,6 +191,20 @@ export function modulePermission(role: MembershipRole, module: PermissionModule)
   }
 }
 
+/** Écriture complète sur un module : création, modification, suppression. */
+export function canEditModule(role: MembershipRole, module: PermissionModule): boolean {
+  return modulePermission(role, module) === 'gestion';
+}
+
+/**
+ * Rédaction de constats d'audit : les gestionnaires du module et l'auditeur,
+ * qui constate sans pouvoir modifier l'objet audité.
+ */
+export function canRecordAuditFindings(role: MembershipRole): boolean {
+  const p = modulePermission(role, 'audits');
+  return p === 'gestion' || p === 'constat';
+}
+
 /**
  * Verdict d'accès au contexte tenant pour une session donnée.
  * `totp_requis` signifie : membre légitime, mais l'accès reste bloqué

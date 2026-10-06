@@ -1,4 +1,4 @@
-import { canManageControls } from '@toron/core';
+import { canEditModule, canRecordAuditFindings } from '@toron/core';
 import { listAudits, listFrameworks, listScopes, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
@@ -14,7 +14,8 @@ export default async function AuditsPage({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
-  const canManage = canManageControls(ctx.role);
+  const canManage = canEditModule(ctx.role, 'audits');
+  const canRecord = canRecordAuditFindings(ctx.role);
 
   const { audits, frameworks, scopes, members } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
     audits: await listAudits(tx),
@@ -47,7 +48,7 @@ export default async function AuditsPage({ params }: { params: Promise<{ slug: s
             <p><b>{openNc} non-conformité{openNc > 1 ? 's' : ''}</b> relevée{openNc > 1 ? 's' : ''} en audit — à convertir en action corrective si ce n’est pas déjà fait.</p>
           </div>
         ) : null}
-        <AuditBoard slug={slug} canManage={canManage} audits={audits} frameworks={frameworks} scopes={scopes} members={members} />
+        <AuditBoard slug={slug} canManage={canManage} canRecord={canRecord} audits={audits} frameworks={frameworks} scopes={scopes} members={members} />
       </main>
     </>
   );

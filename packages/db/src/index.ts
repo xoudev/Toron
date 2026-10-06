@@ -9,8 +9,8 @@ export {
 } from './queries/organisation.ts';
 export {
   listInvitations, createInvitation, revokeInvitation, isEmailMember,
-  listPendingInvitationsForEmail, acceptInvitation,
-  type InvitationRow, type PendingInvitation, type AcceptInvitationResult,
+  listPendingInvitationsForEmail, acceptInvitation, previewInvitation,
+  type InvitationRow, type PendingInvitation, type AcceptInvitationResult, type InvitationPreview,
 } from './queries/invitations.ts';
 export { exportTenantData, exportedTableNames, type TenantExport } from './queries/tenant-export.ts';
 export { withTenant, type TenantTx } from './tenant.ts';

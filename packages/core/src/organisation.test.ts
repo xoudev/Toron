@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  MEMBERSHIP_ROLES, PERMISSION_MODULES, assignableRoles, canManageMembers, memberRemovalVerdict,
+  MEMBERSHIP_ROLES, PERMISSION_MODULES, assignableRoles, canEditModule, canManageMembers, canRecordAuditFindings, memberRemovalVerdict,
   memberRoleChangeVerdict, modulePermission,
 } from './authz.ts';
 import {
-  canConfigureOrganisation, invitationAcceptanceVerdict, invitationExpiry, invitationState,
+  canConfigureOrganisation, invitationAcceptanceVerdict, maskEmail, invitationExpiry, invitationState,
   managementSystemLabel, organisationHeadline, organisationSummary,
 } from './organisation.ts';
 
@@ -84,6 +84,20 @@ describe('matrice de permissions', () => {
   });
 });
 
+describe('application de la matrice', () => {
+  it('l’auditeur rédige des constats sans gérer les audits', () => {
+    expect(canRecordAuditFindings('auditeur')).toBe(true);
+    expect(canEditModule('auditeur', 'audits')).toBe(false);
+    expect(canRecordAuditFindings('lecteur')).toBe(false);
+    expect(canRecordAuditFindings('rssi')).toBe(true);
+  });
+  it('la revue de direction est réservée au pilotage du système', () => {
+    for (const role of MEMBERSHIP_ROLES) {
+      expect(canEditModule(role, 'revue_direction')).toBe(['owner', 'direction', 'rssi', 'resp_qualite'].includes(role));
+    }
+  });
+});
+
 describe('invitations', () => {
   const now = new Date('2026-10-05T10:00:00Z');
   const pending = { email: 'invite@example.test', expiresAt: invitationExpiry(now), acceptedAt: null, revokedAt: null };
@@ -94,6 +108,10 @@ describe('invitations', () => {
     expect(invitationState(pending, new Date('2026-10-12T10:00:00Z'))).toBe('expiree');
     expect(invitationState({ ...pending, acceptedAt: now }, now)).toBe('acceptee');
     expect(invitationState({ ...pending, revokedAt: now }, now)).toBe('revoquee');
+  });
+  it('masque l’adresse attendue sans la rendre méconnaissable', () => {
+    expect(maskEmail('Hugo.Lemaire@Meridiane-Logistics.example')).toBe('h***@meridiane-logistics.example');
+    expect(maskEmail('invalide')).toBe('***');
   });
   it('n’est consommable que par le compte dont l’adresse correspond', () => {
     expect(invitationAcceptanceVerdict({ invitation: pending, sessionEmail: 'Invite@Example.test', now })).toEqual({ ok: true });

@@ -1,10 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 
 import { authClient } from '@/lib/auth-client';
+import { safeInternalPath } from '@/lib/safe-path';
 
 export default function Verification2faPage() {
+  return (
+    <Suspense fallback={null}>
+      <Verification2fa />
+    </Suspense>
+  );
+}
+
+function Verification2fa() {
+  const suite = safeInternalPath(useSearchParams().get('suite'));
   const [code, setCode] = useState('');
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -16,7 +27,7 @@ export default function Verification2faPage() {
       setErreur('Code invalide ou expiré — saisissez le code à 6 chiffres affiché à l’instant.');
       return;
     }
-    window.location.href = '/organisations';
+    window.location.assign(suite);
   }
 
   return (

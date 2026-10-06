@@ -88,6 +88,9 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
       ) d ON true
       WHERE s.owner_user_id = ${userId}
     UNION ALL
+    SELECT 'obligation', o.id, o.title, o.due_date::text, o.status
+      FROM obligations o WHERE o.owner_user_id = ${userId} AND o.status IN ('a_evaluer', 'en_cours')
+    UNION ALL
     SELECT 'controle', c.id, c.title, NULL, NULL
       FROM controls c WHERE c.owner_user_id = ${userId} AND c.status = 'actif'
     UNION ALL
@@ -115,6 +118,7 @@ function detailFor(r: Row): string {
     case 'document': return 'Revue documentaire';
     case 'audit': return r.detail === 'en_cours' ? 'Audit en cours' : 'Audit à conduire';
     case 'fournisseur': return r.detail === 'attestation' ? 'Attestation à renouveler' : r.detail === 'evaluation' ? 'Évaluation à refaire' : 'Revue du fournisseur';
+    case 'obligation': return r.detail === 'a_evaluer' ? 'Obligation à évaluer' : 'Obligation en cours de mise en conformité';
     case 'controle': return 'Contrôle sous votre responsabilité';
     case 'processus': return 'Processus que vous pilotez';
   }

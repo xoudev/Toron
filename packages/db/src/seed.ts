@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { hash } from '@node-rs/argon2';
-import { assessSupplier, supplierQuestion, defaultRiskScale, riskBand, type RiskBand, type SupplierAnswers } from '@toron/core';
+import { OBLIGATION_CATALOG, assessSupplier, supplierQuestion, defaultRiskScale, riskBand, type RiskBand, type SupplierAnswers } from '@toron/core';
 import { FRAMEWORK_CATALOG, iso27001, recyf } from '@toron/frameworks';
 import postgres from 'postgres';
 
@@ -67,6 +67,7 @@ export const DEMO = {
   attestIsoInfogerance: 'd0000000-0000-4000-8000-000000000134',
   attestAssuranceTransporteur: 'd0000000-0000-4000-8000-000000000135',
   actionSupplierIncidents: 'd0000000-0000-4000-8000-000000000141',
+  obligationContratClient: 'd0000000-0000-4000-8000-000000000151',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -241,9 +242,13 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         employee_count = EXCLUDED.employee_count, sector = EXCLUDED.sector`;
 
     await sql`
-      INSERT INTO legal_entities (id, tenant_id, name, siren)
-      VALUES (${DEMO.entityId}, ${DEMO.tenantId}, 'Meridiane Logistics SAS', NULL)
-      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`;
+      INSERT INTO legal_entities (id, tenant_id, name, siren, nis2_sector, employee_count, turnover_meur,
+                                  balance_sheet_meur, nis2_registration)
+      VALUES (${DEMO.entityId}, ${DEMO.tenantId}, 'Meridiane Logistics SAS', NULL, 'postal_expedition', 148, 31.5,
+              18.2, 'en_cours')
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, nis2_sector = EXCLUDED.nis2_sector,
+        employee_count = EXCLUDED.employee_count, turnover_meur = EXCLUDED.turnover_meur,
+        balance_sheet_meur = EXCLUDED.balance_sheet_meur, nis2_registration = EXCLUDED.nis2_registration`;
 
     const sites = [
       [DEMO.siteSiege, 'Siège & plateforme logistique — Corbas', '12 rue des Frères Lumière, 69960 Corbas'],
@@ -911,6 +916,41 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
               'Avenant à négocier avant le renouvellement ; NIS 2 impose l’alerte précoce sous 24 h.',
               'supplier', ${DEMO.supplierInfogerance}, ${DEMO.userClaire}, '2026-11-15', 'p1', 'en_cours')
       ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, status = EXCLUDED.status`;
+
+    // ── Module 6.4 : registre des obligations ───────────────────────────
+    // Meridiane Logistics est une entité importante NIS 2 (services
+    // d'expédition, entreprise moyenne) : catalogue complet, avancement réaliste.
+    const obligationState: Record<string, [string, string, string | null, string | null]> = {
+      nis2_enregistrement: ['en_cours', DEMO.userClaire, '2026-11-30', null],
+      nis2_gouvernance: ['en_cours', DEMO.userAntoine, '2026-12-15', null],
+      nis2_mesures: ['en_cours', DEMO.userClaire, null, null],
+      nis2_chaine: ['en_cours', DEMO.userClaire, '2027-03-31', null],
+      nis2_notification: ['conforme', DEMO.userClaire, null, null],
+      nis2_controle: ['a_evaluer', DEMO.userClaire, null, null],
+      rgpd_registre: ['en_cours', DEMO.userClaire, '2026-10-30', null],
+      rgpd_information: ['conforme', DEMO.userCamille, null, null],
+      rgpd_droits: ['conforme', DEMO.userCamille, null, null],
+      rgpd_sous_traitants: ['en_cours', DEMO.userClaire, '2026-12-31', null],
+      rgpd_violations: ['conforme', DEMO.userClaire, null, null],
+      rgpd_dpo: ['non_applicable', DEMO.userAntoine, null,
+        'Analyse du 12/02/2026 : ni suivi régulier et systématique à grande échelle, ni données sensibles à grande échelle. Un référent RGPD interne est désigné.'],
+    };
+    for (const t of OBLIGATION_CATALOG) {
+      const [status, owner, due, justification] = obligationState[t.key] ?? ['a_evaluer', DEMO.userClaire, null, null];
+      await sql`
+        INSERT INTO obligations (tenant_id, entity_id, regime, catalog_key, title, source, owner_user_id, status, due_date, justification)
+        VALUES (${DEMO.tenantId}, ${DEMO.entityId}, ${t.regime}, ${t.key}, ${t.title}, ${t.source}, ${owner}, ${status}, ${due}, ${justification})
+        ON CONFLICT (tenant_id, coalesce(entity_id, '00000000-0000-0000-0000-000000000000'::uuid), catalog_key)
+          WHERE catalog_key IS NOT NULL DO NOTHING`;
+    }
+    await sql`
+      INSERT INTO obligations (id, tenant_id, entity_id, regime, title, source, description, owner_user_id, status, due_date)
+      VALUES (${DEMO.obligationContratClient}, ${DEMO.tenantId}, ${DEMO.entityId}, 'contractuel',
+              'Remettre chaque année au client distributeur le compte rendu du test de restauration',
+              'Contrat logistique cadre, annexe sécurité, art. 7',
+              'Le client exige la preuve d’une restauration réussie des données de traçabilité.',
+              ${DEMO.userClaire}, 'en_cours', '2027-01-31')
+      ON CONFLICT (id) DO NOTHING`;
 
     // ── Module 5.8 : audit interne de démonstration ─────────────────────
     // Piloté par Antoine (direction), pas par Claire (RSSI, propriétaire du

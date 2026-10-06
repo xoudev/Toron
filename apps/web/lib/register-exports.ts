@@ -1,9 +1,16 @@
 import 'server-only';
 
-import { SUPPLIER_RATING_LABEL, refCodeFor, type CsvColumn, type SearchKind } from '@toron/core';
+import {
+  OBLIGATION_REGIME_LABEL,
+  OBLIGATION_STATUS_LABEL,
+  SUPPLIER_RATING_LABEL,
+  refCodeFor,
+  type CsvColumn,
+  type SearchKind,
+} from '@toron/core';
 import {
   listActions, listAssets, listControls, listDocuments, listEvidences, listIncidents, listNc, listRisks,
-  listSuppliers, type TenantTx,
+  listObligations, listSuppliers, type TenantTx,
 } from '@toron/db';
 
 // Définition des exports CSV de chaque registre : colonnes lisibles par un
@@ -116,6 +123,21 @@ export const REGISTER_EXPORTS = {
       { header: 'Actions ouvertes', value: (r) => r.openActionCount },
       { header: 'Propriétaire', value: (r) => r.ownerName },
       { header: 'Prochaine revue', value: (r) => r.nextReview },
+    ],
+  }),
+  obligations: register({
+    title: 'Registre des obligations',
+    load: (tx) => listObligations(tx),
+    columns: [
+      { header: 'Code', value: code('obligation') },
+      { header: 'Obligation', value: (r) => r.title },
+      { header: 'Régime', value: (r) => label(OBLIGATION_REGIME_LABEL, r.regime) },
+      { header: 'Source', value: (r) => r.source },
+      { header: 'Entité', value: (r) => r.entityName },
+      { header: 'Statut', value: (r) => label(OBLIGATION_STATUS_LABEL, r.status) },
+      { header: 'Justification', value: (r) => r.justification },
+      { header: 'Responsable', value: (r) => r.ownerName },
+      { header: 'Échéance', value: (r) => r.dueDate },
     ],
   }),
   incidents: register({

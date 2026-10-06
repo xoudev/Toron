@@ -12,6 +12,7 @@ import '@toron/ui/import.css';
 import '@toron/ui/incidents.css';
 import '@toron/ui/nc.css';
 import '@toron/ui/fournisseurs.css';
+import '@toron/ui/obligations.css';
 import '@toron/ui/parametres.css';
 
 import type { Metadata } from 'next';

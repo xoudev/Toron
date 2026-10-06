@@ -33,6 +33,12 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0, disable
           iconPath: 'M4 6.5h16 M4 12h16 M4 17.5h16',
         },
         {
+          label: 'Obligations',
+          href: `${base}/obligations`,
+          active: isActive(`${base}/obligations`),
+          iconPath: 'M7 3.5h10v17H7z M10 9.5l1.6 1.6L14.5 8 M10 15h4.5',
+        },
+        {
           label: 'Plan d’action',
           href: `${base}/plan-action`,
           active: isActive(`${base}/plan-action`),

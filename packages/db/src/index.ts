@@ -287,3 +287,16 @@ export {
   type ActionLinkRow,
   type ActionDetail,
 } from './queries/actions.ts';
+export {
+  listEntitiesNis2,
+  updateEntityNis2,
+  listObligations,
+  createObligation,
+  updateObligation,
+  deleteObligation,
+  addCatalogObligations,
+  type EntityNis2,
+  type UpdateEntityNis2Input,
+  type ObligationRow,
+  type ObligationInput,
+} from './queries/obligations.ts';

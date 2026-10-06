@@ -13,8 +13,10 @@ import {
   addSupplierAttestation,
   createAction,
   createSupplier,
+  currentOwner,
   getSupplierDetail,
   getSupplierRef,
+  notifyAssignment,
   recordSupplierAssessment,
   removeSupplierAttestation,
   updateSupplier,
@@ -59,6 +61,7 @@ export async function createSupplierAction(slug: string, input: unknown): Promis
     const id = await withTenant(appDb().db, auth.tenantId, async (tx) => {
       const sid = await createSupplier(tx, { tenantId: auth.tenantId, name: d.name, tier: d.tier, services: d.services ?? null, dataCategories: d.dataCategories ?? [], contractStatus: d.contractStatus, ownerUserId: d.ownerUserId ?? null, nextReview: d.nextReview ?? null });
       await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'supplier.create', objectType: 'supplier', objectId: sid, after: { name: d.name, tier: d.tier }, ip: auth.ip, userAgent: auth.userAgent });
+      await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'fournisseur', objectId: sid, objectTitle: d.name, previousOwnerId: null, nextOwnerId: d.ownerUserId ?? null });
       return sid;
     });
     revalidatePath(`/t/${slug}/fournisseurs`);
@@ -76,8 +79,10 @@ export async function updateSupplierAction(slug: string, input: unknown): Promis
   const d = parsed.data;
   try {
     const n = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const previousOwnerId = await currentOwner(tx, 'fournisseur', d.supplierId);
       const affected = await updateSupplier(tx, { supplierId: d.supplierId, name: d.name, tier: d.tier, services: d.services ?? null, dataCategories: d.dataCategories ?? [], contractStatus: d.contractStatus, ownerUserId: d.ownerUserId ?? null, nextReview: d.nextReview ?? null });
       if (affected > 0) await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'supplier.update', objectType: 'supplier', objectId: d.supplierId, after: { contractStatus: d.contractStatus }, ip: auth.ip, userAgent: auth.userAgent });
+      if (affected > 0) await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'fournisseur', objectId: d.supplierId, objectTitle: d.name, previousOwnerId: previousOwnerId, nextOwnerId: d.ownerUserId ?? null });
       return affected;
     });
     if (n === 0) return { ok: false, error: appError('INTROUVABLE', 'Ce fournisseur n’existe plus — rechargez la page.') };
@@ -213,6 +218,7 @@ export async function requestSupplierActionAction(slug: string, input: unknown):
       const { priority, dueDate } = supplierCorrectiveDefaults(question, ref.tier, todayParis());
       const id = await createAction(tx, { tenantId: auth.tenantId, title, originType: 'supplier', originId: supplierId, ownerUserId: ref.ownerUserId ?? auth.userId, priority, dueDate });
       await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'supplier.corrective_action', objectType: 'action', objectId: id, after: { supplierId, question: question.key }, ip: auth.ip, userAgent: auth.userAgent });
+      await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'action', objectId: id, objectTitle: title, previousOwnerId: null, nextOwnerId: ref.ownerUserId ?? auth.userId });
       return { kind: 'ok' as const, id };
     });
     if (res.kind === 'introuvable') return { ok: false, error: appError('INTROUVABLE', 'Ce fournisseur n’existe plus — rechargez la page.') };

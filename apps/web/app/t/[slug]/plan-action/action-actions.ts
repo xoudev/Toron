@@ -6,7 +6,9 @@ import {
   addSubtask,
   bulkSetStatus,
   createAction,
+  currentOwner,
   getActionDetail,
+  notifyAssignment,
   setActionStatus,
   setSubtaskDone,
   updateActionDetails,
@@ -79,6 +81,7 @@ export async function createActionAction(
         ip: auth.ip,
         userAgent: auth.userAgent,
       });
+      await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'action', objectId: id, objectTitle: d.title, previousOwnerId: null, nextOwnerId: d.ownerUserId ?? null });
       return id;
     });
     revalidatePath(`/t/${slug}/plan-action`);
@@ -107,6 +110,7 @@ export async function updateActionAction(slug: string, input: unknown): Promise<
   const d = parsed.data;
   try {
     const n = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const previousOwnerId = await currentOwner(tx, 'action', d.actionId);
       const affected = await updateActionDetails(tx, {
         actionId: d.actionId,
         title: d.title,
@@ -126,6 +130,7 @@ export async function updateActionAction(slug: string, input: unknown): Promise<
           ip: auth.ip,
           userAgent: auth.userAgent,
         });
+        await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'action', objectId: d.actionId, objectTitle: d.title, previousOwnerId: previousOwnerId, nextOwnerId: d.ownerUserId ?? null });
       }
       return affected;
     });

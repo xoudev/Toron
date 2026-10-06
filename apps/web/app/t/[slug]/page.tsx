@@ -46,7 +46,7 @@ export default async function TenantAccueilPage({
             organisation.
           </p>
           <p className="auth-alt">
-            <a href="/securite/2fa">Activer la double authentification</a>
+            <a href={`/securite/2fa?suite=${encodeURIComponent(`/t/${slug}`)}`}>Activer la double authentification</a>
           </p>
         </div>
       </main>

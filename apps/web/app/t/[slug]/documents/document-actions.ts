@@ -1,9 +1,12 @@
 'use server';
 
-import { appError, hardenDocumentHtml, nextSemver } from '@toron/core';
+import { appError, canManageControls, hardenDocumentHtml, nextSemver } from '@toron/core';
 import {
+  acknowledgeDocument,
   addVersion,
   createDocument,
+  getAcknowledgementStatus,
+  setAcknowledgementRequired,
   getVersionBody,
   latestSemver,
   listVersions,
@@ -18,6 +21,7 @@ import { z } from 'zod';
 
 import {
   authorizeManager,
+  authorizeRole,
   isActionError,
   logFailure,
   type ActionResult,
@@ -25,6 +29,10 @@ import {
 import { appDb } from '@/lib/db';
 
 export type { ActionResult };
+
+// Lire un document publié est ouvert à tout membre ; les brouillons restent
+// réservés aux rôles qui gèrent la documentation.
+const authorizeReader = (slug: string) => authorizeRole(slug, () => true, 'Accès refusé.');
 
 const DocType = z.enum(['pssi', 'politique', 'procedure', 'charte', 'pca_pra', 'fiche_processus', 'autre']);
 const Semver = z.string().trim().regex(/^\d+(\.\d+){0,2}$/, 'Version attendue au format « 1.0 ».');
@@ -187,12 +195,12 @@ export async function setDocumentProcessAction(slug: string, input: unknown): Pr
 }
 
 export async function getVersionBodyAction(slug: string, input: unknown): Promise<ActionResult<{ body: string | null }>> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReader(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.object({ versionId: z.uuid() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };
   try {
-    const body = await withTenant(appDb().db, auth.tenantId, (tx) => getVersionBody(tx, parsed.data.versionId));
+    const body = await withTenant(appDb().db, auth.tenantId, (tx) => getVersionBody(tx, parsed.data.versionId, { publishedOnly: !canManageControls(auth.role) }));
     return { ok: true, data: { body } };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_LECTURE', 'La lecture du contenu a échoué.')) };
@@ -237,18 +245,106 @@ export async function getVersionsAction(
   slug: string,
   input: unknown,
 ): Promise<ActionResult<{ versions: DocumentVersionRow[]; nextSemver: string }>> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReader(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = SuggestSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };
   try {
     const { versions, next } = await withTenant(appDb().db, auth.tenantId, async (tx) => {
-      const list = await listVersions(tx, parsed.data.documentId);
+      const list = await listVersions(tx, parsed.data.documentId, { publishedOnly: !canManageControls(auth.role) });
       const latest = await latestSemver(tx, parsed.data.documentId);
       return { versions: list, next: nextSemver(latest) };
     });
     return { ok: true, data: { versions, nextSemver: next } };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_LECTURE', 'La lecture des versions a échoué — réessayez.')) };
+  }
+}
+
+// ── Accusés de lecture ──────────────────────────────────────────────────
+
+export interface AcknowledgementView {
+  required: boolean;
+  semver: string | null;
+  acknowledgedByMe: Date | null;
+  acknowledged: number;
+  total: number;
+  /** Détail par membre : réservé aux gestionnaires de la documentation. */
+  members: { name: string; acknowledgedAt: Date | null }[] | null;
+}
+
+export async function getAcknowledgementsAction(slug: string, input: unknown): Promise<ActionResult<AcknowledgementView>> {
+  const auth = await authorizeReader(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ documentId: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };
+  try {
+    const status = await withTenant(appDb().db, auth.tenantId, (tx) => getAcknowledgementStatus(tx, parsed.data.documentId));
+    if (!status) return { ok: false, error: appError('INTROUVABLE', 'Ce document n’existe plus — rechargez la page.') };
+    const mine = status.members.find((m) => m.userId === auth.userId);
+    return {
+      ok: true,
+      data: {
+        required: status.required,
+        semver: status.version?.semver ?? null,
+        acknowledgedByMe: mine?.acknowledgedAt ?? null,
+        acknowledged: status.version ? status.members.filter((m) => m.acknowledgedAt).length : 0,
+        total: status.members.length,
+        members: canManageControls(auth.role) ? status.members.map((m) => ({ name: m.name, acknowledgedAt: m.acknowledgedAt })) : null,
+      },
+    };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_LECTURE', 'Le suivi des lectures n’a pas pu être chargé — réessayez.')) };
+  }
+}
+
+export async function setAcknowledgementRequiredAction(slug: string, input: unknown): Promise<ActionResult> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ documentId: z.uuid(), required: z.boolean() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Demande invalide — rechargez la page.') };
+  try {
+    const n = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const affected = await setAcknowledgementRequired(tx, parsed.data.documentId, parsed.data.required);
+      if (affected > 0) {
+        await writeAuditEntry(tx, {
+          tenantId: auth.tenantId, actorUserId: auth.userId, action: 'document.acknowledgement_required', objectType: 'document',
+          objectId: parsed.data.documentId, after: { required: parsed.data.required }, ip: auth.ip, userAgent: auth.userAgent,
+        });
+      }
+      return affected;
+    });
+    if (n === 0) return { ok: false, error: appError('INTROUVABLE', 'Ce document n’existe plus — rechargez la page.') };
+    revalidatePath(`/t/${slug}`, 'layout');
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_MISE_A_JOUR', 'Le changement n’a pas été enregistré — réessayez.')) };
+  }
+}
+
+/** L'accusé est toujours enregistré au nom de la session, jamais d'un tiers. */
+export async function acknowledgeDocumentAction(slug: string, input: unknown): Promise<ActionResult<{ semver: string }>> {
+  const auth = await authorizeReader(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ documentId: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };
+  try {
+    const result = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const r = await acknowledgeDocument(tx, { tenantId: auth.tenantId, documentId: parsed.data.documentId, userId: auth.userId });
+      if (r.outcome === 'accepte') {
+        await writeAuditEntry(tx, {
+          tenantId: auth.tenantId, actorUserId: auth.userId, action: 'document.acknowledge', objectType: 'document_version',
+          objectId: r.versionId, after: { semver: r.semver }, ip: auth.ip, userAgent: auth.userAgent,
+        });
+      }
+      return r;
+    });
+    if (result.outcome === 'aucune_version') {
+      return { ok: false, error: appError('AUCUNE_VERSION', 'Aucune version publiée à accepter pour l’instant.') };
+    }
+    revalidatePath(`/t/${slug}`, 'layout');
+    return { ok: true, data: { semver: result.semver } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_ACCUSE', 'L’acceptation n’a pas été enregistrée — réessayez.')) };
   }
 }

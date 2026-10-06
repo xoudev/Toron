@@ -18,7 +18,7 @@ function groupedSecret(totpUri: string): string {
   }
 }
 
-export function Activation2fa({ suite }: { suite: string }) {
+export function Activation2fa({ suite, retour }: { suite: string; retour: string }) {
   const [etape, setEtape] = useState<Etape>('mot_de_passe');
   const [password, setPassword] = useState('');
   const [totpUri, setTotpUri] = useState('');
@@ -152,7 +152,7 @@ export function Activation2fa({ suite }: { suite: string }) {
               Double authentification activée. Votre application vous donnera désormais le code à saisir
               après votre mot de passe.
             </p>
-            <a className="btn btn-primary" href="/organisations">Continuer vers vos organisations</a>
+            <a className="btn btn-primary" href={retour}>{retour === '/organisations' ? 'Continuer vers vos organisations' : 'Continuer'}</a>
           </>
         ) : null}
       </div>

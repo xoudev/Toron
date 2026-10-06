@@ -283,3 +283,65 @@
   font-size: 11.5px;
   color: var(--text-3);
 }
+
+/* ── Vue d'ensemble : matrice compacte et répartition cliquable ─────── */
+.risk-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 440px) minmax(220px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.risk-overview-matrix {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+.risk-overview-side {
+  min-width: 0;
+}
+.risk-facets {
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+.risk-facets button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: var(--radius-m);
+  font-size: 12.5px;
+  color: var(--text);
+  text-align: left;
+}
+.risk-facets button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.risk-facets button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.risk-facets button:disabled {
+  color: var(--text-3);
+  cursor: default;
+}
+.risk-facets .grow {
+  flex: 1;
+}
+.risk-facet-bar {
+  width: 90px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.risk-facet-bar span {
+  display: block;
+  height: 100%;
+  background: var(--sw);
+}
+@media (max-width: 860px) {
+  .risk-overview {
+    grid-template-columns: 1fr;
+  }
+}

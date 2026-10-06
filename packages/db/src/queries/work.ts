@@ -50,6 +50,16 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
            n.status::text
       FROM nonconformities n WHERE n.owner_user_id = ${userId} AND n.status <> 'efficace'
     UNION ALL
+    SELECT 'lecture', d.id, d.title, (pv.published_at::date + 30)::text, pv.semver
+      FROM documents d
+      JOIN LATERAL (
+        SELECT v.id, v.semver, v.published_at FROM document_versions v
+        WHERE v.document_id = d.id AND v.status = 'publie'
+        ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC LIMIT 1
+      ) pv ON true
+      WHERE d.acknowledgement_required
+        AND NOT EXISTS (SELECT 1 FROM document_acknowledgements a WHERE a.version_id = pv.id AND a.user_id = ${userId})
+    UNION ALL
     SELECT 'risque', r.id, r.title, r.next_review::text, NULL
       FROM risks r WHERE r.owner_user_id = ${userId}
     UNION ALL
@@ -86,6 +96,7 @@ function detailFor(r: Row): string {
     case 'action': return ACTION_STATUS_LABEL[r.detail ?? ''] ?? 'Action à réaliser';
     case 'incident': return r.detail ? `${NOTIF_LABEL[r.detail] ?? 'Notification'} à transmettre` : 'Incident à clôturer';
     case 'nc': return NC_STATUS_LABEL[r.detail ?? ''] ?? 'Non-conformité à traiter';
+    case 'lecture': return `Lire et accepter la version ${r.detail ?? ''}`.trim();
     case 'risque': return 'Revue du risque';
     case 'preuve': return 'Renouvellement de la preuve';
     case 'document': return 'Revue documentaire';

@@ -1,4 +1,5 @@
 import {
+  boolean,
   customType,
   date,
   pgTable,
@@ -35,6 +36,7 @@ export const documents = pgTable('documents', {
   processId: uuid('process_id').references(() => processes.id, { onDelete: 'set null' }),
   ownerUserId: uuid('owner_user_id').references(() => users.id),
   reviewDue: date('review_due'),
+  acknowledgementRequired: boolean('acknowledgement_required').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -78,4 +80,22 @@ export const documentRequirements = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.documentId, t.requirementId] })],
+);
+
+// Accusés de lecture d'une version publiée (insertion seule : une preuve).
+export const documentAcknowledgements = pgTable(
+  'document_acknowledgements',
+  {
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id),
+    versionId: uuid('version_id')
+      .notNull()
+      .references(() => documentVersions.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.versionId, t.userId] })],
 );

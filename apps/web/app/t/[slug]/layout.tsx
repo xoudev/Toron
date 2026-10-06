@@ -4,6 +4,7 @@ import { AppShell } from '@toron/ui';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { SearchPalette } from '@/components/search-palette';
 import { SignOutButton } from '@/components/sign-out-button';
 import { appDb } from '@/lib/db';
 import { todayParis } from '@/lib/format';
@@ -52,6 +53,7 @@ export default async function TenantLayout({
       }
     >
       {children}
+      <SearchPalette slug={slug} />
     </AppShell>
   );
 }

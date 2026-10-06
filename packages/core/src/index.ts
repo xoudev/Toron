@@ -3,6 +3,7 @@ export { slugifyTenantName } from './slug.ts';
 export * from './organisation.ts';
 export * from './onboarding.ts';
 export * from './work.ts';
+export * from './search.ts';
 export {
   frameworksCovered,
   isMutualized,

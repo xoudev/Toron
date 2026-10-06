@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { BrandMark } from './brand.tsx';
 import { NavToggle } from './nav-toggle.tsx';
+import { SearchTrigger } from './search-trigger.tsx';
 
 // Shell applicatif (M0-5) : sidebar 236px + topbar 52px, d'après la
 // maquette de référence. Composants serveur — l'interactivité (bascule de
@@ -145,7 +146,10 @@ export function Topbar({
       <span className="topbar-crumb">
         {crumbRoot} / <b>{crumbCurrent}</b>
       </span>
-      <div className="topbar-actions">{actions}</div>
+      <div className="topbar-actions">
+        <SearchTrigger />
+        {actions}
+      </div>
     </header>
   );
 }

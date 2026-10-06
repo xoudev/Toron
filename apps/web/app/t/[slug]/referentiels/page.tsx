@@ -4,6 +4,7 @@ import { BrandMark, ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 import { Fragment } from 'react';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -67,6 +68,7 @@ export default async function ReferentielsPage({
               {active.length} ACTIF{active.length > 1 ? 'S' : ''}
             </span>
             {canManage ? <CreateFrameworkButton slug={slug} /> : null}
+            <ExportCsvLink slug={slug} registre="controles" label="Exporter les contrôles" />
             <ThemeToggle />
           </>
         }

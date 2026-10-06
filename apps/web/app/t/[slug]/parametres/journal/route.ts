@@ -1,6 +1,8 @@
-import { listAuditLog, withTenant } from '@toron/db';
+import { csvFileName, toCsv, type CsvColumn } from '@toron/core';
+import { listAuditLog, withTenant, type AuditRow } from '@toron/db';
 
 import { appDb } from '@/lib/db';
+import { todayParis } from '@/lib/format';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 // Export CSV du journal d'audit (§8.2 : consultable, filtrable, exportable).
@@ -9,12 +11,14 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 const MAX_ROWS = 20_000;
 const PAGE = 200;
 
-function csvCell(v: string | null | undefined): string {
-  const s = v ?? '';
-  // Neutralise les formules de tableur et échappe les guillemets.
-  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
+const COLUMNS: CsvColumn<AuditRow>[] = [
+  { header: 'horodatage', value: (r) => r.at },
+  { header: 'acteur', value: (r) => r.actorName },
+  { header: 'action', value: (r) => r.action },
+  { header: 'type_objet', value: (r) => r.objectType },
+  { header: 'id_objet', value: (r) => r.objectId },
+  { header: 'ip', value: (r) => r.ip },
+];
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
@@ -25,22 +29,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   const filtre = (url.searchParams.get('filtre') ?? '').slice(0, 40);
   if (!/^[a-z_.]*$/.test(filtre)) return new Response('Filtre invalide', { status: 400 });
 
-  const lines = ['﻿"horodatage";"acteur";"action";"type_objet";"id_objet";"ip"'];
+  const rows: AuditRow[] = [];
   await withTenant(appDb().db, ctx.tenantId, async (tx) => {
     for (let offset = 0; offset < MAX_ROWS; offset += PAGE) {
-      const rows = await listAuditLog(tx, { limit: PAGE, offset, actionPrefix: filtre || undefined });
-      for (const r of rows) {
-        lines.push([csvCell(r.at.toISOString()), csvCell(r.actorName), csvCell(r.action), csvCell(r.objectType), csvCell(r.objectId), csvCell(r.ip)].join(';'));
-      }
-      if (rows.length < PAGE) break;
+      const page = await listAuditLog(tx, { limit: PAGE, offset, actionPrefix: filtre || undefined });
+      rows.push(...page);
+      if (page.length < PAGE) break;
     }
   });
 
-  const stamp = new Date().toISOString().slice(0, 10);
-  return new Response(lines.join('\r\n'), {
+  return new Response(toCsv(COLUMNS, rows), {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="journal-audit-${slug}-${stamp}.csv"`,
+      'Content-Disposition': `attachment; filename="${csvFileName(['journal-audit', slug], todayParis())}"`,
       'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'private, no-store',
     },

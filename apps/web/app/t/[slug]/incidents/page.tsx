@@ -3,6 +3,7 @@ import { listIncidents, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -27,6 +28,7 @@ export default async function IncidentsPage({ params }: { params: Promise<{ slug
         actions={
           <>
             <span className="topbar-crumb" style={{ marginRight: 4 }}>{open} OUVERT{open > 1 ? 'S' : ''}</span>
+            <ExportCsvLink slug={slug} registre="incidents" />
             <ThemeToggle />
           </>
         }

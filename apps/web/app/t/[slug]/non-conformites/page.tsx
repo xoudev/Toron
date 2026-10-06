@@ -3,6 +3,7 @@ import { listNc, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -24,7 +25,8 @@ export default async function NonConformitesPage({ params }: { params: Promise<{
       <Topbar
         crumbRoot="Qualité"
         crumbCurrent="Non-conformités"
-        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>PACK QMS</span><ThemeToggle /></>}
+        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>PACK QMS</span><ExportCsvLink slug={slug} registre="non-conformites" />
+            <ThemeToggle /></>}
       />
       <main className="app-page">
         <div className="page-head">

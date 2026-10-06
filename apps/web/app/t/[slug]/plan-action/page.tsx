@@ -3,6 +3,7 @@ import { listActions, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -34,6 +35,7 @@ export default async function PlanActionPage({ params }: { params: Promise<{ slu
             <span className="topbar-crumb" style={{ marginRight: 4 }}>
               {open} OUVERTE{open > 1 ? 'S' : ''}
             </span>
+            <ExportCsvLink slug={slug} registre="actions" />
             <ThemeToggle />
           </>
         }

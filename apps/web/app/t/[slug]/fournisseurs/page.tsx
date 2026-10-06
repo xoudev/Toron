@@ -3,6 +3,7 @@ import { listSuppliers, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -28,7 +29,8 @@ export default async function FournisseursPage({ params }: { params: Promise<{ s
       <Topbar
         crumbRoot="Système de management"
         crumbCurrent="Fournisseurs"
-        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{suppliers.length} TIERS</span><ThemeToggle /></>}
+        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{suppliers.length} TIERS</span><ExportCsvLink slug={slug} registre="fournisseurs" />
+            <ThemeToggle /></>}
       />
       <main className="app-page">
         <div className="page-head">

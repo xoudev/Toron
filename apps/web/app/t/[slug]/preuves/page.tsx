@@ -3,6 +3,7 @@ import { listControls, listEvidences, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -33,6 +34,7 @@ export default async function PreuvesPage({ params }: { params: Promise<{ slug: 
             <span className="topbar-crumb" style={{ marginRight: 4 }}>
               {evidences.length} PREUVE{evidences.length > 1 ? 'S' : ''}
             </span>
+            <ExportCsvLink slug={slug} registre="preuves" />
             <ThemeToggle />
           </>
         }

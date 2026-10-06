@@ -4,8 +4,10 @@ import { appError } from '@toron/core';
 import {
   acceptRisk,
   createRisk,
+  currentOwner,
   linkRiskControl,
   listRiskControlIds,
+  notifyAssignment,
   unlinkRiskControl,
   updateRiskDetails,
   updateRiskRating,
@@ -88,6 +90,7 @@ export async function createRiskAction(
         ip: auth.ip,
         userAgent: auth.userAgent,
       });
+      await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'risque', objectId: id, objectTitle: d.title, previousOwnerId: null, nextOwnerId: d.ownerUserId ?? null });
       return id;
     });
     revalidatePath(`/t/${slug}/risques`);
@@ -109,6 +112,7 @@ export async function saveRiskDetailsAction(slug: string, input: unknown): Promi
   const d = parsed.data;
   try {
     const affected = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const previousOwnerId = await currentOwner(tx, 'risque', d.riskId);
       const n = await updateRiskDetails(tx, {
         riskId: d.riskId,
         title: d.title,
@@ -130,6 +134,7 @@ export async function saveRiskDetailsAction(slug: string, input: unknown): Promi
           ip: auth.ip,
           userAgent: auth.userAgent,
         });
+        await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'risque', objectId: d.riskId, objectTitle: d.title, previousOwnerId: previousOwnerId, nextOwnerId: d.ownerUserId ?? null });
       }
       return n;
     });

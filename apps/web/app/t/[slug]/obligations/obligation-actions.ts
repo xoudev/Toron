@@ -15,8 +15,10 @@ import {
 import {
   addCatalogObligations,
   createObligation,
+  currentOwner,
   deleteObligation,
   listEntitiesNis2,
+  notifyAssignment,
   updateEntityNis2,
   updateObligation,
   withTenant,
@@ -133,6 +135,7 @@ export async function createObligationAction(slug: string, input: unknown): Prom
     const id = await withTenant(appDb().db, auth.tenantId, async (tx) => {
       const oid = await createObligation(tx, auth.tenantId, parsed.data);
       await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'obligation.create', objectType: 'obligation', objectId: oid, after: { regime: parsed.data.regime, status: parsed.data.status }, ip: auth.ip, userAgent: auth.userAgent });
+      await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'obligation', objectId: oid, objectTitle: parsed.data.title, previousOwnerId: null, nextOwnerId: parsed.data.ownerUserId });
       return oid;
     });
     revalidatePath(`/t/${slug}/obligations`);
@@ -152,8 +155,10 @@ export async function updateObligationAction(slug: string, input: unknown): Prom
   if (missing) return { ok: false, error: missing };
   try {
     const n = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const previousOwnerId = await currentOwner(tx, 'obligation', obligationId);
       const affected = await updateObligation(tx, obligationId, d);
       if (affected > 0) await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'obligation.update', objectType: 'obligation', objectId: obligationId, after: { status: d.status, dueDate: d.dueDate }, ip: auth.ip, userAgent: auth.userAgent });
+      if (affected > 0) await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'obligation', objectId: obligationId, objectTitle: d.title, previousOwnerId: previousOwnerId, nextOwnerId: d.ownerUserId });
       return affected;
     });
     if (n === 0) return { ok: false, error: appError('INTROUVABLE', 'Cette obligation n’existe plus — rechargez la page.') };

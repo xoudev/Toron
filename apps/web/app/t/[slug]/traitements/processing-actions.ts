@@ -1,7 +1,15 @@
 'use server';
 
 import { LEGAL_BASES, appError } from '@toron/core';
-import { createProcessing, deleteProcessing, updateProcessing, withTenant, writeAuditEntry } from '@toron/db';
+import {
+  createProcessing,
+  currentOwner,
+  deleteProcessing,
+  notifyAssignment,
+  updateProcessing,
+  withTenant,
+  writeAuditEntry,
+} from '@toron/db';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -55,6 +63,7 @@ export async function createProcessingAction(slug: string, input: unknown): Prom
     const id = await withTenant(appDb().db, auth.tenantId, async (tx) => {
       const pid = await createProcessing(tx, auth.tenantId, data, supplierIds);
       await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'processing.create', objectType: 'processing_activity', objectId: pid, after: { legalBasis: data.legalBasis, processors: supplierIds.length }, ip: auth.ip, userAgent: auth.userAgent });
+      await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'traitement', objectId: pid, objectTitle: data.name, previousOwnerId: null, nextOwnerId: data.ownerUserId });
       return pid;
     });
     revalidatePath(`/t/${slug}/traitements`);
@@ -74,8 +83,10 @@ export async function updateProcessingAction(slug: string, input: unknown): Prom
   const { processingId, supplierIds, ...data } = parsed.data;
   try {
     const n = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const previousOwnerId = await currentOwner(tx, 'traitement', processingId);
       const affected = await updateProcessing(tx, auth.tenantId, processingId, data, supplierIds);
       if (affected > 0) await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'processing.update', objectType: 'processing_activity', objectId: processingId, after: { legalBasis: data.legalBasis, processors: supplierIds.length, lastReviewedOn: data.lastReviewedOn }, ip: auth.ip, userAgent: auth.userAgent });
+      if (affected > 0) await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'traitement', objectId: processingId, objectTitle: data.name, previousOwnerId: previousOwnerId, nextOwnerId: data.ownerUserId });
       return affected;
     });
     if (n === 0) return { ok: false, error: appError('INTROUVABLE', 'Cette fiche n’existe plus — rechargez la page.') };

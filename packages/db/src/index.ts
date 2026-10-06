@@ -310,3 +310,12 @@ export {
   type ProcessorRef,
 } from './queries/processing.ts';
 export { loadBoardReport, type BoardReport } from './queries/board.ts';
+export {
+  currentOwner,
+  notifyAssignment,
+  listMyNotifications,
+  countUnreadNotifications,
+  markNotificationsRead,
+  type AssignmentNotice,
+  type NotificationRow,
+} from './queries/notifications.ts';

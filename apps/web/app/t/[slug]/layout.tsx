@@ -1,9 +1,10 @@
 import { MEMBERSHIP_ROLE_LABEL, urgentWorkCount, workKindEnabled } from '@toron/core';
-import { listMyWork, withTenant } from '@toron/db';
-import { AppShell } from '@toron/ui';
+import { countUnreadNotifications, listMyWork, withTenant } from '@toron/db';
+import { AppShell, NotificationsProvider } from '@toron/ui';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { NotificationCenter } from '@/components/notification-center';
 import { SearchPalette } from '@/components/search-palette';
 import { SignOutButton } from '@/components/sign-out-button';
 import { appDb } from '@/lib/db';
@@ -30,31 +31,37 @@ export default async function TenantLayout({
   if (ctx.verdict !== 'autorise') return <>{children}</>;
 
   const overview = await getOrganisationOverview(ctx.tenantId);
-  const myWork = await withTenant(appDb().db, ctx.tenantId, (tx) => listMyWork(tx, ctx.userId));
+  const { myWork, unread } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
+    myWork: await listMyWork(tx, ctx.userId),
+    unread: await countUnreadNotifications(tx, ctx.userId),
+  }));
 
   // Chaque page fournit sa propre topbar (fil d'Ariane contextuel).
   return (
-    <AppShell
-      sidebar={
-        <TenantSidebar
-          slug={slug}
-          tenantName={ctx.tenantName}
-          tenantDetail={overview.headline}
-          userName={ctx.userName}
-          userRole={MEMBERSHIP_ROLE_LABEL[ctx.role]}
-          urgentWork={urgentWorkCount(myWork.filter((i) => workKindEnabled(i.kind, overview.disabledModules)), todayParis())}
-          disabledModules={overview.disabledModules}
-          footerActions={
-            <>
-              <a className="sidebar-link" href="/organisations">Changer d’organisation</a>
-              <SignOutButton />
-            </>
-          }
-        />
-      }
-    >
-      {children}
-      <SearchPalette slug={slug} />
-    </AppShell>
+    <NotificationsProvider initialUnread={unread}>
+      <AppShell
+        sidebar={
+          <TenantSidebar
+            slug={slug}
+            tenantName={ctx.tenantName}
+            tenantDetail={overview.headline}
+            userName={ctx.userName}
+            userRole={MEMBERSHIP_ROLE_LABEL[ctx.role]}
+            urgentWork={urgentWorkCount(myWork.filter((i) => workKindEnabled(i.kind, overview.disabledModules)), todayParis())}
+            disabledModules={overview.disabledModules}
+            footerActions={
+              <>
+                <a className="sidebar-link" href="/organisations">Changer d’organisation</a>
+                <SignOutButton />
+              </>
+            }
+          />
+        }
+      >
+        {children}
+        <SearchPalette slug={slug} />
+        <NotificationCenter slug={slug} />
+      </AppShell>
+    </NotificationsProvider>
   );
 }

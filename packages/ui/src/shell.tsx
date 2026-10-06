@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { BrandMark } from './brand.tsx';
 import { NavToggle } from './nav-toggle.tsx';
+import { NotificationsTrigger } from './notifications-trigger.tsx';
 import { SearchTrigger } from './search-trigger.tsx';
 
 // Shell applicatif (M0-5) : sidebar 236px + topbar 52px, d'après la
@@ -148,6 +149,7 @@ export function Topbar({
       </span>
       <div className="topbar-actions">
         <SearchTrigger />
+        <NotificationsTrigger />
         {actions}
       </div>
     </header>

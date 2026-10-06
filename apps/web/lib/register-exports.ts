@@ -1,6 +1,7 @@
 import 'server-only';
 
 import {
+  LEGAL_BASIS_LABEL,
   OBLIGATION_REGIME_LABEL,
   OBLIGATION_STATUS_LABEL,
   SUPPLIER_RATING_LABEL,
@@ -10,7 +11,7 @@ import {
 } from '@toron/core';
 import {
   listActions, listAssets, listControls, listDocuments, listEvidences, listIncidents, listNc, listRisks,
-  listObligations, listSuppliers, type TenantTx,
+  listObligations, listProcessing, listSuppliers, type TenantTx,
 } from '@toron/db';
 
 // Définition des exports CSV de chaque registre : colonnes lisibles par un
@@ -138,6 +139,28 @@ export const REGISTER_EXPORTS = {
       { header: 'Justification', value: (r) => r.justification },
       { header: 'Responsable', value: (r) => r.ownerName },
       { header: 'Échéance', value: (r) => r.dueDate },
+    ],
+  }),
+  traitements: register({
+    title: 'Registre des activités de traitement (RGPD, art. 30)',
+    load: (tx) => listProcessing(tx),
+    columns: [
+      { header: 'Code', value: code('traitement') },
+      { header: 'Traitement', value: (r) => r.name },
+      { header: 'Finalité', value: (r) => r.purpose },
+      { header: 'Base légale', value: (r) => label(LEGAL_BASIS_LABEL, r.legalBasis) },
+      { header: 'Précision sur la base légale', value: (r) => r.legalBasisDetail },
+      { header: 'Personnes concernées', value: (r) => r.dataSubjects.join(', ') },
+      { header: 'Catégories de données', value: (r) => r.dataCategories.join(', ') },
+      { header: 'Données sensibles', value: (r) => (r.sensitiveData ? 'Oui' : 'Non') },
+      { header: 'Destinataires', value: (r) => r.recipients },
+      { header: 'Sous-traitants', value: (r) => r.processors.map((x) => x.name).join(', ') },
+      { header: 'Transferts hors UE', value: (r) => (r.transfersOutsideEu ? 'Oui' : 'Non') },
+      { header: 'Garanties des transferts', value: (r) => r.transferSafeguards },
+      { header: 'Durée de conservation', value: (r) => r.retention },
+      { header: 'Mesures de sécurité', value: (r) => r.securityMeasures },
+      { header: 'Responsable', value: (r) => r.ownerName },
+      { header: 'Dernière relecture', value: (r) => r.lastReviewedOn },
     ],
   }),
   incidents: register({

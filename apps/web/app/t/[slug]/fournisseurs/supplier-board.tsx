@@ -156,7 +156,7 @@ function SupplierDrawer({ slug, members, supplier, canManage, today, onClose }: 
 
   return (
     <Drawer header={header} labelId="frn-title" onClose={onClose}>
-      <div className="sup-wide">
+      <div className="drawer-wide">
         {supplier ? (
           <>
             <h2 className="sup-title">{supplier.name}</h2>

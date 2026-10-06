@@ -1,12 +1,5 @@
 import type { EbiosModel } from './ebios-model.ts';
-
-// Insère une chaîne comme TEXTE en mode markup Typst : on échappe les
-// caractères de syntaxe (#, [], *, _, `, $, <, >, @, ~, \) et on aplatit les
-// sauts de ligne. Ne PAS confondre avec un littéral chaîne « "..." » (mode
-// code) : ici on rend le texte, sans guillemets.
-function mk(s: string): string {
-  return s.replace(/[\r\n]+/g, ' ').replace(/[\\#[\]*_`$<>@~]/g, (c) => `\\${c}`);
-}
+import { typstText as mk } from './escape.ts';
 
 /**
  * Génère la source Typst du livrable EBIOS RM. Rendu déterministe ; le pied

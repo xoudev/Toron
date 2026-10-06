@@ -173,7 +173,7 @@ export interface ObligationInput {
 export async function createObligation(tx: TenantTx, tenantId: string, i: ObligationInput): Promise<string> {
   const [row] = await tx
     .insert(schema.obligations)
-    .values({ tenantId, ...i })
+    .values({ ...i, tenantId })
     .returning({ id: schema.obligations.id });
   return row!.id;
 }

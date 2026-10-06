@@ -36,7 +36,7 @@ export async function claimNextExport(db: Db): Promise<ClaimedExport | null> {
 
 export interface CreateExportInput {
   tenantId: string;
-  type: 'soa' | 'pv' | 'ebios';
+  type: 'soa' | 'pv' | 'ebios' | 'rapport';
   objectRef: string;
   requestedBy: string;
 }
@@ -143,13 +143,13 @@ export async function listExportsForObject(
 export async function getExportPdf(
   tx: TenantTx,
   exportId: string,
-): Promise<{ pdf: Buffer; sha256: string } | null> {
+): Promise<{ pdf: Buffer; sha256: string; type: string } | null> {
   const [row] = await tx
-    .select({ pdf: schema.exports.pdf, sha256: schema.exports.sha256 })
+    .select({ pdf: schema.exports.pdf, sha256: schema.exports.sha256, type: schema.exports.type })
     .from(schema.exports)
     .where(and(eq(schema.exports.id, exportId), eq(schema.exports.status, 'scelle')));
   if (!row || !row.pdf || !row.sha256) return null;
-  return { pdf: row.pdf, sha256: row.sha256 };
+  return { pdf: row.pdf, sha256: row.sha256, type: row.type };
 }
 
 export interface VerifiedExport {

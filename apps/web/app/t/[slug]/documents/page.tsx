@@ -3,6 +3,7 @@ import { listDocuments, listProcesses, listScopes, listTenantMembers, withTenant
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -35,6 +36,7 @@ export default async function DocumentsPage({ params }: { params: Promise<{ slug
             <span className="topbar-crumb" style={{ marginRight: 4 }}>
               {documents.length} DOCUMENT{documents.length > 1 ? 'S' : ''}
             </span>
+            <ExportCsvLink slug={slug} registre="documents" />
             <ThemeToggle />
           </>
         }

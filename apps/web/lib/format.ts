@@ -29,3 +29,11 @@ export function frDate(d: string | null | undefined): string {
   const [y, m, day] = d.slice(0, 10).split('-');
   return `${day}/${m}/${y}`;
 }
+
+/**
+ * Date du jour (AAAA-MM-JJ) à l'heure de Paris : les échéances métier sont
+ * des dates calendaires françaises, pas des instants UTC.
+ */
+export function todayParis(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+}

@@ -11,6 +11,7 @@ import {
 import { BrandMark, ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -58,6 +59,7 @@ export default async function RisquesPage({ params }: { params: Promise<{ slug: 
             <span className="topbar-crumb" style={{ marginRight: 4 }}>
               {risks.length} RISQUE{risks.length > 1 ? 'S' : ''}
             </span>
+            <ExportCsvLink slug={slug} registre="risques" />
             <ThemeToggle />
           </>
         }

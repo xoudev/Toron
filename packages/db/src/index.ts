@@ -13,6 +13,8 @@ export {
   type InvitationRow, type PendingInvitation, type AcceptInvitationResult, type InvitationPreview,
 } from './queries/invitations.ts';
 export { exportTenantData, exportedTableNames, type TenantExport } from './queries/tenant-export.ts';
+export { listMyWork } from './queries/work.ts';
+export { searchTenant, type SearchHit } from './queries/search.ts';
 export { withTenant, type TenantTx } from './tenant.ts';
 export { applyMigrations } from './migrate.ts';
 export { writeAuditEntry, type AuditEntry } from './audit.ts';

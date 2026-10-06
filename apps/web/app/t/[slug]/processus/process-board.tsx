@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import { addProcessRiskAction, createProcessAction, getProcessAction, removeProcessRiskAction, setProcessWorkflowAction, updateProcessAction } from './process-actions';
 
@@ -30,7 +31,7 @@ export function ProcessBoard({
   members: TenantMember[];
 }) {
   const [creating, setCreating] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenItem(processes.map((x) => x.id));
 
   return (
     <>

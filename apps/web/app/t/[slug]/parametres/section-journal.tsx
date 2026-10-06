@@ -15,7 +15,8 @@ const ACTION_FILTERS: { label: string; prefix: string }[] = [
   { label: 'Non-conformités', prefix: 'nc.' },
   { label: 'Contrôles', prefix: 'control.' },
   { label: 'Évaluations', prefix: 'assessment.' },
-  { label: 'Exports', prefix: 'export.' },
+  { label: 'Livrables scellés', prefix: 'export.' },
+  { label: 'Exports de registres', prefix: 'register.' },
   { label: 'Import', prefix: 'import.' },
   { label: 'Données', prefix: 'tenant.' },
 ];

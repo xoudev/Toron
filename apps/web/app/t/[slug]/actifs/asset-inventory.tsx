@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   createAssetAction,
@@ -58,7 +59,9 @@ export function AssetInventory({
 }) {
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [openAsset, setOpenAsset] = useState<AssetSummary | null>(null);
+  const [openId, setOpenId] = useOpenItem(assets.map((x) => x.id));
+  const openAsset = assets.find((x) => x.id === openId) ?? null;
+  const setOpenAsset = (a: AssetSummary | null) => setOpenId(a?.id ?? null);
 
   return (
     <>

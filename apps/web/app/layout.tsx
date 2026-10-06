@@ -52,8 +52,9 @@ const themeInit = `try{var t=localStorage.getItem('toron-theme');if(t==='light'|
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const nonce = (await headers()).get('x-nonce') ?? undefined;
+  // Le script de thème modifie data-theme avant l’hydratation : écart attendu.
   return (
-    <html lang="fr" data-theme="dark" className={`${plexSans.variable} ${plexMono.variable}`}>
+    <html lang="fr" data-theme="dark" suppressHydrationWarning className={`${plexSans.variable} ${plexMono.variable}`}>
       <body>
         {/* Le navigateur masque la valeur du nonce dans le DOM : l’écart d’hydratation est attendu. */}
         <script nonce={nonce} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: themeInit }} />

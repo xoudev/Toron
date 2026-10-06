@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   addEventAction,
@@ -43,7 +44,9 @@ function countdownText(dueAt: Date, sentAt: Date | null, now: Date): string {
 }
 
 export function IncidentsBoard({ slug, canManage, incidents }: { slug: string; canManage: boolean; incidents: IncidentSummary[] }) {
-  const [selectedId, setSelectedId] = useState<string | null>(incidents[0]?.id ?? null);
+  const [linkedId, setLinkedId] = useOpenItem(incidents.map((x) => x.id));
+  const [selectedId, setSelectedIdState] = useState<string | null>(linkedId ?? incidents[0]?.id ?? null);
+  const setSelectedId = (id: string | null) => { setSelectedIdState(id); setLinkedId(id); };
   const [creating, setCreating] = useState(false);
 
   return (

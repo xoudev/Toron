@@ -1,9 +1,9 @@
 import type { NavGroup } from '@toron/ui';
 
-// Navigation du produit (correspondance §9 du PLAN). Les modules des phases
-// ultérieures sont annoncés mais désactivés ; « Référentiels » est livré
-// (module 5.2). L'item actif est déterminé par le chemin courant.
-export function buildNav(slug: string, pathname: string): NavGroup[] {
+// Navigation du produit (correspondance §9 du PLAN). L'item actif est
+// déterminé par le chemin courant ; « Mon travail » porte le nombre
+// d'échéances dépassées ou à moins de 7 jours.
+export function buildNav(slug: string, pathname: string, urgentWork = 0): NavGroup[] {
   const base = `/t/${slug}`;
   const isActive = (href: string): boolean =>
     href === base ? pathname === base : pathname === href || pathname.startsWith(`${href}/`);
@@ -17,6 +17,13 @@ export function buildNav(slug: string, pathname: string): NavGroup[] {
           href: base,
           active: isActive(base),
           iconPath: 'M4 4.5h5.5v5.5H4z M14.5 4.5H20v5.5h-5.5z M4 14.5h5.5V20H4z M14.5 14.5H20V20h-5.5z',
+        },
+        {
+          label: 'Mon travail',
+          href: `${base}/mon-travail`,
+          active: isActive(`${base}/mon-travail`),
+          iconPath: 'M5 6.5h2 M10 6.5h9 M5 12h2 M10 12h9 M5 17.5h2 M10 17.5h9',
+          badge: urgentWork > 0 ? String(urgentWork) : undefined,
         },
         {
           label: 'Référentiels',

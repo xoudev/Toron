@@ -3,6 +3,7 @@ import { listAssets, listRisks, listScopes, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -34,6 +35,7 @@ export default async function ActifsPage({ params }: { params: Promise<{ slug: s
             <span className="topbar-crumb" style={{ marginRight: 4 }}>
               {assets.length} ACTIF{assets.length > 1 ? 'S' : ''}
             </span>
+            <ExportCsvLink slug={slug} registre="actifs" />
             <ThemeToggle />
           </>
         }

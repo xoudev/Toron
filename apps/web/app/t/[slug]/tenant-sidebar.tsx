@@ -18,6 +18,7 @@ export function TenantSidebar({
   userName,
   userRole,
   footerActions,
+  urgentWork = 0,
 }: {
   slug: string;
   tenantName: string;
@@ -25,13 +26,14 @@ export function TenantSidebar({
   userName: string;
   userRole: string;
   footerActions?: ReactNode;
+  urgentWork?: number;
 }) {
   const pathname = usePathname();
   return (
     <Sidebar
       tenantName={tenantName}
       tenantDetail={tenantDetail}
-      groups={buildNav(slug, pathname)}
+      groups={buildNav(slug, pathname, urgentWork)}
       userName={userName}
       userRole={userRole}
       footerActions={footerActions}

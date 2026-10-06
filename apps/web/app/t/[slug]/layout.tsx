@@ -1,9 +1,13 @@
-import { MEMBERSHIP_ROLE_LABEL } from '@toron/core';
+import { MEMBERSHIP_ROLE_LABEL, urgentWorkCount } from '@toron/core';
+import { listMyWork, withTenant } from '@toron/db';
 import { AppShell } from '@toron/ui';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { SearchPalette } from '@/components/search-palette';
 import { SignOutButton } from '@/components/sign-out-button';
+import { appDb } from '@/lib/db';
+import { todayParis } from '@/lib/format';
 import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -26,6 +30,7 @@ export default async function TenantLayout({
   if (ctx.verdict !== 'autorise') return <>{children}</>;
 
   const overview = await getOrganisationOverview(ctx.tenantId);
+  const myWork = await withTenant(appDb().db, ctx.tenantId, (tx) => listMyWork(tx, ctx.userId));
 
   // Chaque page fournit sa propre topbar (fil d'Ariane contextuel).
   return (
@@ -37,6 +42,7 @@ export default async function TenantLayout({
           tenantDetail={overview.headline}
           userName={ctx.userName}
           userRole={MEMBERSHIP_ROLE_LABEL[ctx.role]}
+          urgentWork={urgentWorkCount(myWork, todayParis())}
           footerActions={
             <>
               <a className="sidebar-link" href="/organisations">Changer d’organisation</a>
@@ -47,6 +53,7 @@ export default async function TenantLayout({
       }
     >
       {children}
+      <SearchPalette slug={slug} />
     </AppShell>
   );
 }

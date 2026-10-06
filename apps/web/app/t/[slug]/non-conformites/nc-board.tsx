@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   createCorrectiveActionAction,
@@ -35,7 +36,7 @@ function asWhys(rc: unknown): Whys {
 
 export function NcBoard({ slug, canManage, ncs }: { slug: string; canManage: boolean; ncs: NcSummary[] }) {
   const [creating, setCreating] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenItem(ncs.map((x) => x.id));
 
   return (
     <>

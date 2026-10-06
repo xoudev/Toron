@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import { initials, refCode } from '@/lib/format';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   addCommentAction,
@@ -46,7 +47,7 @@ export function PlanBoard({ slug, canManage, actions, members }: { slug: string;
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenItem(actions.map((x) => x.id));
 
   const toggleSel = (id: string) => setSelected((s) => { const c = new Set(s); if (c.has(id)) c.delete(id); else c.add(id); return c; });
   const shown = useMemo(() => {

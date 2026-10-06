@@ -6,12 +6,15 @@ import { appError } from '@toron/core';
 import {
   createEvidence,
   linkEvidence,
+  listEvidenceHistory,
+  renewEvidence,
   listAccessLog,
   listEvidenceLinks,
   unlinkEvidence,
   withTenant,
   writeAuditEntry,
   type AccessLogRow,
+  type EvidenceHistoryRow,
   type EvidenceLinkRow,
 } from '@toron/db';
 import { revalidatePath } from 'next/cache';
@@ -19,6 +22,7 @@ import { z } from 'zod';
 
 import {
   authorizeManager,
+  authorizeRole,
   isActionError,
   logFailure,
   type ActionResult,
@@ -35,6 +39,21 @@ const DateOpt = z.string().regex(DATE_RE, 'Date attendue au format AAAA-MM-JJ').
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXT = ['pdf', 'png', 'jpg', 'jpeg', 'csv', 'txt', 'md', 'docx', 'xlsx', 'zip', 'json'];
+
+/** Contrôles communs à tout fichier de preuve : présence, taille, extension. */
+function checkUpload(file: FormDataEntryValue | null): { ok: true; file: File } | { ok: false; error: ReturnType<typeof appError> } {
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: appError('FICHIER_MANQUANT', 'Choisissez un fichier à téléverser.') };
+  }
+  if (file.size > MAX_BYTES) {
+    return { ok: false, error: appError('FICHIER_TROP_GROS', 'Fichier trop volumineux — 10 Mo maximum.') };
+  }
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  if (!ALLOWED_EXT.includes(ext)) {
+    return { ok: false, error: appError('TYPE_REFUSE', `Type de fichier non autorisé (.${ext}). Formats admis : ${ALLOWED_EXT.join(', ')}.`) };
+  }
+  return { ok: true, file };
+}
 
 /**
  * Ingestion d'une preuve : reçoit un FormData (fichier + métadonnées). Calcule
@@ -68,17 +87,9 @@ export async function createEvidenceAction(
   if (!parsed.success) {
     return { ok: false, error: appError('SAISIE_INVALIDE', 'Preuve invalide — intitulé, type, date de collecte et récurrence sont requis.') };
   }
-  const file = formData.get('file');
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, error: appError('FICHIER_MANQUANT', 'Choisissez un fichier à téléverser.') };
-  }
-  if (file.size > MAX_BYTES) {
-    return { ok: false, error: appError('FICHIER_TROP_GROS', 'Fichier trop volumineux — 10 Mo maximum.') };
-  }
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
-  if (!ALLOWED_EXT.includes(ext)) {
-    return { ok: false, error: appError('TYPE_REFUSE', `Type de fichier non autorisé (.${ext}). Formats admis : ${ALLOWED_EXT.join(', ')}.`) };
-  }
+  const upload = checkUpload(formData.get('file'));
+  if (!upload.ok) return { ok: false, error: upload.error };
+  const file = upload.file;
 
   const d = parsed.data;
   try {
@@ -150,11 +161,13 @@ export async function toggleEvidenceControlAction(slug: string, input: unknown):
   }
 }
 
+// Consulter une preuve (rattachements, historique, accès) est ouvert à tout
+// membre : l'auditeur en a besoin pour constater.
 export async function getEvidenceDetailAction(
   slug: string,
   evidenceId: string,
-): Promise<ActionResult<{ links: EvidenceLinkRow[]; access: AccessLogRow[] }>> {
-  const auth = await authorizeManager(slug);
+): Promise<ActionResult<{ links: EvidenceLinkRow[]; access: AccessLogRow[]; history: EvidenceHistoryRow[] }>> {
+  const auth = await authorizeRole(slug, () => true, 'Accès refusé.');
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.uuid().safeParse(evidenceId);
   if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };
@@ -162,9 +175,57 @@ export async function getEvidenceDetailAction(
     const data = await withTenant(appDb().db, auth.tenantId, async (tx) => ({
       links: await listEvidenceLinks(tx, parsed.data),
       access: await listAccessLog(tx, parsed.data),
+      history: await listEvidenceHistory(tx, parsed.data),
     }));
     return { ok: true, data };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_LECTURE', 'La lecture a échoué — réessayez.')) };
+  }
+}
+
+/**
+ * Renouvelle une preuve : nouveau fichier (empreinte calculée côté serveur),
+ * nouvelle validité ; rattachements hérités, ancienne preuve conservée comme
+ * historique. RM §5.7.
+ */
+export async function renewEvidenceAction(slug: string, formData: FormData): Promise<ActionResult<{ evidenceId: string }>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ previousId: z.uuid(), collectedAt: DateReq, validUntil: DateOpt })
+    .refine((d) => !d.validUntil || d.validUntil >= d.collectedAt, { message: 'La validité doit suivre la date de collecte.' })
+    .safeParse({
+      previousId: String(formData.get('previousId') ?? ''),
+      collectedAt: String(formData.get('collectedAt') ?? ''),
+      validUntil: String(formData.get('validUntil') ?? '') || null,
+    });
+  if (!parsed.success) {
+    return { ok: false, error: appError('SAISIE_INVALIDE', parsed.error.issues[0]?.message ?? 'Renouvellement invalide — vérifiez les dates.') };
+  }
+  const upload = checkUpload(formData.get('file'));
+  if (!upload.ok) return { ok: false, error: upload.error };
+  const d = parsed.data;
+  try {
+    const content = Buffer.from(await upload.file.arrayBuffer());
+    const sha256 = createHash('sha256').update(content).digest('hex');
+    const result = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const r = await renewEvidence(tx, {
+        tenantId: auth.tenantId, previousId: d.previousId, fileName: upload.file.name, content, sha256,
+        collectedAt: d.collectedAt, validUntil: d.validUntil ?? null, collectorUserId: auth.userId,
+      });
+      if (r.outcome === 'renouvelee') {
+        await writeAuditEntry(tx, {
+          tenantId: auth.tenantId, actorUserId: auth.userId, action: 'evidence.renew', objectType: 'evidence',
+          objectId: r.evidenceId, before: { evidenceId: d.previousId }, after: { sha256, validUntil: d.validUntil ?? null },
+          ip: auth.ip, userAgent: auth.userAgent,
+        });
+      }
+      return r;
+    });
+    if (result.outcome === 'introuvable') return { ok: false, error: appError('INTROUVABLE', 'Cette preuve n’existe plus — rechargez la page.') };
+    if (result.outcome === 'deja_remplacee') return { ok: false, error: appError('DEJA_REMPLACEE', 'Cette preuve a déjà été renouvelée — ouvrez la version en vigueur.') };
+    revalidatePath(`/t/${slug}`, 'layout');
+    return { ok: true, data: { evidenceId: result.evidenceId } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_RENOUVELLEMENT', 'Le renouvellement a échoué — réessayez.')) };
   }
 }

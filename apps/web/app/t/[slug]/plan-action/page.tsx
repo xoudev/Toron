@@ -54,12 +54,13 @@ export default async function PlanActionPage({ params }: { params: Promise<{ slu
         {late > 0 ? (
           <div className="mut-band" style={{ marginBottom: 16 }}>
             <p>
-              <b>{late} action{late > 1 ? 's' : ''} en retard</b> — échéance dépassée, à traiter en priorité.
+              <b>{late} action{late > 1 ? 's' : ''} en retard</b> — échéance dépassée, à traiter en priorité.{' '}
+              <a href={`/t/${slug}/plan-action?statut=en_retard`}>Afficher uniquement celles-ci</a>
             </p>
           </div>
         ) : null}
 
-        <PlanBoard slug={slug} canManage={canManage} actions={actions} members={members} />
+        <PlanBoard slug={slug} canManage={canManage} actions={actions} members={members} viewerId={ctx.userId} />
       </main>
     </>
   );

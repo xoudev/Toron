@@ -1,10 +1,11 @@
-import { groupWork, urgentWorkCount } from '@toron/core';
+import { groupWork, urgentWorkCount, workKindEnabled } from '@toron/core';
 import { listMyWork, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
 import { todayParis } from '@/lib/format';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { WorkList } from './work-list';
@@ -17,7 +18,9 @@ export default async function MonTravailPage({ params }: { params: Promise<{ slu
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
 
   const today = todayParis();
-  const items = await withTenant(appDb().db, ctx.tenantId, (tx) => listMyWork(tx, ctx.userId));
+  const { disabledModules } = await getOrganisationOverview(ctx.tenantId);
+  const items = (await withTenant(appDb().db, ctx.tenantId, (tx) => listMyWork(tx, ctx.userId)))
+    .filter((i) => workKindEnabled(i.kind, disabledModules));
   const urgent = urgentWorkCount(items, today);
 
   return (

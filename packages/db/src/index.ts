@@ -1,6 +1,6 @@
 export { createDb, type Db, type DbHandle } from './client.ts';
 export {
-  getOrganisationProfile, updateOrganisationProfile,
+  getOrganisationProfile, updateOrganisationProfile, setDisabledModules,
   listLegalEntities, saveLegalEntity, deleteLegalEntity,
   listSites, saveSite, deleteSite,
   listScopeDetails, saveOrganisationScope, deleteOrganisationScope,
@@ -107,6 +107,15 @@ export {
   createSupplier,
   updateSupplier,
   listSuppliers,
+  getSupplierRef,
+  recordSupplierAssessment,
+  addSupplierAttestation,
+  removeSupplierAttestation,
+  getSupplierDetail,
+  type SupplierDetail,
+  type SupplierAssessmentRow,
+  type SupplierAttestationRow,
+  type SupplierActionRow,
   type SupplierTier,
   type ContractStatus,
   type CreateSupplierInput,
@@ -221,6 +230,8 @@ export {
   unlinkEvidence,
   listEvidenceLinks,
   listEvidencesCoveringRequirement,
+  renewEvidence,
+  listEvidenceHistory,
   logAccess,
   listAccessLog,
   type EvidenceTarget,
@@ -229,6 +240,8 @@ export {
   type EvidenceContent,
   type EvidenceLinkRow,
   type CoveringEvidence,
+  type RenewResult,
+  type EvidenceHistoryRow,
   type AccessLogRow,
 } from './queries/evidences.ts';
 export {
@@ -274,3 +287,26 @@ export {
   type ActionLinkRow,
   type ActionDetail,
 } from './queries/actions.ts';
+export {
+  listEntitiesNis2,
+  updateEntityNis2,
+  listObligations,
+  createObligation,
+  updateObligation,
+  deleteObligation,
+  addCatalogObligations,
+  type EntityNis2,
+  type UpdateEntityNis2Input,
+  type ObligationRow,
+  type ObligationInput,
+} from './queries/obligations.ts';
+export {
+  listProcessing,
+  createProcessing,
+  updateProcessing,
+  deleteProcessing,
+  type ProcessingRow,
+  type ProcessingInput,
+  type ProcessorRef,
+} from './queries/processing.ts';
+export { loadBoardReport, type BoardReport } from './queries/board.ts';

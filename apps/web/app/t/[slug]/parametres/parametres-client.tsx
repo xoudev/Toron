@@ -8,6 +8,7 @@ import type {
 import { SectionDonnees } from './section-donnees';
 import { SectionJournal } from './section-journal';
 import { SectionMembres } from './section-membres';
+import { SectionModules } from './section-modules';
 import { SectionOrganisation } from './section-organisation';
 import { SectionPerimetres } from './section-perimetres';
 import { SectionSecurite } from './section-securite';
@@ -65,6 +66,9 @@ export function ParametresClient(props: {
         ) : null}
         {section === 'perimetres' ? (
           <SectionPerimetres slug={slug} viewer={props.viewer} scopes={props.scopes} entities={props.entities} sites={props.sites} />
+        ) : null}
+        {section === 'modules' ? (
+          <SectionModules slug={slug} viewer={props.viewer} disabled={props.profile.disabledModules} />
         ) : null}
         {section === 'membres' ? (
           <SectionMembres slug={slug} viewer={props.viewer} members={props.members} invitations={props.invitations} />

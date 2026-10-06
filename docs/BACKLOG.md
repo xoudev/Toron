@@ -6,6 +6,22 @@ description courte, phase cible pressentie.
 
 ## Entrées
 
+- **2026-10-06 · Responsables limités aux membres de l'organisation** —
+  Les colonnes `owner_user_id` (risques, actions, fournisseurs, obligations,
+  traitements…) référencent `users(id)` par une clé étrangère simple, qui
+  ignore la RLS : un gestionnaire peut désigner l'UUID d'un utilisateur d'une
+  autre organisation. Aucune fuite (la RLS de `users` masque le nom), mais
+  l'intégrité n'est pas garantie. Vérifier l'appartenance côté serveur pour
+  tous les modules, ou clé composite vers `memberships (user_id, tenant_id)`.
+  Phase cible : V1 (durcissement transverse).
+
+- **2026-10-06 · Questionnaire fournisseur rempli par le fournisseur (5.10)**
+  — L'évaluation livrée en V1 est remplie par l'organisation à partir des
+  pièces du fournisseur. Envoyer le même questionnaire au fournisseur
+  (compte invité restreint, lien à durée de vie courte, relances, pièces
+  jointes versées au coffre de preuves) relève du portail fournisseur.
+  Phase cible : V2.
+
 - **2026-10-06 · Retirer l'exception `minimumReleaseAgeExclude`** — Le
   correctif source-map-js 1.2.2 (GHSA-68fv-2mgg-jv7q) a été installé avant la
   fin du délai de 7 jours, par une exception limitée à cette version exacte

@@ -33,9 +33,9 @@ function tenantTables(): { name: string; binaryColumns: string[] }[] {
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Liste des tables incluses dans l'export, pour l'afficher à l'utilisateur. */
+/** Liste des collections incluses dans l'export, pour l'afficher à l'utilisateur. */
 export function exportedTableNames(): string[] {
-  return tenantTables().map((t) => t.name);
+  return [...tenantTables().map((t) => t.name), 'membres'];
 }
 
 export async function exportTenantData(tx: TenantTx, now = new Date()): Promise<TenantExport> {
@@ -55,5 +55,15 @@ export async function exportTenantData(tx: TenantTx, now = new Date()): Promise<
     tables[t.name] = rows;
     counts[t.name] = rows.length;
   }
+  // Annuaire des membres : résout les identifiants d'utilisateurs présents dans
+  // les autres collections. La politique RLS de users ne montre que les
+  // membres de l'organisation courante ; aucun secret d'authentification.
+  const membres = (await tx.execute(sql`
+    SELECT u.id, u.name, u.email, m.role, m.created_at AS membre_depuis
+    FROM memberships m JOIN users u ON u.id = m.user_id
+    ORDER BY u.name
+  `)) as unknown as Record<string, unknown>[];
+  tables['membres'] = membres;
+  counts['membres'] = membres.length;
   return { format: 'toron-export', version: 1, exportedAt: now.toISOString(), tables, counts };
 }

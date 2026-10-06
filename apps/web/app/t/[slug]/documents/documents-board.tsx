@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
 import { exportDocx } from '@/lib/document-export';
 import { initials, refCode } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { sanitizeDocumentHtml } from '@/lib/sanitize-html';
 import { useOpenItem } from '@/lib/use-open-item';
 
@@ -157,7 +158,7 @@ function CreateDialog({ slug, scopes, members, processes, onClose }: { slug: str
   }
   return (
     <Dialog title="Nouveau document" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="Politique de sécurité…" /></label>
         <div className="risk-form-grid">
           <label className="field">Type<select name="type" defaultValue="politique">{Object.entries(TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>

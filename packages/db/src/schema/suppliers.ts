@@ -1,4 +1,5 @@
-import { date, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import type { AttestationKind, SupplierAnswers, SupplierRating } from '@toron/core';
+import { date, foreignKey, jsonb, pgTable, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { contractStatus, supplierTier } from './enums.ts';
 import { tenants, users } from './tenancy.ts';
@@ -19,3 +20,28 @@ export const suppliers = pgTable('suppliers', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const supplierAssessments = pgTable('supplier_assessments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  supplierId: uuid('supplier_id').notNull(),
+  assessedOn: date('assessed_on').notNull().defaultNow(),
+  assessorUserId: uuid('assessor_user_id').references(() => users.id),
+  answers: jsonb('answers').notNull().$type<SupplierAnswers>(),
+  score: smallint('score').notNull(),
+  rating: text('rating').notNull().$type<SupplierRating>(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [foreignKey({ columns: [t.supplierId, t.tenantId], foreignColumns: [suppliers.id, suppliers.tenantId] }).onDelete('cascade')]);
+
+export const supplierAttestations = pgTable('supplier_attestations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  supplierId: uuid('supplier_id').notNull(),
+  kind: text('kind').notNull().$type<AttestationKind>(),
+  label: text('label'),
+  issuedOn: date('issued_on'),
+  validUntil: date('valid_until'),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [foreignKey({ columns: [t.supplierId, t.tenantId], foreignColumns: [suppliers.id, suppliers.tenantId] }).onDelete('cascade')]);

@@ -4,6 +4,8 @@ import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
+import { ModuleDisabled } from '@/components/module-disabled';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { ProcessBoard } from './process-board';
@@ -14,6 +16,7 @@ export default async function ProcessusPage({ params }: { params: Promise<{ slug
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
+  if (!(await getOrganisationOverview(ctx.tenantId)).enabled('processus')) return <ModuleDisabled slug={slug} module="processus" role={ctx.role} />;
   const canManage = canManageControls(ctx.role);
 
   const { processes, risks, members } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({

@@ -74,6 +74,9 @@ export interface EvidenceSummary {
   collectorName: string | null;
   freshness: FreshnessState;
   linkCount: number;
+  /** Preuve remplacée par un renouvellement : historique, hors échéances. */
+  supersededById: string | null;
+  supersededAt: Date | null;
 }
 
 interface RawEvidence {
@@ -88,6 +91,8 @@ interface RawEvidence {
   recurrence: EvidenceRecurrence;
   collector_name: string | null;
   link_count: number | string;
+  superseded_by: string | null;
+  superseded_at: string | null;
 }
 
 /** Preuves du tenant, triées « expirées d'abord » puis par échéance croissante. */
@@ -96,7 +101,8 @@ export async function listEvidences(tx: TenantTx): Promise<EvidenceSummary[]> {
     SELECT e.id, e.title, e.type, e.sha256, e.file_name, (e.content IS NOT NULL) AS has_content,
            e.collected_at::text AS collected_at, e.valid_until::text AS valid_until,
            e.recurrence, u.name AS collector_name,
-           (SELECT count(*) FROM evidence_links el WHERE el.evidence_id = e.id) AS link_count
+           (SELECT count(*) FROM evidence_links el WHERE el.evidence_id = e.id) AS link_count,
+           e.superseded_by, e.superseded_at::text AS superseded_at
     FROM evidences e LEFT JOIN users u ON u.id = e.collector_user_id
   `);
   const now = new Date();
@@ -115,9 +121,14 @@ export async function listEvidences(tx: TenantTx): Promise<EvidenceSummary[]> {
       collectorName: r.collector_name,
       freshness,
       linkCount: Number(r.link_count),
+      supersededById: r.superseded_by,
+      supersededAt: r.superseded_at ? new Date(r.superseded_at) : null,
     };
   });
   return list.sort((a, b) => {
+    // Les preuves en vigueur d'abord, l'historique ensuite.
+    const sup = Number(a.supersededById !== null) - Number(b.supersededById !== null);
+    if (sup !== 0) return sup;
     const fr = freshnessRank(a.freshness) - freshnessRank(b.freshness);
     if (fr !== 0) return fr;
     return (a.validUntil ?? '9999').localeCompare(b.validUntil ?? '9999');
@@ -217,8 +228,9 @@ export async function listEvidencesCoveringRequirement(
     JOIN evidence_links el ON el.evidence_id = e.id
     LEFT JOIN control_requirements cr
       ON el.target_type = 'control' AND cr.control_id = el.target_id
-    WHERE (el.target_type = 'requirement' AND el.target_id = ${requirementId})
-       OR (el.target_type = 'control' AND cr.requirement_id = ${requirementId})
+    WHERE e.superseded_by IS NULL
+      AND ((el.target_type = 'requirement' AND el.target_id = ${requirementId})
+       OR (el.target_type = 'control' AND cr.requirement_id = ${requirementId}))
     GROUP BY e.id, e.title, e.valid_until
     ORDER BY e.id
   `);
@@ -263,5 +275,68 @@ export async function listAccessLog(tx: TenantTx, evidenceId: string): Promise<A
     userName: r.user_name,
     kind: r.kind,
     at: new Date(r.at),
+  }));
+}
+
+// ── Renouvellement ──────────────────────────────────────────────────────
+
+export type RenewResult =
+  | { outcome: 'renouvelee'; evidenceId: string; title: string }
+  | { outcome: 'introuvable' }
+  | { outcome: 'deja_remplacee'; supersededBy: string };
+
+/**
+ * Renouvelle une preuve : la nouvelle hérite de l'intitulé, du type, de la
+ * récurrence et des rattachements ; l'ancienne est marquée remplacée dans la
+ * même transaction (verrou de ligne : deux renouvellements simultanés ne
+ * peuvent pas remplacer la même preuve).
+ */
+export async function renewEvidence(tx: TenantTx, input: {
+  tenantId: string; previousId: string; fileName: string; content: Buffer; sha256: string;
+  collectedAt: string; validUntil: string | null; collectorUserId: string;
+}): Promise<RenewResult> {
+  const rows = (await tx.execute(sql`
+    SELECT id, title, type, recurrence, superseded_by FROM evidences WHERE id = ${input.previousId} FOR UPDATE
+  `)) as unknown as { id: string; title: string; type: EvidenceType; recurrence: EvidenceRecurrence; superseded_by: string | null }[];
+  const prev = rows[0];
+  if (!prev) return { outcome: 'introuvable' };
+  if (prev.superseded_by) return { outcome: 'deja_remplacee', supersededBy: prev.superseded_by };
+
+  const links = await tx.select({ targetType: schema.evidenceLinks.targetType, targetId: schema.evidenceLinks.targetId })
+    .from(schema.evidenceLinks).where(eq(schema.evidenceLinks.evidenceId, prev.id));
+  const id = await createEvidence(tx, {
+    tenantId: input.tenantId, title: prev.title, type: prev.type, fileName: input.fileName, content: input.content,
+    sha256: input.sha256, collectedAt: input.collectedAt, validUntil: input.validUntil, recurrence: prev.recurrence,
+    collectorUserId: input.collectorUserId, links,
+  });
+  await tx.update(schema.evidences).set({ supersededBy: id, supersededAt: new Date() }).where(eq(schema.evidences.id, prev.id));
+  return { outcome: 'renouvelee', evidenceId: id, title: prev.title };
+}
+
+export interface EvidenceHistoryRow {
+  id: string;
+  collectedAt: string;
+  validUntil: string | null;
+  sha256: string;
+  supersededAt: Date | null;
+}
+
+/** Versions antérieures d'une preuve (la plus récente d'abord). */
+export async function listEvidenceHistory(tx: TenantTx, evidenceId: string): Promise<EvidenceHistoryRow[]> {
+  const rows = (await tx.execute(sql`
+    WITH RECURSIVE chain AS (
+      SELECT e.id, e.collected_at, e.valid_until, e.sha256, e.superseded_at, 1 AS depth
+        FROM evidences e WHERE e.superseded_by = ${evidenceId}
+      UNION ALL
+      SELECT e.id, e.collected_at, e.valid_until, e.sha256, e.superseded_at, c.depth + 1
+        FROM evidences e JOIN chain c ON e.superseded_by = c.id
+        WHERE c.depth < 50
+    )
+    SELECT id, collected_at::text AS collected_at, valid_until::text AS valid_until, sha256, superseded_at::text AS superseded_at
+    FROM chain ORDER BY depth
+  `)) as unknown as { id: string; collected_at: string; valid_until: string | null; sha256: string; superseded_at: string | null }[];
+  return rows.map((r) => ({
+    id: r.id, collectedAt: r.collected_at, validUntil: r.valid_until, sha256: r.sha256,
+    supersededAt: r.superseded_at ? new Date(r.superseded_at) : null,
   }));
 }

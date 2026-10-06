@@ -4,6 +4,8 @@ import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
+import { ModuleDisabled } from '@/components/module-disabled';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { ReviewBoard } from './review-board';
@@ -14,6 +16,7 @@ export default async function RevueDirectionPage({ params }: { params: Promise<{
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
+  if (!(await getOrganisationOverview(ctx.tenantId)).enabled('revue_direction')) return <ModuleDisabled slug={slug} module="revue_direction" role={ctx.role} />;
   const canManage = canEditModule(ctx.role, 'revue_direction');
 
   const { reviews, metrics, counts, members } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({

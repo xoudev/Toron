@@ -58,8 +58,8 @@ export async function getDashboardMetrics(tx: TenantTx): Promise<DashboardMetric
       (SELECT count(*) FROM assessment_items WHERE assessment_id IN (SELECT id FROM latest) AND status = 'ecart') AS gaps,
       (SELECT count(*) FROM actions WHERE status <> 'termine') AS actions_open,
       (SELECT count(*) FROM actions WHERE due_date < CURRENT_DATE AND status NOT IN ('termine', 'verification')) AS actions_overdue,
-      (SELECT count(*) FROM evidences) AS evidences_total,
-      (SELECT count(*) FROM evidences WHERE valid_until IS NOT NULL AND valid_until <= CURRENT_DATE + 30) AS evidences_stale,
+      (SELECT count(*) FROM evidences WHERE superseded_by IS NULL) AS evidences_total,
+      (SELECT count(*) FROM evidences WHERE superseded_by IS NULL AND valid_until IS NOT NULL AND valid_until <= CURRENT_DATE + 30) AS evidences_stale,
       (SELECT count(*) FROM documents) AS documents_total,
       (SELECT count(*) FROM documents WHERE review_due < CURRENT_DATE) AS documents_review_overdue
   `)) as unknown as RawCounts[];

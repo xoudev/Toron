@@ -93,13 +93,18 @@
   gap: 14px;
   margin: 16px 0;
 }
+.kpi-grid.kpi-grid--5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
 @media (max-width: 1240px) {
-  .kpi-grid {
+  .kpi-grid,
+  .kpi-grid.kpi-grid--5 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 @media (max-width: 560px) {
-  .kpi-grid {
+  .kpi-grid,
+  .kpi-grid.kpi-grid--5 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { organisationHeadline, type ScopeKind } from '@toron/core';
+import { isModuleEnabled, organisationHeadline, type OptionalModule, type ScopeKind } from '@toron/core';
 import { getOrganisationProfile, listScopes, withTenant, type OrganisationProfile } from '@toron/db';
 import { cache } from 'react';
 
@@ -11,6 +11,8 @@ export interface OrganisationOverview {
   scopeKinds: ScopeKind[];
   /** « Périmètre SMSI + QMS · 148 salariés · 3 sites », dérivé des données réelles. */
   headline: string;
+  disabledModules: OptionalModule[];
+  enabled: (module: OptionalModule) => boolean;
 }
 
 /**
@@ -27,5 +29,7 @@ export const getOrganisationOverview = cache(async (tenantId: string): Promise<O
     profile,
     scopeKinds,
     headline: organisationHeadline({ scopeKinds, siteCount: profile.siteCount, employeeCount: profile.employeeCount }),
+    disabledModules: profile.disabledModules,
+    enabled: (module) => isModuleEnabled(profile.disabledModules, module),
   };
 });

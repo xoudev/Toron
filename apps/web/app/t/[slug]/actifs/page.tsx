@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
+import { ModuleDisabled } from '@/components/module-disabled';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { AssetInventory } from './asset-inventory';
@@ -15,6 +17,7 @@ export default async function ActifsPage({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
+  if (!(await getOrganisationOverview(ctx.tenantId)).enabled('actifs')) return <ModuleDisabled slug={slug} module="actifs" role={ctx.role} />;
   const canManage = canManageControls(ctx.role);
 
   const { assets, scopes, risks } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({

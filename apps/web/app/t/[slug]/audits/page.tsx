@@ -4,6 +4,8 @@ import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
+import { ModuleDisabled } from '@/components/module-disabled';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { AuditBoard } from './audit-board';
@@ -14,6 +16,7 @@ export default async function AuditsPage({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
+  if (!(await getOrganisationOverview(ctx.tenantId)).enabled('audits')) return <ModuleDisabled slug={slug} module="audits" role={ctx.role} />;
   const canManage = canEditModule(ctx.role, 'audits');
   const canRecord = canRecordAuditFindings(ctx.role);
 

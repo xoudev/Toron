@@ -23,7 +23,9 @@ export function useOpenItem(ids: readonly string[]): [string | null, (id: string
     const url = new URL(window.location.href);
     if (id) url.searchParams.set(PARAM, id);
     else url.searchParams.delete(PARAM);
-    window.history.replaceState(window.history.state, '', url);
+    // État nul : Next.js intercepte l'appel et synchronise son routeur avec la
+    // nouvelle URL (un rafraîchissement ultérieur la conserve).
+    window.history.replaceState(null, '', url);
   }, []);
 
   return [openId, setOpenId];

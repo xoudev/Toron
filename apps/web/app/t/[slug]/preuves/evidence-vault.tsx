@@ -1,17 +1,19 @@
 'use client';
 
-import type { FreshnessState } from '@toron/core';
-import type { AccessLogRow, EvidenceLinkRow, EvidenceSummary } from '@toron/db';
+import { suggestedValidUntil, type EvidenceRecurrence, type FreshnessState } from '@toron/core';
+import type { AccessLogRow, EvidenceHistoryRow, EvidenceLinkRow, EvidenceSummary } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
-import { refCode } from '@/lib/format';
+import { refCode, todayParis } from '@/lib/format';
+import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   createEvidenceAction,
   getEvidenceDetailAction,
+  renewEvidenceAction,
   toggleEvidenceControlAction,
 } from './evidence-actions';
 
@@ -33,21 +35,26 @@ function FreshTag({ f }: { f: FreshnessState }) {
 export function EvidenceVault({ slug, canManage, evidences, controls }: { slug: string; canManage: boolean; evidences: EvidenceSummary[]; controls: ControlLite[] }) {
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
+  const [withHistory, setWithHistory] = useState(false);
   const [openId, setOpenId] = useOpenItem(evidences.map((x) => x.id));
+  const current = useMemo(() => evidences.filter((e) => e.supersededById === null), [evidences]);
+  const historyCount = evidences.length - current.length;
 
+  // Les indicateurs ne portent que sur les preuves en vigueur.
   const stats = useMemo(() => {
-    const total = evidences.length;
-    const expired = evidences.filter((e) => e.freshness === 'expiree').length;
-    const soon = evidences.filter((e) => e.freshness === 'bientot').length;
+    const total = current.length;
+    const expired = current.filter((e) => e.freshness === 'expiree').length;
+    const soon = current.filter((e) => e.freshness === 'bientot').length;
     const upToDate = total === 0 ? null : Math.round(((total - expired) / total) * 100);
     return { total, expired, soon, upToDate };
-  }, [evidences]);
+  }, [current]);
 
   const shown = useMemo(() => {
+    const base = withHistory ? evidences : current;
     const q = query.trim().toLowerCase();
-    if (!q) return evidences;
-    return evidences.filter((e) => e.title.toLowerCase().includes(q) || refCode('EVI', e.id).toLowerCase().includes(q) || e.sha256.includes(q));
-  }, [evidences, query]);
+    if (!q) return base;
+    return base.filter((e) => e.title.toLowerCase().includes(q) || refCode('EVI', e.id).toLowerCase().includes(q) || e.sha256.includes(q));
+  }, [evidences, current, withHistory, query]);
   const open = openId ? evidences.find((e) => e.id === openId) ?? null : null;
 
   return (
@@ -63,6 +70,12 @@ export function EvidenceVault({ slug, canManage, evidences, controls }: { slug: 
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M16.5 16.5 20.5 20.5" /></svg>
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher — EVI-031, titre, empreinte" />
         </div>
+        {historyCount > 0 ? (
+          <label className="evi-history-toggle">
+            <input type="checkbox" checked={withHistory} onChange={(e) => setWithHistory(e.target.checked)} />
+            Afficher les versions remplacées ({historyCount})
+          </label>
+        ) : null}
         <span className="spacer" />
         {canManage ? <button className="btn btn-primary btn-sm" onClick={() => setCreating(true)}>+ Ajouter une preuve</button> : null}
       </div>
@@ -88,10 +101,10 @@ export function EvidenceVault({ slug, canManage, evidences, controls }: { slug: 
               </thead>
               <tbody>
                 {shown.map((e) => (
-                  <tr key={e.id} onClick={() => setOpenId(e.id)}>
+                  <tr key={e.id} onClick={() => setOpenId(e.id)} className={e.supersededById ? 'row-superseded' : undefined}>
                     <td className="ds-id">{refCode('EVI', e.id)}</td>
                     <td><div className="ds-primary">{e.title}<small>{TYPE_LABEL[e.type] ?? e.type} · {e.collectorName ?? '—'}</small></div></td>
-                    <td><FreshTag f={e.freshness} /></td>
+                    <td>{e.supersededById ? <span className="fresh-tag fresh--permanente">Remplacée</span> : <FreshTag f={e.freshness} />}</td>
                     <td className="ds-mono">{fmtDate(e.collectedAt)}</td>
                     <td className="ds-mono" style={{ color: e.freshness === 'expiree' ? 'var(--danger)' : undefined }}>{fmtDate(e.validUntil)}</td>
                     <td className="ds-muted">{RECURRENCE_LABEL[e.recurrence] ?? e.recurrence}</td>
@@ -107,7 +120,7 @@ export function EvidenceVault({ slug, canManage, evidences, controls }: { slug: 
       )}
 
       {creating ? <CreateDialog slug={slug} controls={controls} onClose={() => setCreating(false)} /> : null}
-      {open ? <DetailDrawer slug={slug} ev={open} controls={controls} canManage={canManage} onClose={() => setOpenId(null)} /> : null}
+      {open ? <DetailDrawer key={open.id} slug={slug} ev={open} controls={controls} canManage={canManage} onOpen={setOpenId} onClose={() => setOpenId(null)} /> : null}
     </>
   );
 }
@@ -126,7 +139,7 @@ function CreateDialog({ slug, controls, onClose }: { slug: string; controls: Con
   }
   return (
     <Dialog title="Nouvelle preuve" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="PV de test de restauration…" /></label>
         <div className="risk-form-grid">
           <label className="field">Type<select name="type" defaultValue="export">{Object.entries(TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
@@ -146,16 +159,21 @@ function CreateDialog({ slug, controls, onClose }: { slug: string; controls: Con
   );
 }
 
-function DetailDrawer({ slug, ev, controls, canManage, onClose }: { slug: string; ev: EvidenceSummary; controls: ControlLite[]; canManage: boolean; onClose: () => void }) {
+function DetailDrawer({ slug, ev, controls, canManage, onOpen, onClose }: { slug: string; ev: EvidenceSummary; controls: ControlLite[]; canManage: boolean; onOpen: (id: string) => void; onClose: () => void }) {
   const router = useRouter();
   const [links, setLinks] = useState<EvidenceLinkRow[] | null>(null);
   const [access, setAccess] = useState<AccessLogRow[]>([]);
+  const [history, setHistory] = useState<EvidenceHistoryRow[]>([]);
   const [pending, start] = useTransition();
+  const superseded = ev.supersededById !== null;
 
-  const reload = () => getEvidenceDetailAction(slug, ev.id).then((res) => { if (res.ok) { setLinks(res.data.links); setAccess(res.data.access); } });
+  const apply = (data: { links: EvidenceLinkRow[]; access: AccessLogRow[]; history: EvidenceHistoryRow[] }) => {
+    setLinks(data.links); setAccess(data.access); setHistory(data.history);
+  };
+  const reload = () => getEvidenceDetailAction(slug, ev.id).then((res) => { if (res.ok) apply(res.data); });
   useEffect(() => {
     let alive = true;
-    getEvidenceDetailAction(slug, ev.id).then((res) => { if (alive && res.ok) { setLinks(res.data.links); setAccess(res.data.access); } });
+    getEvidenceDetailAction(slug, ev.id).then((res) => { if (alive && res.ok) apply(res.data); });
     return () => { alive = false; };
   }, [slug, ev.id]);
 
@@ -167,7 +185,7 @@ function DetailDrawer({ slug, ev, controls, canManage, onClose }: { slug: string
   const header = (
     <>
       <span className="ds-id" id="evi-drawer-title">{refCode('EVI', ev.id)}</span>
-      <FreshTag f={ev.freshness} />
+      {superseded ? <span className="fresh-tag fresh--permanente">Remplacée</span> : <FreshTag f={ev.freshness} />}
       <span className="ds-chip">{TYPE_LABEL[ev.type] ?? ev.type}</span>
     </>
   );
@@ -177,19 +195,42 @@ function DetailDrawer({ slug, ev, controls, canManage, onClose }: { slug: string
       <div className="drawer-section">
         <div className="ds-primary" style={{ fontSize: 14 }}>{ev.title}</div>
         <p className="ds-mono" style={{ marginTop: 6, wordBreak: 'break-all' }} title={ev.sha256}>SHA-256 {ev.sha256}</p>
+        <p className="ds-muted" style={{ marginTop: 4 }}>Collectée le {fmtDate(ev.collectedAt)} · valide jusqu’au {fmtDate(ev.validUntil)} · {RECURRENCE_LABEL[ev.recurrence] ?? ev.recurrence}</p>
         {ev.hasContent ? <a className="btn btn-ghost btn-sm" style={{ marginTop: 6 }} href={`/t/${slug}/preuves/${ev.id}`}>Télécharger</a> : null}
+        {superseded ? (
+          <p className="evi-superseded">
+            Version historique, remplacée le {ev.supersededAt ? new Date(ev.supersededAt).toLocaleDateString('fr-FR') : '—'}.{' '}
+            <button type="button" className="link-btn" onClick={() => onOpen(ev.supersededById!)}>Ouvrir la version en vigueur ({refCode('EVI', ev.supersededById!)})</button>
+          </p>
+        ) : null}
       </div>
+
+      {canManage && !superseded ? <RenewSection slug={slug} ev={ev} onRenewed={(id) => { onOpen(id); window.setTimeout(() => router.refresh(), 0); }} /> : null}
 
       <div className="drawer-section">
         <p className="drawer-section-label">Contrôles couverts (mutualisation)</p>
         {links === null ? <p className="risk-mut-hint">Chargement…</p> : controls.length === 0 ? <p className="risk-mut-hint">Aucun contrôle interne à rattacher.</p> : (
           <div className="control-link-list">
             {controls.map((c) => (
-              <label className="control-link-row" key={c.id}><input type="checkbox" checked={linkedControlIds.has(c.id)} disabled={!canManage || pending} onChange={(e) => toggle(c.id, e.target.checked)} />{c.title}</label>
+              <label className="control-link-row" key={c.id}><input type="checkbox" checked={linkedControlIds.has(c.id)} disabled={!canManage || superseded || pending} onChange={(e) => toggle(c.id, e.target.checked)} />{c.title}</label>
             ))}
           </div>
         )}
       </div>
+
+      {history.length > 0 ? (
+        <div className="drawer-section">
+          <p className="drawer-section-label">Versions précédentes</p>
+          <div className="access-log">
+            {history.map((h) => (
+              <div className="access-row" key={h.id}>
+                <button type="button" className="link-btn" onClick={() => onOpen(h.id)}>{refCode('EVI', h.id)}</button>
+                <span className="ds-mono">collectée {fmtDate(h.collectedAt)} · valide au {fmtDate(h.validUntil)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="drawer-section">
         <p className="drawer-section-label">Journal des accès</p>
@@ -200,5 +241,48 @@ function DetailDrawer({ slug, ev, controls, canManage, onClose }: { slug: string
         )}
       </div>
     </Drawer>
+  );
+}
+
+function RenewSection({ slug, ev, onRenewed }: { slug: string; ev: EvidenceSummary; onRenewed: (id: string) => void }) {
+  const today = todayParis();
+  const [collectedAt, setCollectedAt] = useState(today);
+  const [validUntil, setValidUntil] = useState(suggestedValidUntil(today, ev.recurrence as EvidenceRecurrence) ?? '');
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const urgent = ev.freshness === 'expiree' || ev.freshness === 'bientot';
+
+  function changeCollected(v: string) {
+    setCollectedAt(v);
+    if (v) setValidUntil(suggestedValidUntil(v, ev.recurrence as EvidenceRecurrence) ?? '');
+  }
+  function submit() {
+    setError(null);
+    const file = fileRef.current?.files?.[0];
+    if (!file) { setError('Choisissez le nouveau fichier de preuve.'); return; }
+    const fd = new FormData();
+    fd.set('previousId', ev.id); fd.set('collectedAt', collectedAt); fd.set('validUntil', validUntil); fd.set('file', file);
+    start(async () => {
+      const res = await renewEvidenceAction(slug, fd);
+      if (res.ok) onRenewed(res.data.evidenceId); else setError(res.error.message);
+    });
+  }
+
+  return (
+    <div className={`drawer-section evi-renew${urgent ? ' evi-renew--urgent' : ''}`}>
+      <p className="drawer-section-label">Renouveler la preuve</p>
+      <p className="ds-muted">
+        Déposez la nouvelle collecte : elle reprend les contrôles couverts, et cette version reste consultable
+        dans l’historique.
+      </p>
+      <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.csv,.txt,.md,.docx,.xlsx,.zip,.json" aria-label="Nouveau fichier de preuve" />
+      <div className="risk-form-grid">
+        <label className="field">Date de collecte<input type="date" value={collectedAt} max={today} onChange={(e) => changeCollected(e.target.value)} required /></label>
+        <label className="field">Valide jusqu’au<input type="date" value={validUntil} min={collectedAt} onChange={(e) => setValidUntil(e.target.value)} /></label>
+      </div>
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
+      <button type="button" className="btn btn-primary btn-sm" disabled={pending} onClick={submit}>{pending ? 'Renouvellement…' : 'Renouveler'}</button>
+    </div>
   );
 }

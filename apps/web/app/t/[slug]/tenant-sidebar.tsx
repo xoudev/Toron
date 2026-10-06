@@ -19,6 +19,7 @@ export function TenantSidebar({
   userRole,
   footerActions,
   urgentWork = 0,
+  disabledModules = [],
 }: {
   slug: string;
   tenantName: string;
@@ -27,13 +28,14 @@ export function TenantSidebar({
   userRole: string;
   footerActions?: ReactNode;
   urgentWork?: number;
+  disabledModules?: readonly string[];
 }) {
   const pathname = usePathname();
   return (
     <Sidebar
       tenantName={tenantName}
       tenantDetail={tenantDetail}
-      groups={buildNav(slug, pathname, urgentWork)}
+      groups={buildNav(slug, pathname, urgentWork, disabledModules)}
       userName={userName}
       userRole={userRole}
       footerActions={footerActions}

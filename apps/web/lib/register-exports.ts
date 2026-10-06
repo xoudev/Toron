@@ -1,9 +1,17 @@
 import 'server-only';
 
-import { refCodeFor, type CsvColumn, type SearchKind } from '@toron/core';
+import {
+  LEGAL_BASIS_LABEL,
+  OBLIGATION_REGIME_LABEL,
+  OBLIGATION_STATUS_LABEL,
+  SUPPLIER_RATING_LABEL,
+  refCodeFor,
+  type CsvColumn,
+  type SearchKind,
+} from '@toron/core';
 import {
   listActions, listAssets, listControls, listDocuments, listEvidences, listIncidents, listNc, listRisks,
-  listSuppliers, type TenantTx,
+  listObligations, listProcessing, listSuppliers, type TenantTx,
 } from '@toron/db';
 
 // Définition des exports CSV de chaque registre : colonnes lisibles par un
@@ -109,8 +117,50 @@ export const REGISTER_EXPORTS = {
       { header: 'Services', value: (r) => r.services },
       { header: 'Données confiées', value: (r) => r.dataCategories.join(', ') },
       { header: 'Clauses contractuelles', value: (r) => label(CONTRACT, r.contractStatus) },
+      { header: 'Dernière évaluation', value: (r) => r.lastAssessedOn },
+      { header: 'Note /100', value: (r) => r.lastScore },
+      { header: 'Appréciation', value: (r) => (r.lastRating ? SUPPLIER_RATING_LABEL[r.lastRating] : null) },
+      { header: 'Prochaine échéance d’attestation', value: (r) => r.nextAttestationExpiry },
+      { header: 'Actions ouvertes', value: (r) => r.openActionCount },
       { header: 'Propriétaire', value: (r) => r.ownerName },
       { header: 'Prochaine revue', value: (r) => r.nextReview },
+    ],
+  }),
+  obligations: register({
+    title: 'Registre des obligations',
+    load: (tx) => listObligations(tx),
+    columns: [
+      { header: 'Code', value: code('obligation') },
+      { header: 'Obligation', value: (r) => r.title },
+      { header: 'Régime', value: (r) => label(OBLIGATION_REGIME_LABEL, r.regime) },
+      { header: 'Source', value: (r) => r.source },
+      { header: 'Entité', value: (r) => r.entityName },
+      { header: 'Statut', value: (r) => label(OBLIGATION_STATUS_LABEL, r.status) },
+      { header: 'Justification', value: (r) => r.justification },
+      { header: 'Responsable', value: (r) => r.ownerName },
+      { header: 'Échéance', value: (r) => r.dueDate },
+    ],
+  }),
+  traitements: register({
+    title: 'Registre des activités de traitement (RGPD, art. 30)',
+    load: (tx) => listProcessing(tx),
+    columns: [
+      { header: 'Code', value: code('traitement') },
+      { header: 'Traitement', value: (r) => r.name },
+      { header: 'Finalité', value: (r) => r.purpose },
+      { header: 'Base légale', value: (r) => label(LEGAL_BASIS_LABEL, r.legalBasis) },
+      { header: 'Précision sur la base légale', value: (r) => r.legalBasisDetail },
+      { header: 'Personnes concernées', value: (r) => r.dataSubjects.join(', ') },
+      { header: 'Catégories de données', value: (r) => r.dataCategories.join(', ') },
+      { header: 'Données sensibles', value: (r) => (r.sensitiveData ? 'Oui' : 'Non') },
+      { header: 'Destinataires', value: (r) => r.recipients },
+      { header: 'Sous-traitants', value: (r) => r.processors.map((x) => x.name).join(', ') },
+      { header: 'Transferts hors UE', value: (r) => (r.transfersOutsideEu ? 'Oui' : 'Non') },
+      { header: 'Garanties des transferts', value: (r) => r.transferSafeguards },
+      { header: 'Durée de conservation', value: (r) => r.retention },
+      { header: 'Mesures de sécurité', value: (r) => r.securityMeasures },
+      { header: 'Responsable', value: (r) => r.ownerName },
+      { header: 'Dernière relecture', value: (r) => r.lastReviewedOn },
     ],
   }),
   incidents: register({

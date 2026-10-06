@@ -332,6 +332,9 @@
     opacity: 0.6;
   }
 }
+.drawer:has(.drawer-wide) {
+  width: 560px;
+}
 .drawer-head {
   position: sticky;
   top: 0;

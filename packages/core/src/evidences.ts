@@ -52,3 +52,25 @@ export function freshnessRank(state: FreshnessState): number {
 export function freshnessNeedsAttention(state: FreshnessState): boolean {
   return state === 'expiree' || state === 'bientot';
 }
+
+const RECURRENCE_MONTHS: Record<EvidenceRecurrence, number | null> = {
+  ponctuelle: null,
+  trimestrielle: 3,
+  semestrielle: 6,
+  annuelle: 12,
+};
+
+/**
+ * Validité proposée pour une preuve collectée à `collectedAt` (AAAA-MM-JJ)
+ * selon sa récurrence ; null pour une preuve ponctuelle. Le jour est borné au
+ * dernier jour du mois d'arrivée (31/01 + 1 mois → 28 ou 29/02).
+ */
+export function suggestedValidUntil(collectedAt: string, recurrence: EvidenceRecurrence): string | null {
+  const months = RECURRENCE_MONTHS[recurrence];
+  if (months === null) return null;
+  const [y, m, d] = collectedAt.slice(0, 10).split('-').map(Number);
+  const target = new Date(Date.UTC(y!, m! - 1 + months, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(d!, lastDay));
+  return target.toISOString().slice(0, 10);
+}

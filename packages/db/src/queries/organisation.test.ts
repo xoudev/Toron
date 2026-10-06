@@ -7,7 +7,7 @@ import { applyMigrations } from '../migrate.ts';
 import { PG_IMAGE } from '../test-image.ts';
 import { withTenant } from '../tenant.ts';
 import {
-  createTenantWithOwner, deleteLegalEntity, deleteOrganisationScope, deleteSite, getOrganisationProfile,
+  createTenantWithOwner, deleteLegalEntity, setDisabledModules, deleteOrganisationScope, deleteSite, getOrganisationProfile,
   listLegalEntities, listScopeDetails, listSites, saveLegalEntity, saveOrganisationScope, saveSite,
   updateOrganisationProfile,
 } from './organisation.ts';
@@ -134,5 +134,25 @@ describe('export complet des données', () => {
     expect(exported['pdf_bytes']).toBe(5);
     expect(typeof exported['pdf_sha256']).toBe('string');
     expect(fromB.tables['memberships']!.every((m) => (m as { tenant_id: string }).tenant_id === b.id)).toBe(true);
+    expect(names).toContain('membres');
+    const membres = fromB.tables['membres']! as { email: string; role: string }[];
+    expect(membres.map((m) => m.email)).toEqual(['setup@example.test']);
+    expect(Object.keys(membres[0]!).sort()).toEqual(['email', 'id', 'membre_depuis', 'name', 'role']);
+  });
+});
+
+describe('modules activables', () => {
+  it('applique les valeurs par défaut de la nature du périmètre à la création', async () => {
+    const smsi = await createTenantWithOwner(auth.db, { ...input(), baseSlug: 'modules-smsi', scopeKind: 'smsi' });
+    expect((await withTenant(app.db, smsi.id, getOrganisationProfile)).disabledModules).toEqual(['processus', 'non_conformites']);
+  });
+  it('normalise, isole entre organisations et refuse une valeur inconnue en base', async () => {
+    const a = await createTenantWithOwner(auth.db, { ...input(), baseSlug: 'modules-a' });
+    const b = await createTenantWithOwner(auth.db, { ...input(), baseSlug: 'modules-b' });
+    const saved = await withTenant(app.db, a.id, (tx) => setDisabledModules(tx, ['risques', 'inconnu']));
+    expect(saved).toEqual(['risques', 'ebios']);
+    expect((await withTenant(app.db, a.id, getOrganisationProfile)).disabledModules).toEqual(['risques', 'ebios']);
+    expect((await withTenant(app.db, b.id, getOrganisationProfile)).disabledModules).toEqual([]);
+    await expect(admin`UPDATE tenants SET disabled_modules = ARRAY['inconnu'] WHERE id = ${b.id}`).rejects.toThrow();
   });
 });

@@ -5,6 +5,8 @@ import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
+import { keepValues } from '@/lib/forms';
+
 import { deleteEntityAction, deleteSiteAction, saveEntityAction, saveSiteAction, updateOrganisationAction } from './actions';
 import type { Viewer } from './parametres-client';
 
@@ -48,7 +50,7 @@ function ProfileCard({ slug, viewer, profile }: { slug: string; viewer: Viewer; 
         </div>
         <span className="ds-mono">/t/{profile.slug}</span>
       </div>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <div className="settings-grid">
           <label className="field">Nom de l’organisation
             <input name="name" defaultValue={profile.name} minLength={2} maxLength={160} required disabled={!viewer.canConfigure} />
@@ -156,7 +158,7 @@ function EntityDrawer({ slug, entity, onClose }: { slug: string; entity: LegalEn
   }
   return (
     <Drawer header={<><span className="ds-id" id="entity-title">{entity ? 'Entité' : 'Nouvelle entité'}</span><span className="ds-chip">Organisation</span></>} labelId="entity-title" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Raison sociale<input name="name" defaultValue={entity?.name ?? ''} minLength={2} maxLength={160} required autoFocus /></label>
         <label className="field">SIREN (facultatif)<input name="siren" defaultValue={entity?.siren ?? ''} inputMode="numeric" pattern="[0-9 ]*" placeholder="9 chiffres" /></label>
         {error ? <p className="form-error" role="alert">{error}</p> : null}
@@ -247,7 +249,7 @@ function SiteDrawer({ slug, site, entities, onClose }: { slug: string; site: Sit
   }
   return (
     <Drawer header={<><span className="ds-id" id="site-title">{site ? 'Site' : 'Nouveau site'}</span><span className="ds-chip">Organisation</span></>} labelId="site-title" onClose={onClose}>
-      <form action={submit}>
+      <form onSubmit={keepValues(submit)}>
         <label className="field">Nom du site<input name="name" defaultValue={site?.name ?? ''} minLength={2} maxLength={160} required autoFocus placeholder="Ex. Entrepôt de Saint-Priest" /></label>
         <label className="field">Entité juridique
           <select name="entityId" defaultValue={site?.entityId ?? entities[0]?.id ?? ''} required>

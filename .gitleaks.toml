@@ -1,0 +1,13 @@
+# Configuration gitleaks du dépôt : règles par défaut, plus une exception
+# étroite pour des identifiants que la règle générique prend pour des clés.
+
+[extend]
+useDefault = true
+
+# Clés du catalogue d'obligations (« nis2_gouvernance », « rgpd_violations »…) :
+# des identifiants en minuscules, pas des secrets. Le motif n'accepte que
+# des mots minuscules séparés par « _ » derrière le préfixe nis2_ ou rgpd_.
+[[allowlists]]
+description = "Identifiants du catalogue d'obligations NIS 2 et RGPD"
+regexTarget = "secret"
+regexes = ['''^(?:nis2|rgpd)_[a-z]+(?:_[a-z]+)*$''']

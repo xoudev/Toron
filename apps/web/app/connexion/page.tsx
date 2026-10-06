@@ -37,9 +37,13 @@ function ConnexionForm() {
       );
       return;
     }
-    // Un compte protégé par TOTP est redirigé vers la vérification par le
-    // client d'authentification ; sinon on poursuit vers la destination.
-    if (data && !('twoFactorRedirect' in data)) window.location.assign(suite);
+    // Un compte protégé par TOTP passe par la vérification du second facteur,
+    // qui reprend la destination validée ; sinon on y va directement.
+    if (data && 'twoFactorRedirect' in data) {
+      window.location.assign(`/connexion/2fa?suite=${encodeURIComponent(suite)}`);
+      return;
+    }
+    window.location.assign(suite);
   }
 
   return (

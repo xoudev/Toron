@@ -1,5 +1,5 @@
 import { canManageControls, onboardingProgress, onboardingSteps } from '@toron/core';
-import { getDashboardExtras, getDashboardMetrics, listProcesses, withTenant } from '@toron/db';
+import { getDashboardExtras, getDashboardMetrics, getFrameworkCoverage, listProcesses, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 
 import { appDb } from '@/lib/db';
@@ -53,11 +53,12 @@ export default async function TenantAccueilPage({
     );
   }
 
-  const { m, x, processesAlert } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
+  const { m, x, coverage, processesAlert } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
     const procs = await listProcesses(tx);
     return {
       m: await getDashboardMetrics(tx),
       x: await getDashboardExtras(tx),
+      coverage: await getFrameworkCoverage(tx),
       processesAlert: procs.filter((p) => p.health === 'en_alerte').length,
     };
   });
@@ -191,6 +192,40 @@ export default async function TenantAccueilPage({
             </span>
           </a>
         </div>
+
+        {coverage.length > 0 ? (
+          <section className="card dash-panel coverage-panel" aria-labelledby="coverage-title">
+            <div className="dash-panel-head">
+              <h2 id="coverage-title">Couverture par référentiel</h2>
+              <span className="dash-panel-note">Dernière campagne d’évaluation · les exclusions justifiées ne comptent pas</span>
+            </div>
+            <ul className="coverage-list">
+              {coverage.map((f) => (
+                <li key={f.frameworkId}>
+                  <a href={`${base}/referentiels/${f.frameworkId}`}>
+                    <span className="coverage-name">
+                      <b>{f.name}</b>
+                      <small>{f.campaign ? f.campaign.label : 'Aucune évaluation lancée'}</small>
+                    </span>
+                    {f.campaign && f.campaign.score.scorePct !== null ? (
+                      <>
+                        <span className="coverage-bar" aria-hidden="true"><span style={{ width: `${f.campaign.score.scorePct}%` }} /></span>
+                        <span className="coverage-pct mono">{f.campaign.score.scorePct} %</span>
+                        <span className="coverage-counts">
+                          <span className={f.campaign.score.gaps > 0 ? 'alert' : undefined}>{f.campaign.score.gaps} écart{f.campaign.score.gaps > 1 ? 's' : ''}</span>
+                          {' · '}{f.campaign.score.counts.a_evaluer} à évaluer
+                          {' · '}{f.campaign.score.counts.non_applicable} exclue{f.campaign.score.counts.non_applicable > 1 ? 's' : ''}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="coverage-empty">Évaluer →</span>
+                    )}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <div className="dash-cols">
           <article className="card dash-panel">

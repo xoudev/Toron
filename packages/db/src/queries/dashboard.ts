@@ -1,4 +1,7 @@
-import { acceptanceNeedsAttention, acceptanceState, riskBand, type RiskBand } from '@toron/core';
+import {
+  acceptanceNeedsAttention, acceptanceState, riskBand, scoreAssessment, type AssessmentItemStatus, type CoverageScore,
+  type RiskBand,
+} from '@toron/core';
 import { sql } from 'drizzle-orm';
 
 import type { TenantTx } from '../tenant.ts';
@@ -165,4 +168,45 @@ export async function getDashboardExtras(tx: TenantTx): Promise<DashboardExtras>
     membersTotal: Number(r['members_total']),
     assessmentsTotal: Number(r['assessments_total']),
   };
+}
+
+export interface FrameworkCoverage {
+  frameworkId: string;
+  name: string;
+  code: string;
+  /** Dernière campagne du référentiel, ou null si aucune n'a été lancée. */
+  campaign: { id: string; label: string; status: string; startedAt: Date | null; score: CoverageScore } | null;
+}
+
+/**
+ * Couverture par référentiel actif (module 5.11) : score de la dernière
+ * campagne de chaque référentiel, calculé par la règle du cœur (les non
+ * applicables ne comptent jamais au dénominateur).
+ */
+export async function getFrameworkCoverage(tx: TenantTx): Promise<FrameworkCoverage[]> {
+  const frameworks = (await tx.execute(sql`
+    SELECT DISTINCT f.id, f.name, f.code
+    FROM scope_frameworks sf JOIN frameworks f ON f.id = sf.framework_id
+    ORDER BY f.name
+  `)) as unknown as { id: string; name: string; code: string }[];
+  const campaigns = (await tx.execute(sql`
+    SELECT DISTINCT ON (a.framework_id) a.framework_id, a.id, a.campaign_label, a.status::text AS status, a.started_at::text AS started_at
+    FROM assessments a ORDER BY a.framework_id, a.created_at DESC
+  `)) as unknown as { framework_id: string; id: string; campaign_label: string; status: string; started_at: string | null }[];
+  const items = (await tx.execute(sql`
+    SELECT ai.assessment_id, ai.status::text AS status FROM assessment_items ai
+    WHERE ai.assessment_id IN (SELECT DISTINCT ON (framework_id) id FROM assessments ORDER BY framework_id, created_at DESC)
+  `)) as unknown as { assessment_id: string; status: AssessmentItemStatus }[];
+
+  return frameworks.map((f) => {
+    const c = campaigns.find((x) => x.framework_id === f.id);
+    return {
+      frameworkId: f.id, name: f.name, code: f.code,
+      campaign: c ? {
+        id: c.id, label: c.campaign_label, status: c.status,
+        startedAt: c.started_at ? new Date(c.started_at) : null,
+        score: scoreAssessment(items.filter((i) => i.assessment_id === c.id)),
+      } : null,
+    };
+  });
 }

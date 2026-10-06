@@ -102,6 +102,7 @@ export {
   freshnessState,
   freshnessRank,
   freshnessNeedsAttention,
+  suggestedValidUntil,
   type EvidenceType,
   type EvidenceRecurrence,
   type FreshnessState,

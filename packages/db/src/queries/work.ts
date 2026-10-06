@@ -64,7 +64,7 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
       FROM risks r WHERE r.owner_user_id = ${userId}
     UNION ALL
     SELECT 'preuve', e.id, e.title, e.valid_until::text, NULL
-      FROM evidences e WHERE e.collector_user_id = ${userId}
+      FROM evidences e WHERE e.collector_user_id = ${userId} AND e.superseded_by IS NULL
     UNION ALL
     SELECT 'document', d.id, d.title, d.review_due::text, NULL
       FROM documents d WHERE d.owner_user_id = ${userId}

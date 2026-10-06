@@ -27,6 +27,8 @@ export const evidences = pgTable('evidences', {
   validUntil: date('valid_until'),
   recurrence: evidenceRecurrence('recurrence').notNull().default('ponctuelle'),
   collectorUserId: uuid('collector_user_id').references(() => users.id),
+  supersededBy: uuid('superseded_by'),
+  supersededAt: timestamp('superseded_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

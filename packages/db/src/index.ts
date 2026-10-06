@@ -221,6 +221,8 @@ export {
   unlinkEvidence,
   listEvidenceLinks,
   listEvidencesCoveringRequirement,
+  renewEvidence,
+  listEvidenceHistory,
   logAccess,
   listAccessLog,
   type EvidenceTarget,
@@ -229,6 +231,8 @@ export {
   type EvidenceContent,
   type EvidenceLinkRow,
   type CoveringEvidence,
+  type RenewResult,
+  type EvidenceHistoryRow,
   type AccessLogRow,
 } from './queries/evidences.ts';
 export {

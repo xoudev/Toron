@@ -77,6 +77,9 @@ export const DEMO = {
   exceptionTelemaintenance: 'd0000000-0000-4000-8000-000000000172',
   exceptionSauvegardesVitrolles: 'd0000000-0000-4000-8000-000000000173',
   exceptionCompteAdmin: 'd0000000-0000-4000-8000-000000000174',
+  reviewSauvegardesMars: 'd0000000-0000-4000-8000-000000000181',
+  reviewMfaAvril: 'd0000000-0000-4000-8000-000000000182',
+  reviewSauvegardesJuillet: 'd0000000-0000-4000-8000-000000000183',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -365,9 +368,9 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
     ] as const;
     for (const [id, title, description, owner, freq, mappings] of controls) {
       await sql`
-        INSERT INTO controls (id, tenant_id, title, description, owner_user_id, review_frequency)
-        VALUES (${id}, ${DEMO.tenantId}, ${title}, ${description}, ${owner}, ${freq})
-        ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description`;
+        INSERT INTO controls (id, tenant_id, title, description, owner_user_id, review_frequency, created_at)
+        VALUES (${id}, ${DEMO.tenantId}, ${title}, ${description}, ${owner}, ${freq}, '2025-09-01T08:00:00Z')
+        ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description, created_at = EXCLUDED.created_at`;
       for (const mapping of mappings) {
         const sep = mapping.indexOf(':');
         const code = mapping.slice(0, sep);
@@ -380,6 +383,24 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
           WHERE f.tenant_id IS NULL AND f.code = ${code} AND r.ref_id = ${ref}
           ON CONFLICT DO NOTHING`;
       }
+    }
+
+    // Revues d'efficacité : la MFA, revue sur échantillon au printemps, est en
+    // retard de revue ; les sauvegardes ont échoué au dernier test de
+    // restauration ; l'inventaire n'a jamais été revu.
+    const controlReviews = [
+      [DEMO.reviewSauvegardesMars, DEMO.controlSauvegardes, '2026-03-20', DEMO.userAntoine, 'test_technique', 'efficace',
+        'Restauration complète du serveur de fichiers du siège en 2 h 10, dans l’objectif fixé.'],
+      [DEMO.reviewMfaAvril, DEMO.controlMfa, '2026-04-02', DEMO.userClaire, 'echantillonnage', 'partiellement_efficace',
+        'Deux comptes de prestataires sur quarante testés sans second facteur ; corrigé le jour même, revue des comptes externes à renforcer.'],
+      [DEMO.reviewSauvegardesJuillet, DEMO.controlSauvegardes, '2026-07-10', DEMO.userClaire, 'test_technique', 'inefficace',
+        'Restauration du serveur EDI impossible : sauvegarde incomplète depuis la migration de juin.'],
+    ] as const;
+    for (const [id, controlId, reviewedOn, reviewer, method, result, observations] of controlReviews) {
+      await sql`
+        INSERT INTO control_reviews (id, tenant_id, control_id, reviewed_on, reviewer_user_id, method, result, observations)
+        VALUES (${id}, ${DEMO.tenantId}, ${controlId}, ${reviewedOn}, ${reviewer}, ${method}, ${result}, ${observations})
+        ON CONFLICT (id) DO NOTHING`;
     }
 
     // ── Module 5.4 : registre de risques du tenant démo ─────────────────

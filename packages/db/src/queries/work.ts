@@ -1,4 +1,4 @@
-import { EXCEPTION_DECIDER_ROLES, PROCESSING_REVIEW_MONTHS, REASSESSMENT_MONTHS, type TreatmentPlanState, type WorkItem, type WorkKind } from '@toron/core';
+import { EXCEPTION_DECIDER_ROLES, PROCESSING_REVIEW_MONTHS, REASSESSMENT_MONTHS, REVIEW_FREQUENCY_MONTHS, type TreatmentPlanState, type WorkItem, type WorkKind } from '@toron/core';
 import { sql } from 'drizzle-orm';
 
 import type { TenantTx } from '../tenant.ts';
@@ -44,6 +44,10 @@ interface Row {
 }
 
 export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem[]> {
+  const frequencyMonths = sql.join(
+    Object.entries(REVIEW_FREQUENCY_MONTHS).map(([frequency, months]) => sql`WHEN ${frequency} THEN ${months}::int`),
+    sql` `,
+  );
   const rows = (await tx.execute(sql`
     SELECT 'action' AS kind, a.id, a.title, a.due_date::text AS due, a.status::text AS detail
       FROM actions a WHERE a.owner_user_id = ${userId} AND a.status <> 'termine'
@@ -103,7 +107,13 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
            (p.last_reviewed_on + make_interval(months => ${PROCESSING_REVIEW_MONTHS}::int))::date::text, NULL
       FROM processing_activities p WHERE p.owner_user_id = ${userId}
     UNION ALL
-    SELECT 'controle', c.id, c.title, NULL, NULL
+    -- Prochaine revue d'efficacité : une période après la dernière revue, ou
+    -- après la création pour un contrôle jamais revu.
+    SELECT 'controle', c.id, c.title,
+           CASE WHEN c.review_frequency IS NULL THEN NULL ELSE
+             (coalesce((SELECT max(x.reviewed_on) FROM control_reviews x WHERE x.control_id = c.id), c.created_at::date)
+              + make_interval(months => CASE c.review_frequency::text ${frequencyMonths} END))::date::text END,
+           CASE WHEN EXISTS (SELECT 1 FROM control_reviews x WHERE x.control_id = c.id) THEN 'revue' ELSE 'premiere' END
       FROM controls c WHERE c.owner_user_id = ${userId} AND c.status = 'actif'
     UNION ALL
     SELECT 'processus', p.id, p.name, NULL, NULL
@@ -152,7 +162,7 @@ function detailFor(r: Row): string {
     case 'fournisseur': return r.detail === 'attestation' ? 'Attestation à renouveler' : r.detail === 'evaluation' ? 'Évaluation à refaire' : 'Revue du fournisseur';
     case 'obligation': return r.detail === 'a_evaluer' ? 'Obligation à évaluer' : 'Obligation en cours de mise en conformité';
     case 'traitement': return r.due ? 'Révision annuelle de la fiche' : 'Fiche de traitement à relire';
-    case 'controle': return 'Contrôle sous votre responsabilité';
+    case 'controle': return r.due === null ? 'Contrôle sous votre responsabilité' : r.detail === 'premiere' ? 'Première revue d’efficacité à réaliser' : 'Revue d’efficacité à réaliser';
     case 'processus': return 'Processus que vous pilotez';
     case 'derogation': return r.detail === 'decision' ? 'Demande de dérogation à trancher' : 'Dérogation à renouveler ou clôturer à l’échéance';
   }

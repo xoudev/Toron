@@ -3,7 +3,7 @@
  * membre, et quoi lui dire.
  */
 
-export const NOTIFICATION_SUBJECTS = ['action', 'risque', 'obligation', 'fournisseur', 'traitement', 'derogation'] as const;
+export const NOTIFICATION_SUBJECTS = ['action', 'risque', 'obligation', 'fournisseur', 'traitement', 'derogation', 'controle'] as const;
 export type NotificationSubject = (typeof NOTIFICATION_SUBJECTS)[number];
 
 const SUBJECT_PATH: Record<NotificationSubject, string> = {
@@ -13,6 +13,7 @@ const SUBJECT_PATH: Record<NotificationSubject, string> = {
   fournisseur: 'fournisseurs',
   traitement: 'traitements',
   derogation: 'derogations',
+  controle: 'controles',
 };
 
 const SUBJECT_PHRASE: Record<NotificationSubject, string> = {
@@ -22,6 +23,7 @@ const SUBJECT_PHRASE: Record<NotificationSubject, string> = {
   fournisseur: 'Un fournisseur vous est confié',
   traitement: 'Une fiche de traitement vous est confiée',
   derogation: 'Une dérogation vous est confiée',
+  controle: 'Un contrôle vous est confié',
 };
 
 /**

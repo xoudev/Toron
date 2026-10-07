@@ -22,6 +22,7 @@ const OWNER_COLUMN: Record<NotificationSubject, { table: string; column: string 
   fournisseur: { table: 'suppliers', column: 'owner_user_id' },
   traitement: { table: 'processing_activities', column: 'owner_user_id' },
   derogation: { table: 'policy_exceptions', column: 'owner_user_id' },
+  controle: { table: 'controls', column: 'owner_user_id' },
 };
 
 /** Responsable actuel d'un objet (avant modification), ou null. */

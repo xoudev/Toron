@@ -71,6 +71,14 @@ describe('recherche transverse', () => {
     expect(await search(T, 'confidentielle du concurrent')).toEqual([]);
   });
 
+  it('trouve un intitulé à partir de mots épars, sans accents ni apostrophe typographique', async () => {
+    const titles = async (q: string) => (await search(T, q)).map((h) => h.title);
+    expect(await titles('pieces jointes messagerie')).toContain('Durcir la messagerie contre les pièces jointes piégées');
+    expect(await titles("meyzieu l'entrepot")).toContain('Indisponibilité prolongée de l’entrepôt de Meyzieu');
+    // Tous les termes sont requis.
+    expect(await titles('messagerie meyzieu')).toEqual([]);
+  });
+
   it('ne renvoie rien pour une saisie trop courte', async () => {
     expect(await search(T, 'a')).toEqual([]);
   });

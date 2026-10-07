@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { likeContains, parseSearchQuery, refCodeFor, refNumber } from './search.ts';
+import { SEARCH_FOLD_FROM, SEARCH_FOLD_TO, foldForSearch, likeContains, parseSearchQuery, refCodeFor, refNumber, searchTerms } from './search.ts';
 
 describe('recherche transverse', () => {
   it('reconnaît un code d’élément sous plusieurs écritures', () => {
@@ -23,5 +23,15 @@ describe('recherche transverse', () => {
   });
   it('neutralise les jokers SQL de la saisie', () => {
     expect(likeContains('100%_sûr\\')).toBe('%100\\%\\_sûr\\\\%');
+  });
+  it('plie accents, majuscules et apostrophes typographiques', () => {
+    expect(SEARCH_FOLD_FROM.length).toBe(SEARCH_FOLD_TO.length);
+    expect(foldForSearch('Sécurité de l’Entrepôt — Œuvre')).toBe("securite de l'entrepot — ouvre");
+    expect(foldForSearch('ÇA')).toBe('ca');
+  });
+  it('découpe la saisie en termes indépendants, sans doublon, cinq au plus', () => {
+    expect(searchTerms('MFA VPN')).toEqual(['mfa', 'vpn']);
+    expect(searchTerms('Revue revue accès')).toEqual(['revue', 'acces']);
+    expect(searchTerms('a b c d e f g')).toHaveLength(5);
   });
 });

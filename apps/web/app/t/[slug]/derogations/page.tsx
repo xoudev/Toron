@@ -2,6 +2,7 @@ import { listAssets, listControls, listExceptions, listTenantMembers, withTenant
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { ExportCsvLink } from '@/components/export-csv-link';
 import { ModuleDisabled } from '@/components/module-disabled';
 import { appDb } from '@/lib/db';
 import { todayParis } from '@/lib/format';
@@ -33,7 +34,7 @@ export default async function DerogationsPage({ params }: { params: Promise<{ sl
       <Topbar
         crumbRoot="Système de management"
         crumbCurrent="Dérogations"
-        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{active} EN VIGUEUR</span><ThemeToggle /></>}
+        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{active} EN VIGUEUR</span><ExportCsvLink slug={slug} registre="derogations" /><ThemeToggle /></>}
       />
       <main className="app-page">
         <div className="page-head">

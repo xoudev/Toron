@@ -1,6 +1,6 @@
 'use client';
 
-import { scoreAssessment, type AssessmentItemStatus, type ControlDeleteImpact } from '@toron/core';
+import { scoreAssessment, type AssessmentItemStatus, type ControlDeleteImpact, type ExceptionState } from '@toron/core';
 import type {
   AssessmentItemRow,
   AssessmentSummary,
@@ -60,6 +60,22 @@ function sectionOf(ref: string): string {
   return 'Exigences';
 }
 
+/** Dérogation ouverte sur un contrôle (en attente, accordée ou échue sans clôture). */
+export interface ControlException {
+  id: string;
+  controlId: string;
+  state: ExceptionState;
+  expiresOn: string;
+}
+
+const CONTROL_EXCEPTION_LABEL: Partial<Record<ExceptionState, string>> = {
+  en_attente: 'Dérogation demandée',
+  a_venir: 'Dérogation accordée',
+  en_vigueur: 'Dérogation en vigueur',
+  a_echeance: 'Dérogation en vigueur, échéance proche',
+  echue: 'Dérogation échue, à renouveler ou clôturer',
+};
+
 interface Props {
   slug: string;
   canManage: boolean;
@@ -72,6 +88,7 @@ interface Props {
   activeCampaign: AssessmentSummary | null;
   items: AssessmentItemRow[];
   exportsList: ExportSummary[];
+  controlExceptions: ControlException[];
 }
 
 export function ReferentielDetail({
@@ -86,6 +103,7 @@ export function ReferentielDetail({
   activeCampaign,
   items,
   exportsList,
+  controlExceptions,
 }: Props) {
   const itemsByReq = useMemo(
     () => new Map(items.map((i) => [i.requirementId, i])),
@@ -306,6 +324,7 @@ export function ReferentielDetail({
             otherFrameworks={otherFrameworks(selectedReq.id)}
             activeCampaign={activeCampaign}
             item={itemsByReq.get(selectedReq.id) ?? null}
+            controlExceptions={controlExceptions}
             onClose={() => setSelectedReqId(null)}
           />
         ) : null}
@@ -325,6 +344,7 @@ function RequirementPanel({
   otherFrameworks,
   activeCampaign,
   item,
+  controlExceptions,
   onClose,
 }: {
   slug: string;
@@ -337,6 +357,7 @@ function RequirementPanel({
   otherFrameworks: string[];
   activeCampaign: AssessmentSummary | null;
   item: AssessmentItemRow | null;
+  controlExceptions: ControlException[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -435,6 +456,11 @@ function RequirementPanel({
                     {statusLabel(c.status)} · couvre {c.frameworkCodes.length} référentiel
                     {c.frameworkCodes.length > 1 ? 's' : ''}
                   </div>
+                  {controlExceptions.filter((x) => x.controlId === cid).map((x) => (
+                    <a key={x.id} className={`linked-control-exception linked-control-exception--${x.state}`} href={`/t/${slug}/derogations?ouvrir=${x.id}`}>
+                      {CONTROL_EXCEPTION_LABEL[x.state]} · jusqu’au {x.expiresOn.split('-').reverse().join('/')}
+                    </a>
+                  ))}
                 </div>
                 {canManage ? (
                   <div className="linked-control-actions">

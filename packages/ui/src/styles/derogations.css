@@ -176,3 +176,26 @@
     gap: 2px;
   }
 }
+
+/* Dérogation ouverte sur un contrôle, dans le panneau d'une exigence. */
+.linked-control-exception {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--warn);
+  text-decoration: none;
+}
+.linked-control-exception:hover {
+  text-decoration: underline;
+}
+.linked-control-exception--en_attente {
+  color: var(--accent);
+}
+.linked-control-exception--a_venir,
+.linked-control-exception--en_vigueur {
+  color: var(--text-2);
+}
+.linked-control-exception--echue {
+  color: var(--danger);
+}

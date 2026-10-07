@@ -19,7 +19,8 @@ export const REVIEW_FREQUENCY_LABEL: Record<ReviewFrequency, string> = {
   annuelle: 'Annuelle',
 };
 
-const FREQUENCY_MONTHS: Record<ReviewFrequency, number> = {
+/** Période entre deux revues, en mois. */
+export const REVIEW_FREQUENCY_MONTHS: Record<ReviewFrequency, number> = {
   mensuelle: 1,
   trimestrielle: 3,
   semestrielle: 6,
@@ -61,7 +62,7 @@ export interface ControlReviewSchedule {
 /** Date de la prochaine revue, ou null si le contrôle n'a pas de fréquence de revue. */
 export function nextControlReview(s: ControlReviewSchedule): string | null {
   if (!s.frequency) return null;
-  return addMonthsIso(s.lastReviewedOn ?? s.createdOn, FREQUENCY_MONTHS[s.frequency]);
+  return addMonthsIso(s.lastReviewedOn ?? s.createdOn, REVIEW_FREQUENCY_MONTHS[s.frequency]);
 }
 
 export const CONTROL_REVIEW_STATES = ['sans_frequence', 'a_jour', 'bientot', 'en_retard'] as const;

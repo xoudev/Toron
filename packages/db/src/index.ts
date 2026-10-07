@@ -115,6 +115,19 @@ export {
   type ExceptionRef,
   type ExceptionInput,
 } from './queries/exceptions.ts';
+export {
+  listControlLibrary,
+  listControlReviews,
+  getControlDetail,
+  getControlRef,
+  createControlReview,
+  updateControl,
+  type ControlLibraryRow,
+  type ControlReviewRow,
+  type ControlDetail,
+  type ControlRef,
+  type UpdateControlInput,
+} from './queries/control-reviews.ts';
 export { listAuditLog, countAuditLog, type AuditRow } from './queries/audit.ts';
 export {
   createSupplier,

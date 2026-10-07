@@ -35,7 +35,10 @@ FROM base AS run
 
 # Gestionnaires de paquets inutiles à l'exécution (CMD lance node seul) : npm
 # embarque ses propres dépendances, souvent en retard sur les correctifs.
-RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
+# Les correctifs de sécurité Alpine parus depuis la construction de l'image de
+# base (épinglée par digest) sont appliqués à l'image livrée.
+RUN apk upgrade --no-cache \
+ && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
       /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-v*
 
 # ── Binaire Typst (build statique musl, épinglé) ─────────────────────────

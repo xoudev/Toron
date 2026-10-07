@@ -12,6 +12,7 @@ export * from './obligations.ts';
 export * from './processing.ts';
 export * from './board.ts';
 export * from './notifications.ts';
+export * from './exceptions.ts';
 export {
   frameworksCovered,
   isMutualized,

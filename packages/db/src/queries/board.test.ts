@@ -47,15 +47,20 @@ describe('rapport de direction (module 5.11)', () => {
     expect(r.entities[0]).toMatchObject({ name: 'Meridiane Logistics SAS', status: 'ei' });
     expect(r.input.processing).toMatchObject({ total: 5, incomplete: 2 });
     expect(r.decisions.some((d) => d.includes('art. 20'))).toBe(true);
+    // Seed : la télémaintenance attend une décision, la rétention de Vitrolles est échue.
+    expect(r.input.exceptions).toEqual({ pending: 1, lapsed: 1 });
+    expect(r.decisions).toContain('Accorder ou refuser 1 demande de dérogation.');
+    expect(r.messages).toContainEqual({ tone: 'alerte', text: '1 dérogation échue sans clôture : l’écart n’est plus couvert.' });
   });
 
   it('ignore les modules masqués par l’organisation', async () => {
-    await admin`UPDATE tenants SET disabled_modules = ARRAY['risques','ebios','incidents']::text[] WHERE id = ${T}`;
+    await admin`UPDATE tenants SET disabled_modules = ARRAY['risques','ebios','incidents','derogations']::text[] WHERE id = ${T}`;
     try {
       const r = await withTenant(app.db, T, (tx) => loadBoardReport(tx, TODAY));
       expect(r.input.risks).toBeNull();
       expect(r.input.incidents).toBeNull();
       expect(r.topRisks).toBeNull();
+      expect(r.input.exceptions).toBeNull();
       expect(r.messages.some((m) => /risque|incident/i.test(m.text))).toBe(false);
     } finally {
       await admin`UPDATE tenants SET disabled_modules = '{}' WHERE id = ${T}`;

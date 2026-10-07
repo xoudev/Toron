@@ -6,6 +6,7 @@ import {
   listAssessments,
   listControlLinks,
   listControls,
+  listExceptions,
   listExportsForObject,
   listScopes,
   withTenant,
@@ -17,6 +18,8 @@ import { notFound, redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { appDb } from '@/lib/db';
+import { todayParis } from '@/lib/format';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { ReferentielDetail } from './detail';
@@ -38,6 +41,7 @@ export default async function ReferentielDetailPage({
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
   const canManage = canManageControls(ctx.role);
+  const exceptionsOn = (await getOrganisationOverview(ctx.tenantId)).enabled('derogations');
 
   const data = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
     const framework = await getFramework(tx, frameworkId);
@@ -54,8 +58,15 @@ export default async function ReferentielDetailPage({
       items = await getAssessmentItems(tx, active.id);
       exportsList = await listExportsForObject(tx, active.id);
     }
+    // Dérogations ouvertes sur un contrôle : l'écart à connaître avant de s'appuyer dessus.
+    const controlExceptions = exceptionsOn
+      ? (await listExceptions(tx, todayParis()))
+          .filter((e) => e.controlId !== null && ['en_attente', 'a_venir', 'en_vigueur', 'a_echeance', 'echue'].includes(e.state))
+          .map((e) => ({ id: e.id, controlId: e.controlId!, state: e.state, expiresOn: e.expiresOn }))
+      : [];
     return {
       framework,
+      controlExceptions,
       tree: await getRequirementTree(tx, frameworkId),
       controls: await listControls(tx),
       links: await listControlLinks(tx, frameworkId),
@@ -84,6 +95,7 @@ export default async function ReferentielDetailPage({
           activeCampaign={data.activeCampaign}
           items={data.items}
           exportsList={data.exportsList}
+          controlExceptions={data.controlExceptions}
         />
       </main>
     </>

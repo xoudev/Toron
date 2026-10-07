@@ -1,5 +1,7 @@
 import {
   assignmentTitle,
+  decisionRecipients,
+  exceptionDecisionTitle,
   notificationHref,
   shouldNotifyAssignment,
   type NotificationSubject,
@@ -19,6 +21,7 @@ const OWNER_COLUMN: Record<NotificationSubject, { table: string; column: string 
   obligation: { table: 'obligations', column: 'owner_user_id' },
   fournisseur: { table: 'suppliers', column: 'owner_user_id' },
   traitement: { table: 'processing_activities', column: 'owner_user_id' },
+  derogation: { table: 'policy_exceptions', column: 'owner_user_id' },
 };
 
 /** Responsable actuel d'un objet (avant modification), ou null. */
@@ -56,6 +59,28 @@ export async function notifyAssignment(tx: TenantTx, n: AssignmentNotice): Promi
     RETURNING id
   `)) as unknown as { id: string }[];
   return rows.length > 0;
+}
+
+/**
+ * Prévient le demandeur et le responsable d'une dérogation de la décision
+ * prise (jamais le décideur lui-même). Seuls les membres actuels de
+ * l'organisation sont notifiés. Renvoie le nombre de notifications créées.
+ */
+export async function notifyExceptionDecision(
+  tx: TenantTx,
+  n: { tenantId: string; slug: string; actorUserId: string; exceptionId: string; title: string; requestedBy: string; ownerUserId: string; approved: boolean },
+): Promise<number> {
+  const recipients = decisionRecipients(n);
+  if (recipients.length === 0) return 0;
+  const rows = (await tx.execute(sql`
+    INSERT INTO notifications (tenant_id, user_id, kind, subject, title, href, actor_user_id)
+    SELECT m.tenant_id, m.user_id, 'decision', 'derogation',
+           ${exceptionDecisionTitle(n.approved, n.title)}, ${notificationHref(n.slug, 'derogation', n.exceptionId)}, ${n.actorUserId}
+    FROM memberships m
+    WHERE m.tenant_id = ${n.tenantId} AND m.user_id IN (${sql.join(recipients.map((r) => sql`${r}`), sql`, `)})
+    RETURNING id
+  `)) as unknown as { id: string }[];
+  return rows.length;
 }
 
 export interface NotificationRow {

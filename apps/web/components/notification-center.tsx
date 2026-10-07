@@ -13,6 +13,7 @@ const SUBJECT_LABEL: Record<string, string> = {
   obligation: 'Obligation',
   fournisseur: 'Fournisseur',
   traitement: 'Traitement',
+  derogation: 'Dérogation',
 };
 
 const RELATIVE = new Intl.RelativeTimeFormat('fr-FR', { numeric: 'auto' });

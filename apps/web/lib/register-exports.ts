@@ -1,6 +1,7 @@
 import 'server-only';
 
 import {
+  EXCEPTION_STATE_LABEL,
   LEGAL_BASIS_LABEL,
   OBLIGATION_REGIME_LABEL,
   OBLIGATION_STATUS_LABEL,
@@ -10,9 +11,11 @@ import {
   type SearchKind,
 } from '@toron/core';
 import {
-  listActions, listAssets, listControls, listDocuments, listEvidences, listIncidents, listNc, listRisks,
+  listActions, listAssets, listControls, listDocuments, listEvidences, listExceptions, listIncidents, listNc, listRisks,
   listObligations, listProcessing, listSuppliers, type TenantTx,
 } from '@toron/db';
+
+import { todayParis } from '@/lib/format';
 
 // Définition des exports CSV de chaque registre : colonnes lisibles par un
 // auditeur, codes identiques à ceux de l'interface, aucune donnée binaire.
@@ -241,6 +244,29 @@ export const REGISTER_EXPORTS = {
       { header: 'Exigences couvertes', value: (r) => r.mappedRequirementCount },
       { header: 'Référentiels', value: (r) => r.frameworkCodes.join(', ').toUpperCase() },
       { header: 'Mutualisé', value: (r) => r.mutualized },
+    ],
+  }),
+  derogations: register({
+    title: 'Registre des dérogations',
+    load: (tx) => listExceptions(tx, todayParis()),
+    columns: [
+      { header: 'Code', value: code('derogation') },
+      { header: 'Dérogation', value: (r) => r.title },
+      { header: 'Règle concernée', value: (r) => r.rule },
+      { header: 'Contrôle', value: (r) => r.controlTitle },
+      { header: 'Actif', value: (r) => r.assetName },
+      { header: 'Justification', value: (r) => r.justification },
+      { header: 'Mesures compensatoires', value: (r) => r.compensatingMeasures },
+      { header: 'Demandeur', value: (r) => r.requesterName },
+      { header: 'Responsable', value: (r) => r.ownerName },
+      { header: 'Début', value: (r) => r.startsOn },
+      { header: 'Fin', value: (r) => r.expiresOn },
+      { header: 'État', value: (r) => EXCEPTION_STATE_LABEL[r.state] },
+      { header: 'Décidée par', value: (r) => r.deciderName },
+      { header: 'Décidée le', value: (r) => (r.decidedAt ? r.decidedAt.toISOString().slice(0, 10) : null) },
+      { header: 'Conditions ou motif', value: (r) => r.decisionNote },
+      { header: 'Clôturée le', value: (r) => (r.closedAt ? r.closedAt.toISOString().slice(0, 10) : null) },
+      { header: 'Renouvelle', value: (r) => (r.renewedFromId ? refCodeFor('derogation', r.renewedFromId) : null) },
     ],
   }),
 } as const;

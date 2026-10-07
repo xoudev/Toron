@@ -12,6 +12,7 @@ const calm: BoardInput = {
   suppliers: { watch: 0 },
   processing: { total: 5, incomplete: 0, processorsWithoutAgreement: 0 },
   evidencesStale: 0,
+  exceptions: { pending: 0, lapsed: 0 },
 };
 
 describe('messages clés du rapport de direction', () => {
@@ -76,6 +77,20 @@ describe('risques sans plan de traitement', () => {
     expect(boardDecisions({ ...calm, risks: { critical: 0, high: 1, acceptancePending: 0, unplanned: 1, unplannedSevere: 1 } })).toEqual([
       'Valider un plan de traitement pour 1 risque élevé ou critique sans action engagée.',
     ]);
+  });
+});
+
+describe('dérogations', () => {
+  it('alerte sur une dérogation échue sans clôture et demande de trancher les demandes', () => {
+    const input = { ...calm, exceptions: { pending: 2, lapsed: 1 } };
+    expect(boardMessages(input)[0]).toEqual({ tone: 'alerte', text: '1 dérogation échue sans clôture : l’écart n’est plus couvert.' });
+    expect(boardDecisions(input)).toEqual(['Accorder ou refuser 2 demandes de dérogation.']);
+  });
+
+  it('se tait quand le module est masqué', () => {
+    const input = { ...calm, exceptions: null };
+    expect(boardMessages(input).some((m) => m.text.includes('dérogation'))).toBe(false);
+    expect(boardDecisions(input)).toEqual([]);
   });
 });
 

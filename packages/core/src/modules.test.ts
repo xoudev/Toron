@@ -26,5 +26,7 @@ describe('filtrage par module', () => {
     expect(workKindEnabled('action', ['risques'])).toBe(true);
     expect(workKindEnabled('revue', ['revue_direction'])).toBe(false);
     expect(workKindEnabled('preuve', ['audits'])).toBe(true);
+    expect(workKindEnabled('derogation', ['derogations'])).toBe(false);
+    expect(moduleForSegment('derogations')).toBe('derogations');
   });
 });

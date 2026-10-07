@@ -367,3 +367,20 @@ describe('règles métier en base', () => {
     expect(seenByB).toHaveLength(0);
   });
 });
+
+describe('couverture RLS du schéma (S1)', () => {
+  it('toute table portant un tenant_id a la RLS activée, forcée et une politique', async () => {
+    const tables = (await admin`
+      SELECT c.relname AS name, c.relrowsecurity AS enabled, c.relforcerowsecurity AS forced,
+             EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid) AS has_policy
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped
+      WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p')
+      ORDER BY c.relname`) as unknown as { name: string; enabled: boolean; forced: boolean; has_policy: boolean }[];
+    // Garde-fou contre un test vide : le schéma compte des dizaines de tables métier.
+    expect(tables.length).toBeGreaterThan(30);
+    const unprotected = tables.filter((t) => !t.enabled || !t.forced || !t.has_policy).map((t) => t.name);
+    expect(unprotected).toEqual([]);
+  });
+});

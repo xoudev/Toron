@@ -3,7 +3,7 @@
  * membre, et quoi lui dire.
  */
 
-export const NOTIFICATION_SUBJECTS = ['action', 'risque', 'obligation', 'fournisseur', 'traitement'] as const;
+export const NOTIFICATION_SUBJECTS = ['action', 'risque', 'obligation', 'fournisseur', 'traitement', 'derogation'] as const;
 export type NotificationSubject = (typeof NOTIFICATION_SUBJECTS)[number];
 
 const SUBJECT_PATH: Record<NotificationSubject, string> = {
@@ -12,6 +12,7 @@ const SUBJECT_PATH: Record<NotificationSubject, string> = {
   obligation: 'obligations',
   fournisseur: 'fournisseurs',
   traitement: 'traitements',
+  derogation: 'derogations',
 };
 
 const SUBJECT_PHRASE: Record<NotificationSubject, string> = {
@@ -20,6 +21,7 @@ const SUBJECT_PHRASE: Record<NotificationSubject, string> = {
   obligation: 'Une obligation vous est confiée',
   fournisseur: 'Un fournisseur vous est confié',
   traitement: 'Une fiche de traitement vous est confiée',
+  derogation: 'Une dérogation vous est confiée',
 };
 
 /**
@@ -41,4 +43,19 @@ export function assignmentTitle(subject: NotificationSubject, objectTitle: strin
   const name = objectTitle.trim().replace(/\s+/g, ' ');
   const short = name.length > 160 ? `${name.slice(0, 157)}…` : name;
   return `${SUBJECT_PHRASE[subject]} : ${short}`;
+}
+
+/**
+ * Destinataires d'une décision : le demandeur et le responsable, sans
+ * doublon, et jamais l'auteur de la décision lui-même.
+ */
+export function decisionRecipients(input: { actorUserId: string; requestedBy: string; ownerUserId: string }): string[] {
+  return [...new Set([input.requestedBy, input.ownerUserId])].filter((id) => id !== input.actorUserId);
+}
+
+/** Libellé d'une notification de décision sur une dérogation. */
+export function exceptionDecisionTitle(approved: boolean, objectTitle: string): string {
+  const name = objectTitle.trim().replace(/\s+/g, ' ');
+  const short = name.length > 160 ? `${name.slice(0, 157)}…` : name;
+  return `${approved ? 'Dérogation accordée' : 'Dérogation refusée'} : ${short}`;
 }

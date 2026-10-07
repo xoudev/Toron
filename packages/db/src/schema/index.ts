@@ -13,6 +13,7 @@ export * from './nonconformities.ts';
 export * from './suppliers.ts';
 export * from './obligations.ts';
 export * from './processing.ts';
+export * from './exceptions.ts';
 export * from './notifications.ts';
 export * from './audits.ts';
 export * from './reviews.ts';

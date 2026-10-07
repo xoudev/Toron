@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { assignmentTitle, notificationHref, shouldNotifyAssignment } from './notifications.ts';
+import { assignmentTitle, decisionRecipients, exceptionDecisionTitle, notificationHref, shouldNotifyAssignment } from './notifications.ts';
 
 describe('notifications d’attribution', () => {
   it('prévient le nouveau responsable, pas celui qui s’attribue l’objet', () => {
@@ -23,5 +23,19 @@ describe('notifications d’attribution', () => {
   it('formule un libellé lisible et borné', () => {
     expect(assignmentTitle('action', '  Durcir   la messagerie ')).toBe('Une action vous est confiée : Durcir la messagerie');
     expect(assignmentTitle('risque', 'x'.repeat(300)).length).toBeLessThanOrEqual(190);
+  });
+});
+
+describe('notifications de décision', () => {
+  it('préviennent le demandeur et le responsable, une fois chacun, jamais le décideur', () => {
+    expect(decisionRecipients({ actorUserId: 'd', requestedBy: 'a', ownerUserId: 'b' })).toEqual(['a', 'b']);
+    expect(decisionRecipients({ actorUserId: 'd', requestedBy: 'a', ownerUserId: 'a' })).toEqual(['a']);
+    expect(decisionRecipients({ actorUserId: 'a', requestedBy: 'a', ownerUserId: 'b' })).toEqual(['b']);
+  });
+
+  it('disent si la dérogation est accordée ou refusée, et mènent à son écran', () => {
+    expect(exceptionDecisionTitle(true, 'Trieuse sans antivirus')).toBe('Dérogation accordée : Trieuse sans antivirus');
+    expect(exceptionDecisionTitle(false, 'Compte partagé')).toBe('Dérogation refusée : Compte partagé');
+    expect(notificationHref('acme', 'derogation', 'x')).toBe('/t/acme/derogations?ouvrir=x');
   });
 });

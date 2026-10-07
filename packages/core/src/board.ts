@@ -34,6 +34,8 @@ export interface BoardInput {
   suppliers: { watch: number } | null;
   processing: { total: number; incomplete: number; processorsWithoutAgreement: number };
   evidencesStale: number;
+  /** null quand le module dérogations est masqué. Échues = échéance passée sans clôture ni renouvellement. */
+  exceptions: { pending: number; lapsed: number } | null;
 }
 
 export type BoardTone = 'alerte' | 'vigilance' | 'positif';
@@ -53,6 +55,7 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
   if (i.risks && i.risks.critical > 0) out.push({ tone: 'alerte', text: `${s(i.risks.critical, 'risque critique', 'risques critiques')} après traitement.` });
   if (i.actions.overdueP1 > 0) out.push({ tone: 'alerte', text: `${s(i.actions.overdueP1, 'action prioritaire', 'actions prioritaires')} en retard.` });
   if (i.incidents && i.incidents.nis2ImportantOpen > 0) out.push({ tone: 'alerte', text: `${s(i.incidents.nis2ImportantOpen, 'incident important NIS 2', 'incidents importants NIS 2')} en cours de traitement.` });
+  if (i.exceptions && i.exceptions.lapsed > 0) out.push({ tone: 'alerte', text: `${s(i.exceptions.lapsed, 'dérogation échue', 'dérogations échues')} sans clôture : l’écart n’est plus couvert.` });
   for (const e of i.entities) {
     if ((e.nis2 === 'ee' || e.nis2 === 'ei') && e.registration === 'a_faire') out.push({ tone: 'alerte', text: `${e.name} : enregistrement auprès de l’ANSSI non engagé.` });
   }
@@ -95,5 +98,6 @@ export function boardDecisions(i: BoardInput): string[] {
   }
   if (i.obligations.unowned > 0) out.push(`Désigner un responsable pour ${s(i.obligations.unowned, 'obligation', 'obligations')}.`);
   if (i.suppliers && i.suppliers.watch > 0) out.push(`Statuer sur ${s(i.suppliers.watch, 'fournisseur', 'fournisseurs')} à suivre : maintien, plan d’amélioration ou remplacement.`);
+  if (i.exceptions && i.exceptions.pending > 0) out.push(`Accorder ou refuser ${s(i.exceptions.pending, 'demande de dérogation', 'demandes de dérogation')}.`);
   return out;
 }

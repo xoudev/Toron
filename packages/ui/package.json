@@ -21,6 +21,7 @@
     "./fournisseurs.css": "./src/styles/fournisseurs.css",
     "./obligations.css": "./src/styles/obligations.css",
     "./derogations.css": "./src/styles/derogations.css",
+    "./controles.css": "./src/styles/controles.css",
     "./board.css": "./src/styles/board.css",
     "./parametres.css": "./src/styles/parametres.css"
   },

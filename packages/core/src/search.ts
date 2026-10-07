@@ -16,7 +16,7 @@ export const SEARCH_KIND_META: Record<SearchKind, { label: string; prefix: strin
   document: { label: 'Document', prefix: 'DOC', path: '/documents' },
   preuve: { label: 'Preuve', prefix: 'EVI', path: '/preuves' },
   exigence: { label: 'Exigence', prefix: null, path: '/referentiels' },
-  controle: { label: 'Contrôle', prefix: null, path: '/referentiels' },
+  controle: { label: 'Contrôle', prefix: null, path: '/controles' },
   audit: { label: 'Audit', prefix: 'AUD', path: '/audits' },
   fournisseur: { label: 'Fournisseur', prefix: 'FRN', path: '/fournisseurs' },
   obligation: { label: 'Obligation', prefix: 'OBL', path: '/obligations' },

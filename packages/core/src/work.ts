@@ -19,7 +19,7 @@ export const WORK_KIND_META: Record<WorkKind, { label: string; plural: string; p
   fournisseur: { label: 'Fournisseur', plural: 'Fournisseurs', path: '/fournisseurs' },
   obligation: { label: 'Obligation', plural: 'Obligations', path: '/obligations' },
   traitement: { label: 'Traitement', plural: 'Traitements', path: '/traitements' },
-  controle: { label: 'Contrôle', plural: 'Contrôles', path: '/referentiels' },
+  controle: { label: 'Contrôle', plural: 'Contrôles', path: '/controles' },
   processus: { label: 'Processus', plural: 'Processus', path: '/processus' },
   derogation: { label: 'Dérogation', plural: 'Dérogations', path: '/derogations' },
 };

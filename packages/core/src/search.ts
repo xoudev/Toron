@@ -67,3 +67,31 @@ export function refCodeFor(kind: SearchKind, id: string): string | null {
 export function likeContains(text: string): string {
   return `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 }
+
+/**
+ * Pliage des accents et apostrophes, caractère pour caractère : la même table
+ * sert à `translate()` côté SQL, si bien que « securite » trouve « Sécurité »
+ * et « l'entrepot » trouve « l’entrepôt ». Les deux chaînes ont même longueur.
+ */
+export const SEARCH_FOLD_FROM = 'àáâäãåçèéêëìíîïñòóôöõùúûüýÿœæ’‘';
+export const SEARCH_FOLD_TO = "aaaaaaceeeeiiiinooooouuuuyyoa''";
+
+export function foldForSearch(text: string): string {
+  let out = '';
+  for (const ch of text.toLowerCase()) {
+    const i = SEARCH_FOLD_FROM.indexOf(ch);
+    out += i >= 0 ? SEARCH_FOLD_TO[i] : ch;
+  }
+  return out;
+}
+
+export const SEARCH_MAX_TERMS = 5;
+
+/**
+ * Termes d'une recherche textuelle : pliés, dédoublonnés, cinq au plus.
+ * Chaque terme doit figurer dans l'intitulé, dans n'importe quel ordre.
+ */
+export function searchTerms(text: string): string[] {
+  const terms = foldForSearch(text).split(' ').filter((t) => t.length > 0);
+  return [...new Set(terms)].slice(0, SEARCH_MAX_TERMS);
+}

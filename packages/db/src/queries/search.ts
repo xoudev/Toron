@@ -1,4 +1,4 @@
-import { likeContains, type SearchKind, type SearchQuery } from '@toron/core';
+import { SEARCH_FOLD_FROM, SEARCH_FOLD_TO, likeContains, searchTerms, type SearchKind, type SearchQuery } from '@toron/core';
 import { sql, type SQL } from 'drizzle-orm';
 
 import type { TenantTx } from '../tenant.ts';
@@ -45,6 +45,12 @@ const SOURCES: Source[] = [
 
 const PER_KIND = 6;
 
+/** Chaque terme (déjà plié par le cœur) doit figurer dans la colonne pliée. */
+function matchesAll(column: SQL, terms: string[]): SQL {
+  const folded = sql`translate(lower(${column}), ${SEARCH_FOLD_FROM}, ${SEARCH_FOLD_TO})`;
+  return sql.join(terms.map((t) => sql`${folded} LIKE ${likeContains(t)} ESCAPE '\\'`), sql` AND `);
+}
+
 /** Numéro lisible (RSK-482) recalculé en SQL, identique à refNumber() du cœur. */
 const REF_NUMBER = (alias: string) =>
   sql.raw(`((('x' || right(replace(${alias}.id::text, '-', ''), 6))::bit(24)::int) % 1000)`);
@@ -52,6 +58,8 @@ const REF_NUMBER = (alias: string) =>
 export async function searchTenant(tx: TenantTx, query: SearchQuery): Promise<SearchHit[]> {
   if (query.type === 'vide') return [];
   const parts: SQL[] = [];
+  const terms = query.type === 'texte' ? searchTerms(query.text) : [];
+  if (query.type === 'texte' && terms.length === 0) return [];
 
   for (const s of SOURCES) {
     let where: SQL;
@@ -59,7 +67,7 @@ export async function searchTenant(tx: TenantTx, query: SearchQuery): Promise<Se
       if (query.kind !== s.kind) continue;
       where = sql`${REF_NUMBER('t')} = ${query.number}`;
     } else {
-      where = sql`t.${sql.raw(s.title)} ILIKE ${likeContains(query.text)} ESCAPE '\\'`;
+      where = matchesAll(sql`t.${sql.raw(s.title)}`, terms);
     }
     parts.push(sql`(SELECT ${s.kind}::text AS kind, t.id, t.${sql.raw(s.title)} AS title,
       NULL::text AS detail, NULL::uuid AS parent_id
@@ -69,12 +77,13 @@ export async function searchTenant(tx: TenantTx, query: SearchQuery): Promise<Se
 
   if (query.type === 'texte') {
     const p = likeContains(query.text);
+    const label = sql`r.ref_id || ' ' || r.title_internal`;
     // Exigences : identifiant de clause ou intitulé, dans les référentiels
     // visibles par l'organisation (intégrés et internes).
     parts.push(sql`(SELECT 'exigence'::text AS kind, r.id, r.ref_id || ' — ' || r.title_internal AS title,
       f.name AS detail, r.framework_id AS parent_id
       FROM requirements r JOIN frameworks f ON f.id = r.framework_id
-      WHERE r.ref_id ILIKE ${p} ESCAPE '\\' OR r.title_internal ILIKE ${p} ESCAPE '\\'
+      WHERE ${matchesAll(label, terms)}
       ORDER BY (r.ref_id ILIKE ${p} ESCAPE '\\') DESC, f.name, r.sort_order LIMIT ${PER_KIND})`);
   }
 

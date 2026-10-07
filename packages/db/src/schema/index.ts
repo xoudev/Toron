@@ -15,6 +15,7 @@ export * from './obligations.ts';
 export * from './processing.ts';
 export * from './exceptions.ts';
 export * from './control-reviews.ts';
+export * from './training.ts';
 export * from './notifications.ts';
 export * from './audits.ts';
 export * from './reviews.ts';

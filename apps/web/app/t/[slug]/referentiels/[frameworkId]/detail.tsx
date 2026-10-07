@@ -1,6 +1,14 @@
 'use client';
 
-import { scoreAssessment, type AssessmentItemStatus, type ControlDeleteImpact, type ExceptionState } from '@toron/core';
+import {
+  CONTROL_REVIEW_RESULT_LABEL,
+  scoreAssessment,
+  type AssessmentItemStatus,
+  type ControlDeleteImpact,
+  type ControlReviewResult,
+  type ControlReviewState,
+  type ExceptionState,
+} from '@toron/core';
 import type {
   AssessmentItemRow,
   AssessmentSummary,
@@ -76,6 +84,14 @@ const CONTROL_EXCEPTION_LABEL: Partial<Record<ExceptionState, string>> = {
   echue: 'Dérogation échue, à renouveler ou clôturer',
 };
 
+/** Dernière revue d'efficacité d'un contrôle. */
+export interface ControlReviewSummary {
+  controlId: string;
+  lastReviewedOn: string | null;
+  lastResult: ControlReviewResult | null;
+  reviewState: ControlReviewState;
+}
+
 interface Props {
   slug: string;
   canManage: boolean;
@@ -89,6 +105,7 @@ interface Props {
   items: AssessmentItemRow[];
   exportsList: ExportSummary[];
   controlExceptions: ControlException[];
+  controlReviews: ControlReviewSummary[];
 }
 
 export function ReferentielDetail({
@@ -104,6 +121,7 @@ export function ReferentielDetail({
   items,
   exportsList,
   controlExceptions,
+  controlReviews,
 }: Props) {
   const itemsByReq = useMemo(
     () => new Map(items.map((i) => [i.requirementId, i])),
@@ -325,6 +343,7 @@ export function ReferentielDetail({
             activeCampaign={activeCampaign}
             item={itemsByReq.get(selectedReq.id) ?? null}
             controlExceptions={controlExceptions}
+            controlReviews={controlReviews}
             onClose={() => setSelectedReqId(null)}
           />
         ) : null}
@@ -345,6 +364,7 @@ function RequirementPanel({
   activeCampaign,
   item,
   controlExceptions,
+  controlReviews,
   onClose,
 }: {
   slug: string;
@@ -358,6 +378,7 @@ function RequirementPanel({
   activeCampaign: AssessmentSummary | null;
   item: AssessmentItemRow | null;
   controlExceptions: ControlException[];
+  controlReviews: ControlReviewSummary[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -456,6 +477,18 @@ function RequirementPanel({
                     {statusLabel(c.status)} · couvre {c.frameworkCodes.length} référentiel
                     {c.frameworkCodes.length > 1 ? 's' : ''}
                   </div>
+                  {(() => {
+                    const rv = controlReviews.find((x) => x.controlId === cid);
+                    if (!rv) return null;
+                    const late = rv.reviewState === 'en_retard' ? ' · revue en retard' : '';
+                    return (
+                      <a className={`linked-control-review linked-control-review--${rv.lastResult ?? 'jamais'}`} href={`/t/${slug}/controles?ouvrir=${cid}`}>
+                        {rv.lastResult && rv.lastReviewedOn
+                          ? `Revue du ${rv.lastReviewedOn.split('-').reverse().join('/')} : ${CONTROL_REVIEW_RESULT_LABEL[rv.lastResult].toLowerCase()}${late}`
+                          : `Jamais revu${late}`}
+                      </a>
+                    );
+                  })()}
                   {controlExceptions.filter((x) => x.controlId === cid).map((x) => (
                     <a key={x.id} className={`linked-control-exception linked-control-exception--${x.state}`} href={`/t/${slug}/derogations?ouvrir=${x.id}`}>
                       {CONTROL_EXCEPTION_LABEL[x.state]} · jusqu’au {x.expiresOn.split('-').reverse().join('/')}

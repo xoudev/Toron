@@ -4,6 +4,7 @@ import {
   getReview,
   getReviewCounts,
   getReviewEntityName,
+  listControlLibrary,
   sealExport,
   withTenant,
   type ClaimedExport,
@@ -18,6 +19,8 @@ const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', {
   timeZone: 'Europe/Paris',
 });
 const DAY_FORMAT = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZone: 'Europe/Paris' });
+// Date civile du jour à Paris (AAAA-MM-JJ), base des échéances de revue.
+const ISO_DAY_PARIS = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' });
 
 function frDay(iso: string | null): string {
   if (!iso) return '—';
@@ -48,7 +51,8 @@ export async function processPvExport(
       const metrics = await getDashboardMetrics(tx);
       const counts = await getReviewCounts(tx);
       const entityName = await getReviewEntityName(tx);
-      return { review, metrics, counts, entityName };
+      const controls = (await listControlLibrary(tx, ISO_DAY_PARIS.format(now()))).filter((c) => c.status === 'actif');
+      return { review, metrics, counts, entityName, controls };
     });
     if (!data) {
       await withTenant(db, job.tenantId, (tx) => failExport(tx, job.id, 'Revue introuvable.'));
@@ -57,7 +61,7 @@ export async function processPvExport(
 
     // 2) Modèle + compilation (hors transaction)
     const slug = randomVerifySlug();
-    const { review, metrics, counts, entityName } = data;
+    const { review, metrics, counts, entityName, controls } = data;
     const agenda = buildReviewAgenda({
       actionsOpen: metrics.actionsOpen,
       actionsOverdue: metrics.actionsOverdue,
@@ -74,6 +78,9 @@ export async function processPvExport(
       risksToReassess: metrics.risksByPlan.a_recoter,
       risksPlanLate: metrics.risksByPlan.en_retard,
       controlsMutualized: metrics.controlsMutualized,
+      controlsActive: controls.length,
+      controlsLate: controls.filter((c) => c.reviewState === 'en_retard').length,
+      controlsIneffective: controls.filter((c) => c.lastResult === 'inefficace').length,
       evidencesStale: metrics.evidencesStale,
       documentsReviewOverdue: metrics.documentsReviewOverdue,
     });

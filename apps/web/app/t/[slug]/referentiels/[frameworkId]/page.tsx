@@ -5,6 +5,7 @@ import {
   getRequirementTree,
   listAssessments,
   listControlLinks,
+  listControlLibrary,
   listControls,
   listExceptions,
   listExportsForObject,
@@ -64,9 +65,14 @@ export default async function ReferentielDetailPage({
           .filter((e) => e.controlId !== null && ['en_attente', 'a_venir', 'en_vigueur', 'a_echeance', 'echue'].includes(e.state))
           .map((e) => ({ id: e.id, controlId: e.controlId!, state: e.state, expiresOn: e.expiresOn }))
       : [];
+    // Dernière revue d'efficacité de chaque contrôle : la preuve qu'il fonctionne.
+    const controlReviews = (await listControlLibrary(tx, todayParis())).map((c) => ({
+      controlId: c.id, lastReviewedOn: c.lastReviewedOn, lastResult: c.lastResult, reviewState: c.reviewState,
+    }));
     return {
       framework,
       controlExceptions,
+      controlReviews,
       tree: await getRequirementTree(tx, frameworkId),
       controls: await listControls(tx),
       links: await listControlLinks(tx, frameworkId),
@@ -96,6 +102,7 @@ export default async function ReferentielDetailPage({
           items={data.items}
           exportsList={data.exportsList}
           controlExceptions={data.controlExceptions}
+          controlReviews={data.controlReviews}
         />
       </main>
     </>

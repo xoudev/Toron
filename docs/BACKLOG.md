@@ -127,3 +127,20 @@ description courte, phase cible pressentie.
   recherche ramène « œ » à « o » des deux côtés : « oeuvre » ne trouve donc
   pas « œuvre ». Traiter les ligatures (œ → oe, æ → ae) et, plus tard, des
   synonymes métier (PCA/PRA, MFA/2FA). Phase cible : V1.
+- **2026-10-07 · e2e Playwright des dérogations** — Demande (contrôle
+  choisi : règle pré-remplie) → refus sans motif bloqué → décision par un
+  tiers (séparation des tâches) → notification du demandeur → renouvellement
+  pré-rempli → clôture d'une dérogation échue. Vérifié manuellement le
+  2026-10-07 ; suit l'infra Playwright transverse. Phase cible : MVP.
+- **2026-10-07 · e2e Playwright des revues de contrôle** — Revue
+  « partiellement efficace » avec preuve → action corrective ouverte pour le
+  responsable, pastille « Contrôle ↗ » de retour → contrôle « À jour » ;
+  changement de responsable notifié. Vérifié manuellement le 2026-10-07.
+  Phase cible : MVP.
+- **2026-10-07 · Dérogations et acceptation des risques** — Une dérogation
+  accordée est une acceptation de risque résiduel : la rattacher au risque
+  concerné, et signaler les dérogations renouvelées plus de deux fois
+  (écart devenu permanent, à traiter autrement). Phase cible : V1.
+- **2026-10-07 · Revue de contrôle avec preuve nouvelle** — Déposer la
+  preuve de la revue (capture, export) depuis le formulaire de revue, au
+  lieu de la choisir parmi les preuves déjà rattachées. Phase cible : V1.

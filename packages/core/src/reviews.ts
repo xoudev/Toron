@@ -59,12 +59,28 @@ export interface ReviewInputs {
   /** Au moins une action de traitement en retard. */
   risksPlanLate: number;
   controlsMutualized: number;
+  /** Contrôles actifs, dont revue en retard, et jugés inefficaces à leur dernière revue. */
+  controlsActive: number;
+  controlsLate: number;
+  controlsIneffective: number;
   evidencesStale: number;
   documentsReviewOverdue: number;
 }
 
 function plural(n: number, singular: string, plural_: string): string {
   return `${n} ${n > 1 ? plural_ : singular}`;
+}
+
+function controlReviewLine(m: ReviewInputs): string {
+  if (m.controlsActive === 0) return 'aucun contrôle actif à revoir.';
+  if (m.controlsLate === 0 && m.controlsIneffective === 0) {
+    return `${plural(m.controlsActive, 'contrôle revu dans les temps et jugé efficace', 'contrôles revus dans les temps et jugés efficaces')}.`;
+  }
+  const parts = [
+    m.controlsLate > 0 ? plural(m.controlsLate, 'en retard de revue', 'en retard de revue') : null,
+    m.controlsIneffective > 0 ? plural(m.controlsIneffective, 'jugé inefficace', 'jugés inefficaces') : null,
+  ].filter((p): p is string => p !== null);
+  return `sur ${plural(m.controlsActive, 'contrôle actif', 'contrôles actifs')} : ${parts.join(', ')}.`;
 }
 
 function treatmentPlanLine(m: ReviewInputs): string {
@@ -135,6 +151,7 @@ export function buildReviewAgenda(m: ReviewInputs): AgendaSection[] {
       summary: `${plural(m.auditsClosed, 'audit clôturé', 'audits clôturés')}, ${plural(m.auditsInProgress, 'audit en cours', 'audits en cours')}.`,
       bullets: [
         { head: 'Audits —', body: `${plural(m.auditsClosed, 'clôturé', 'clôturés')}, ${plural(m.auditsInProgress, 'en cours', 'en cours')}.`, tone: m.auditsInProgress > 0 ? 'warn' : 'ok' },
+        { head: 'Revues de contrôle —', body: controlReviewLine(m), tone: m.controlsIneffective > 0 ? 'danger' : m.controlsLate > 0 ? 'warn' : 'ok' },
         { head: 'Non-conformités —', body: `${plural(m.ncOpen, 'ouverte', 'ouvertes')}, ${plural(m.ncInEffectivenessCheck, 'en vérification d’efficacité (J+90)', 'en vérification d’efficacité (J+90)')}.`, tone: m.ncOpen > 0 ? 'warn' : 'ok' },
       ],
       kpis: [],

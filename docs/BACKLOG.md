@@ -116,3 +116,14 @@ description courte, phase cible pressentie.
   ciblées (CSP, cookies, en-têtes). Phase cible : MVP (staging).
 - **2026-10-01 · Image Postgres des tests** : traité le 2026-10-01, constante
   unique `packages/db/src/test-image.ts` alignée sur les compose (18.6).
+- **2026-10-07 · e2e Playwright du plan de traitement des risques** —
+  Connexion Camille → registre des risques → risque « TRAITEMENT À
+  PLANIFIER » → « Planifier une action » (responsable Antoine) → action
+  visible dans le plan d'action, pastille « Risque ↗ » de retour → action
+  terminée → « À RECOTER » → recotation → « Cible atteinte ». Vérifié
+  manuellement le 2026-10-07 ; suit l'infra Playwright transverse. Phase
+  cible : MVP.
+- **2026-10-07 · Recherche : ligatures et synonymes** — Le pliage de la
+  recherche ramène « œ » à « o » des deux côtés : « oeuvre » ne trouve donc
+  pas « œuvre ». Traiter les ligatures (œ → oe, æ → ae) et, plus tard, des
+  synonymes métier (PCA/PRA, MFA/2FA). Phase cible : V1.

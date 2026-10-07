@@ -80,6 +80,12 @@ export const DEMO = {
   reviewSauvegardesMars: 'd0000000-0000-4000-8000-000000000181',
   reviewMfaAvril: 'd0000000-0000-4000-8000-000000000182',
   reviewSauvegardesJuillet: 'd0000000-0000-4000-8000-000000000183',
+  trainingPreparateurs: 'd0000000-0000-4000-8000-000000000191',
+  trainingPhishing: 'd0000000-0000-4000-8000-000000000192',
+  trainingDirigeants: 'd0000000-0000-4000-8000-000000000193',
+  trainingRgpd: 'd0000000-0000-4000-8000-000000000194',
+  evidenceFormationDirigeants: 'd0000000-0000-4000-8000-000000000195',
+  evidenceHameconnage: 'd0000000-0000-4000-8000-000000000196',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -1331,6 +1337,49 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
            ${e.requestedAt})
         ON CONFLICT (id) DO NOTHING`;
     }
+
+    // ── Sensibilisation et formation : effectifs comptés, dirigeants nommés.
+    // Antoine a suivi la formation des dirigeants (NIS 2, art. 20) en
+    // novembre 2025, les trois autres membres du comité n'ont pas de compte
+    // Toron ; la feuille d'émargement de Meyzieu manque au coffre ; la
+    // formation RGPD du service client est planifiée.
+    const trainingSheets = [
+      [DEMO.evidenceFormationDirigeants, 'Attestations de formation des dirigeants — novembre 2025', 'attestation',
+        'Attestations de suivi délivrées par l’organisme de formation, quatre membres du comité de direction.', '2025-11-18', '2026-11-18', 'annuelle'],
+      [DEMO.evidenceHameconnage, 'Rapport de l’exercice d’hameçonnage — juin 2026', 'rapport',
+        'Rapport de campagne : 148 destinataires, 121 participants au rappel des réflexes, taux de clic en baisse.', '2026-06-20', null, 'ponctuelle'],
+    ] as const;
+    for (const [id, title, type, text, collectedAt, validUntil, recurrence] of trainingSheets) {
+      const buf = Buffer.from(text);
+      await sql`
+        INSERT INTO evidences
+          (id, tenant_id, title, type, file_name, content, sha256, collected_at, valid_until, recurrence, collector_user_id)
+        VALUES
+          (${id}, ${DEMO.tenantId}, ${title}, ${type}, ${`${title}.txt`}, ${buf}, ${createHash('sha256').update(buf).digest('hex')},
+           ${collectedAt}, ${validUntil}, ${recurrence}, ${DEMO.userClaire})
+        ON CONFLICT (id) DO NOTHING`;
+    }
+    const trainings = [
+      [DEMO.trainingPreparateurs, 'Sensibilisation cybersécurité des préparateurs de Meyzieu', 'sensibilisation', '2026-03-12', 60,
+        'Préparateurs de commandes, entrepôt de Meyzieu', 42, 37, 'RSSI interne', null],
+      [DEMO.trainingPhishing, 'Exercice d’hameçonnage et rappel des réflexes', 'phishing', '2026-06-20', 30,
+        'Tous les salariés disposant d’une messagerie', 148, 121, 'RSSI interne', DEMO.evidenceHameconnage],
+      [DEMO.trainingDirigeants, 'Formation des dirigeants à la cybersécurité (NIS 2, art. 20)', 'formation_dirigeants', '2025-11-18', 180,
+        'Comité de direction', 4, 4, 'Organisme de formation spécialisé', DEMO.evidenceFormationDirigeants],
+      [DEMO.trainingRgpd, 'Protection des données pour le service client', 'rgpd', '2026-11-05', 90,
+        'Conseillers du service client', 12, null, 'Déléguée à la protection des données', null],
+    ] as const;
+    for (const [id, title, kind, heldOn, minutes, audience, expected, attended, provider, sheet] of trainings) {
+      await sql`
+        INSERT INTO training_sessions
+          (id, tenant_id, title, kind, held_on, duration_minutes, audience, expected_count, attended_count, provider, evidence_id, created_by)
+        VALUES (${id}, ${DEMO.tenantId}, ${title}, ${kind}, ${heldOn}, ${minutes}, ${audience}, ${expected}, ${attended}, ${provider}, ${sheet}, ${DEMO.userClaire})
+        ON CONFLICT (id) DO NOTHING`;
+    }
+    await sql`
+      INSERT INTO training_attendees (tenant_id, session_id, user_id)
+      VALUES (${DEMO.tenantId}, ${DEMO.trainingDirigeants}, ${DEMO.userAntoine})
+      ON CONFLICT DO NOTHING`;
   } finally {
     await sql.end();
   }

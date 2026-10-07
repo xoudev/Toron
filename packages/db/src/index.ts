@@ -128,6 +128,16 @@ export {
   type ControlRef,
   type UpdateControlInput,
 } from './queries/control-reviews.ts';
+export {
+  listTrainingSessions,
+  createTrainingSession,
+  updateTrainingSession,
+  deleteTrainingSession,
+  listLeaderTraining,
+  type TrainingSessionRow,
+  type TrainingSessionInput,
+  type LeaderTrainingRow,
+} from './queries/training.ts';
 export { listAuditLog, countAuditLog, type AuditRow } from './queries/audit.ts';
 export {
   createSupplier,

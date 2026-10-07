@@ -104,6 +104,17 @@ export {
   listTenantMembers, listTenantMemberDetails, isTenantMember, getMembership, countOwners, updateMemberRole, removeMember,
   type TenantMember, type TenantMemberDetail,
 } from './queries/members.ts';
+export {
+  listExceptions,
+  getExceptionRef,
+  createException,
+  updateExceptionRequest,
+  decideException,
+  closeException,
+  type ExceptionRow,
+  type ExceptionRef,
+  type ExceptionInput,
+} from './queries/exceptions.ts';
 export { listAuditLog, countAuditLog, type AuditRow } from './queries/audit.ts';
 export {
   createSupplier,

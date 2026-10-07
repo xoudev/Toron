@@ -73,6 +73,10 @@ export const DEMO = {
   processingGeoloc: 'd0000000-0000-4000-8000-000000000163',
   processingVideo: 'd0000000-0000-4000-8000-000000000164',
   processingReclamations: 'd0000000-0000-4000-8000-000000000165',
+  exceptionTrieuse: 'd0000000-0000-4000-8000-000000000171',
+  exceptionTelemaintenance: 'd0000000-0000-4000-8000-000000000172',
+  exceptionSauvegardesVitrolles: 'd0000000-0000-4000-8000-000000000173',
+  exceptionCompteAdmin: 'd0000000-0000-4000-8000-000000000174',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -1241,6 +1245,70 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
       WHERE ai.assessment_id = ${DEMO.assessmentIso} AND ai.assessed_at IS NULL`) as unknown as { ref_id: string }[];
     for (const { ref_id: ref } of leaves) {
       if (!pending.includes(ref)) await setItem(ref, 'conforme', null, true, null);
+    }
+
+    // ── Dérogations : une à échéance, une en attente de décision, une échue
+    // jamais clôturée, une refusée. Décisions prises par une autre personne
+    // que le demandeur (séparation des tâches, contrainte en base).
+    const exceptions = [
+      {
+        id: DEMO.exceptionTrieuse,
+        title: 'Poste de pilotage de la trieuse de Meyzieu sans antivirus',
+        rule: 'PSSI §6.2 — antivirus géré sur tous les postes de travail',
+        justification: 'L’éditeur de la trieuse ne certifie pas son logiciel de pilotage avec un antivirus : une installation annulerait la garantie et le contrat de maintenance.',
+        measures: 'Poste isolé dans un VLAN dédié sans accès Internet, ports USB bloqués, mises à jour de l’éditeur contrôlées avant installation chaque trimestre.',
+        control: null, asset: null,
+        requestedBy: DEMO.userCamille, owner: DEMO.userCamille,
+        startsOn: '2026-03-01', expiresOn: '2026-10-31',
+        status: 'approuvee', decidedBy: DEMO.userClaire, decidedAt: '2026-02-26T10:00:00Z',
+        note: 'Accordée jusqu’à la livraison de la version certifiée annoncée par l’éditeur.',
+      },
+      {
+        id: DEMO.exceptionTelemaintenance,
+        title: 'Télémaintenance de l’éditeur du WMS sans second facteur',
+        rule: 'Contrôle « MFA sur les accès distants » — second facteur pour tout accès distant',
+        justification: 'Le boîtier de télémaintenance de l’éditeur ne prend pas en charge le second facteur ; son remplacement est prévu au premier trimestre 2027.',
+        measures: 'Compte nominatif ouvert à la demande par le support, plage horaire restreinte, sessions journalisées et revues chaque semaine.',
+        control: DEMO.controlMfa, asset: DEMO.assetServeurs,
+        requestedBy: DEMO.userClaire, owner: DEMO.userClaire,
+        startsOn: '2026-10-15', expiresOn: '2027-03-31',
+        status: 'demandee', decidedBy: null, decidedAt: null, note: null,
+      },
+      {
+        id: DEMO.exceptionSauvegardesVitrolles,
+        title: 'Rétention des sauvegardes de l’agence de Vitrolles réduite à 14 jours',
+        rule: 'Procédure de sauvegarde — rétention de 30 jours',
+        justification: 'Capacité du NAS de l’agence insuffisante en attendant son remplacement, budgété au deuxième semestre.',
+        measures: 'Copie hebdomadaire externalisée chez l’hébergeur du siège, contrôle mensuel de restauration d’un échantillon.',
+        control: DEMO.controlSauvegardes, asset: null,
+        requestedBy: DEMO.userClaire, owner: DEMO.userClaire,
+        startsOn: '2026-04-15', expiresOn: '2026-09-30',
+        status: 'approuvee', decidedBy: DEMO.userAntoine, decidedAt: '2026-04-10T16:30:00Z',
+        note: 'Accordée le temps du remplacement du NAS ; à clôturer dès sa mise en service.',
+      },
+      {
+        id: DEMO.exceptionCompteAdmin,
+        title: 'Compte administrateur partagé sur les imprimantes d’étiquettes',
+        rule: 'PSSI §4.1 — un compte nominatif par intervenant',
+        justification: 'Les techniciens de maintenance se relaient la nuit et partagent aujourd’hui un même accès aux imprimantes.',
+        measures: 'Mot de passe changé chaque mois.',
+        control: null, asset: null,
+        requestedBy: DEMO.userCamille, owner: DEMO.userCamille,
+        startsOn: '2026-06-15', expiresOn: '2026-12-31',
+        status: 'refusee', decidedBy: DEMO.userClaire, decidedAt: '2026-06-12T09:15:00Z',
+        note: 'Le gestionnaire de mots de passe permet un compte nominatif par technicien : pas d’écart justifié.',
+      },
+    ] as const;
+    for (const e of exceptions) {
+      await sql`
+        INSERT INTO policy_exceptions
+          (id, tenant_id, title, rule, justification, compensating_measures, control_id, asset_id,
+           requested_by, owner_user_id, starts_on, expires_on, status, decided_by, decided_at, decision_note, created_at)
+        VALUES
+          (${e.id}, ${DEMO.tenantId}, ${e.title}, ${e.rule}, ${e.justification}, ${e.measures}, ${e.control}, ${e.asset},
+           ${e.requestedBy}, ${e.owner}, ${e.startsOn}, ${e.expiresOn}, ${e.status}, ${e.decidedBy}, ${e.decidedAt}, ${e.note},
+           ${e.startsOn}::date - 7)
+        ON CONFLICT (id) DO NOTHING`;
     }
   } finally {
     await sql.end();

@@ -79,6 +79,8 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
       critical: d.risks.filter((r) => r.netBand === 'critique').length,
       high: d.risks.filter((r) => r.netBand === 'eleve').length,
       acceptancePending: d.risks.filter((r) => acceptanceNeedsAttention(r.acceptanceState)).length,
+      unplanned: d.risks.filter((r) => r.treatmentPlan === 'non_planifie').length,
+      unplannedSevere: d.risks.filter((r) => r.treatmentPlan === 'non_planifie' && (r.netBand === 'eleve' || r.netBand === 'critique')).length,
     },
     actions: { open: d.actions.filter((a) => a.status !== 'termine').length, overdue: overdue.length, overdueP1: overdue.filter((a) => a.priority === 'p1').length },
     incidents: d.incidents && {

@@ -1,4 +1,14 @@
-import { EXCEPTION_DECIDER_ROLES, PROCESSING_REVIEW_MONTHS, REASSESSMENT_MONTHS, REVIEW_FREQUENCY_MONTHS, type TreatmentPlanState, type WorkItem, type WorkKind } from '@toron/core';
+import {
+  EXCEPTION_DECIDER_ROLES,
+  LEADER_ROLES,
+  LEADER_TRAINING_MONTHS,
+  PROCESSING_REVIEW_MONTHS,
+  REASSESSMENT_MONTHS,
+  REVIEW_FREQUENCY_MONTHS,
+  type TreatmentPlanState,
+  type WorkItem,
+  type WorkKind,
+} from '@toron/core';
 import { sql } from 'drizzle-orm';
 
 import type { TenantTx } from '../tenant.ts';
@@ -133,6 +143,17 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
       WHERE e.status = 'demandee' AND e.requested_by <> ${userId} AND e.owner_user_id <> ${userId}
         AND EXISTS (SELECT 1 FROM memberships m
                     WHERE m.user_id = ${userId} AND m.role::text IN (${sql.join(EXCEPTION_DECIDER_ROLES.map((r) => sql`${r}`), sql`, `)}))
+    UNION ALL
+    -- Formation cybersécurité d'un dirigeant (NIS 2, art. 20) : à renouveler
+    -- un an après la dernière session « dirigeants » suivie, sans échéance
+    -- s'il n'en a suivi aucune.
+    SELECT 'formation', m.user_id, 'Formation des dirigeants à la cybersécurité (NIS 2)',
+           (SELECT (max(s.held_on) + make_interval(months => ${LEADER_TRAINING_MONTHS}::int))::date::text
+              FROM training_attendees a JOIN training_sessions s ON s.id = a.session_id
+             WHERE a.user_id = m.user_id AND s.kind = 'formation_dirigeants' AND s.held_on <= CURRENT_DATE),
+           NULL
+      FROM memberships m
+      WHERE m.user_id = ${userId} AND m.role::text IN (${sql.join(LEADER_ROLES.map((r) => sql`${r}`), sql`, `)})
   `)) as unknown as Row[];
 
   // L'état du plan dépend de l'échelle active : calculé par le cœur, pas en SQL.
@@ -165,5 +186,6 @@ function detailFor(r: Row): string {
     case 'controle': return r.due === null ? 'Contrôle sous votre responsabilité' : r.detail === 'premiere' ? 'Première revue d’efficacité à réaliser' : 'Revue d’efficacité à réaliser';
     case 'processus': return 'Processus que vous pilotez';
     case 'derogation': return r.detail === 'decision' ? 'Demande de dérogation à trancher' : 'Dérogation à renouveler ou clôturer à l’échéance';
+    case 'formation': return r.due ? 'Renouvellement de votre formation' : 'Aucune formation enregistrée : à suivre';
   }
 }

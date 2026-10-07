@@ -127,6 +127,12 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0, disable
           iconPath: 'M4 8.5 12 4.5l8 4v8l-8 4-8-4z M4 8.5l8 4 8-4 M12 12.5v8',
         },
         {
+          label: 'Sensibilisation',
+          href: `${base}/sensibilisation`,
+          active: isActive(`${base}/sensibilisation`),
+          iconPath: 'M3.5 9 12 5l8.5 4-8.5 4z M7 10.7v4.3c1.4 1.3 3 2 5 2s3.6-.7 5-2v-4.3 M20.5 9v5',
+        },
+        {
           label: 'Revue de direction',
           href: `${base}/revue-direction`,
           active: isActive(`${base}/revue-direction`),

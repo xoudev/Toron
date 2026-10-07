@@ -4,7 +4,7 @@
  * dirigeants à jour, bilan sur douze mois, saisie valide.
  */
 
-import type { MembershipRole } from './authz.ts';
+import { canManageControls, type MembershipRole } from './authz.ts';
 import { addMonthsIso } from './dates.ts';
 import { daysUntil } from './work.ts';
 
@@ -39,6 +39,16 @@ export function isLeaderRole(role: MembershipRole): boolean {
 }
 
 export type TrainingSessionState = 'a_venir' | 'realisee';
+
+export const TRAINING_SESSION_STATE_LABEL: Record<TrainingSessionState, string> = {
+  a_venir: 'À venir',
+  realisee: 'Réalisée',
+};
+
+/** Planifier et enregistrer des sessions : les rôles qui gèrent les contrôles, pas le lecteur ni l'auditeur. */
+export function canManageTraining(role: MembershipRole): boolean {
+  return canManageControls(role);
+}
 
 export function trainingSessionState(heldOn: string, today: string): TrainingSessionState {
   return heldOn > today ? 'a_venir' : 'realisee';

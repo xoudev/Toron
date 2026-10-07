@@ -28,5 +28,7 @@ describe('filtrage par module', () => {
     expect(workKindEnabled('preuve', ['audits'])).toBe(true);
     expect(workKindEnabled('derogation', ['derogations'])).toBe(false);
     expect(moduleForSegment('derogations')).toBe('derogations');
+    expect(workKindEnabled('formation', ['sensibilisation'])).toBe(false);
+    expect(moduleForSegment('sensibilisation')).toBe('sensibilisation');
   });
 });

@@ -132,6 +132,51 @@ export async function updateTrainingSession(
   return updated.length;
 }
 
+export interface TrainingSessionRef {
+  title: string;
+  kind: TrainingKind;
+  heldOn: string;
+  expectedCount: number | null;
+  attendedCount: number | null;
+  evidenceId: string | null;
+  attendeeIds: string[];
+}
+
+/** Ce qu'il faut d'une session pour la modifier, la supprimer ou la tracer ; null si elle n'existe pas. */
+export async function getTrainingSessionRef(tx: TenantTx, sessionId: string): Promise<TrainingSessionRef | null> {
+  const [row] = (await tx.execute(sql`
+    SELECT s.title, s.kind, s.held_on::text AS held_on, s.expected_count, s.attended_count, s.evidence_id,
+           coalesce(array_agg(a.user_id ORDER BY a.user_id) FILTER (WHERE a.user_id IS NOT NULL), '{}') AS attendee_ids
+    FROM training_sessions s
+    LEFT JOIN training_attendees a ON a.session_id = s.id
+    WHERE s.id = ${sessionId}
+    GROUP BY s.id
+  `)) as unknown as {
+    title: string; kind: TrainingKind; held_on: string; expected_count: number | null; attended_count: number | null;
+    evidence_id: string | null; attendee_ids: string[];
+  }[];
+  if (!row) return null;
+  return {
+    title: row.title,
+    kind: row.kind,
+    heldOn: row.held_on,
+    expectedCount: row.expected_count,
+    attendedCount: row.attended_count,
+    evidenceId: row.evidence_id,
+    attendeeIds: row.attendee_ids,
+  };
+}
+
+/** Rattache une feuille d'émargement du coffre de preuves. Renvoie le nombre de lignes. */
+export async function setTrainingSessionEvidence(tx: TenantTx, sessionId: string, evidenceId: string): Promise<number> {
+  const updated = await tx
+    .update(schema.trainingSessions)
+    .set({ evidenceId })
+    .where(eq(schema.trainingSessions.id, sessionId))
+    .returning({ id: schema.trainingSessions.id });
+  return updated.length;
+}
+
 /** Supprime une session (ses présences suivent). Renvoie son intitulé, ou null si elle n'existe pas. */
 export async function deleteTrainingSession(tx: TenantTx, sessionId: string): Promise<{ title: string } | null> {
   const [row] = await tx

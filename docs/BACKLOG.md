@@ -144,3 +144,16 @@ description courte, phase cible pressentie.
 - **2026-10-07 · Revue de contrôle avec preuve nouvelle** — Déposer la
   preuve de la revue (capture, export) depuis le formulaire de revue, au
   lieu de la choisir parmi les preuves déjà rattachées. Phase cible : V1.
+- **2026-10-07 · e2e Playwright de la sensibilisation** — Nouvelle session
+  tenue (présents inférieurs aux membres cochés : refus) → dépôt de la
+  feuille d'émargement depuis la fiche (coffre, antivirus) → indicateur
+  « feuilles » à jour ; planification préremplie de la formation des
+  dirigeants → saisie de la présence → dirigeant « À jour ». Vérifié
+  manuellement le 2026-10-07. Phase cible : MVP.
+- **2026-10-07 · Feuille d'émargement imprimable** — Générer pour une
+  session planifiée une feuille d'émargement PDF (intitulé, date, public,
+  intervenant, lignes de signature), à faire signer puis déposer au coffre.
+  Phase cible : V1.
+- **2026-10-07 · Rappel de la formation des dirigeants** — Notifier le
+  dirigeant et le RSSI deux mois avant l'échéance de la formation (NIS 2,
+  art. 20), comme les autres échéances du worker. Phase cible : V1.

@@ -4,6 +4,7 @@
 
 export const WORK_KINDS = [
   'action', 'incident', 'nc', 'lecture', 'risque', 'preuve', 'document', 'audit', 'fournisseur', 'obligation', 'traitement', 'controle', 'processus', 'derogation',
+  'formation',
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
 
@@ -22,6 +23,7 @@ export const WORK_KIND_META: Record<WorkKind, { label: string; plural: string; p
   controle: { label: 'Contrôle', plural: 'Contrôles', path: '/controles' },
   processus: { label: 'Processus', plural: 'Processus', path: '/processus' },
   derogation: { label: 'Dérogation', plural: 'Dérogations', path: '/derogations' },
+  formation: { label: 'Formation', plural: 'Formations', path: '/sensibilisation' },
 };
 
 export const WORK_URGENCIES = ['en_retard', 'cette_semaine', 'ce_mois', 'plus_tard', 'sans_echeance'] as const;

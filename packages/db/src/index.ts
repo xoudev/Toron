@@ -133,9 +133,12 @@ export {
   createTrainingSession,
   updateTrainingSession,
   deleteTrainingSession,
+  getTrainingSessionRef,
+  setTrainingSessionEvidence,
   listLeaderTraining,
   type TrainingSessionRow,
   type TrainingSessionInput,
+  type TrainingSessionRef,
   type LeaderTrainingRow,
 } from './queries/training.ts';
 export { listAuditLog, countAuditLog, type AuditRow } from './queries/audit.ts';

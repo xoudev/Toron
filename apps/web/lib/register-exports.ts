@@ -9,13 +9,15 @@ import {
   OBLIGATION_STATUS_LABEL,
   REVIEW_FREQUENCY_LABEL,
   SUPPLIER_RATING_LABEL,
+  TRAINING_KIND_LABEL,
+  TRAINING_SESSION_STATE_LABEL,
   refCodeFor,
   type CsvColumn,
   type SearchKind,
 } from '@toron/core';
 import {
   listActions, listAssets, listControlLibrary, listDocuments, listEvidences, listExceptions, listIncidents, listNc, listRisks,
-  listObligations, listProcessing, listSuppliers, type TenantTx,
+  listObligations, listProcessing, listSuppliers, listTrainingSessions, type TenantTx,
 } from '@toron/db';
 
 import { todayParis } from '@/lib/format';
@@ -276,6 +278,24 @@ export const REGISTER_EXPORTS = {
       { header: 'Conditions ou motif', value: (r) => r.decisionNote },
       { header: 'Clôturée le', value: (r) => (r.closedAt ? r.closedAt.toISOString().slice(0, 10) : null) },
       { header: 'Renouvelle', value: (r) => (r.renewedFromId ? refCodeFor('derogation', r.renewedFromId) : null) },
+    ],
+  }),
+  sensibilisation: register({
+    title: 'Registre de sensibilisation et de formation',
+    load: (tx) => listTrainingSessions(tx, todayParis()),
+    columns: [
+      { header: 'Date', value: (r) => r.heldOn },
+      { header: 'Session', value: (r) => r.title },
+      { header: 'Type', value: (r) => TRAINING_KIND_LABEL[r.kind] },
+      { header: 'État', value: (r) => TRAINING_SESSION_STATE_LABEL[r.state] },
+      { header: 'Durée (minutes)', value: (r) => r.durationMinutes },
+      { header: 'Public', value: (r) => r.audience },
+      { header: 'Attendus', value: (r) => r.expectedCount },
+      { header: 'Présents', value: (r) => r.attendedCount },
+      { header: 'Membres présents', value: (r) => r.attendees.map((a) => a.name ?? 'Ancien membre').join(', ') },
+      { header: 'Intervenant', value: (r) => r.provider },
+      { header: 'Feuille d’émargement', value: (r) => r.evidenceTitle },
+      { header: 'Notes', value: (r) => r.notes },
     ],
   }),
 } as const;

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   awarenessSummary,
+  canManageTraining,
   isLeaderRole,
   leaderTrainingDue,
   leaderTrainingState,
@@ -39,6 +40,16 @@ describe('sessions de sensibilisation', () => {
     expect(trainingSessionError({ heldOn: '2026-11-05', expectedCount: 12, attendedCount: 10, attendeeCount: 0 }, TODAY)).toMatch(/à venir/);
     expect(trainingSessionError({ heldOn: '2026-03-12', expectedCount: 42, attendedCount: 1, attendeeCount: 2 }, TODAY)).toMatch(/inférieur/);
     expect(trainingSessionError({ heldOn: '2026-03-12', expectedCount: 42, attendedCount: 37, attendeeCount: 2 }, TODAY)).toBeNull();
+  });
+});
+
+describe('droits', () => {
+  it('les gestionnaires planifient et enregistrent, l’auditeur et le lecteur consultent', () => {
+    expect(canManageTraining('rssi')).toBe(true);
+    expect(canManageTraining('resp_qualite')).toBe(true);
+    expect(canManageTraining('contributeur')).toBe(true);
+    expect(canManageTraining('auditeur')).toBe(false);
+    expect(canManageTraining('lecteur')).toBe(false);
   });
 });
 

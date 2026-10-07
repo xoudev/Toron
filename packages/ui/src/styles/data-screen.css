@@ -744,10 +744,12 @@
 /* ── Base des contrôles de formulaire ────────────────────────────────── */
 /* Uniformise TOUT input texte / select / textarea, même hors `.field` (les
    sélecteurs d'ajout, mini-formulaires en ligne, sélecteurs de contexte).
-   Les règles `.field` / `.auth-card` plus spécifiques restent prioritaires. */
+   :where() ramène la spécificité de la base à zéro : sans lui, la chaîne de
+   :not() l'emportait sur les styles des composants (`.ds-search input`,
+   palette de recherche…), qui doivent rester prioritaires. */
 select,
 textarea,
-input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color'])) {
   font: inherit;
   color: var(--text);
   background: var(--surface-2);
@@ -767,12 +769,12 @@ select {
 }
 select:hover,
 textarea:hover,
-input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):hover {
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color'])):hover {
   border-color: var(--border-strong);
 }
 select:focus,
 textarea:focus,
-input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus {
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color'])):focus {
   border-color: var(--accent);
   outline: none;
 }

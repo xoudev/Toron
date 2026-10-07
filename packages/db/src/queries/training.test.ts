@@ -10,14 +10,18 @@ import { applyMigrations } from '../migrate.ts';
 import { DEMO, seedDemoTenant, seedIso27001Framework, seedRecyfFramework } from '../seed.ts';
 import { withTenant } from '../tenant.ts';
 import { PG_IMAGE } from '../test-image.ts';
+import { searchTenant } from './search.ts';
 import {
   createTrainingSession,
   deleteTrainingSession,
+  getTrainingSessionRef,
   listLeaderTraining,
   listTrainingSessions,
+  setTrainingSessionEvidence,
   updateTrainingSession,
   type TrainingSessionInput,
 } from './training.ts';
+import { listMyWork } from './work.ts';
 
 const T = DEMO.tenantId;
 const TODAY = '2026-10-07';
@@ -132,9 +136,39 @@ describe('sessions de sensibilisation', () => {
     expect(await withTenant(app.db, T, (tx) => deleteTrainingSession(tx, id))).toBeNull();
   });
 
+  it('la fiche de référence porte les présents ; la feuille d’émargement se rattache après coup', async () => {
+    expect(await withTenant(app.db, T, (tx) => getTrainingSessionRef(tx, DEMO.trainingDirigeants))).toEqual({
+      title: 'Formation des dirigeants à la cybersécurité (NIS 2, art. 20)', kind: 'formation_dirigeants', heldOn: '2025-11-18',
+      expectedCount: 4, attendedCount: 4, evidenceId: DEMO.evidenceFormationDirigeants, attendeeIds: [DEMO.userAntoine],
+    });
+    expect((await withTenant(app.db, T, (tx) => getTrainingSessionRef(tx, DEMO.trainingRgpd)))?.attendeeIds).toEqual([]);
+    expect(await withTenant(app.db, T, (tx) => getTrainingSessionRef(tx, '00000000-0000-4000-8000-000000000000'))).toBeNull();
+
+    expect(await withTenant(app.db, T, (tx) => setTrainingSessionEvidence(tx, DEMO.trainingPreparateurs, DEMO.evidenceInventaire))).toBe(1);
+    expect((await list()).find((r) => r.id === DEMO.trainingPreparateurs)?.evidenceTitle).toBe('Export de l’inventaire des actifs et services');
+    await admin`UPDATE training_sessions SET evidence_id = NULL WHERE id = ${DEMO.trainingPreparateurs}`;
+  });
+
   it('le module se masque comme les autres modules optionnels', async () => {
     await admin`UPDATE tenants SET disabled_modules = ARRAY['sensibilisation']::text[] WHERE id = ${T}`;
     await admin`UPDATE tenants SET disabled_modules = '{}' WHERE id = ${T}`;
+  });
+});
+
+describe('« Mon travail » et recherche', () => {
+  it('le dirigeant voit le renouvellement de sa formation, les autres membres non', async () => {
+    const antoine = await withTenant(app.db, T, (tx) => listMyWork(tx, DEMO.userAntoine));
+    expect(antoine.find((i) => i.kind === 'formation')).toEqual({
+      kind: 'formation', id: DEMO.userAntoine, title: 'Formation des dirigeants à la cybersécurité (NIS 2)',
+      due: '2026-11-18', detail: 'Renouvellement de votre formation',
+    });
+    const claire = await withTenant(app.db, T, (tx) => listMyWork(tx, DEMO.userClaire));
+    expect(claire.some((i) => i.kind === 'formation')).toBe(false);
+  });
+
+  it('une session se retrouve par son intitulé, accents et apostrophes compris', async () => {
+    const hits = await withTenant(app.db, T, (tx) => searchTenant(tx, { type: 'texte', text: 'hameconnage reflexes' }));
+    expect(hits.filter((h) => h.kind === 'formation').map((h) => h.id)).toEqual([DEMO.trainingPhishing]);
   });
 });
 
@@ -182,6 +216,17 @@ describe('isolation entre organisations', () => {
     expect(await withTenant(app.db, otherId, (tx) => listLeaderTraining(tx, TODAY))).toEqual([]);
     expect(await withTenant(app.db, otherId, (tx) => updateTrainingSession(tx, otherId, DEMO.trainingDirigeants, SESSION, []))).toBe(0);
     expect(await withTenant(app.db, otherId, (tx) => deleteTrainingSession(tx, DEMO.trainingDirigeants))).toBeNull();
+    expect(await withTenant(app.db, otherId, (tx) => getTrainingSessionRef(tx, DEMO.trainingDirigeants))).toBeNull();
+    expect(await withTenant(app.db, otherId, (tx) => setTrainingSessionEvidence(tx, DEMO.trainingPreparateurs, DEMO.evidenceMfa))).toBe(0);
+    const found = await withTenant(app.db, otherId, (tx) => searchTenant(tx, { type: 'texte', text: 'hameconnage' }));
+    expect(found.filter((h) => h.kind === 'formation')).toEqual([]);
+    const [foreign] = await admin`
+      INSERT INTO evidences (tenant_id, title, sha256, collected_at)
+      VALUES (${otherId}, 'Feuille d’émargement tierce', ${'a'.repeat(64)}, ${TODAY}) RETURNING id`;
+    await expectDbError(
+      withTenant(app.db, T, (tx) => setTrainingSessionEvidence(tx, DEMO.trainingPreparateurs, (foreign as { id: string }).id)),
+      /foreign key/,
+    );
     // La feuille d'émargement doit appartenir à la même organisation.
     await expectDbError(create({ evidenceId: DEMO.evidenceMfa }, [], otherId), /foreign key/);
     // Une présence ne se rattache pas à la session d'une autre organisation.

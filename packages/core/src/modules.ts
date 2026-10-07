@@ -8,6 +8,7 @@ import type { ScopeKind } from './organisation.ts';
 
 export const OPTIONAL_MODULES = [
   'risques', 'ebios', 'incidents', 'actifs', 'audits', 'fournisseurs', 'revue_direction', 'processus', 'non_conformites', 'derogations',
+  'sensibilisation',
 ] as const;
 export type OptionalModule = (typeof OPTIONAL_MODULES)[number];
 
@@ -22,6 +23,7 @@ export const MODULE_META: Record<OptionalModule, { label: string; description: s
   processus: { label: 'Processus', description: 'Cartographie SIPOC, indicateurs et pilotes (ISO 9001).', path: '/processus', family: 'qualite' },
   non_conformites: { label: 'Non-conformités', description: 'Causes, actions correctives et vérification d’efficacité.', path: '/non-conformites', family: 'qualite' },
   derogations: { label: 'Dérogations', description: 'Écarts tolérés à une règle : décision d’un tiers, mesures compensatoires et échéance.', path: '/derogations', family: 'management' },
+  sensibilisation: { label: 'Sensibilisation et formation', description: 'Sessions, participation, feuilles d’émargement et formation des dirigeants (NIS 2).', path: '/sensibilisation', family: 'management' },
 };
 
 /** Modules sans objet pour une nature de périmètre, désactivés à la création. */
@@ -69,6 +71,7 @@ const KIND_MODULE: Record<string, OptionalModule> = {
   actif: 'actifs',
   revue: 'revue_direction',
   derogation: 'derogations',
+  formation: 'sensibilisation',
 };
 
 /** Un élément d'un module masqué n'apparaît ni dans « Mon travail » ni dans la recherche. */

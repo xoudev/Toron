@@ -145,7 +145,8 @@ export function Topbar({
     <header className="topbar">
       <NavToggle />
       <span className="topbar-crumb">
-        {crumbRoot} / <b>{crumbCurrent}</b>
+        <span className="topbar-crumb-root">{crumbRoot} / </span>
+        <b>{crumbCurrent}</b>
       </span>
       <div className="topbar-actions">
         <SearchTrigger />

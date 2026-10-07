@@ -10,13 +10,19 @@
 .plan-toolbar .spacer {
   flex: 1;
 }
+/* Sur un écran étroit, les vues défilent horizontalement au lieu de se
+   comprimer sur plusieurs lignes. */
 .view-toggle {
   display: inline-flex;
+  max-width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .view-toggle button {
+  flex: none;
+  white-space: nowrap;
   padding: 5px 12px;
   font-size: 12.5px;
   background: var(--surface);

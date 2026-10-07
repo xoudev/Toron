@@ -14,6 +14,9 @@ const BASE: ReviewInputs = {
   ncInEffectivenessCheck: 2,
   risksHigh: 14,
   risksTotal: 30,
+  risksUnplanned: 0,
+  risksToReassess: 0,
+  risksPlanLate: 0,
   controlsMutualized: 38,
   evidencesStale: 0,
   documentsReviewOverdue: 0,
@@ -36,6 +39,17 @@ describe('ordre du jour de la revue de direction (clause 9.3.2)', () => {
     const risks = agenda.find((s) => s.n === 5)!;
     expect(risks.summary).toContain('14');
     expect(risks.summary).toContain('30');
+  });
+
+  it('rend compte du plan de traitement des risques', () => {
+    const line = (m: ReviewInputs) => buildReviewAgenda(m).find((s) => s.n === 5)!.bullets.find((b) => b.head === 'Plan de traitement —')!;
+    expect(line(BASE)).toEqual({ head: 'Plan de traitement —', body: 'chaque décision de traitement a ses actions, dans les temps.', tone: 'ok' });
+    expect(line({ ...BASE, risksUnplanned: 2, risksPlanLate: 1, risksToReassess: 1 })).toEqual({
+      head: 'Plan de traitement —',
+      body: '2 risques sans action engagée, 1 risque dont une action est en retard, 1 risque à recoter (actions soldées).',
+      tone: 'warn',
+    });
+    expect(line({ ...BASE, risksToReassess: 3 }).tone).toBe('muted');
   });
 
   it('gère une couverture nulle sans casser', () => {

@@ -48,6 +48,11 @@ describe('indicateurs du tableau de bord (module 5.11)', () => {
     expect(m.risksAttention).toBeGreaterThanOrEqual(1);
     const bandTotal = Object.values(m.risksByBand).reduce((a, b) => a + b, 0);
     expect(bandTotal).toBe(5);
+    // Plan de traitement : la compromission de compte à privilèges n'a aucune action,
+    // les deux risques acceptés relèvent de l'acceptation signée.
+    expect(Object.values(m.risksByPlan).reduce((a, b) => a + b, 0)).toBe(5);
+    expect(m.risksByPlan.non_planifie).toBeGreaterThanOrEqual(1);
+    expect(m.risksByPlan.sans_objet).toBe(2);
     // Une action à échéance dépassée (revue des accès).
     expect(m.actionsOverdue).toBeGreaterThanOrEqual(1);
     // Une preuve expirée/bientôt (attestation MFA) ; un document à revoir.

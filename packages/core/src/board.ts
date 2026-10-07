@@ -16,7 +16,15 @@ export interface BoardEntity {
 export interface BoardInput {
   coveragePct: number | null;
   /** null quand le registre des risques est masqué. */
-  risks: { critical: number; high: number; acceptancePending: number } | null;
+  risks: {
+    critical: number;
+    high: number;
+    acceptancePending: number;
+    /** Traitement décidé (réduire, transférer, éviter) sans aucune action engagée. */
+    unplanned: number;
+    /** Parmi eux, ceux dont le niveau net est élevé ou critique. */
+    unplannedSevere: number;
+  } | null;
   actions: { open: number; overdue: number; overdueP1: number };
   /** null quand le module incidents est masqué. */
   incidents: { open: number; nis2ImportantOpen: number } | null;
@@ -49,6 +57,7 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
     if ((e.nis2 === 'ee' || e.nis2 === 'ei') && e.registration === 'a_faire') out.push({ tone: 'alerte', text: `${e.name} : enregistrement auprès de l’ANSSI non engagé.` });
   }
   if (i.obligations.late > 0) out.push({ tone: 'vigilance', text: `${s(i.obligations.late, 'obligation réglementaire', 'obligations réglementaires')} dont l’échéance est dépassée.` });
+  if (i.risks && i.risks.unplanned > 0) out.push({ tone: 'vigilance', text: `${s(i.risks.unplanned, 'risque', 'risques')} dont le traitement décidé n’a encore aucune action.` });
   const otherOverdue = i.actions.overdue - i.actions.overdueP1;
   if (otherOverdue > 0) out.push({ tone: 'vigilance', text: `${s(otherOverdue, 'autre action', 'autres actions')} en retard.` });
   if (i.suppliers && i.suppliers.watch > 0) out.push({ tone: 'vigilance', text: `${s(i.suppliers.watch, 'fournisseur', 'fournisseurs')} à suivre : évaluation insuffisante ou à refaire, ou attestation expirée.` });
@@ -71,6 +80,9 @@ export function boardDecisions(i: BoardInput): string[] {
   const out: string[] = [];
   if (i.risks && i.risks.acceptancePending > 0) {
     out.push(`Accepter formellement ou refuser ${s(i.risks.acceptancePending, 'risque', 'risques')} dont le traitement retenu est l’acceptation.`);
+  }
+  if (i.risks && i.risks.unplannedSevere > 0) {
+    out.push(`Valider un plan de traitement pour ${s(i.risks.unplannedSevere, 'risque élevé ou critique', 'risques élevés ou critiques')} sans action engagée.`);
   }
   const concerned = i.entities.some((e) => e.nis2 === 'ee' || e.nis2 === 'ei');
   if (concerned && i.obligations.nis2Governance !== null && i.obligations.nis2Governance !== 'conforme') {

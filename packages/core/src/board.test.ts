@@ -4,7 +4,7 @@ import { boardDecisions, boardMessages, type BoardInput } from './board.ts';
 
 const calm: BoardInput = {
   coveragePct: 86,
-  risks: { critical: 0, high: 0, acceptancePending: 0 },
+  risks: { critical: 0, high: 0, acceptancePending: 0, unplanned: 0, unplannedSevere: 0 },
   actions: { open: 12, overdue: 0, overdueP1: 0 },
   incidents: { open: 0, nis2ImportantOpen: 0 },
   obligations: { applicable: 10, met: 9, late: 0, unowned: 0, nis2Governance: 'conforme' },
@@ -22,7 +22,7 @@ describe('messages clés du rapport de direction', () => {
   it('classe les alertes avant la vigilance et accorde singulier et pluriel', () => {
     const messages = boardMessages({
       ...calm,
-      risks: { critical: 1, high: 2, acceptancePending: 0 },
+      risks: { critical: 1, high: 2, acceptancePending: 0, unplanned: 0, unplannedSevere: 0 },
       actions: { open: 12, overdue: 3, overdueP1: 2 },
       obligations: { ...calm.obligations, late: 1 },
     });
@@ -65,6 +65,20 @@ describe('messages clés du rapport de direction', () => {
   });
 });
 
+describe('risques sans plan de traitement', () => {
+  it('signale les décisions de traitement restées sans action', () => {
+    const messages = boardMessages({ ...calm, risks: { ...calm.risks!, unplanned: 2, unplannedSevere: 0 } });
+    expect(messages).toContainEqual({ tone: 'vigilance', text: '2 risques dont le traitement décidé n’a encore aucune action.' });
+    expect(boardDecisions({ ...calm, risks: { ...calm.risks!, unplanned: 2, unplannedSevere: 0 } })).toEqual([]);
+  });
+
+  it('demande à la direction de valider un plan pour un risque élevé non traité', () => {
+    expect(boardDecisions({ ...calm, risks: { critical: 0, high: 1, acceptancePending: 0, unplanned: 1, unplannedSevere: 1 } })).toEqual([
+      'Valider un plan de traitement pour 1 risque élevé ou critique sans action engagée.',
+    ]);
+  });
+});
+
 describe('décisions attendues de la direction', () => {
   it('rien à décider quand tout est en ordre', () => {
     expect(boardDecisions(calm)).toEqual([]);
@@ -73,7 +87,7 @@ describe('décisions attendues de la direction', () => {
   it('formule les arbitrages qui relèvent de la direction', () => {
     expect(boardDecisions({
       ...calm,
-      risks: { critical: 0, high: 1, acceptancePending: 2 },
+      risks: { critical: 0, high: 1, acceptancePending: 2, unplanned: 0, unplannedSevere: 0 },
       actions: { open: 5, overdue: 1, overdueP1: 1 },
       obligations: { ...calm.obligations, unowned: 3, nis2Governance: 'en_cours' },
       suppliers: { watch: 1 },

@@ -103,6 +103,12 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0, disable
           iconPath: 'M6.5 4h11v16h-11z M9.5 8.5h5 M9.5 12h5 M9.5 15.5h3',
         },
         {
+          label: 'Dérogations',
+          href: `${base}/derogations`,
+          active: isActive(`${base}/derogations`),
+          iconPath: 'M12 3.5 19.5 6.5v5.2c0 4.3-3.1 7.6-7.5 8.8-4.4-1.2-7.5-4.5-7.5-8.8V6.5Z M9.2 12h5.6',
+        },
+        {
           label: 'Audits',
           href: `${base}/audits`,
           active: isActive(`${base}/audits`),

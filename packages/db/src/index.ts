@@ -326,6 +326,7 @@ export { loadBoardReport, type BoardReport } from './queries/board.ts';
 export {
   currentOwner,
   notifyAssignment,
+  notifyExceptionDecision,
   listMyNotifications,
   countUnreadNotifications,
   markNotificationsRead,

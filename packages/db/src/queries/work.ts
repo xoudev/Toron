@@ -1,4 +1,4 @@
-import { PROCESSING_REVIEW_MONTHS, REASSESSMENT_MONTHS, type TreatmentPlanState, type WorkItem, type WorkKind } from '@toron/core';
+import { EXCEPTION_DECIDER_ROLES, PROCESSING_REVIEW_MONTHS, REASSESSMENT_MONTHS, type TreatmentPlanState, type WorkItem, type WorkKind } from '@toron/core';
 import { sql } from 'drizzle-orm';
 
 import type { TenantTx } from '../tenant.ts';
@@ -108,6 +108,21 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
     UNION ALL
     SELECT 'processus', p.id, p.name, NULL, NULL
       FROM processes p WHERE p.pilot_user_id = ${userId}
+    UNION ALL
+    -- Dérogations accordées dont on répond : à renouveler ou clôturer à l'échéance,
+    -- sauf si un renouvellement est déjà demandé ou accordé.
+    SELECT 'derogation', e.id, e.title, e.expires_on::text, 'echeance'
+      FROM policy_exceptions e
+      WHERE e.owner_user_id = ${userId} AND e.status = 'approuvee'
+        AND NOT EXISTS (SELECT 1 FROM policy_exceptions n
+                        WHERE n.renewed_from_id = e.id AND n.status IN ('demandee', 'approuvee'))
+    UNION ALL
+    -- Demandes à trancher par un décideur, hors celles qu'il a faites ou dont il répond.
+    SELECT 'derogation', e.id, e.title, e.starts_on::text, 'decision'
+      FROM policy_exceptions e
+      WHERE e.status = 'demandee' AND e.requested_by <> ${userId} AND e.owner_user_id <> ${userId}
+        AND EXISTS (SELECT 1 FROM memberships m
+                    WHERE m.user_id = ${userId} AND m.role::text IN (${sql.join(EXCEPTION_DECIDER_ROLES.map((r) => sql`${r}`), sql`, `)}))
   `)) as unknown as Row[];
 
   // L'état du plan dépend de l'échelle active : calculé par le cœur, pas en SQL.
@@ -139,5 +154,6 @@ function detailFor(r: Row): string {
     case 'traitement': return r.due ? 'Révision annuelle de la fiche' : 'Fiche de traitement à relire';
     case 'controle': return 'Contrôle sous votre responsabilité';
     case 'processus': return 'Processus que vous pilotez';
+    case 'derogation': return r.detail === 'decision' ? 'Demande de dérogation à trancher' : 'Dérogation à renouveler ou clôturer à l’échéance';
   }
 }

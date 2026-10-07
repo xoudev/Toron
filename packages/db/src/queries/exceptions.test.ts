@@ -1,4 +1,5 @@
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { parseSearchQuery, refCodeFor } from '@toron/core';
 import { sql } from 'drizzle-orm';
 import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -17,6 +18,9 @@ import {
   updateExceptionRequest,
   type ExceptionInput,
 } from './exceptions.ts';
+import { listMyNotifications, notifyExceptionDecision } from './notifications.ts';
+import { searchTenant } from './search.ts';
+import { listMyWork } from './work.ts';
 
 const T = DEMO.tenantId;
 const TODAY = '2026-10-07';
@@ -218,5 +222,48 @@ describe('isolation entre organisations', () => {
       withTenant(app.db, otherId, (tx) => createException(tx, { ...input, ownerUserId: DEMO.userClaire, tenantId: T, requestedBy: DEMO.userClaire })),
       /row-level security/,
     );
+  });
+});
+
+describe('intégrations : « Mon travail », recherche, notifications', () => {
+  it('le décideur voit la demande à trancher ; le demandeur, non ; le responsable, son échéance', async () => {
+    const work = (userId: string) => withTenant(app.db, T, (tx) => listMyWork(tx, userId));
+    const antoine = await work(DEMO.userAntoine);
+    expect(antoine.find((i) => i.id === DEMO.exceptionTelemaintenance)).toMatchObject({
+      kind: 'derogation', due: '2026-10-15', detail: 'Demande de dérogation à trancher',
+    });
+    const claire = await work(DEMO.userClaire);
+    expect(claire.some((i) => i.id === DEMO.exceptionTelemaintenance)).toBe(false);
+    const camille = await work(DEMO.userCamille);
+    expect(camille.find((i) => i.id === DEMO.exceptionTrieuse)).toMatchObject({
+      kind: 'derogation', due: '2026-10-31', detail: 'Dérogation à renouveler ou clôturer à l’échéance',
+    });
+    // Une dérogation refusée ne demande plus rien à personne.
+    expect([...antoine, ...claire, ...camille].some((i) => i.id === DEMO.exceptionCompteAdmin)).toBe(false);
+  });
+
+  it('se retrouve par mots de l’intitulé ou par son code DRG', async () => {
+    const byText = await withTenant(app.db, T, (tx) => searchTenant(tx, parseSearchQuery('telemaintenance wms')));
+    expect(byText.find((h) => h.id === DEMO.exceptionTelemaintenance)?.kind).toBe('derogation');
+    const code = refCodeFor('derogation', DEMO.exceptionTelemaintenance)!;
+    const byCode = await withTenant(app.db, T, (tx) => searchTenant(tx, parseSearchQuery(code)));
+    expect(byCode.map((h) => h.id)).toContain(DEMO.exceptionTelemaintenance);
+  });
+
+  it('la décision est notifiée au demandeur et au responsable, pas au décideur', async () => {
+    const id = await withTenant(app.db, T, (tx) => createException(tx, { ...input, ownerUserId: DEMO.userAntoine, tenantId: T, requestedBy: DEMO.userCamille }));
+    const created = await withTenant(app.db, T, (tx) => notifyExceptionDecision(tx, {
+      tenantId: T, slug: DEMO.slug, actorUserId: DEMO.userClaire, exceptionId: id, title: input.title,
+      requestedBy: DEMO.userCamille, ownerUserId: DEMO.userAntoine, approved: false,
+    }));
+    expect(created).toBe(2);
+    const camille = await withTenant(app.db, T, (tx) => listMyNotifications(tx, DEMO.userCamille));
+    expect(camille[0]).toMatchObject({
+      subject: 'derogation',
+      title: `Dérogation refusée : ${input.title}`,
+      href: `/t/${DEMO.slug}/derogations?ouvrir=${id}`,
+    });
+    const claire = await withTenant(app.db, T, (tx) => listMyNotifications(tx, DEMO.userClaire));
+    expect(claire.some((n) => n.href.endsWith(id))).toBe(false);
   });
 });

@@ -41,6 +41,7 @@ const SOURCES: Source[] = [
   { kind: 'actif', table: 'assets', title: 'name' },
   { kind: 'processus', table: 'processes', title: 'name' },
   { kind: 'revue', table: 'management_reviews', title: 'title' },
+  { kind: 'derogation', table: 'policy_exceptions', title: 'title' },
 ];
 
 const PER_KIND = 6;

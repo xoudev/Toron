@@ -7,7 +7,7 @@
 import type { ScopeKind } from './organisation.ts';
 
 export const OPTIONAL_MODULES = [
-  'risques', 'ebios', 'incidents', 'actifs', 'audits', 'fournisseurs', 'revue_direction', 'processus', 'non_conformites',
+  'risques', 'ebios', 'incidents', 'actifs', 'audits', 'fournisseurs', 'revue_direction', 'processus', 'non_conformites', 'derogations',
 ] as const;
 export type OptionalModule = (typeof OPTIONAL_MODULES)[number];
 
@@ -21,6 +21,7 @@ export const MODULE_META: Record<OptionalModule, { label: string; description: s
   revue_direction: { label: 'Revue de direction', description: 'Ordre du jour automatique, décisions et procès-verbal scellé.', path: '/revue-direction', family: 'management' },
   processus: { label: 'Processus', description: 'Cartographie SIPOC, indicateurs et pilotes (ISO 9001).', path: '/processus', family: 'qualite' },
   non_conformites: { label: 'Non-conformités', description: 'Causes, actions correctives et vérification d’efficacité.', path: '/non-conformites', family: 'qualite' },
+  derogations: { label: 'Dérogations', description: 'Écarts tolérés à une règle : décision d’un tiers, mesures compensatoires et échéance.', path: '/derogations', family: 'management' },
 };
 
 /** Modules sans objet pour une nature de périmètre, désactivés à la création. */
@@ -67,6 +68,7 @@ const KIND_MODULE: Record<string, OptionalModule> = {
   processus: 'processus',
   actif: 'actifs',
   revue: 'revue_direction',
+  derogation: 'derogations',
 };
 
 /** Un élément d'un module masqué n'apparaît ni dans « Mon travail » ni dans la recherche. */

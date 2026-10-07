@@ -120,7 +120,8 @@ export function exceptionIsLapsed(state: ExceptionState): boolean {
 // ── Droits ──────────────────────────────────────────────────────────────
 
 /** Rôles qui statuent sur une dérogation — jamais sur celle qu'ils ont demandée ou dont ils répondent. */
-const DECIDER_ROLES: ReadonlySet<MembershipRole> = new Set(['owner', 'direction', 'rssi', 'resp_qualite']);
+export const EXCEPTION_DECIDER_ROLES: readonly MembershipRole[] = ['owner', 'direction', 'rssi', 'resp_qualite'];
+const DECIDER_ROLES: ReadonlySet<MembershipRole> = new Set(EXCEPTION_DECIDER_ROLES);
 
 export function canDecideExceptions(role: MembershipRole): boolean {
   return DECIDER_ROLES.has(role);

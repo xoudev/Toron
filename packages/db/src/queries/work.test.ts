@@ -55,6 +55,16 @@ describe('Mon travail', () => {
     expect(new Set(items.map((i) => i.kind)).size).toBeGreaterThan(1);
   });
 
+  it('indique au propriétaire d’un risque le traitement à planifier', async () => {
+    // Seed : la compromission de compte à privilèges (Claire) n'a aucune action.
+    const items = await withTenant(app.db, T, (tx) => listMyWork(tx, DEMO.userClaire));
+    const risks = items.filter((i) => i.kind === 'risque');
+    expect(risks.length).toBeGreaterThan(0);
+    expect(risks.map((i) => i.detail)).toContain('Traitement à planifier');
+    // Les risques acceptés restent en simple revue.
+    expect(risks.map((i) => i.detail)).toContain('Revue du risque');
+  });
+
   it('ne montre jamais le travail d’une autre organisation', async () => {
     const demo = await withTenant(app.db, T, (tx) => listMyWork(tx, DEMO.userClaire));
     expect(demo.map((i) => i.title)).not.toContain('Action d’une autre organisation');

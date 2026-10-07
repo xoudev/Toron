@@ -1,7 +1,8 @@
-import { PROCESSING_REVIEW_MONTHS, REASSESSMENT_MONTHS, type WorkItem, type WorkKind } from '@toron/core';
+import { PROCESSING_REVIEW_MONTHS, REASSESSMENT_MONTHS, type TreatmentPlanState, type WorkItem, type WorkKind } from '@toron/core';
 import { sql } from 'drizzle-orm';
 
 import type { TenantTx } from '../tenant.ts';
+import { listRisks } from './risks.ts';
 
 // ── « Mon travail » : éléments assignés à un membre dans tous les modules ──
 // Lecture seule, dans le contexte RLS de l'organisation courante : la
@@ -18,6 +19,13 @@ const ACTION_STATUS_LABEL: Record<string, string> = {
   planifie: 'Action planifiée',
   en_cours: 'Action en cours',
   verification: 'Vérification d’efficacité',
+};
+
+/** Ce que le propriétaire d'un risque doit faire, selon l'état de son plan de traitement. */
+const RISK_PLAN_LABEL: Partial<Record<TreatmentPlanState, string>> = {
+  non_planifie: 'Traitement à planifier',
+  a_recoter: 'Risque à recoter après traitement',
+  en_retard: 'Plan de traitement en retard',
 };
 
 const NC_STATUS_LABEL: Record<string, string> = {
@@ -102,12 +110,17 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
       FROM processes p WHERE p.pilot_user_id = ${userId}
   `)) as unknown as Row[];
 
+  // L'état du plan dépend de l'échelle active : calculé par le cœur, pas en SQL.
+  const plans = rows.some((r) => r.kind === 'risque')
+    ? new Map((await listRisks(tx)).map((r) => [r.id, r.treatmentPlan]))
+    : new Map<string, TreatmentPlanState>();
+
   return rows.map((r) => ({
     kind: r.kind,
     id: r.id,
     title: r.title,
     due: r.due,
-    detail: detailFor(r),
+    detail: r.kind === 'risque' ? RISK_PLAN_LABEL[plans.get(r.id) ?? 'en_cours'] ?? 'Revue du risque' : detailFor(r),
   }));
 }
 

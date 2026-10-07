@@ -23,7 +23,31 @@ const BASE: ReviewInputs = {
   controlsIneffective: 0,
   evidencesStale: 0,
   documentsReviewOverdue: 0,
+  training: null,
 };
+
+describe('sensibilisation à l’ordre du jour', () => {
+  const section6 = (m: ReviewInputs) => buildReviewAgenda(m).find((sec) => sec.n === 6)!;
+
+  it('rend compte des sessions et de la formation des dirigeants parmi les retours des parties intéressées', () => {
+    const sec = section6({ ...BASE, training: { held: 3, participations: 162, leaders: 1, leadersUpToDate: 1 } });
+    expect(sec.hasData).toBe(true);
+    expect(sec.bullets.at(-1)).toEqual({
+      head: 'Sensibilisation —', body: '3 sessions tenues sur douze mois, 162 participations ; dirigeants formés à jour : 1 sur 1.', tone: 'ok',
+    });
+  });
+
+  it('signale un dirigeant sans formation à jour, ou l’absence de session', () => {
+    expect(section6({ ...BASE, training: { held: 2, participations: 40, leaders: 2, leadersUpToDate: 1 } }).bullets.at(-1)?.tone).toBe('danger');
+    expect(section6({ ...BASE, training: { held: 0, participations: 0, leaders: 0, leadersUpToDate: 0 } }).bullets.at(-1)).toEqual({
+      head: 'Sensibilisation —', body: 'aucune session tenue sur douze mois.', tone: 'warn',
+    });
+  });
+
+  it('module masqué : pas de ligne', () => {
+    expect(section6(BASE).bullets.some((b) => b.head.startsWith('Sensibilisation'))).toBe(false);
+  });
+});
 
 describe('ordre du jour de la revue de direction (clause 9.3.2)', () => {
   it('produit les sept entrées obligatoires dans l’ordre', () => {

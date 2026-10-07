@@ -38,6 +38,12 @@ export interface BoardInput {
   exceptions: { pending: number; lapsed: number } | null;
   /** Contrôles actifs : revue en retard, et jugés inefficaces à leur dernière revue. */
   controls: { active: number; late: number; ineffective: number };
+  /**
+   * null quand le module sensibilisation est masqué. Sessions tenues sur
+   * douze mois, dont sans feuille d'émargement ; dirigeants (propriétaire,
+   * direction) sans formation à jour ou à renouveler d'ici deux mois.
+   */
+  training: { held: number; withoutSheet: number; leaders: number; leadersUntrained: number; leadersDueSoon: number } | null;
 }
 
 export type BoardTone = 'alerte' | 'vigilance' | 'positif';
@@ -51,6 +57,9 @@ const s = (n: number, word: string, plural = `${word}s`) => `${n} ${n > 1 ? plur
 
 const TONE_ORDER: Record<BoardTone, number> = { alerte: 0, vigilance: 1, positif: 2 };
 
+/** Au moins une entité est essentielle ou importante au sens de NIS 2. */
+const nis2Concerned = (i: BoardInput) => i.entities.some((e) => e.nis2 === 'ee' || e.nis2 === 'ei');
+
 /** Messages clés, des alertes aux points positifs ; sept au plus. */
 export function boardMessages(i: BoardInput): BoardMessage[] {
   const out: BoardMessage[] = [];
@@ -59,6 +68,10 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
   if (i.incidents && i.incidents.nis2ImportantOpen > 0) out.push({ tone: 'alerte', text: `${s(i.incidents.nis2ImportantOpen, 'incident important NIS 2', 'incidents importants NIS 2')} en cours de traitement.` });
   if (i.controls.ineffective > 0) out.push({ tone: 'alerte', text: `${s(i.controls.ineffective, 'contrôle jugé inefficace', 'contrôles jugés inefficaces')} à la dernière revue.` });
   if (i.exceptions && i.exceptions.lapsed > 0) out.push({ tone: 'alerte', text: `${s(i.exceptions.lapsed, 'dérogation échue', 'dérogations échues')} sans clôture : l’écart n’est plus couvert.` });
+  if (i.training && i.training.leadersUntrained > 0) {
+    const nis2 = nis2Concerned(i);
+    out.push({ tone: nis2 ? 'alerte' : 'vigilance', text: `${s(i.training.leadersUntrained, 'dirigeant', 'dirigeants')} sans formation à la cybersécurité à jour${nis2 ? ' (NIS 2, art. 20)' : ''}.` });
+  }
   for (const e of i.entities) {
     if ((e.nis2 === 'ee' || e.nis2 === 'ei') && e.registration === 'a_faire') out.push({ tone: 'alerte', text: `${e.name} : enregistrement auprès de l’ANSSI non engagé.` });
   }
@@ -76,10 +89,18 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
   }
   if (i.controls.late > 0) out.push({ tone: 'vigilance', text: `${s(i.controls.late, 'contrôle en retard de revue', 'contrôles en retard de revue')} : efficacité non démontrée.` });
   if (i.evidencesStale > 0) out.push({ tone: 'vigilance', text: `${s(i.evidencesStale, 'preuve expirée ou bientôt expirée', 'preuves expirées ou bientôt expirées')}.` });
+  if (i.training) {
+    if (i.training.leadersDueSoon > 0) out.push({ tone: 'vigilance', text: `Formation à la cybersécurité à renouveler d’ici deux mois pour ${s(i.training.leadersDueSoon, 'dirigeant', 'dirigeants')}.` });
+    if (i.training.held === 0) out.push({ tone: 'vigilance', text: 'Aucune session de sensibilisation tenue sur douze mois.' });
+    if (i.training.withoutSheet > 0) out.push({ tone: 'vigilance', text: `${s(i.training.withoutSheet, 'session de sensibilisation sans feuille d’émargement', 'sessions de sensibilisation sans feuille d’émargement')} au coffre de preuves.` });
+  }
   if (i.coveragePct !== null && i.coveragePct >= 80) out.push({ tone: 'positif', text: `Couverture de ${i.coveragePct} % des exigences évaluées.` });
   if (i.obligations.applicable > 0 && i.obligations.met / i.obligations.applicable >= 0.8) out.push({ tone: 'positif', text: `${i.obligations.met} obligations respectées sur ${i.obligations.applicable}.` });
   if (i.risks && i.risks.critical === 0 && i.risks.high === 0) out.push({ tone: 'positif', text: 'Aucun risque élevé ou critique après traitement.' });
   if (i.controls.active > 0 && i.controls.late === 0 && i.controls.ineffective === 0) out.push({ tone: 'positif', text: 'Tous les contrôles sont revus dans les temps et jugés efficaces.' });
+  if (i.training && i.training.leaders > 0 && i.training.leadersUntrained === 0 && i.training.leadersDueSoon === 0) {
+    out.push({ tone: 'positif', text: 'Formation à la cybersécurité des dirigeants à jour.' });
+  }
   return out.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone]).slice(0, 7);
 }
 
@@ -92,9 +113,15 @@ export function boardDecisions(i: BoardInput): string[] {
   if (i.risks && i.risks.unplannedSevere > 0) {
     out.push(`Valider un plan de traitement pour ${s(i.risks.unplannedSevere, 'risque élevé ou critique', 'risques élevés ou critiques')} sans action engagée.`);
   }
-  const concerned = i.entities.some((e) => e.nis2 === 'ee' || e.nis2 === 'ei');
+  const concerned = nis2Concerned(i);
   if (concerned && i.obligations.nis2Governance !== null && i.obligations.nis2Governance !== 'conforme') {
-    out.push('Approuver les mesures de cybersécurité et planifier la formation des dirigeants (NIS 2, art. 20).');
+    // Avec le module sensibilisation, la formation des dirigeants se suit à part, nommément.
+    out.push(i.training
+      ? 'Approuver les mesures de gestion des risques de cybersécurité (NIS 2, art. 20).'
+      : 'Approuver les mesures de cybersécurité et planifier la formation des dirigeants (NIS 2, art. 20).');
+  }
+  if (i.training && i.training.leadersUntrained > 0) {
+    out.push(`Planifier la formation à la cybersécurité de ${s(i.training.leadersUntrained, 'dirigeant', 'dirigeants')}${concerned ? ' (NIS 2, art. 20)' : ''}.`);
   }
   if (i.actions.overdueP1 > 0) {
     out.push(i.actions.overdueP1 === 1

@@ -76,6 +76,25 @@ export function leaderTrainingState(lastTrainedOn: string | null, today: string)
   return days <= LEADER_TRAINING_SOON_DAYS ? 'bientot' : 'a_jour';
 }
 
+export interface LeaderTrainingCounts {
+  leaders: number;
+  /** Formation valable, y compris à renouveler bientôt. */
+  upToDate: number;
+  dueSoon: number;
+  /** Formation échue ou jamais suivie. */
+  untrained: number;
+}
+
+/** Dirigeants par état de formation, pour le pilotage. */
+export function leaderTrainingCounts(states: readonly LeaderTrainingState[]): LeaderTrainingCounts {
+  return {
+    leaders: states.length,
+    upToDate: states.filter((st) => st === 'a_jour' || st === 'bientot').length,
+    dueSoon: states.filter((st) => st === 'bientot').length,
+    untrained: states.filter((st) => st === 'a_renouveler' || st === 'jamais').length,
+  };
+}
+
 export interface AwarenessSession {
   heldOn: string;
   expectedCount: number | null;

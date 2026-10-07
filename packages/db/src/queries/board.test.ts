@@ -54,17 +54,21 @@ describe('rapport de direction (module 5.11)', () => {
     expect(r.decisions).toContain('Arbitrer les moyens pour rétablir le contrôle jugé inefficace.');
     expect(r.decisions).toContain('Accorder ou refuser 1 demande de dérogation.');
     expect(r.messages).toContainEqual({ tone: 'alerte', text: '1 dérogation échue sans clôture : l’écart n’est plus couvert.' });
+    // Seed : trois sessions tenues, la feuille de Meyzieu manque ; Antoine à renouveler d'ici le 18 novembre.
+    expect(r.input.training).toEqual({ held: 3, withoutSheet: 1, leaders: 1, leadersUntrained: 0, leadersDueSoon: 1 });
+    expect(r.decisions).toContain('Approuver les mesures de gestion des risques de cybersécurité (NIS 2, art. 20).');
   });
 
   it('ignore les modules masqués par l’organisation', async () => {
-    await admin`UPDATE tenants SET disabled_modules = ARRAY['risques','ebios','incidents','derogations']::text[] WHERE id = ${T}`;
+    await admin`UPDATE tenants SET disabled_modules = ARRAY['risques','ebios','incidents','derogations','sensibilisation']::text[] WHERE id = ${T}`;
     try {
       const r = await withTenant(app.db, T, (tx) => loadBoardReport(tx, TODAY));
       expect(r.input.risks).toBeNull();
       expect(r.input.incidents).toBeNull();
       expect(r.topRisks).toBeNull();
       expect(r.input.exceptions).toBeNull();
-      expect(r.messages.some((m) => /risque|incident/i.test(m.text))).toBe(false);
+      expect(r.input.training).toBeNull();
+      expect(r.messages.some((m) => /risque|incident|sensibilisation/i.test(m.text))).toBe(false);
     } finally {
       await admin`UPDATE tenants SET disabled_modules = '{}' WHERE id = ${T}`;
     }

@@ -1,16 +1,18 @@
 import {
   failExport,
   getDashboardMetrics,
+  getOrganisationProfile,
   getReview,
   getReviewCounts,
   getReviewEntityName,
+  getTrainingOverview,
   listControlLibrary,
   sealExport,
   withTenant,
   type ClaimedExport,
   type Db,
 } from '@toron/db';
-import { buildReviewAgenda } from '@toron/core';
+import { buildReviewAgenda, isModuleEnabled } from '@toron/core';
 import { compilePv, randomVerifySlug, sha256Hex, type PvModel } from '@toron/typst';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', {
@@ -51,8 +53,11 @@ export async function processPvExport(
       const metrics = await getDashboardMetrics(tx);
       const counts = await getReviewCounts(tx);
       const entityName = await getReviewEntityName(tx);
-      const controls = (await listControlLibrary(tx, ISO_DAY_PARIS.format(now()))).filter((c) => c.status === 'actif');
-      return { review, metrics, counts, entityName, controls };
+      const today = ISO_DAY_PARIS.format(now());
+      const controls = (await listControlLibrary(tx, today)).filter((c) => c.status === 'actif');
+      const { disabledModules } = await getOrganisationProfile(tx);
+      const training = isModuleEnabled(disabledModules, 'sensibilisation') ? await getTrainingOverview(tx, today) : null;
+      return { review, metrics, counts, entityName, controls, training };
     });
     if (!data) {
       await withTenant(db, job.tenantId, (tx) => failExport(tx, job.id, 'Revue introuvable.'));
@@ -61,7 +66,7 @@ export async function processPvExport(
 
     // 2) Modèle + compilation (hors transaction)
     const slug = randomVerifySlug();
-    const { review, metrics, counts, entityName, controls } = data;
+    const { review, metrics, counts, entityName, controls, training } = data;
     const agenda = buildReviewAgenda({
       actionsOpen: metrics.actionsOpen,
       actionsOverdue: metrics.actionsOverdue,
@@ -83,6 +88,9 @@ export async function processPvExport(
       controlsIneffective: controls.filter((c) => c.lastResult === 'inefficace').length,
       evidencesStale: metrics.evidencesStale,
       documentsReviewOverdue: metrics.documentsReviewOverdue,
+      training: training && {
+        held: training.held, participations: training.participations, leaders: training.leaders, leadersUpToDate: training.upToDate,
+      },
     });
 
     const model: PvModel = {

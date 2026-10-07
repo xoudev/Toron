@@ -35,7 +35,11 @@ WORKDIR /app
 # Gestionnaires de paquets inutiles à l'exécution (CMD lance node seul) : npm
 # embarque ses propres dépendances, souvent en retard sur les correctifs, et
 # chaque outil retiré réduit la surface d'attaque de l'image livrée.
-RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
+# Les correctifs de sécurité Alpine parus depuis la construction de l'image de
+# base (épinglée par digest) sont appliqués : l'image livrée n'attend pas sa
+# reconstruction pour corriger une bibliothèque système (zlib, openssl…).
+RUN apk upgrade --no-cache \
+ && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
       /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-v* \
  && addgroup -S toron && adduser -S toron -G toron
 COPY --from=build --chown=toron:toron /repo/apps/web/.next/standalone ./

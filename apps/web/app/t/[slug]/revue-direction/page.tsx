@@ -1,9 +1,10 @@
 import { buildReviewAgenda, canEditModule, reviewInputsReady, suggestNextReview } from '@toron/core';
-import { getDashboardMetrics, getReviewCounts, listReviews, listTenantMembers, withTenant } from '@toron/db';
+import { getDashboardMetrics, getReviewCounts, listControlLibrary, listReviews, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
+import { todayParis } from '@/lib/format';
 import { ModuleDisabled } from '@/components/module-disabled';
 import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
@@ -19,11 +20,12 @@ export default async function RevueDirectionPage({ params }: { params: Promise<{
   if (!(await getOrganisationOverview(ctx.tenantId)).enabled('revue_direction')) return <ModuleDisabled slug={slug} module="revue_direction" role={ctx.role} />;
   const canManage = canEditModule(ctx.role, 'revue_direction');
 
-  const { reviews, metrics, counts, members } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
+  const { reviews, metrics, counts, members, controls } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
     reviews: await listReviews(tx),
     metrics: await getDashboardMetrics(tx),
     counts: await getReviewCounts(tx),
     members: await listTenantMembers(tx),
+    controls: (await listControlLibrary(tx, todayParis())).filter((c) => c.status === 'actif'),
   }));
 
   const agenda = buildReviewAgenda({
@@ -42,6 +44,9 @@ export default async function RevueDirectionPage({ params }: { params: Promise<{
     risksToReassess: metrics.risksByPlan.a_recoter,
     risksPlanLate: metrics.risksByPlan.en_retard,
     controlsMutualized: metrics.controlsMutualized,
+    controlsActive: controls.length,
+    controlsLate: controls.filter((c) => c.reviewState === 'en_retard').length,
+    controlsIneffective: controls.filter((c) => c.lastResult === 'inefficace').length,
     evidencesStale: metrics.evidencesStale,
     documentsReviewOverdue: metrics.documentsReviewOverdue,
   });

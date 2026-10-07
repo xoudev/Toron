@@ -18,6 +18,9 @@ const BASE: ReviewInputs = {
   risksToReassess: 0,
   risksPlanLate: 0,
   controlsMutualized: 38,
+  controlsActive: 40,
+  controlsLate: 0,
+  controlsIneffective: 0,
   evidencesStale: 0,
   documentsReviewOverdue: 0,
 };
@@ -50,6 +53,15 @@ describe('ordre du jour de la revue de direction (clause 9.3.2)', () => {
       tone: 'warn',
     });
     expect(line({ ...BASE, risksToReassess: 3 }).tone).toBe('muted');
+  });
+
+  it('rend compte des revues d’efficacité des contrôles', () => {
+    const line = (m: ReviewInputs) => buildReviewAgenda(m).find((s) => s.n === 4)!.bullets.find((b) => b.head === 'Revues de contrôle —')!;
+    expect(line(BASE)).toEqual({ head: 'Revues de contrôle —', body: '40 contrôles revus dans les temps et jugés efficaces.', tone: 'ok' });
+    expect(line({ ...BASE, controlsLate: 3, controlsIneffective: 1 })).toEqual({
+      head: 'Revues de contrôle —', body: 'sur 40 contrôles actifs : 3 en retard de revue, 1 jugé inefficace.', tone: 'danger',
+    });
+    expect(line({ ...BASE, controlsLate: 1 }).tone).toBe('warn');
   });
 
   it('gère une couverture nulle sans casser', () => {

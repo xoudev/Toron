@@ -49,6 +49,9 @@ describe('rapport de direction (module 5.11)', () => {
     expect(r.decisions.some((d) => d.includes('art. 20'))).toBe(true);
     // Seed : la télémaintenance attend une décision, la rétention de Vitrolles est échue.
     expect(r.input.exceptions).toEqual({ pending: 1, lapsed: 1 });
+    // Seed : sauvegardes inefficaces au dernier test ; MFA et inventaire en retard de revue.
+    expect(r.input.controls).toEqual({ active: 3, late: 2, ineffective: 1 });
+    expect(r.decisions).toContain('Arbitrer les moyens pour rétablir le contrôle jugé inefficace.');
     expect(r.decisions).toContain('Accorder ou refuser 1 demande de dérogation.');
     expect(r.messages).toContainEqual({ tone: 'alerte', text: '1 dérogation échue sans clôture : l’écart n’est plus couvert.' });
   });

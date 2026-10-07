@@ -36,6 +36,8 @@ export interface BoardInput {
   evidencesStale: number;
   /** null quand le module dérogations est masqué. Échues = échéance passée sans clôture ni renouvellement. */
   exceptions: { pending: number; lapsed: number } | null;
+  /** Contrôles actifs : revue en retard, et jugés inefficaces à leur dernière revue. */
+  controls: { active: number; late: number; ineffective: number };
 }
 
 export type BoardTone = 'alerte' | 'vigilance' | 'positif';
@@ -55,6 +57,7 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
   if (i.risks && i.risks.critical > 0) out.push({ tone: 'alerte', text: `${s(i.risks.critical, 'risque critique', 'risques critiques')} après traitement.` });
   if (i.actions.overdueP1 > 0) out.push({ tone: 'alerte', text: `${s(i.actions.overdueP1, 'action prioritaire', 'actions prioritaires')} en retard.` });
   if (i.incidents && i.incidents.nis2ImportantOpen > 0) out.push({ tone: 'alerte', text: `${s(i.incidents.nis2ImportantOpen, 'incident important NIS 2', 'incidents importants NIS 2')} en cours de traitement.` });
+  if (i.controls.ineffective > 0) out.push({ tone: 'alerte', text: `${s(i.controls.ineffective, 'contrôle jugé inefficace', 'contrôles jugés inefficaces')} à la dernière revue.` });
   if (i.exceptions && i.exceptions.lapsed > 0) out.push({ tone: 'alerte', text: `${s(i.exceptions.lapsed, 'dérogation échue', 'dérogations échues')} sans clôture : l’écart n’est plus couvert.` });
   for (const e of i.entities) {
     if ((e.nis2 === 'ee' || e.nis2 === 'ei') && e.registration === 'a_faire') out.push({ tone: 'alerte', text: `${e.name} : enregistrement auprès de l’ANSSI non engagé.` });
@@ -71,10 +74,12 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
     ].filter(Boolean);
     out.push({ tone: 'vigilance', text: `RGPD : ${parts.join(', ')}.` });
   }
+  if (i.controls.late > 0) out.push({ tone: 'vigilance', text: `${s(i.controls.late, 'contrôle en retard de revue', 'contrôles en retard de revue')} : efficacité non démontrée.` });
   if (i.evidencesStale > 0) out.push({ tone: 'vigilance', text: `${s(i.evidencesStale, 'preuve expirée ou bientôt expirée', 'preuves expirées ou bientôt expirées')}.` });
   if (i.coveragePct !== null && i.coveragePct >= 80) out.push({ tone: 'positif', text: `Couverture de ${i.coveragePct} % des exigences évaluées.` });
   if (i.obligations.applicable > 0 && i.obligations.met / i.obligations.applicable >= 0.8) out.push({ tone: 'positif', text: `${i.obligations.met} obligations respectées sur ${i.obligations.applicable}.` });
   if (i.risks && i.risks.critical === 0 && i.risks.high === 0) out.push({ tone: 'positif', text: 'Aucun risque élevé ou critique après traitement.' });
+  if (i.controls.active > 0 && i.controls.late === 0 && i.controls.ineffective === 0) out.push({ tone: 'positif', text: 'Tous les contrôles sont revus dans les temps et jugés efficaces.' });
   return out.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone]).slice(0, 7);
 }
 
@@ -98,6 +103,11 @@ export function boardDecisions(i: BoardInput): string[] {
   }
   if (i.obligations.unowned > 0) out.push(`Désigner un responsable pour ${s(i.obligations.unowned, 'obligation', 'obligations')}.`);
   if (i.suppliers && i.suppliers.watch > 0) out.push(`Statuer sur ${s(i.suppliers.watch, 'fournisseur', 'fournisseurs')} à suivre : maintien, plan d’amélioration ou remplacement.`);
+  if (i.controls.ineffective > 0) {
+    out.push(i.controls.ineffective === 1
+      ? 'Arbitrer les moyens pour rétablir le contrôle jugé inefficace.'
+      : `Arbitrer les moyens pour rétablir les ${i.controls.ineffective} contrôles jugés inefficaces.`);
+  }
   if (i.exceptions && i.exceptions.pending > 0) out.push(`Accorder ou refuser ${s(i.exceptions.pending, 'demande de dérogation', 'demandes de dérogation')}.`);
   return out;
 }

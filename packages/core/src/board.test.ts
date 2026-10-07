@@ -13,11 +13,12 @@ const calm: BoardInput = {
   processing: { total: 5, incomplete: 0, processorsWithoutAgreement: 0 },
   evidencesStale: 0,
   exceptions: { pending: 0, lapsed: 0 },
+  controls: { active: 3, late: 0, ineffective: 0 },
 };
 
 describe('messages clés du rapport de direction', () => {
   it('une organisation sans point ouvert ne reçoit que des messages positifs', () => {
-    expect(boardMessages(calm).map((m) => m.tone)).toEqual(['positif', 'positif', 'positif']);
+    expect(boardMessages(calm).map((m) => m.tone)).toEqual(['positif', 'positif', 'positif', 'positif']);
   });
 
   it('classe les alertes avant la vigilance et accorde singulier et pluriel', () => {
@@ -77,6 +78,21 @@ describe('risques sans plan de traitement', () => {
     expect(boardDecisions({ ...calm, risks: { critical: 0, high: 1, acceptancePending: 0, unplanned: 1, unplannedSevere: 1 } })).toEqual([
       'Valider un plan de traitement pour 1 risque élevé ou critique sans action engagée.',
     ]);
+  });
+});
+
+describe('contrôles internes', () => {
+  it('alerte sur un contrôle inefficace, signale les revues en retard et demande d’arbitrer', () => {
+    const input = { ...calm, controls: { active: 3, late: 2, ineffective: 1 } };
+    const messages = boardMessages(input);
+    expect(messages[0]).toEqual({ tone: 'alerte', text: '1 contrôle jugé inefficace à la dernière revue.' });
+    expect(messages).toContainEqual({ tone: 'vigilance', text: '2 contrôles en retard de revue : efficacité non démontrée.' });
+    expect(messages.some((m) => m.text.startsWith('Tous les contrôles'))).toBe(false);
+    expect(boardDecisions(input)).toEqual(['Arbitrer les moyens pour rétablir le contrôle jugé inefficace.']);
+  });
+
+  it('ne félicite pas une organisation sans contrôle', () => {
+    expect(boardMessages({ ...calm, controls: { active: 0, late: 0, ineffective: 0 } }).some((m) => m.text.startsWith('Tous les contrôles'))).toBe(false);
   });
 });
 

@@ -22,6 +22,7 @@ import {
 
 import type { TenantTx } from '../tenant.ts';
 import { listActions, type ActionSummary } from './actions.ts';
+import { listControlLibrary } from './control-reviews.ts';
 import { getDashboardMetrics, getFrameworkCoverage } from './dashboard.ts';
 import { listExceptions } from './exceptions.ts';
 import { listIncidents } from './incidents.ts';
@@ -67,6 +68,7 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
     suppliers: on('fournisseurs') ? await listSuppliers(tx) : null,
     processing: await listProcessing(tx),
     exceptions: on('derogations') ? await listExceptions(tx, today) : null,
+    controls: (await listControlLibrary(tx, today)).filter((c) => c.status === 'actif'),
   };
 
   const overdue = d.actions.filter((a) => a.effectiveStatus === 'en_retard');
@@ -109,6 +111,11 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
     exceptions: d.exceptions && {
       pending: d.exceptions.filter((e) => e.state === 'en_attente').length,
       lapsed: d.exceptions.filter((e) => e.state === 'echue').length,
+    },
+    controls: {
+      active: d.controls.length,
+      late: d.controls.filter((c) => c.reviewState === 'en_retard').length,
+      ineffective: d.controls.filter((c) => c.lastResult === 'inefficace').length,
     },
   };
 

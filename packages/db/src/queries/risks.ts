@@ -2,10 +2,12 @@ import {
   acceptanceState,
   defaultRiskScale,
   riskBand,
+  treatmentPlanState,
   type AcceptanceState,
   type RiskBand,
   type RiskScale,
   type RiskTreatment,
+  type TreatmentPlanState,
 } from '@toron/core';
 import { and, eq, sql } from 'drizzle-orm';
 
@@ -256,6 +258,10 @@ export interface RiskSummary {
   ownerName: string | null;
   nextReview: string | null;
   controlCount: number;
+  openActionCount: number;
+  overdueActionCount: number;
+  doneActionCount: number;
+  treatmentPlan: TreatmentPlanState;
   acceptanceState: AcceptanceState;
   acceptedByName: string | null;
   acceptedAt: Date | null;
@@ -279,6 +285,9 @@ interface RawRisk {
   owner_name: string | null;
   next_review: string | null;
   control_count: number | string;
+  open_action_count: number | string;
+  overdue_action_count: number | string;
+  done_action_count: number | string;
   accepted_by_name: string | null;
   accepted_at: string | null; // timestamptz brut (chaîne via tx.execute)
   acceptance_expires_at: string | null;
@@ -300,6 +309,10 @@ export async function listRisks(tx: TenantTx, scopeId?: string): Promise<RiskSum
       r.gross_g, r.gross_v, r.net_g, r.net_v, r.residual_target,
       r.owner_user_id, o.name AS owner_name, r.next_review::text AS next_review,
       (SELECT count(*) FROM risk_controls rc WHERE rc.risk_id = r.id) AS control_count,
+      (SELECT count(*) FROM actions a WHERE a.origin_type = 'risk' AND a.origin_id = r.id AND a.status <> 'termine') AS open_action_count,
+      (SELECT count(*) FROM actions a WHERE a.origin_type = 'risk' AND a.origin_id = r.id
+         AND a.status IN ('planifie', 'en_cours') AND a.due_date < current_date) AS overdue_action_count,
+      (SELECT count(*) FROM actions a WHERE a.origin_type = 'risk' AND a.origin_id = r.id AND a.status = 'termine') AS done_action_count,
       acc.accepted_by_name, acc.accepted_at, acc.acceptance_expires_at
     FROM risks r
     JOIN scopes s ON s.id = r.scope_id
@@ -335,6 +348,10 @@ export async function listRisks(tx: TenantTx, scopeId?: string): Promise<RiskSum
       },
       now,
     );
+    const netBand = riskBand(netG, netV, scale);
+    const openActionCount = Number(r.open_action_count);
+    const overdueActionCount = Number(r.overdue_action_count);
+    const doneActionCount = Number(r.done_action_count);
     return {
       id: r.id,
       scopeId: r.scope_id,
@@ -348,12 +365,23 @@ export async function listRisks(tx: TenantTx, scopeId?: string): Promise<RiskSum
       grossBand: riskBand(grossG, grossV, scale),
       netG,
       netV,
-      netBand: riskBand(netG, netV, scale),
+      netBand,
       residualTarget: r.residual_target,
       ownerUserId: r.owner_user_id,
       ownerName: r.owner_name,
       nextReview: r.next_review,
       controlCount: Number(r.control_count),
+      openActionCount,
+      overdueActionCount,
+      doneActionCount,
+      treatmentPlan: treatmentPlanState({
+        treatment: r.treatment,
+        netBand,
+        residualTarget: r.residual_target,
+        openActions: openActionCount,
+        overdueActions: overdueActionCount,
+        doneActions: doneActionCount,
+      }),
       acceptanceState: state,
       acceptedByName: r.accepted_by_name,
       acceptedAt,
@@ -383,6 +411,21 @@ export async function acceptRisk(tx: TenantTx, input: AcceptRiskInput): Promise<
     })
     .returning({ id: schema.riskAcceptances.id });
   return row!.id;
+}
+
+export interface RiskRef {
+  id: string;
+  title: string;
+  ownerUserId: string | null;
+}
+
+/** Intitulé et propriétaire d'un risque du tenant, ou null s'il n'existe pas. */
+export async function getRiskRef(tx: TenantTx, riskId: string): Promise<RiskRef | null> {
+  const [row] = await tx
+    .select({ id: schema.risks.id, title: schema.risks.title, ownerUserId: schema.risks.ownerUserId })
+    .from(schema.risks)
+    .where(eq(schema.risks.id, riskId));
+  return row ?? null;
 }
 
 /** Rattache un contrôle atténuant à un risque (idempotent). */

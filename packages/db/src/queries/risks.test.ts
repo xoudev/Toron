@@ -7,6 +7,7 @@ import { createDb, type DbHandle } from '../client.ts';
 import { applyMigrations } from '../migrate.ts';
 import { DEMO, seedDemoTenant, seedIso27001Framework, seedRecyfFramework } from '../seed.ts';
 import { withTenant } from '../tenant.ts';
+import { createAction, listActions, setActionStatus } from './actions.ts';
 import {
   acceptRisk,
   createRisk,
@@ -241,6 +242,58 @@ describe('contrôles atténuants', () => {
     expect(counts.after).toBe(1);
     expect(counts.removed).toBe(1);
     expect(counts.final).toBe(0);
+  });
+});
+
+describe('plan de traitement (actions issues du risque)', () => {
+  it('compte les actions ouvertes et en retard, et en déduit l’état du plan', async () => {
+    const r = await withTenant(app.db, T, async (tx) => {
+      const id = await createRisk(tx, {
+        tenantId: T,
+        scopeId: DEMO.scopeSmsi,
+        title: 'Test — plan de traitement',
+        grossG: 4,
+        grossV: 4,
+        netG: 3,
+        netV: 3,
+        treatment: 'reduire',
+        // Pas de cible : l'état ne dépend pas de l'échelle active (modifiée plus haut).
+        residualTarget: null,
+        ratedBy: DEMO.userClaire,
+      });
+      const find = async () => (await listRisks(tx)).find((x) => x.id === id)!;
+      const before = await find();
+      const late = await createAction(tx, { tenantId: T, title: 'Action échue', originType: 'risk', originId: id, dueDate: '2020-01-31' });
+      await createAction(tx, { tenantId: T, title: 'Action à venir', originType: 'risk', originId: id, dueDate: '2099-01-31' });
+      await createAction(tx, { tenantId: T, title: 'Action manuelle', originType: 'manual', originId: id });
+      const during = await find();
+      await setActionStatus(tx, late, 'termine');
+      const after = await find();
+      const others = (await listActions(tx, { originType: 'risk', originId: id })).filter((a) => a.id !== late);
+      for (const a of others) await setActionStatus(tx, a.id, 'termine');
+      const done = await find();
+      const linked = await listActions(tx, { originType: 'risk', originId: id });
+      return { before, during, after, done, linked };
+    });
+    expect(r.before.openActionCount).toBe(0);
+    expect(r.before.treatmentPlan).toBe('non_planifie');
+    // Seules les actions d'origine « risk » comptent, pas une homonymie d'identifiant.
+    expect(r.during.openActionCount).toBe(2);
+    expect(r.during.overdueActionCount).toBe(1);
+    expect(r.during.treatmentPlan).toBe('en_retard');
+    expect(r.after.openActionCount).toBe(1);
+    expect(r.after.overdueActionCount).toBe(0);
+    expect(r.after.treatmentPlan).toBe('en_cours');
+    // Tout est terminé, la cible n'est pas constatée : le risque est à recoter.
+    expect(r.done.doneActionCount).toBe(2);
+    expect(r.done.treatmentPlan).toBe('a_recoter');
+    expect(r.linked.map((a) => a.title).sort()).toEqual(['Action à venir', 'Action échue']);
+  });
+
+  it('le risque rançongiciel du seed a un plan en cours', async () => {
+    const risk = await withTenant(app.db, T, async (tx) => (await listRisks(tx)).find((x) => x.id === DEMO.riskRancongiciel)!);
+    expect(risk.openActionCount).toBeGreaterThan(0);
+    expect(['en_cours', 'en_retard']).toContain(risk.treatmentPlan);
   });
 });
 

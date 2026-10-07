@@ -7,6 +7,9 @@ import {
   defaultRiskScale,
   riskBand,
   riskScore,
+  treatmentActionPriority,
+  treatmentPlanNeedsAttention,
+  treatmentPlanState,
 } from './risks.ts';
 
 const SCALE = defaultRiskScale();
@@ -94,5 +97,54 @@ describe('acceptanceState (RM §5.4)', () => {
       ),
     ).toBe('expiree');
     expect(acceptanceNeedsAttention('expiree')).toBe(true);
+  });
+});
+
+describe('treatmentPlanState (traduction du traitement en actions)', () => {
+  const base = { treatment: 'reduire' as const, netBand: 'eleve' as const, residualTarget: 'moyen' as const, openActions: 0, overdueActions: 0, doneActions: 0 };
+
+  it('réduire sans action ouverte et au-dessus de la cible ⇒ non planifié', () => {
+    expect(treatmentPlanState(base)).toBe('non_planifie');
+    expect(treatmentPlanNeedsAttention('non_planifie')).toBe(true);
+  });
+
+  it('sans cible définie et sans action ⇒ non planifié', () => {
+    expect(treatmentPlanState({ ...base, residualTarget: null })).toBe('non_planifie');
+  });
+
+  it('risque net au niveau de la cible sans action ouverte ⇒ cible atteinte', () => {
+    expect(treatmentPlanState({ ...base, netBand: 'moyen' })).toBe('cible_atteinte');
+    expect(treatmentPlanState({ ...base, netBand: 'faible' })).toBe('cible_atteinte');
+    expect(treatmentPlanNeedsAttention('cible_atteinte')).toBe(false);
+  });
+
+  it('actions ouvertes ⇒ en cours, ou en retard dès qu’une échéance est dépassée', () => {
+    expect(treatmentPlanState({ ...base, openActions: 2 })).toBe('en_cours');
+    expect(treatmentPlanState({ ...base, openActions: 2, overdueActions: 1 })).toBe('en_retard');
+    expect(treatmentPlanNeedsAttention('en_retard')).toBe(true);
+  });
+
+  it('actions toutes terminées sans atteindre la cible ⇒ à recoter', () => {
+    expect(treatmentPlanState({ ...base, doneActions: 2 })).toBe('a_recoter');
+    expect(treatmentPlanNeedsAttention('a_recoter')).toBe(true);
+    expect(treatmentPlanState({ ...base, netBand: 'moyen', doneActions: 2 })).toBe('cible_atteinte');
+  });
+
+  it('accepter relève de l’acceptation signée, pas du plan d’action', () => {
+    expect(treatmentPlanState({ ...base, treatment: 'accepter' })).toBe('sans_objet');
+  });
+
+  it('transférer et éviter se planifient comme réduire', () => {
+    expect(treatmentPlanState({ ...base, treatment: 'transferer' })).toBe('non_planifie');
+    expect(treatmentPlanState({ ...base, treatment: 'eviter', openActions: 1 })).toBe('en_cours');
+  });
+});
+describe('treatmentActionPriority', () => {
+  it('propose P1 pour un risque net critique ou élevé, P3 pour un risque faible', () => {
+    expect(treatmentActionPriority('critique')).toBe('p1');
+    expect(treatmentActionPriority('eleve')).toBe('p1');
+    expect(treatmentActionPriority('moyen')).toBe('p2');
+    expect(treatmentActionPriority('faible')).toBe('p3');
+    expect(treatmentActionPriority(null)).toBe('p2');
   });
 });

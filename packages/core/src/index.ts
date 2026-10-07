@@ -66,11 +66,17 @@ export {
   riskScore,
   acceptanceState,
   acceptanceNeedsAttention,
+  TREATMENT_PLAN_STATES,
+  treatmentPlanState,
+  treatmentPlanNeedsAttention,
+  treatmentActionPriority,
   type RiskTreatment,
   type RiskBand,
   type RiskScale,
   type AcceptanceState,
   type AcceptanceInput,
+  type TreatmentPlanState,
+  type TreatmentPlanInput,
 } from './risks.ts';
 export {
   ACTION_STATUSES,

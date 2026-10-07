@@ -3,8 +3,12 @@
 import { appError } from '@toron/core';
 import {
   acceptRisk,
+  createAction,
   createRisk,
   currentOwner,
+  getRiskRef,
+  isTenantMember,
+  listActions,
   linkRiskControl,
   listRiskControlIds,
   notifyAssignment,
@@ -13,19 +17,24 @@ import {
   updateRiskRating,
   withTenant,
   writeAuditEntry,
+  type ActionSummary,
 } from '@toron/db';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import {
   authorizeManager,
+  authorizeRole,
   isActionError,
   logFailure,
   type ActionResult,
 } from '@/lib/action-guard';
 import { appDb } from '@/lib/db';
+import { todayParis } from '@/lib/format';
 
 export type { ActionResult };
+
+const authorizeReader = (slug: string) => authorizeRole(slug, () => true, 'Accès refusé.');
 
 const Treatment = z.enum(['reduire', 'transferer', 'accepter', 'eviter']);
 const Band = z.enum(['faible', 'moyen', 'eleve', 'critique']);
@@ -273,7 +282,7 @@ export async function getRiskControlsAction(
   slug: string,
   riskId: string,
 ): Promise<ActionResult<{ controlIds: string[] }>> {
-  const auth = await authorizeManager(slug);
+  const auth = await authorizeReader(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z.uuid().safeParse(riskId);
   if (!parsed.success) {
@@ -286,5 +295,80 @@ export async function getRiskControlsAction(
     return { ok: true, data: { controlIds } };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_LECTURE', 'La lecture des contrôles a échoué — réessayez.')) };
+  }
+}
+
+export async function getRiskActionsAction(slug: string, riskId: string): Promise<ActionResult<ActionSummary[]>> {
+  const auth = await authorizeReader(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.uuid().safeParse(riskId);
+  if (!parsed.success) {
+    return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence de risque invalide.') };
+  }
+  try {
+    const actions = await withTenant(appDb().db, auth.tenantId, (tx) =>
+      listActions(tx, { originType: 'risk', originId: parsed.data }),
+    );
+    return { ok: true, data: actions };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_LECTURE', 'La lecture du plan de traitement a échoué — réessayez.')) };
+  }
+}
+
+const PlanSchema = z.object({
+  riskId: z.uuid(),
+  title: z.string().trim().min(3, '3 caractères minimum').max(200),
+  ownerUserId: z.uuid().optional().nullable(),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date attendue au format AAAA-MM-JJ'),
+  priority: z.enum(['p1', 'p2', 'p3']),
+});
+
+/** Traduit la décision de traitement d'un risque en action du plan d'action unifié. */
+export async function planRiskActionAction(slug: string, input: unknown): Promise<ActionResult<{ actionId: string }>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = PlanSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: appError('SAISIE_INVALIDE', 'Action invalide — un intitulé (3 caractères min) et une échéance sont requis.') };
+  }
+  const d = parsed.data;
+  if (d.dueDate < todayParis()) {
+    return { ok: false, error: appError('ECHEANCE_PASSEE', 'L’échéance est déjà passée — choisissez une date à venir.') };
+  }
+  try {
+    const res = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const risk = await getRiskRef(tx, d.riskId);
+      if (!risk) return { kind: 'introuvable' as const };
+      const ownerUserId = d.ownerUserId ?? auth.userId;
+      if (!(await isTenantMember(tx, ownerUserId))) return { kind: 'responsable' as const };
+      const id = await createAction(tx, {
+        tenantId: auth.tenantId,
+        title: d.title,
+        originType: 'risk',
+        originId: risk.id,
+        ownerUserId,
+        dueDate: d.dueDate,
+        priority: d.priority,
+      });
+      await writeAuditEntry(tx, {
+        tenantId: auth.tenantId,
+        actorUserId: auth.userId,
+        action: 'risk.treatment_action',
+        objectType: 'action',
+        objectId: id,
+        after: { riskId: risk.id, dueDate: d.dueDate, priority: d.priority },
+        ip: auth.ip,
+        userAgent: auth.userAgent,
+      });
+      await notifyAssignment(tx, { tenantId: auth.tenantId, slug, actorUserId: auth.userId, subject: 'action', objectId: id, objectTitle: d.title, previousOwnerId: null, nextOwnerId: ownerUserId });
+      return { kind: 'ok' as const, id };
+    });
+    if (res.kind === 'introuvable') return { ok: false, error: appError('RISQUE_INTROUVABLE', 'Ce risque n’existe plus — rechargez la page.') };
+    if (res.kind === 'responsable') return { ok: false, error: appError('RESPONSABLE_INVALIDE', 'Le responsable choisi ne fait plus partie de l’organisation — choisissez-en un autre.') };
+    revalidatePath(`/t/${slug}/risques`);
+    revalidatePath(`/t/${slug}/plan-action`);
+    return { ok: true, data: { actionId: res.id } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_CREATION', 'La planification de l’action a échoué — réessayez.')) };
   }
 }

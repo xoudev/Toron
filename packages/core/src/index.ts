@@ -15,6 +15,7 @@ export * from './notifications.ts';
 export * from './dates.ts';
 export * from './exceptions.ts';
 export * from './control-reviews.ts';
+export * from './antivirus.ts';
 export {
   frameworksCovered,
   isMutualized,

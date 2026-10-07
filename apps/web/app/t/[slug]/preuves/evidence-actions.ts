@@ -27,6 +27,7 @@ import {
   logFailure,
   type ActionResult,
 } from '@/lib/action-guard';
+import { antivirusGate } from '@/lib/antivirus';
 import { appDb } from '@/lib/db';
 
 export type { ActionResult };
@@ -95,6 +96,8 @@ export async function createEvidenceAction(
   try {
     const content = Buffer.from(await file.arrayBuffer());
     const sha256 = createHash('sha256').update(content).digest('hex');
+    const scan = await antivirusGate(auth, { name: file.name, content, sha256 });
+    if (!scan.ok) return { ok: false, error: scan.error };
     const evidenceId = await withTenant(appDb().db, auth.tenantId, async (tx) => {
       const id = await createEvidence(tx, {
         tenantId: auth.tenantId,
@@ -115,7 +118,7 @@ export async function createEvidenceAction(
         action: 'evidence.create',
         objectType: 'evidence',
         objectId: id,
-        after: { title: d.title, sha256 },
+        after: { title: d.title, sha256, antivirus: scan.antivirus },
         ip: auth.ip,
         userAgent: auth.userAgent,
       });
@@ -207,6 +210,8 @@ export async function renewEvidenceAction(slug: string, formData: FormData): Pro
   try {
     const content = Buffer.from(await upload.file.arrayBuffer());
     const sha256 = createHash('sha256').update(content).digest('hex');
+    const scan = await antivirusGate(auth, { name: upload.file.name, content, sha256 });
+    if (!scan.ok) return { ok: false, error: scan.error };
     const result = await withTenant(appDb().db, auth.tenantId, async (tx) => {
       const r = await renewEvidence(tx, {
         tenantId: auth.tenantId, previousId: d.previousId, fileName: upload.file.name, content, sha256,
@@ -215,7 +220,7 @@ export async function renewEvidenceAction(slug: string, formData: FormData): Pro
       if (r.outcome === 'renouvelee') {
         await writeAuditEntry(tx, {
           tenantId: auth.tenantId, actorUserId: auth.userId, action: 'evidence.renew', objectType: 'evidence',
-          objectId: r.evidenceId, before: { evidenceId: d.previousId }, after: { sha256, validUntil: d.validUntil ?? null },
+          objectId: r.evidenceId, before: { evidenceId: d.previousId }, after: { sha256, validUntil: d.validUntil ?? null, antivirus: scan.antivirus },
           ip: auth.ip, userAgent: auth.userAgent,
         });
       }

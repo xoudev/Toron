@@ -33,11 +33,22 @@ services:
       # environnement réel via le gestionnaire de secrets (S3).
       BETTER_AUTH_SECRET: dev_local_secret_32_caracteres_min_x
       BETTER_AUTH_URL: http://localhost:3000
+      # Analyse antivirus des fichiers déposés : sans réponse de clamd, les
+      # dépôts sont refusés. Pas de dépendance de démarrage : l'application
+      # tourne pendant que clamd charge ses signatures.
+      CLAMAV_URL: tcp://clamav:3310
     ports:
       - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
+
+  # Antivirus à l'ingestion (clamd). Environ 1 Go de mémoire une fois les
+  # signatures chargées ; premier démarrage de quelques minutes.
+  clamav:
+    image: clamav/clamav:1.5.4@sha256:ebec5bc138401b36ae987caa1a3fa3c3b2a21ed3d51f0bfa5852825e663e67b0
+    volumes:
+      - clamav-db:/var/lib/clamav
 
   # Worker de livrables scellés (Typst) — ADR-5/7.
   worker:
@@ -53,3 +64,4 @@ services:
 
 volumes:
   pgdata:
+  clamav-db:

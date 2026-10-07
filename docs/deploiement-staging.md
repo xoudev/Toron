@@ -12,8 +12,10 @@ l'application a besoin d'un serveur Node permanent, du worker Typst et de
 PostgreSQL 18 avec ses propres rôles (RLS), et les offres gratuites
 sérieuses sont américaines (Vercel, Render, Neon, Supabase, Oracle).
 
-Une petite VM européenne suffit : 2 vCPU, 2 à 4 Go de RAM, 40 Go de disque,
-Debian 12 ou Ubuntu 24.04.
+Une petite VM européenne suffit : 2 vCPU, **4 Go de RAM**, 40 Go de disque,
+Debian 12 ou Ubuntu 24.04. L'antivirus des fichiers déposés (clamd) occupe à
+lui seul environ 1 Go une fois ses signatures chargées : avec 2 Go, la base
+et l'application manqueraient de mémoire.
 
 - **Hetzner Cloud** (Allemagne, Finlande) : le moins cher pour ce gabarit.
 - **Scaleway** (France) : cohérent avec la production prévue (ADR-2).
@@ -25,8 +27,10 @@ création de la VM.
 
 ```
 Internet ──443──> Caddy (TLS, authentification) ──> web ──> Postgres
+                                                    web ──> clamd ──> signatures ClamAV
                                                     worker ──> Postgres
-                                       (réseau interne, sans Internet)
+                                       (réseau interne, sans Internet ;
+                                        clamd seul sort, pour ses mises à jour)
 ```
 
 1. Fusion sur `main` : `.github/workflows/deploy-staging.yml` construit les
@@ -102,3 +106,12 @@ Meridiane Logistics du seed.
   (équivalent root sur une VM dédiée au staging) ; pas de sauvegarde, les
   données sont fictives. La production exigera sauvegardes et test de
   restauration (ADR-9).
+
+## Antivirus
+
+Chaque fichier déposé (preuve, version de document) est analysé par clamd
+avant d'être enregistré. Sans réponse de clamd, le dépôt est refusé avec un
+message explicite : jamais de fichier non analysé en base. `CLAMAV_URL` est
+obligatoire en production (sans elle, l'application refuse de servir) et
+`ANTIVIRUS_DESACTIVE` y est interdit. Au premier démarrage, clamd télécharge
+ses signatures en quelques minutes : les dépôts attendent ce délai.

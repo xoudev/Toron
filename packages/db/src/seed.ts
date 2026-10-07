@@ -1259,7 +1259,7 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         measures: 'Poste isolé dans un VLAN dédié sans accès Internet, ports USB bloqués, mises à jour de l’éditeur contrôlées avant installation chaque trimestre.',
         control: null, asset: null,
         requestedBy: DEMO.userCamille, owner: DEMO.userCamille,
-        startsOn: '2026-03-01', expiresOn: '2026-10-31',
+        startsOn: '2026-03-01', expiresOn: '2026-10-31', requestedAt: '2026-02-20T09:00:00Z',
         status: 'approuvee', decidedBy: DEMO.userClaire, decidedAt: '2026-02-26T10:00:00Z',
         note: 'Accordée jusqu’à la livraison de la version certifiée annoncée par l’éditeur.',
       },
@@ -1271,7 +1271,7 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         measures: 'Compte nominatif ouvert à la demande par le support, plage horaire restreinte, sessions journalisées et revues chaque semaine.',
         control: DEMO.controlMfa, asset: DEMO.assetServeurs,
         requestedBy: DEMO.userClaire, owner: DEMO.userClaire,
-        startsOn: '2026-10-15', expiresOn: '2027-03-31',
+        startsOn: '2026-10-15', expiresOn: '2027-03-31', requestedAt: '2026-10-02T14:20:00Z',
         status: 'demandee', decidedBy: null, decidedAt: null, note: null,
       },
       {
@@ -1282,7 +1282,7 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         measures: 'Copie hebdomadaire externalisée chez l’hébergeur du siège, contrôle mensuel de restauration d’un échantillon.',
         control: DEMO.controlSauvegardes, asset: null,
         requestedBy: DEMO.userClaire, owner: DEMO.userClaire,
-        startsOn: '2026-04-15', expiresOn: '2026-09-30',
+        startsOn: '2026-04-15', expiresOn: '2026-09-30', requestedAt: '2026-04-08T11:00:00Z',
         status: 'approuvee', decidedBy: DEMO.userAntoine, decidedAt: '2026-04-10T16:30:00Z',
         note: 'Accordée le temps du remplacement du NAS ; à clôturer dès sa mise en service.',
       },
@@ -1294,7 +1294,7 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         measures: 'Mot de passe changé chaque mois.',
         control: null, asset: null,
         requestedBy: DEMO.userCamille, owner: DEMO.userCamille,
-        startsOn: '2026-06-15', expiresOn: '2026-12-31',
+        startsOn: '2026-06-15', expiresOn: '2026-12-31', requestedAt: '2026-06-08T08:45:00Z',
         status: 'refusee', decidedBy: DEMO.userClaire, decidedAt: '2026-06-12T09:15:00Z',
         note: 'Le gestionnaire de mots de passe permet un compte nominatif par technicien : pas d’écart justifié.',
       },
@@ -1307,7 +1307,7 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
         VALUES
           (${e.id}, ${DEMO.tenantId}, ${e.title}, ${e.rule}, ${e.justification}, ${e.measures}, ${e.control}, ${e.asset},
            ${e.requestedBy}, ${e.owner}, ${e.startsOn}, ${e.expiresOn}, ${e.status}, ${e.decidedBy}, ${e.decidedAt}, ${e.note},
-           ${e.startsOn}::date - 7)
+           ${e.requestedAt})
         ON CONFLICT (id) DO NOTHING`;
     }
   } finally {

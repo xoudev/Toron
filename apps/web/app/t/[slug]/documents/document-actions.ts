@@ -1,5 +1,7 @@
 'use server';
 
+import { createHash } from 'node:crypto';
+
 import { appError, canManageControls, hardenDocumentHtml, nextSemver } from '@toron/core';
 import {
   acknowledgeDocument,
@@ -26,6 +28,7 @@ import {
   logFailure,
   type ActionResult,
 } from '@/lib/action-guard';
+import { antivirusGate } from '@/lib/antivirus';
 import { appDb } from '@/lib/db';
 
 export type { ActionResult };
@@ -127,6 +130,8 @@ export async function addVersionAction(slug: string, formData: FormData): Promis
 
   try {
     const content = Buffer.from(await file.arrayBuffer());
+    const scan = await antivirusGate(auth, { name: file.name, content, sha256: createHash('sha256').update(content).digest('hex') });
+    if (!scan.ok) return { ok: false, error: scan.error };
     await withTenant(appDb().db, auth.tenantId, async (tx) => {
       const versionId = await addVersion(tx, {
         tenantId: auth.tenantId,
@@ -142,7 +147,7 @@ export async function addVersionAction(slug: string, formData: FormData): Promis
         action: 'document.version_add',
         objectType: 'document_version',
         objectId: versionId,
-        after: { documentId, semver, fileName: file.name },
+        after: { documentId, semver, fileName: file.name, antivirus: scan.antivirus },
         ip: auth.ip,
         userAgent: auth.userAgent,
       });

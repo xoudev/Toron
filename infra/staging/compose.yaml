@@ -47,6 +47,8 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?}
       BETTER_AUTH_URL: https://${STAGING_DOMAIN:?}
       NEXT_TELEMETRY_DISABLED: "1"
+      # Obligatoire en production : sans réponse de clamd, les dépôts sont refusés.
+      CLAMAV_URL: tcp://clamav:3310
     networks: [edge, backend]
     depends_on:
       db:
@@ -79,6 +81,20 @@ services:
     tmpfs:
       - /tmp
     cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  # Antivirus à l'ingestion (clamd), joint par l'application sur le réseau
+  # interne. Un réseau dédié lui laisse télécharger ses signatures (freshclam).
+  # Environ 1 Go de mémoire : prévoir 4 Go de RAM sur le serveur. Capacités
+  # réduites au strict nécessaire au changement d'utilisateur de l'image.
+  clamav:
+    image: clamav/clamav:1.5.4@sha256:ebec5bc138401b36ae987caa1a3fa3c3b2a21ed3d51f0bfa5852825e663e67b0
+    restart: unless-stopped
+    networks: [backend, antivirus]
+    volumes:
+      - clamav-db:/var/lib/clamav
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     security_opt: [no-new-privileges:true]
 
   # Tâche ponctuelle lancée par deployer.sh : migrations puis seed (idempotent)
@@ -127,8 +143,11 @@ networks:
   edge: {}
   backend:
     internal: true
+  # Sortie vers les serveurs de signatures ClamAV, et rien d'autre ne s'y attache.
+  antivirus: {}
 
 volumes:
   pgdata: {}
+  clamav-db: {}
   caddy-data: {}
   caddy-config: {}

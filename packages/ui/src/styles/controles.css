@@ -1,0 +1,242 @@
+/* Contrôles internes et revues d'efficacité (migration 0033). Tokens uniquement. */
+
+.mut-band.ctl-late {
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 30%, var(--border));
+}
+
+.ctl-row--inactive td {
+  opacity: 0.6;
+}
+
+.ctl-result,
+.ctl-state {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--cs, var(--text-2));
+  background: color-mix(in srgb, var(--cs, var(--border)) 13%, transparent);
+}
+.ctl-result--efficace,
+.ctl-state--a_jour {
+  --cs: var(--ok);
+}
+.ctl-result--partiellement_efficace,
+.ctl-state--bientot {
+  --cs: var(--warn);
+}
+.ctl-result--inefficace,
+.ctl-state--en_retard {
+  --cs: var(--danger);
+}
+.ctl-state--sans_frequence {
+  --cs: var(--text-3);
+}
+
+.ctl-due {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.ctl-facts .ctl-due {
+  display: inline;
+}
+.ctl-due--bientot {
+  color: var(--warn);
+  font-weight: 600;
+}
+.ctl-due--en_retard {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.ctl-exceptions {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--warn);
+}
+
+/* ── Tiroir ──────────────────────────────────────────────────────────── */
+.ctl-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+}
+.ctl-text {
+  margin: 4px 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+  white-space: pre-line;
+}
+.ctl-facts {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 12px;
+  font-size: 12.5px;
+}
+.ctl-facts div {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 10px;
+}
+.ctl-facts dt {
+  color: var(--text-3);
+}
+.ctl-facts dd {
+  margin: 0;
+  color: var(--text);
+}
+.ctl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ctl-notice {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+}
+
+.ctl-reviews {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--border);
+  display: grid;
+  gap: 12px;
+}
+.ctl-reviews li {
+  position: relative;
+  font-size: 12.5px;
+}
+.ctl-reviews li::before {
+  content: '';
+  position: absolute;
+  left: -19px;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+.ctl-reviews li.ctl-reviews--efficace::before {
+  background: var(--ok);
+}
+.ctl-reviews li.ctl-reviews--partiellement_efficace::before {
+  background: var(--warn);
+}
+.ctl-reviews li.ctl-reviews--inefficace::before {
+  background: var(--danger);
+}
+.ctl-review-head b {
+  color: var(--text);
+}
+
+.ctl-link {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+.ctl-link:hover {
+  text-decoration: underline;
+}
+.ctl-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 12.5px;
+}
+
+.ctl-coverage + .ctl-coverage {
+  margin-top: 10px;
+}
+.ctl-coverage-fw {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ctl-coverage ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.ctl-coverage .ds-mono {
+  color: var(--text-3);
+  margin-right: 4px;
+}
+
+/* ── Formulaire de revue ─────────────────────────────────────────────── */
+.ctl-review-form {
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+.ctl-result-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 10px;
+  padding: 0;
+  border: 0;
+}
+.ctl-result-picker legend {
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.ctl-result-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.ctl-result-option:has(input:checked) {
+  border-color: var(--ro, var(--accent));
+  background: color-mix(in srgb, var(--ro, var(--accent)) 10%, transparent);
+}
+.ctl-result-option--efficace {
+  --ro: var(--ok);
+}
+.ctl-result-option--partiellement_efficace {
+  --ro: var(--warn);
+}
+.ctl-result-option--inefficace {
+  --ro: var(--danger);
+}
+.ctl-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0 8px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+@media (max-width: 560px) {
+  .ctl-facts div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

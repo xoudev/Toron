@@ -33,9 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     const meta = SEARCH_KIND_META[h.kind];
     const href = h.kind === 'exigence' && h.parentId
       ? `${base}/referentiels/${h.parentId}`
-      : h.kind === 'controle'
-        ? `${base}${meta.path}`
-        : `${base}${meta.path}?ouvrir=${h.id}`;
+      : `${base}${meta.path}?ouvrir=${h.id}`;
     return { kind: h.kind, label: meta.label, code: refCodeFor(h.kind, h.id), title: h.title, detail: h.detail, href };
   });
 

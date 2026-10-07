@@ -52,6 +52,12 @@ export interface ReviewInputs {
   ncInEffectivenessCheck: number;
   risksHigh: number;
   risksTotal: number;
+  /** Traitement décidé sans action engagée. */
+  risksUnplanned: number;
+  /** Actions soldées, risque net à réévaluer. */
+  risksToReassess: number;
+  /** Au moins une action de traitement en retard. */
+  risksPlanLate: number;
   controlsMutualized: number;
   evidencesStale: number;
   documentsReviewOverdue: number;
@@ -59,6 +65,15 @@ export interface ReviewInputs {
 
 function plural(n: number, singular: string, plural_: string): string {
   return `${n} ${n > 1 ? plural_ : singular}`;
+}
+
+function treatmentPlanLine(m: ReviewInputs): string {
+  const parts = [
+    m.risksUnplanned > 0 ? plural(m.risksUnplanned, 'risque sans action engagée', 'risques sans action engagée') : null,
+    m.risksPlanLate > 0 ? plural(m.risksPlanLate, 'risque dont une action est en retard', 'risques dont une action est en retard') : null,
+    m.risksToReassess > 0 ? plural(m.risksToReassess, 'risque à recoter (actions soldées)', 'risques à recoter (actions soldées)') : null,
+  ].filter((p): p is string => p !== null);
+  return parts.length === 0 ? 'chaque décision de traitement a ses actions, dans les temps.' : `${parts.join(', ')}.`;
 }
 
 /**
@@ -133,6 +148,7 @@ export function buildReviewAgenda(m: ReviewInputs): AgendaSection[] {
       summary: `${plural(m.risksHigh, 'risque élevé/critique', 'risques élevés/critiques')} sur ${m.risksTotal}.`,
       bullets: [
         { head: 'Niveau de risque —', body: `${plural(m.risksHigh, 'risque élevé ou critique', 'risques élevés ou critiques')} sur ${plural(m.risksTotal, 'risque identifié', 'risques identifiés')}.`, tone: m.risksHigh > 0 ? 'danger' : 'ok' },
+        { head: 'Plan de traitement —', body: treatmentPlanLine(m), tone: m.risksUnplanned + m.risksPlanLate > 0 ? 'warn' : m.risksToReassess > 0 ? 'muted' : 'ok' },
         { head: 'Opportunité —', body: `mutualisation de ${plural(m.controlsMutualized, 'contrôle', 'contrôles')} entre référentiels — moins d’effort d’audit.`, tone: 'ok' },
       ],
       kpis: [],

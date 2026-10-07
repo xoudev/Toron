@@ -1,6 +1,6 @@
 import {
-  acceptanceNeedsAttention, acceptanceState, riskBand, scoreAssessment, type AssessmentItemStatus, type CoverageScore,
-  type RiskBand,
+  acceptanceNeedsAttention, acceptanceState, riskBand, scoreAssessment, treatmentPlanState, type AssessmentItemStatus, type CoverageScore,
+  type RiskBand, type RiskTreatment, type TreatmentPlanState,
 } from '@toron/core';
 import { sql } from 'drizzle-orm';
 
@@ -21,6 +21,8 @@ export interface DashboardMetrics {
   risksTotal: number;
   risksByBand: Record<RiskBand, number>;
   risksAttention: number;
+  /** Risques par état du plan de traitement (actions issues du risque). */
+  risksByPlan: Record<TreatmentPlanState, number>;
   actionsOpen: number;
   actionsOverdue: number;
   evidencesTotal: number;
@@ -70,9 +72,14 @@ export async function getDashboardMetrics(tx: TenantTx): Promise<DashboardMetric
   const risksByBand: Record<RiskBand, number> = { faible: 0, moyen: 0, eleve: 0, critique: 0 };
   let risksTotal = 0;
   let risksAttention = 0;
+  const risksByPlan: Record<TreatmentPlanState, number> = { sans_objet: 0, cible_atteinte: 0, non_planifie: 0, a_recoter: 0, en_retard: 0, en_cours: 0 };
   if (active) {
     const rows = (await tx.execute(sql`
-      SELECT r.net_g, r.net_v, r.treatment,
+      SELECT r.net_g, r.net_v, r.treatment, r.residual_target,
+        (SELECT count(*) FROM actions a WHERE a.origin_type = 'risk' AND a.origin_id = r.id AND a.status <> 'termine') AS open_actions,
+        (SELECT count(*) FROM actions a WHERE a.origin_type = 'risk' AND a.origin_id = r.id
+           AND a.status IN ('planifie', 'en_cours') AND a.due_date < CURRENT_DATE) AS overdue_actions,
+        (SELECT count(*) FROM actions a WHERE a.origin_type = 'risk' AND a.origin_id = r.id AND a.status = 'termine') AS done_actions,
         (SELECT ra.expires_at::text FROM risk_acceptances ra WHERE ra.risk_id = r.id ORDER BY ra.accepted_at DESC LIMIT 1) AS expires_at,
         (SELECT ra.accepted_at::text FROM risk_acceptances ra WHERE ra.risk_id = r.id ORDER BY ra.accepted_at DESC LIMIT 1) AS accepted_at
       FROM risks r
@@ -80,6 +87,10 @@ export async function getDashboardMetrics(tx: TenantTx): Promise<DashboardMetric
       net_g: number | string;
       net_v: number | string;
       treatment: string;
+      residual_target: RiskBand | null;
+      open_actions: number | string;
+      overdue_actions: number | string;
+      done_actions: number | string;
       expires_at: string | null;
       accepted_at: string | null;
     }[];
@@ -87,9 +98,20 @@ export async function getDashboardMetrics(tx: TenantTx): Promise<DashboardMetric
     for (const r of rows) {
       const band = riskBand(Number(r.net_g), Number(r.net_v), active.scale);
       if (band) risksByBand[band] += 1;
+      const treatment = r.treatment as RiskTreatment;
+      risksByPlan[
+        treatmentPlanState({
+          treatment,
+          netBand: band,
+          residualTarget: r.residual_target,
+          openActions: Number(r.open_actions),
+          overdueActions: Number(r.overdue_actions),
+          doneActions: Number(r.done_actions),
+        })
+      ] += 1;
       const state = acceptanceState(
         {
-          treatment: r.treatment as 'reduire' | 'transferer' | 'accepter' | 'eviter',
+          treatment,
           acceptance: r.accepted_at
             ? { acceptedAt: new Date(r.accepted_at), expiresAt: r.expires_at ? new Date(r.expires_at) : null }
             : null,
@@ -112,6 +134,7 @@ export async function getDashboardMetrics(tx: TenantTx): Promise<DashboardMetric
     risksTotal,
     risksByBand,
     risksAttention,
+    risksByPlan,
     actionsOpen: Number(raw!.actions_open),
     actionsOverdue: Number(raw!.actions_overdue),
     evidencesTotal: Number(raw!.evidences_total),

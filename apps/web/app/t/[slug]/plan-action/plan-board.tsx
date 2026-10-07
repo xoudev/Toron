@@ -33,6 +33,10 @@ const PRIORITY_LABEL: Record<string, string> = { p1: 'P1', p2: 'P2', p3: 'P3' };
 const ORIGIN_LABEL: Record<string, string> = {
   risk: 'Risque', assessment: 'Écart', nc: 'NC', finding: 'Constat', incident: 'Incident', review: 'Revue', manual: 'Manuel', supplier: 'Fournisseur',
 };
+/** Écran qui sait ouvrir l'objet d'origine (`?ouvrir=`), pour revenir à la source d'une action. */
+const ORIGIN_SCREEN: Partial<Record<string, string>> = {
+  risk: 'risques', supplier: 'fournisseurs', nc: 'non-conformites',
+};
 
 function fmtDate(d: string | null): string {
   if (!d) return '—';
@@ -284,7 +288,13 @@ function ActionDrawer({ slug, members, action, canManage, onClose }: { slug: str
     <>
       <span className="ds-id" id="act-drawer-title">{refCode('ACT', action.id)}</span>
       <StatusTag status={action.effectiveStatus} />
-      <span className="ds-chip">{ORIGIN_LABEL[action.originType] ?? action.originType}</span>
+      {action.originId && ORIGIN_SCREEN[action.originType] ? (
+        <a className="ds-chip" href={`/t/${slug}/${ORIGIN_SCREEN[action.originType]}?ouvrir=${action.originId}`} title="Ouvrir l’origine de cette action">
+          {ORIGIN_LABEL[action.originType] ?? action.originType} ↗
+        </a>
+      ) : (
+        <span className="ds-chip">{ORIGIN_LABEL[action.originType] ?? action.originType}</span>
+      )}
     </>
   );
 

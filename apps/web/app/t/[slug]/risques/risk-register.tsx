@@ -1,19 +1,21 @@
 'use client';
 
-import type { RiskBand } from '@toron/core';
-import type { RiskSummary, ScopeSummary, TenantMember } from '@toron/db';
+import { treatmentActionPriority, treatmentPlanNeedsAttention, type ActionEffectiveStatus, type RiskBand, type TreatmentPlanState } from '@toron/core';
+import type { ActionSummary, RiskSummary, ScopeSummary, TenantMember } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 
-import { initials, refCode } from '@/lib/format';
+import { initials, refCode, todayParis } from '@/lib/format';
 import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   acceptRiskAction,
   createRiskAction,
+  getRiskActionsAction,
   getRiskControlsAction,
+  planRiskActionAction,
   rateRiskAction,
   saveRiskDetailsAction,
   toggleRiskControlAction,
@@ -39,6 +41,26 @@ const TREATMENT_LABEL: Record<string, string> = {
   accepter: 'Accepter',
   eviter: 'Éviter',
 };
+const PLAN_LABEL: Record<TreatmentPlanState, string> = {
+  sans_objet: 'Suivi par l’acceptation',
+  cible_atteinte: 'Cible atteinte',
+  non_planifie: 'Traitement non planifié',
+  a_recoter: 'À recoter',
+  en_retard: 'Plan en retard',
+  en_cours: 'Plan en cours',
+};
+const ACTION_STATUS_LABEL: Record<ActionEffectiveStatus, string> = {
+  planifie: 'Planifiée',
+  en_cours: 'En cours',
+  en_retard: 'En retard',
+  verification: 'Vérification',
+  termine: 'Terminée',
+};
+const PLAN_FACET_LABEL = { non_planifie: 'Sans action planifiée', a_recoter: 'Actions soldées, à recoter', en_retard: 'Actions en retard' } as const;
+type Facet =
+  | { kind: 'band'; value: RiskBand }
+  | { kind: 'treatment'; value: string }
+  | { kind: 'plan'; value: TreatmentPlanState };
 
 function fmtDate(d: string | null): string {
   if (!d) return '—';
@@ -74,7 +96,7 @@ export function RiskRegister({
   members: TenantMember[];
 }) {
   const [filter, setFilter] = useState<{ g: number; v: number } | null>(null);
-  const [facet, setFacet] = useState<{ kind: 'band'; value: RiskBand } | { kind: 'treatment'; value: string } | null>(null);
+  const [facet, setFacet] = useState<Facet | null>(null);
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useOpenItem(risks.map((x) => x.id));
@@ -89,6 +111,7 @@ export function RiskRegister({
     if (filter) list = list.filter((r) => r.netG === filter.g && r.netV === filter.v);
     if (facet?.kind === 'band') list = list.filter((r) => r.netBand === facet.value);
     if (facet?.kind === 'treatment') list = list.filter((r) => r.treatment === facet.value);
+    if (facet?.kind === 'plan') list = list.filter((r) => r.treatmentPlan === facet.value);
     const q = query.trim().toLowerCase();
     if (q) {
       list = list.filter(
@@ -105,8 +128,10 @@ export function RiskRegister({
   const BANDS: RiskBand[] = ['critique', 'eleve', 'moyen', 'faible'];
   const bandCounts = BANDS.map((b) => ({ band: b, n: risks.filter((r) => r.netBand === b).length }));
   const treatments = Object.keys(TREATMENT_LABEL).map((t) => ({ t, n: risks.filter((r) => r.treatment === t).length })).filter((x) => x.n > 0);
-  const toggleFacet = (f: { kind: 'band'; value: RiskBand } | { kind: 'treatment'; value: string }) =>
+  const planAlerts = (['non_planifie', 'a_recoter', 'en_retard'] as const).map((p) => ({ p, n: risks.filter((r) => r.treatmentPlan === p).length }));
+  const toggleFacet = (f: Facet) =>
     setFacet((cur) => (cur && cur.kind === f.kind && cur.value === f.value ? null : f));
+  const facetLabel = facet?.kind === 'band' ? BAND_LABEL[facet.value] : facet?.kind === 'treatment' ? TREATMENT_LABEL[facet.value] : facet?.kind === 'plan' ? PLAN_LABEL[facet.value] : '';
   const open = openId ? risks.find((r) => r.id === openId) ?? null : null;
 
   return (
@@ -139,7 +164,7 @@ export function RiskRegister({
           <span className="drawer-section-label" style={{ margin: 0 }}>Matrice · cotation nette (G × V)</span>
           {filter || facet ? (
             <button className="ds-chip accent" onClick={() => { setFilter(null); setFacet(null); }}>
-              Filtre {filter ? `G${filter.g}×V${filter.v}` : ''}{filter && facet ? ' · ' : ''}{facet?.kind === 'band' ? BAND_LABEL[facet.value] : facet?.kind === 'treatment' ? TREATMENT_LABEL[facet.value] : ''} — réinitialiser
+              Filtre {filter ? `G${filter.g}×V${filter.v}` : ''}{filter && facet ? ' · ' : ''}{facetLabel} — réinitialiser
             </button>
           ) : (
             <span className="ds-mono" style={{ marginLeft: 'auto' }}>CLIQUEZ UNE CASE OU UN NIVEAU POUR FILTRER</span>
@@ -190,6 +215,17 @@ export function RiskRegister({
               </ul>
             </>
           ) : null}
+          <p className="drawer-section-label" style={{ marginTop: 12 }}>Plan de traitement</p>
+          <ul className="risk-facets">
+            {planAlerts.map(({ p, n }) => (
+              <li key={p}>
+                <button type="button" aria-pressed={facet?.kind === 'plan' && facet.value === p} disabled={n === 0} onClick={() => toggleFacet({ kind: 'plan', value: p })}>
+                  <span className="grow">{PLAN_FACET_LABEL[p]}</span>
+                  <b className="mono">{n}</b>
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
         </div>
       </div>
@@ -226,6 +262,9 @@ export function RiskRegister({
                         <span className="ds-accept-badge pending">ACCEPTATION EN ATTENTE</span>
                       ) : r.acceptanceState === 'expiree' ? (
                         <span className="ds-accept-badge pending">REVALIDATION REQUISE</span>
+                      ) : null}
+                      {treatmentPlanNeedsAttention(r.treatmentPlan) ? (
+                        <span className="ds-accept-badge pending">{r.treatmentPlan === 'en_retard' ? 'PLAN EN RETARD' : r.treatmentPlan === 'a_recoter' ? 'À RECOTER' : 'TRAITEMENT À PLANIFIER'}</span>
                       ) : null}
                     </td>
                     <td className="ds-muted">{r.businessValue ?? '—'}</td>
@@ -396,6 +435,7 @@ function RiskDrawer({
         </div>
       </div>
 
+      <TreatmentPlan slug={slug} risk={risk} members={members} canManage={canManage} />
       <AcceptanceSection slug={slug} risk={risk} canManage={canManage} onDone={() => router.refresh()} />
       <ControlLinks slug={slug} riskId={risk.id} controls={controls} canManage={canManage} />
       {error ? <p className="form-error" role="alert">{error}</p> : null}
@@ -524,6 +564,120 @@ function AcceptanceSection({ slug, risk, canManage, onDone }: { slug: string; ri
         </form>
       ) : (
         <button className="btn btn-ghost btn-sm" style={{ marginTop: 8 }} onClick={() => setOpen(true)}>{signed ? 'Revalider l’acceptation' : 'Signer l’acceptation'}</button>
+      )) : null}
+    </div>
+  );
+}
+
+function planSummary(risk: RiskSummary): string {
+  const n = risk.openActionCount;
+  const open = `${n} action${n > 1 ? 's' : ''} ouverte${n > 1 ? 's' : ''}`;
+  switch (risk.treatmentPlan) {
+    case 'non_planifie':
+      return `Décision « ${TREATMENT_LABEL[risk.treatment] ?? risk.treatment} » sans action ouverte${risk.residualTarget ? ` — planifiez de quoi ramener le risque au niveau ${BAND_LABEL[risk.residualTarget].toLowerCase()}.` : ' — planifiez au moins une action.'}`;
+    case 'a_recoter':
+      return 'Toutes les actions sont terminées — recotez le risque net pour constater leur effet, ou planifiez une action complémentaire.';
+    case 'en_retard':
+      return `${open}, dont ${risk.overdueActionCount} en retard.`;
+    case 'en_cours':
+      return `${open}, dans les temps.`;
+    case 'cible_atteinte':
+      return 'Le risque net est au niveau visé — aucune action ouverte.';
+    case 'sans_objet':
+      return 'Risque accepté : le suivi passe par l’acceptation formelle.';
+  }
+}
+
+function TreatmentPlan({ slug, risk, members, canManage }: { slug: string; risk: RiskSummary; members: TenantMember[]; canManage: boolean }) {
+  const router = useRouter();
+  const [actions, setActions] = useState<ActionSummary[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  // Les compteurs du risque changent après chaque planification : on relit la liste.
+  useEffect(() => {
+    let alive = true;
+    getRiskActionsAction(slug, risk.id).then((res) => {
+      if (!alive) return;
+      if (res.ok) setActions(res.data);
+      else setLoadError(res.error.message);
+    });
+    return () => { alive = false; };
+  }, [slug, risk.id, risk.openActionCount, risk.overdueActionCount]);
+
+  function submit(fd: FormData, form: HTMLFormElement) {
+    setError(null);
+    start(async () => {
+      const res = await planRiskActionAction(slug, {
+        riskId: risk.id,
+        title: String(fd.get('title') ?? ''),
+        ownerUserId: String(fd.get('ownerUserId') ?? '') || null,
+        dueDate: String(fd.get('dueDate') ?? ''),
+        priority: String(fd.get('priority') ?? 'p2'),
+      });
+      if (res.ok) {
+        form.reset();
+        setAdding(false);
+        router.refresh();
+      } else setError(res.error.message);
+    });
+  }
+
+  const alert = treatmentPlanNeedsAttention(risk.treatmentPlan);
+  return (
+    <div className="drawer-section">
+      <p className="drawer-section-label">Plan de traitement</p>
+      <div className={`risk-plan-state${alert ? ' warn' : ''}`}>
+        <b>{PLAN_LABEL[risk.treatmentPlan]}</b> — {planSummary(risk)}
+      </div>
+      {loadError ? <p className="form-error" role="alert">{loadError}</p> : null}
+      {actions === null && !loadError ? <p className="risk-mut-hint">Chargement…</p> : null}
+      {actions && actions.length > 0 ? (
+        <ul className="risk-plan-list">
+          {actions.map((a) => (
+            <li key={a.id}>
+              <span className="grow">
+                <a href={`/t/${slug}/plan-action?ouvrir=${a.id}`}>{a.title}</a>
+                <small>{refCode('ACT', a.id)} · {a.ownerName ?? 'non attribuée'} · échéance {fmtDate(a.dueDate)}</small>
+              </span>
+              <span className={`status-tag st--${a.effectiveStatus}`}>{ACTION_STATUS_LABEL[a.effectiveStatus]}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {canManage ? (adding ? (
+        <form onSubmit={keepValues(submit)} className="risk-plan-form">
+          <label className="field">Action à mener
+            <input name="title" minLength={3} maxLength={200} required placeholder="Ex. : tester la restauration des sauvegardes chaque trimestre" />
+          </label>
+          <div className="risk-form-grid">
+            <label className="field">Responsable
+              <select name="ownerUserId" defaultValue={risk.ownerUserId ?? ''}>
+                <option value="">— Vous-même —</option>
+                {members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}
+              </select>
+            </label>
+            <label className="field">Échéance
+              <input type="date" name="dueDate" min={todayParis()} required />
+            </label>
+            <label className="field">Priorité
+              <select name="priority" defaultValue={treatmentActionPriority(risk.netBand)}>
+                <option value="p1">P1 — urgente</option>
+                <option value="p2">P2 — normale</option>
+                <option value="p3">P3 — différable</option>
+              </select>
+            </label>
+          </div>
+          {error ? <p className="form-error" role="alert">{error}</p> : null}
+          <div className="dialog-actions">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setAdding(false); setError(null); }}>Annuler</button>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Planification…' : 'Planifier l’action'}</button>
+          </div>
+        </form>
+      ) : (
+        <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 8 }} onClick={() => setAdding(true)}>+ Planifier une action</button>
       )) : null}
     </div>
   );

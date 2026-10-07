@@ -93,3 +93,57 @@ export function acceptanceState(input: AcceptanceInput, now: Date): AcceptanceSt
 export function acceptanceNeedsAttention(state: AcceptanceState): boolean {
   return state === 'en_attente' || state === 'expiree';
 }
+
+export const TREATMENT_PLAN_STATES = ['sans_objet', 'cible_atteinte', 'non_planifie', 'a_recoter', 'en_retard', 'en_cours'] as const;
+export type TreatmentPlanState = (typeof TREATMENT_PLAN_STATES)[number];
+
+export interface TreatmentPlanInput {
+  treatment: RiskTreatment;
+  netBand: RiskBand | null;
+  residualTarget: RiskBand | null;
+  /** Actions issues du risque non terminées (planifiées, en cours, en vérification). */
+  openActions: number;
+  /** Parmi elles, celles dont l'échéance est dépassée. */
+  overdueActions: number;
+  /** Actions issues du risque déjà terminées. */
+  doneActions: number;
+}
+
+/**
+ * Où en est le traitement d'un risque (RM §5.4 → §5.5).
+ *
+ * - « accepter » : le suivi passe par l'acceptation signée ⇒ `sans_objet`.
+ * - Risque net déjà au niveau de la cible (ou en dessous) sans action ouverte ⇒ `cible_atteinte`.
+ * - Actions toutes terminées mais cible non atteinte ⇒ `a_recoter` : le risque net
+ *   doit être réévalué pour constater l'effet du traitement.
+ * - Réduire / transférer / éviter sans aucune action ⇒ `non_planifie` :
+ *   la décision de traitement n'a pas de traduction concrète.
+ * - Au moins une action ouverte en retard ⇒ `en_retard`, sinon `en_cours`.
+ */
+export function treatmentPlanState(input: TreatmentPlanInput): TreatmentPlanState {
+  if (input.treatment === 'accepter') return 'sans_objet';
+  if (input.openActions === 0) {
+    const reached =
+      input.netBand !== null &&
+      input.residualTarget !== null &&
+      bandRank(input.netBand) <= bandRank(input.residualTarget);
+    if (reached) return 'cible_atteinte';
+    return input.doneActions > 0 ? 'a_recoter' : 'non_planifie';
+  }
+  return input.overdueActions > 0 ? 'en_retard' : 'en_cours';
+}
+
+/** true si le plan de traitement doit être remonté (rien de planifié ou du retard). */
+export function treatmentPlanNeedsAttention(state: TreatmentPlanState): boolean {
+  return state === 'non_planifie' || state === 'a_recoter' || state === 'en_retard';
+}
+
+/**
+ * Priorité proposée pour une action de traitement, selon le niveau net du
+ * risque : un risque critique ou élevé ne se traite pas en P3.
+ */
+export function treatmentActionPriority(netBand: RiskBand | null): 'p1' | 'p2' | 'p3' {
+  if (netBand === 'critique' || netBand === 'eleve') return 'p1';
+  if (netBand === 'faible') return 'p3';
+  return 'p2';
+}

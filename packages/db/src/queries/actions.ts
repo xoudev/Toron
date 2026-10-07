@@ -102,6 +102,8 @@ export interface ActionFilter {
   status?: ActionStatus;
   ownerUserId?: string;
   originType?: ActionOrigin;
+  /** Objet d'origine (risque, fournisseur…) : à combiner avec originType. */
+  originId?: string;
 }
 
 /** Liste les actions du tenant avec compteurs et statut effectif (retard dérivé). */
@@ -110,6 +112,7 @@ export async function listActions(tx: TenantTx, filter?: ActionFilter): Promise<
   if (filter?.status) conds.push(sql`a.status = ${filter.status}`);
   if (filter?.ownerUserId) conds.push(sql`a.owner_user_id = ${filter.ownerUserId}`);
   if (filter?.originType) conds.push(sql`a.origin_type = ${filter.originType}`);
+  if (filter?.originId) conds.push(sql`a.origin_id = ${filter.originId}`);
   const where = conds.length > 0 ? sql`WHERE ${sql.join(conds, sql` AND `)}` : sql``;
 
   const rows = await tx.execute(sql`

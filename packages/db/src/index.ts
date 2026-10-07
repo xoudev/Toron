@@ -90,6 +90,7 @@ export {
   unlinkRiskControl,
   listRiskControlIds,
   listRiskHistory,
+  getRiskRef,
   type StoredScale,
   type CreateRiskInput,
   type UpdateRiskRatingInput,
@@ -97,9 +98,10 @@ export {
   type RiskSummary,
   type AcceptRiskInput,
   type RiskHistoryRow,
+  type RiskRef,
 } from './queries/risks.ts';
 export {
-  listTenantMembers, listTenantMemberDetails, getMembership, countOwners, updateMemberRole, removeMember,
+  listTenantMembers, listTenantMemberDetails, isTenantMember, getMembership, countOwners, updateMemberRole, removeMember,
   type TenantMember, type TenantMemberDetail,
 } from './queries/members.ts';
 export { listAuditLog, countAuditLog, type AuditRow } from './queries/audit.ts';

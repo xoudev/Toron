@@ -39,6 +39,12 @@ export async function listTenantMembers(tx: TenantTx): Promise<TenantMember[]> {
   }));
 }
 
+/** true si l'utilisateur est membre du tenant courant (RLS sur memberships). */
+export async function isTenantMember(tx: TenantTx, userId: string): Promise<boolean> {
+  const rows = await tx.execute(sql`SELECT 1 FROM memberships WHERE user_id = ${userId}`);
+  return (rows as unknown as unknown[]).length > 0;
+}
+
 /** Vue administration : adresse, double authentification, ancienneté. */
 export async function listTenantMemberDetails(tx: TenantTx): Promise<TenantMemberDetail[]> {
   const rows = await tx.select({

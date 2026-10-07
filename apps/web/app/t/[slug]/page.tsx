@@ -1,8 +1,9 @@
 import { canManageControls, onboardingProgress, onboardingSteps, type OptionalModule } from '@toron/core';
-import { getDashboardExtras, getDashboardMetrics, getFrameworkCoverage, listProcesses, withTenant } from '@toron/db';
+import { getDashboardExtras, getDashboardMetrics, getFrameworkCoverage, listControlLibrary, listExceptions, listProcesses, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 
 import { appDb } from '@/lib/db';
+import { todayParis } from '@/lib/format';
 import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
@@ -53,16 +54,24 @@ export default async function TenantAccueilPage({
     );
   }
 
-  const { m, x, coverage, processesAlert } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
+  const overview = await getOrganisationOverview(ctx.tenantId);
+  const today = todayParis();
+  const { m, x, coverage, processesAlert, controls, exceptions } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
     const procs = await listProcesses(tx);
     return {
       m: await getDashboardMetrics(tx),
       x: await getDashboardExtras(tx),
       coverage: await getFrameworkCoverage(tx),
       processesAlert: procs.filter((p) => p.health === 'en_alerte').length,
+      controls: (await listControlLibrary(tx, today)).filter((c) => c.status === 'actif'),
+      exceptions: overview.enabled('derogations') ? await listExceptions(tx, today) : [],
     };
   });
-  const overview = await getOrganisationOverview(ctx.tenantId);
+  // Efficacité des contrôles et dérogations : ce qui n'est plus démontré ou plus couvert.
+  const controlsLate = controls.filter((c) => c.reviewState === 'en_retard').length;
+  const controlsIneffective = controls.filter((c) => c.lastResult === 'inefficace').length;
+  const exceptionsPending = exceptions.filter((e) => e.state === 'en_attente').length;
+  const exceptionsLapsed = exceptions.filter((e) => e.state === 'echue').length;
   const base = `/t/${slug}`;
   const steps = onboardingSteps({
     scopes: x.scopesTotal, frameworksActive: m.frameworksActive, members: x.membersTotal,
@@ -81,7 +90,11 @@ export default async function TenantAccueilPage({
   const priorities: { n: number; one: string; many: string; href: string; tone: 'danger' | 'warn'; module?: OptionalModule }[] = [
     { n: m.actionsOverdue, one: 'action en retard', many: 'actions en retard', href: `${base}/plan-action?statut=en_retard`, tone: 'danger' as const },
     { n: x.incidentsOpen, one: 'incident en cours (échéances NIS 2)', many: 'incidents en cours (échéances NIS 2)', href: `${base}/incidents`, tone: 'danger' as const, module: 'incidents' as const },
+    { n: controlsIneffective, one: 'contrôle jugé inefficace', many: 'contrôles jugés inefficaces', href: `${base}/controles`, tone: 'danger' as const },
+    { n: exceptionsLapsed, one: 'dérogation échue sans clôture', many: 'dérogations échues sans clôture', href: `${base}/derogations`, tone: 'danger' as const, module: 'derogations' as const },
     { n: x.ncOpen, one: 'non-conformité ouverte', many: 'non-conformités ouvertes', href: `${base}/non-conformites`, tone: 'warn' as const, module: 'non_conformites' as const },
+    { n: controlsLate, one: 'contrôle en retard de revue', many: 'contrôles en retard de revue', href: `${base}/controles`, tone: 'warn' as const },
+    { n: exceptionsPending, one: 'demande de dérogation à trancher', many: 'demandes de dérogation à trancher', href: `${base}/derogations`, tone: 'warn' as const, module: 'derogations' as const },
     { n: m.risksAttention, one: 'acceptation de risque à traiter', many: 'acceptations de risque à traiter', href: `${base}/risques`, tone: 'warn' as const, module: 'risques' as const },
     { n: m.evidencesStale, one: 'preuve à renouveler', many: 'preuves à renouveler', href: `${base}/preuves`, tone: 'warn' as const },
     { n: m.documentsReviewOverdue, one: 'document à revoir', many: 'documents à revoir', href: `${base}/documents`, tone: 'warn' as const },
@@ -145,10 +158,18 @@ export default async function TenantAccueilPage({
             </span>
           </a>
 
-          <a className="card kpi" href={`${base}/referentiels`}>
+          <a className={`card kpi ${controlsIneffective > 0 ? 'kpi--danger' : controlsLate > 0 ? 'kpi--warn' : ''}`} href={`${base}/controles`}>
             <span className="kpi-label">Contrôles</span>
             <span className="kpi-value">{m.controlsTotal}</span>
-            <span className="kpi-sub">{m.controlsTotal === 0 ? 'Aucun contrôle décrit' : `${m.controlsMutualized} mutualisé${m.controlsMutualized > 1 ? 's' : ''} — prouvé${m.controlsMutualized > 1 ? 's' : ''} une fois`}</span>
+            <span className={`kpi-sub${controlsIneffective + controlsLate > 0 ? ' alert' : ''}`}>
+              {m.controlsTotal === 0
+                ? 'Aucun contrôle décrit'
+                : controlsIneffective > 0
+                  ? `${controlsIneffective} jugé${controlsIneffective > 1 ? 's' : ''} inefficace${controlsIneffective > 1 ? 's' : ''}`
+                  : controlsLate > 0
+                    ? `${controlsLate} en retard de revue`
+                    : `${m.controlsMutualized} mutualisé${m.controlsMutualized > 1 ? 's' : ''} — prouvé${m.controlsMutualized > 1 ? 's' : ''} une fois`}
+            </span>
           </a>
 
           {on('risques') ? (

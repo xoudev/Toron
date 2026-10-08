@@ -99,6 +99,8 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
       FROM suppliers s
       LEFT JOIN LATERAL (
         SELECT v.due, v.reason FROM (VALUES
+          -- Réponse reçue par le portail : à examiner dès le jour de l'envoi.
+          ((SELECT min(r.submitted_at)::date FROM supplier_requests r WHERE r.supplier_id = s.id AND r.status = 'soumise'), 'reponse'),
           (s.next_review, 'revue'),
           ((SELECT min(t.valid_until) FROM supplier_attestations t WHERE t.supplier_id = s.id), 'attestation'),
           ((SELECT (max(sa.assessed_on) + make_interval(months => CASE s.tier
@@ -189,7 +191,7 @@ function detailFor(r: Row): string {
     case 'preuve': return 'Renouvellement de la preuve';
     case 'document': return 'Revue documentaire';
     case 'audit': return r.detail === 'en_cours' ? 'Audit en cours' : 'Audit à conduire';
-    case 'fournisseur': return r.detail === 'attestation' ? 'Attestation à renouveler' : r.detail === 'evaluation' ? 'Évaluation à refaire' : 'Revue du fournisseur';
+    case 'fournisseur': return r.detail === 'reponse' ? 'Réponse du fournisseur à examiner' : r.detail === 'attestation' ? 'Attestation à renouveler' : r.detail === 'evaluation' ? 'Évaluation à refaire' : 'Revue du fournisseur';
     case 'obligation': return r.detail === 'a_evaluer' ? 'Obligation à évaluer' : 'Obligation en cours de mise en conformité';
     case 'traitement': return r.due ? 'Révision annuelle de la fiche' : 'Fiche de traitement à relire';
     case 'controle': return r.due === null ? 'Contrôle sous votre responsabilité' : r.detail === 'premiere' ? 'Première revue d’efficacité à réaliser' : 'Revue d’efficacité à réaliser';

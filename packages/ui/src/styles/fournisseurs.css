@@ -327,3 +327,195 @@
     flex-basis: 100%;
   }
 }
+
+/* ── Portail de réponse fournisseur (page publique, hors shell) ──────── */
+.portal-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 20px 0;
+  display: grid;
+  gap: 20px;
+}
+.portal-head {
+  display: grid;
+  gap: 10px;
+}
+.portal-head h1 {
+  margin-top: 6px;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.portal-head p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.portal-head p b {
+  color: var(--text);
+  font-weight: 600;
+}
+.portal-message {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-line;
+}
+.portal-message span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.portal-head .portal-hint {
+  font-size: 12.5px;
+}
+.portal-form {
+  display: grid;
+  gap: 4px;
+}
+.portal-theme {
+  margin: 18px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.portal-question {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+}
+.portal-question.is-answered {
+  border-color: color-mix(in srgb, var(--ok) 30%, var(--border));
+}
+.portal-question legend {
+  float: left;
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.portal-num {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+}
+.portal-question.is-answered .portal-num {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
+}
+.portal-question .sup-answers {
+  clear: both;
+  flex-wrap: wrap;
+}
+.portal-add-comment {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--accent-strong);
+  cursor: pointer;
+}
+.portal-add-comment:hover,
+.portal-add-comment:focus-visible {
+  text-decoration: underline;
+}
+.portal-comment {
+  margin: 0;
+}
+.portal-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 12px -20px 0;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.portal-bar .spacer {
+  flex: 1;
+}
+.portal-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.portal-progress-track {
+  width: 90px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.portal-progress-track span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}
+.portal-saved {
+  font-size: 12.5px;
+  color: var(--ok);
+}
+.portal-confirm {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.portal-foot {
+  padding: 8px 0 28px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+@media (max-width: 560px) {
+  .portal-page {
+    padding: 20px 16px 0;
+  }
+  .portal-bar {
+    margin: 12px -16px 0;
+    padding: 10px 16px;
+  }
+  .portal-bar .spacer {
+    display: none;
+  }
+  .portal-progress,
+  .portal-bar [role='alert'],
+  .portal-bar [role='status'],
+  .portal-confirm {
+    flex-basis: 100%;
+  }
+  .portal-bar .btn {
+    flex: 1;
+    justify-content: center;
+  }
+}

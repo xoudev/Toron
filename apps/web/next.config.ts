@@ -19,6 +19,13 @@ const nextConfig: NextConfig = {
   // Les paquets internes sont consommés en source TypeScript
   transpilePackages: ['@toron/core', '@toron/db', '@toron/ui', '@toron/frameworks'],
   poweredByHeader: false,
+  // Pas de trace des appels d'actions serveur, dont les arguments peuvent
+  // porter un jeton ou des données personnelles, ni des chemins qui portent
+  // un jeton (portail fournisseur, invitations).
+  logging: {
+    serverFunctions: false,
+    incomingRequests: { ignore: [/^\/fournisseur\//, /^\/invitations\//] },
+  },
   async headers() {
     return [{ source: '/:path*', headers: HARDENED_HEADERS }];
   },

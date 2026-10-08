@@ -109,7 +109,8 @@ describe('demandes de réponse', () => {
     const { id, token } = await request();
     const found = await resolvePortalRequest(app.db, token);
     expect(found).toMatchObject({
-      tenantId: T, requestId: id, organisationName: 'Meridiane Logistics', supplierId: DEMO.supplierTransporteur,
+      tenantId: T, requestId: id, organisationName: 'Meridiane Logistics', organisationSlug: 'meridiane-logistics',
+      supplierId: DEMO.supplierTransporteur,
       supplierName: 'Transporteur régional', status: 'envoyee',
     });
     expect(await resolvePortalRequest(app.db, `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`)).toBeNull();

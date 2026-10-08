@@ -60,6 +60,7 @@ export function proxy(req: NextRequest): NextResponse {
   const rule =
     pathname.startsWith('/api/auth') ? { bucket: 'auth', limit: 20, windowMs: 60_000 } :
     pathname.startsWith('/verifier') ? { bucket: 'verify', limit: 60, windowMs: 60_000 } :
+    pathname.startsWith('/fournisseur/') ? { bucket: 'portal', limit: 60, windowMs: 60_000 } :
     null;
   if (rule && rateLimited(`${rule.bucket}:${ip}`, rule.limit, rule.windowMs, now)) {
     return new NextResponse('Trop de requêtes — réessayez dans une minute.', {

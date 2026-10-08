@@ -1,8 +1,11 @@
 import 'server-only';
 
 import {
+  ACTIVITY_CONTINUITY_STATE_LABEL,
   CONTROL_REVIEW_RESULT_LABEL,
   CONTROL_REVIEW_STATE_LABEL,
+  CRITICALITY_LABEL,
+  EXERCISE_RESULT_LABEL,
   EXCEPTION_STATE_LABEL,
   LEGAL_BASIS_LABEL,
   OBLIGATION_REGIME_LABEL,
@@ -17,7 +20,7 @@ import {
 } from '@toron/core';
 import {
   listActions, listAssets, listControlLibrary, listDocuments, listEvidences, listExceptions, listIncidents, listNc, listRisks,
-  listObligations, listProcessing, listSuppliers, listTrainingSessions, type TenantTx,
+  listContinuityActivities, listObligations, listProcessing, listSuppliers, listTrainingSessions, type TenantTx,
 } from '@toron/db';
 
 import { todayParis } from '@/lib/format';
@@ -31,7 +34,7 @@ const ACCEPTANCE: Record<string, string> = { non_requise: 'Non requise', en_atte
 const TREATMENT_PLAN: Record<string, string> = { sans_objet: 'Sans objet (acceptation)', cible_atteinte: 'Cible atteinte', non_planifie: 'Non planifié', a_recoter: 'À recoter', en_retard: 'En retard', en_cours: 'En cours' };
 const ACTION_STATUS: Record<string, string> = { planifie: 'Planifiée', en_cours: 'En cours', verification: 'Vérification', termine: 'Terminée', en_retard: 'En retard' };
 const PRIORITY: Record<string, string> = { p1: 'P1 — haute', p2: 'P2 — moyenne', p3: 'P3 — basse' };
-const ORIGIN: Record<string, string> = { risk: 'Risque', finding: 'Constat d’audit', incident: 'Incident', nc: 'Non-conformité', assessment: 'Évaluation', review: 'Revue de direction', manual: 'Manuel', supplier: 'Fournisseur', control: 'Revue de contrôle' };
+const ORIGIN: Record<string, string> = { risk: 'Risque', finding: 'Constat d’audit', incident: 'Incident', nc: 'Non-conformité', assessment: 'Évaluation', review: 'Revue de direction', manual: 'Manuel', supplier: 'Fournisseur', control: 'Revue de contrôle', exercise: 'Exercice de continuité' };
 const TIER: Record<string, string> = { t1: 'T1 — critique', t2: 'T2', t3: 'T3' };
 const CONTRACT: Record<string, string> = { a_faire: 'À faire', en_cours: 'En cours', conforme: 'Conforme' };
 const SEVERITY: Record<string, string> = { mineur: 'Mineur', majeur: 'Majeur', critique: 'Critique' };
@@ -296,6 +299,29 @@ export const REGISTER_EXPORTS = {
       { header: 'Intervenant', value: (r) => r.provider },
       { header: 'Feuille d’émargement', value: (r) => r.evidenceTitle },
       { header: 'Notes', value: (r) => r.notes },
+    ],
+  }),
+  continuite: register({
+    title: 'Bilan d’impact des activités critiques',
+    load: (tx) => listContinuityActivities(tx, todayParis()),
+    columns: [
+      { header: 'Activité', value: (r) => r.name },
+      { header: 'Criticité', value: (r) => CRITICALITY_LABEL[r.criticality] },
+      { header: 'DMIA (heures)', value: (r) => r.rtoHours },
+      { header: 'PDMA (heures)', value: (r) => r.rpoHours },
+      { header: 'Responsable', value: (r) => r.ownerName },
+      { header: 'Processus', value: (r) => r.processName },
+      { header: 'Actifs', value: (r) => r.assets.map((a) => a.name).join(', ') },
+      { header: 'Fournisseurs', value: (r) => r.suppliers.map((s) => s.name).join(', ') },
+      { header: 'Mode dégradé', value: (r) => r.degradedMode },
+      { header: 'Plan de continuité', value: (r) => r.planDocumentTitle },
+      { header: 'Bilan d’impact du', value: (r) => r.assessedOn },
+      { header: 'À revoir avant', value: (r) => r.biaDueOn },
+      { header: 'Dernier exercice', value: (r) => r.lastExercise?.heldOn ?? null },
+      { header: 'Résultat', value: (r) => (r.lastExercise ? EXERCISE_RESULT_LABEL[r.lastExercise.result] : null) },
+      { header: 'Reprise mesurée (minutes)', value: (r) => r.lastExercise?.recoveryMinutes ?? null },
+      { header: 'État', value: (r) => ACTIVITY_CONTINUITY_STATE_LABEL[r.state] },
+      { header: 'Prochain exercice', value: (r) => r.nextExerciseOn },
     ],
   }),
 } as const;

@@ -1,4 +1,5 @@
 import {
+  BIA_REVIEW_MONTHS,
   EXCEPTION_DECIDER_ROLES,
   LEADER_ROLES,
   LEADER_TRAINING_MONTHS,
@@ -154,6 +155,14 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
            NULL
       FROM memberships m
       WHERE m.user_id = ${userId} AND m.role::text IN (${sql.join(LEADER_ROLES.map((r) => sql`${r}`), sql`, `)})
+    UNION ALL
+    -- Bilan d'impact d'une activité dont on répond : à revoir un an après.
+    SELECT 'continuite', a.id, a.name, (a.assessed_on + make_interval(months => ${BIA_REVIEW_MONTHS}::int))::date::text, 'bia'
+      FROM continuity_activities a WHERE a.owner_user_id = ${userId}
+    UNION ALL
+    -- Exercice planifié que l'on pilote.
+    SELECT 'continuite', e.id, e.title, e.scheduled_on::text, 'exercice'
+      FROM continuity_exercises e WHERE e.lead_user_id = ${userId} AND e.status = 'planifie'
   `)) as unknown as Row[];
 
   // L'état du plan dépend de l'échelle active : calculé par le cœur, pas en SQL.
@@ -187,5 +196,6 @@ function detailFor(r: Row): string {
     case 'processus': return 'Processus que vous pilotez';
     case 'derogation': return r.detail === 'decision' ? 'Demande de dérogation à trancher' : 'Dérogation à renouveler ou clôturer à l’échéance';
     case 'formation': return r.due ? 'Renouvellement de votre formation' : 'Aucune formation enregistrée : à suivre';
+    case 'continuite': return r.detail === 'exercice' ? 'Exercice de continuité à conduire' : 'Bilan d’impact à revoir';
   }
 }

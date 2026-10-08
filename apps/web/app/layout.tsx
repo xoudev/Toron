@@ -16,6 +16,7 @@ import '@toron/ui/obligations.css';
 import '@toron/ui/derogations.css';
 import '@toron/ui/controles.css';
 import '@toron/ui/sensibilisation.css';
+import '@toron/ui/continuite.css';
 import '@toron/ui/board.css';
 import '@toron/ui/parametres.css';
 

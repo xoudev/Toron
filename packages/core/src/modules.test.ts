@@ -30,5 +30,7 @@ describe('filtrage par module', () => {
     expect(moduleForSegment('derogations')).toBe('derogations');
     expect(workKindEnabled('formation', ['sensibilisation'])).toBe(false);
     expect(moduleForSegment('sensibilisation')).toBe('sensibilisation');
+    expect(workKindEnabled('continuite', ['continuite'])).toBe(false);
+    expect(moduleForSegment('continuite')).toBe('continuite');
   });
 });

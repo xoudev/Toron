@@ -1,0 +1,264 @@
+/* Continuité d'activité (migration 0035). Tokens uniquement. */
+
+.bcp-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.bcp-kpis .kpi-value {
+  font-size: 24px;
+}
+.bcp-kpis .kpi-sub {
+  overflow-wrap: anywhere;
+}
+.bcp-kpis .kpi-sub--warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.mut-band.bcp-band--danger {
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+}
+.mut-band.bcp-band--warn {
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 30%, var(--border));
+}
+
+/* ── Pastilles ───────────────────────────────────────────────────────── */
+.bcp-crit,
+.bcp-state {
+  display: inline-flex;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--bs, var(--text-2));
+  background: color-mix(in srgb, var(--bs, var(--border)) 13%, transparent);
+}
+.bcp-crit--1 {
+  --bs: var(--text-3);
+}
+.bcp-crit--2 {
+  --bs: var(--accent);
+}
+.bcp-crit--3 {
+  --bs: var(--warn);
+}
+.bcp-crit--4 {
+  --bs: var(--danger);
+}
+.bcp-state--teste,
+.bcp-state--atteint {
+  --bs: var(--ok);
+}
+.bcp-state--partiel {
+  --bs: var(--warn);
+}
+.bcp-state--objectif_manque,
+.bcp-state--non_atteint {
+  --bs: var(--danger);
+}
+.bcp-state--non_teste,
+.bcp-state--annule {
+  --bs: var(--text-3);
+}
+.bcp-state--planifie {
+  --bs: var(--accent);
+}
+
+/* ── Tableaux ────────────────────────────────────────────────────────── */
+.bcp-table tbody tr:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.bcp-num {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.bcp-deps {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.bcp-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.bcp-sub--warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+.bcp-sub--danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+.bcp-actions--open {
+  color: var(--warn);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* ── Tiroirs ─────────────────────────────────────────────────────────── */
+.bcp-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+}
+.bcp-facts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  font-size: 12.5px;
+}
+.bcp-facts div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+}
+.bcp-facts dt {
+  color: var(--text-3);
+}
+.bcp-facts dd {
+  margin: 0;
+  color: var(--text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.bcp-text {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+  white-space: pre-line;
+}
+.bcp-link {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.bcp-link:hover {
+  text-decoration: underline;
+}
+.bcp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.bcp-chips a.ds-chip {
+  text-decoration: none;
+}
+.bcp-chip-button {
+  cursor: pointer;
+  border: 0;
+  font: inherit;
+}
+.bcp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 12.5px;
+}
+.bcp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+.bcp-confirm {
+  flex-basis: 100%;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--danger) 5%, transparent);
+  font-size: 12.5px;
+}
+.bcp-confirm p {
+  margin: 0 0 8px;
+}
+.bcp-upload {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+}
+.bcp-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.bcp-notice {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: var(--ok);
+  font-weight: 600;
+}
+
+/* ── Formulaires ─────────────────────────────────────────────────────── */
+.bcp-picks {
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+.bcp-picks legend {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.bcp-picks-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 4px 12px;
+}
+.bcp-picks label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  min-width: 0;
+}
+.bcp-picks small {
+  color: var(--text-3);
+}
+.bcp-result {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.bcp-duration {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bcp-duration input {
+  width: 80px;
+}
+.bcp-duration span {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+@media (max-width: 900px) {
+  .bcp-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .bcp-facts div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

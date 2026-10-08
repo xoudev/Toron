@@ -43,6 +43,8 @@ const SOURCES: Source[] = [
   { kind: 'revue', table: 'management_reviews', title: 'title' },
   { kind: 'derogation', table: 'policy_exceptions', title: 'title' },
   { kind: 'formation', table: 'training_sessions', title: 'title' },
+  { kind: 'continuite', table: 'continuity_activities', title: 'name' },
+  { kind: 'continuite', table: 'continuity_exercises', title: 'title' },
 ];
 
 const PER_KIND = 6;

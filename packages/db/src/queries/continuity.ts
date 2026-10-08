@@ -167,6 +167,68 @@ export async function updateContinuityActivity(
   return updated.length;
 }
 
+export interface ContinuityActivityRef {
+  name: string;
+  ownerUserId: string | null;
+  criticality: Criticality;
+  rtoHours: number;
+  rpoHours: number;
+}
+
+/** Ce qu'il faut d'une activité pour la modifier, la supprimer ou la tracer ; null si elle n'existe pas. */
+export async function getContinuityActivityRef(tx: TenantTx, activityId: string): Promise<ContinuityActivityRef | null> {
+  const [row] = await tx
+    .select({
+      name: schema.continuityActivities.name,
+      ownerUserId: schema.continuityActivities.ownerUserId,
+      criticality: schema.continuityActivities.criticality,
+      rtoHours: schema.continuityActivities.rtoHours,
+      rpoHours: schema.continuityActivities.rpoHours,
+    })
+    .from(schema.continuityActivities)
+    .where(eq(schema.continuityActivities.id, activityId));
+  return row ? { ...row, criticality: row.criticality as Criticality } : null;
+}
+
+export interface ContinuityExerciseRef {
+  title: string;
+  scheduledOn: string;
+  status: ExerciseStatus;
+  result: ExerciseResult | null;
+  recoveryMinutes: number | null;
+  findings: string | null;
+  evidenceId: string | null;
+  leadUserId: string | null;
+}
+
+/** Ce qu'il faut d'un exercice pour le modifier, le supprimer ou le tracer ; null s'il n'existe pas. */
+export async function getContinuityExerciseRef(tx: TenantTx, exerciseId: string): Promise<ContinuityExerciseRef | null> {
+  const [row] = await tx
+    .select({
+      title: schema.continuityExercises.title,
+      scheduledOn: schema.continuityExercises.scheduledOn,
+      status: schema.continuityExercises.status,
+      result: schema.continuityExercises.result,
+      recoveryMinutes: schema.continuityExercises.recoveryMinutes,
+      findings: schema.continuityExercises.findings,
+      evidenceId: schema.continuityExercises.evidenceId,
+      leadUserId: schema.continuityExercises.leadUserId,
+    })
+    .from(schema.continuityExercises)
+    .where(eq(schema.continuityExercises.id, exerciseId));
+  return row ?? null;
+}
+
+/** Rattache le rapport d'un exercice déposé au coffre de preuves. Renvoie le nombre de lignes. */
+export async function setContinuityExerciseEvidence(tx: TenantTx, exerciseId: string, evidenceId: string): Promise<number> {
+  const updated = await tx
+    .update(schema.continuityExercises)
+    .set({ evidenceId })
+    .where(eq(schema.continuityExercises.id, exerciseId))
+    .returning({ id: schema.continuityExercises.id });
+  return updated.length;
+}
+
 export async function deleteContinuityActivity(tx: TenantTx, activityId: string): Promise<{ name: string } | null> {
   const [row] = await tx.delete(schema.continuityActivities).where(eq(schema.continuityActivities.id, activityId))
     .returning({ name: schema.continuityActivities.name });

@@ -86,6 +86,12 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0, disable
           iconPath: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z M12 8v4.6 M12 15.8v.2',
         },
         {
+          label: 'Continuité d’activité',
+          href: `${base}/continuite`,
+          active: isActive(`${base}/continuite`),
+          iconPath: 'M19.5 11a7.5 7.5 0 0 0-13.6-4.4 M5 3.5V7h3.5 M4.5 13a7.5 7.5 0 0 0 13.6 4.4 M19 20.5V17h-3.5',
+        },
+        {
           label: 'Cartographie des actifs',
           href: `${base}/actifs`,
           active: isActive(`${base}/actifs`),

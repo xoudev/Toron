@@ -45,6 +45,7 @@ const SOURCES: Source[] = [
   { kind: 'formation', table: 'training_sessions', title: 'title' },
   { kind: 'continuite', table: 'continuity_activities', title: 'name' },
   { kind: 'continuite', table: 'continuity_exercises', title: 'title' },
+  { kind: 'satisfaction', table: 'customer_surveys', title: 'title' },
 ];
 
 const PER_KIND = 6;

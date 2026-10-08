@@ -161,6 +161,12 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0, disable
           active: isActive(`${base}/non-conformites`),
           iconPath: 'M8.5 3.5h7L20.5 8.5v7L15.5 20.5h-7L3.5 15.5v-7z M9.7 9.7l4.6 4.6 M14.3 9.7l-4.6 4.6',
         },
+        {
+          label: 'Satisfaction client',
+          href: `${base}/satisfaction`,
+          active: isActive(`${base}/satisfaction`),
+          iconPath: 'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z M8.5 14c.9 1.3 2.1 2 3.5 2s2.6-.7 3.5-2 M9 9.5v.5 M15 9.5v.5',
+        },
       ],
     },
     {

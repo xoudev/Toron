@@ -5,7 +5,7 @@ import { defaultDisabledModules, isModuleEnabled, moduleForSegment, normalizeDis
 describe('modules activables', () => {
   it('propose des modules adaptés à la nature du périmètre', () => {
     expect(defaultDisabledModules('mixte')).toEqual([]);
-    expect(defaultDisabledModules('smsi')).toEqual(['processus', 'non_conformites']);
+    expect(defaultDisabledModules('smsi')).toEqual(['processus', 'non_conformites', 'satisfaction']);
     expect(defaultDisabledModules('qms')).toEqual(['ebios', 'incidents', 'actifs']);
   });
   it('ignore les valeurs inconnues et désactive EBIOS RM avec le registre des risques', () => {
@@ -32,5 +32,7 @@ describe('filtrage par module', () => {
     expect(moduleForSegment('sensibilisation')).toBe('sensibilisation');
     expect(workKindEnabled('continuite', ['continuite'])).toBe(false);
     expect(moduleForSegment('continuite')).toBe('continuite');
+    expect(workKindEnabled('satisfaction', ['satisfaction'])).toBe(false);
+    expect(moduleForSegment('satisfaction')).toBe('satisfaction');
   });
 });

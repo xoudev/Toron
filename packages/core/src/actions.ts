@@ -30,6 +30,7 @@ export const ACTION_ORIGINS = [
   'manual',
   'supplier',
   'control',
+  'exercise',
 ] as const;
 export type ActionOrigin = (typeof ACTION_ORIGINS)[number];
 

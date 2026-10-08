@@ -329,6 +329,32 @@ a.nav-item:hover {
   gap: 8px;
 }
 
+/* Téléphone : le fil d'Ariane se réduit à l'écran courant, le compteur de
+   l'écran (déjà lisible dans la page) disparaît, l'export devient une icône.
+   La barre tient sur une ligne, sans défilement horizontal de la page. */
+@media (max-width: 560px) {
+  .topbar {
+    gap: 8px;
+    padding: 0 12px;
+  }
+  .topbar > .topbar-crumb {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .topbar-crumb-root,
+  .topbar-actions .topbar-crumb,
+  .export-csv-label {
+    display: none;
+  }
+  .topbar-actions {
+    flex-shrink: 0;
+    gap: 4px;
+  }
+}
+
 .icon-btn {
   width: 30px;
   height: 30px;

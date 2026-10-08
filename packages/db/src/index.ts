@@ -143,6 +143,22 @@ export {
   type TrainingSessionRef,
   type LeaderTrainingRow,
 } from './queries/training.ts';
+export {
+  listContinuityActivities,
+  createContinuityActivity,
+  updateContinuityActivity,
+  deleteContinuityActivity,
+  listContinuityExercises,
+  createContinuityExercise,
+  updateContinuityExercise,
+  deleteContinuityExercise,
+  getContinuityOverview,
+  type ContinuityActivityRow,
+  type ContinuityActivityInput,
+  type ContinuityExerciseRow,
+  type ContinuityExerciseInput,
+  type ContinuityOverview,
+} from './queries/continuity.ts';
 export { listAuditLog, countAuditLog, type AuditRow } from './queries/audit.ts';
 export {
   createSupplier,

@@ -3,7 +3,9 @@
  * membre, et quoi lui dire.
  */
 
-export const NOTIFICATION_SUBJECTS = ['action', 'risque', 'obligation', 'fournisseur', 'traitement', 'derogation', 'controle'] as const;
+export const NOTIFICATION_SUBJECTS = [
+  'action', 'risque', 'obligation', 'fournisseur', 'traitement', 'derogation', 'controle', 'activite', 'exercice',
+] as const;
 export type NotificationSubject = (typeof NOTIFICATION_SUBJECTS)[number];
 
 const SUBJECT_PATH: Record<NotificationSubject, string> = {
@@ -14,6 +16,8 @@ const SUBJECT_PATH: Record<NotificationSubject, string> = {
   traitement: 'traitements',
   derogation: 'derogations',
   controle: 'controles',
+  activite: 'continuite',
+  exercice: 'continuite',
 };
 
 const SUBJECT_PHRASE: Record<NotificationSubject, string> = {
@@ -24,6 +28,8 @@ const SUBJECT_PHRASE: Record<NotificationSubject, string> = {
   traitement: 'Une fiche de traitement vous est confiée',
   derogation: 'Une dérogation vous est confiée',
   controle: 'Un contrôle vous est confié',
+  activite: 'Une activité critique vous est confiée',
+  exercice: 'Un exercice de continuité vous est confié',
 };
 
 /**

@@ -23,6 +23,8 @@ const OWNER_COLUMN: Record<NotificationSubject, { table: string; column: string 
   traitement: { table: 'processing_activities', column: 'owner_user_id' },
   derogation: { table: 'policy_exceptions', column: 'owner_user_id' },
   controle: { table: 'controls', column: 'owner_user_id' },
+  activite: { table: 'continuity_activities', column: 'owner_user_id' },
+  exercice: { table: 'continuity_exercises', column: 'lead_user_id' },
 };
 
 /** Responsable actuel d'un objet (avant modification), ou null. */

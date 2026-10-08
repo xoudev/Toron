@@ -86,6 +86,14 @@ export const DEMO = {
   trainingRgpd: 'd0000000-0000-4000-8000-000000000194',
   evidenceFormationDirigeants: 'd0000000-0000-4000-8000-000000000195',
   evidenceHameconnage: 'd0000000-0000-4000-8000-000000000196',
+  continuityExpedition: 'd0000000-0000-4000-8000-0000000001a1',
+  continuityEdi: 'd0000000-0000-4000-8000-0000000001a2',
+  continuityTournees: 'd0000000-0000-4000-8000-0000000001a3',
+  continuityPaie: 'd0000000-0000-4000-8000-0000000001a4',
+  exerciseRestaurationEdi: 'd0000000-0000-4000-8000-0000000001b1',
+  exerciseTableWms: 'd0000000-0000-4000-8000-0000000001b2',
+  exerciseBasculeWms: 'd0000000-0000-4000-8000-0000000001b3',
+  actionListesPapier: 'd0000000-0000-4000-8000-0000000001b4',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -1380,6 +1388,98 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
       INSERT INTO training_attendees (tenant_id, session_id, user_id)
       VALUES (${DEMO.tenantId}, ${DEMO.trainingDirigeants}, ${DEMO.userAntoine})
       ON CONFLICT DO NOTHING`;
+
+    // ── Continuité d'activité : quatre activités critiques, trois exercices.
+    // La paie n'a pas revu son bilan d'impact depuis septembre 2025 ;
+    // l'exercice sur table du WMS a laissé un enseignement en cours de
+    // traitement ; la bascule du WMS est planifiée en novembre.
+    const continuityActivities = [
+      {
+        id: DEMO.continuityExpedition, name: 'Préparation et expédition des commandes', owner: DEMO.userAntoine, process: DEMO.processPrepa,
+        description: 'Préparation des commandes à Corbas et Meyzieu, édition des étiquettes et remise aux transporteurs.',
+        criticality: 4, rto: 8, rpo: 1, assessedOn: '2026-02-10',
+        degraded: 'Préparation sur listes papier éditées chaque matin depuis le WMS ; ressaisie des expéditions au retour du système.',
+        assets: [DEMO.assetWms, DEMO.assetServeurs], suppliers: [DEMO.supplierHebergeur, DEMO.supplierInfogerance],
+      },
+      {
+        id: DEMO.continuityEdi, name: 'Échanges EDI avec les clients et les transporteurs', owner: DEMO.userClaire, process: null,
+        description: 'Réception des commandes clients et transmission des bordereaux aux transporteurs.',
+        criticality: 3, rto: 24, rpo: 4, assessedOn: '2026-02-10',
+        degraded: 'Envoi des bordereaux par courriel chiffré aux trois transporteurs principaux.',
+        assets: [DEMO.assetFluxEdi, DEMO.assetServeurs], suppliers: [DEMO.supplierTransporteur, DEMO.supplierHebergeur],
+      },
+      {
+        id: DEMO.continuityTournees, name: 'Planification des tournées de livraison', owner: DEMO.userAntoine, process: DEMO.processTransport,
+        description: 'Affectation des livraisons aux tournées et aux chauffeurs, la veille pour le lendemain.',
+        criticality: 3, rto: 12, rpo: 4, assessedOn: '2026-02-10',
+        degraded: 'Tournées de la veille reconduites, ajustées par téléphone avec les chauffeurs.',
+        assets: [], suppliers: [DEMO.supplierTransporteur],
+      },
+      {
+        id: DEMO.continuityPaie, name: 'Paie et administration du personnel', owner: DEMO.userAntoine, process: null,
+        description: 'Calcul et versement de la paie mensuelle, déclarations sociales.',
+        criticality: 2, rto: 120, rpo: 24, assessedOn: '2025-09-15',
+        degraded: 'Acompte versé sur la base de la paie du mois précédent, régularisé le mois suivant.',
+        assets: [], suppliers: [],
+      },
+    ] as const;
+    for (const a of continuityActivities) {
+      await sql`
+        INSERT INTO continuity_activities
+          (id, tenant_id, name, description, owner_user_id, process_id, criticality, rto_hours, rpo_hours, degraded_mode, assessed_on, created_by)
+        VALUES (${a.id}, ${DEMO.tenantId}, ${a.name}, ${a.description}, ${a.owner}, ${a.process}, ${a.criticality}, ${a.rto}, ${a.rpo},
+                ${a.degraded}, ${a.assessedOn}, ${DEMO.userClaire})
+        ON CONFLICT (id) DO NOTHING`;
+      for (const assetId of a.assets) {
+        await sql`
+          INSERT INTO continuity_activity_assets (tenant_id, activity_id, asset_id)
+          VALUES (${DEMO.tenantId}, ${a.id}, ${assetId}) ON CONFLICT DO NOTHING`;
+      }
+      for (const supplierId of a.suppliers) {
+        await sql`
+          INSERT INTO continuity_activity_suppliers (tenant_id, activity_id, supplier_id)
+          VALUES (${DEMO.tenantId}, ${a.id}, ${supplierId}) ON CONFLICT DO NOTHING`;
+      }
+    }
+
+    const continuityExercises = [
+      {
+        id: DEMO.exerciseRestaurationEdi, title: 'Test de restauration des sauvegardes EDI', kind: 'restauration',
+        scheduledOn: '2026-06-20', status: 'realise', result: 'atteint', recovery: 270,
+        findings: 'Restauration complète en 4 h 30 depuis la sauvegarde externalisée ; procédure suivie sans écart.',
+        evidence: DEMO.evidenceRestauration, lead: DEMO.userClaire, activities: [DEMO.continuityEdi],
+      },
+      {
+        id: DEMO.exerciseTableWms, title: 'Exercice sur table : indisponibilité du WMS un jour de pic', kind: 'table',
+        scheduledOn: '2026-05-14', status: 'realise', result: 'partiel', recovery: null,
+        findings: 'Les listes de préparation papier de Meyzieu dataient de 2024 ; l’astreinte de l’hébergeur n’a été jointe qu’au bout d’1 h 40.',
+        evidence: null, lead: DEMO.userAntoine, activities: [DEMO.continuityExpedition, DEMO.continuityTournees],
+      },
+      {
+        id: DEMO.exerciseBasculeWms, title: 'Test de bascule du WMS sur l’infrastructure de secours', kind: 'bascule',
+        scheduledOn: '2026-11-20', status: 'planifie', result: null, recovery: null, findings: null,
+        evidence: null, lead: DEMO.userClaire, activities: [DEMO.continuityExpedition],
+      },
+    ] as const;
+    for (const e of continuityExercises) {
+      await sql`
+        INSERT INTO continuity_exercises
+          (id, tenant_id, title, kind, scheduled_on, status, result, recovery_minutes, findings, evidence_id, lead_user_id, created_by)
+        VALUES (${e.id}, ${DEMO.tenantId}, ${e.title}, ${e.kind}, ${e.scheduledOn}, ${e.status}, ${e.result}, ${e.recovery},
+                ${e.findings}, ${e.evidence}, ${e.lead}, ${DEMO.userClaire})
+        ON CONFLICT (id) DO NOTHING`;
+      for (const activityId of e.activities) {
+        await sql`
+          INSERT INTO continuity_exercise_activities (tenant_id, exercise_id, activity_id)
+          VALUES (${DEMO.tenantId}, ${e.id}, ${activityId}) ON CONFLICT DO NOTHING`;
+      }
+    }
+    await sql`
+      INSERT INTO actions (id, tenant_id, title, description, origin_type, origin_id, owner_user_id, due_date, priority, status)
+      VALUES (${DEMO.actionListesPapier}, ${DEMO.tenantId}, 'Régénérer chaque trimestre les listes de préparation papier de Meyzieu',
+              'Enseignement de l’exercice du 14 mai : les listes du mode dégradé dataient de 2024.',
+              'exercise', ${DEMO.exerciseTableWms}, ${DEMO.userAntoine}, '2026-10-31', 'p2', 'en_cours')
+      ON CONFLICT (id) DO NOTHING`;
   } finally {
     await sql.end();
   }

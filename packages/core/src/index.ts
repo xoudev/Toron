@@ -17,6 +17,7 @@ export * from './exceptions.ts';
 export * from './control-reviews.ts';
 export * from './antivirus.ts';
 export * from './training.ts';
+export * from './continuity.ts';
 export {
   frameworksCovered,
   isMutualized,

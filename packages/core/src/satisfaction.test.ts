@@ -4,6 +4,7 @@ import {
   canManageSatisfaction,
   complaintsTrend,
   csatRate,
+  formatSurveyScore,
   monthlyComplaints,
   npsScore,
   surveyError,
@@ -25,6 +26,9 @@ describe('scores', () => {
     expect(csatRate(178, 212)).toBe(84);
     expect(surveyScore({ method: 'csat', respondents: 212, satisfied: 178, promoters: null, passives: null, detractors: null })).toBe(84);
     expect(surveyScore({ method: 'nps', respondents: 100, satisfied: null, promoters: 52, passives: 31, detractors: 17 })).toBe(35);
+    expect(formatSurveyScore('nps', 35)).toBe('+35');
+    expect(formatSurveyScore('nps', -12)).toBe('-12');
+    expect(formatSurveyScore('csat', 84)).toBe('84\u202f%');
   });
 
   it('objectif et tendance', () => {

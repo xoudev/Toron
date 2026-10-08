@@ -8,7 +8,7 @@ import type { ScopeKind } from './organisation.ts';
 
 export const OPTIONAL_MODULES = [
   'risques', 'ebios', 'incidents', 'actifs', 'audits', 'fournisseurs', 'revue_direction', 'processus', 'non_conformites', 'derogations',
-  'sensibilisation', 'continuite',
+  'sensibilisation', 'continuite', 'satisfaction',
 ] as const;
 export type OptionalModule = (typeof OPTIONAL_MODULES)[number];
 
@@ -25,11 +25,12 @@ export const MODULE_META: Record<OptionalModule, { label: string; description: s
   derogations: { label: 'Dérogations', description: 'Écarts tolérés à une règle : décision d’un tiers, mesures compensatoires et échéance.', path: '/derogations', family: 'management' },
   sensibilisation: { label: 'Sensibilisation et formation', description: 'Sessions, participation, feuilles d’émargement et formation des dirigeants (NIS 2).', path: '/sensibilisation', family: 'management' },
   continuite: { label: 'Continuité d’activité', description: 'Bilan d’impact, DMIA et PDMA, exercices de reprise et enseignements.', path: '/continuite', family: 'risques' },
+  satisfaction: { label: 'Satisfaction client', description: 'Enquêtes NPS et CSAT, objectifs, tendance et réclamations clients (ISO 9001).', path: '/satisfaction', family: 'qualite' },
 };
 
 /** Modules sans objet pour une nature de périmètre, désactivés à la création. */
 const OFF_BY_KIND: Record<ScopeKind, OptionalModule[]> = {
-  smsi: ['processus', 'non_conformites'],
+  smsi: ['processus', 'non_conformites', 'satisfaction'],
   qms: ['ebios', 'incidents', 'actifs'],
   mixte: [],
 };
@@ -74,6 +75,7 @@ const KIND_MODULE: Record<string, OptionalModule> = {
   derogation: 'derogations',
   formation: 'sensibilisation',
   continuite: 'continuite',
+  satisfaction: 'satisfaction',
 };
 
 /** Un élément d'un module masqué n'apparaît ni dans « Mon travail » ni dans la recherche. */

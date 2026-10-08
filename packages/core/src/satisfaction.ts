@@ -44,6 +44,11 @@ export function csatRate(satisfied: number, respondents: number): number {
   return respondents === 0 ? 0 : Math.round((100 * satisfied) / respondents);
 }
 
+/** Score lisible : NPS signé (« +35 »), CSAT en pourcentage (« 84 % »). */
+export function formatSurveyScore(method: SurveyMethod, score: number): string {
+  return method === 'nps' ? `${score > 0 ? '+' : ''}${score}` : `${score}\u202f%`;
+}
+
 export function surveyScore(s: SurveyResults): number {
   return s.method === 'nps'
     ? npsScore(s.promoters ?? 0, s.passives ?? 0, s.detractors ?? 0)

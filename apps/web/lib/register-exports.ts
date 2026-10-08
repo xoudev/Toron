@@ -6,6 +6,8 @@ import {
   CONTROL_REVIEW_STATE_LABEL,
   CRITICALITY_LABEL,
   EXERCISE_RESULT_LABEL,
+  SURVEY_METHOD_LABEL,
+  SURVEY_VERDICT_LABEL,
   EXCEPTION_STATE_LABEL,
   LEGAL_BASIS_LABEL,
   OBLIGATION_REGIME_LABEL,
@@ -20,7 +22,7 @@ import {
 } from '@toron/core';
 import {
   listActions, listAssets, listControlLibrary, listDocuments, listEvidences, listExceptions, listIncidents, listNc, listRisks,
-  listContinuityActivities, listObligations, listProcessing, listSuppliers, listTrainingSessions, type TenantTx,
+  listContinuityActivities, listCustomerSurveys, listObligations, listProcessing, listSuppliers, listTrainingSessions, type TenantTx,
 } from '@toron/db';
 
 import { todayParis } from '@/lib/format';
@@ -322,6 +324,28 @@ export const REGISTER_EXPORTS = {
       { header: 'Reprise mesurée (minutes)', value: (r) => r.lastExercise?.recoveryMinutes ?? null },
       { header: 'État', value: (r) => ACTIVITY_CONTINUITY_STATE_LABEL[r.state] },
       { header: 'Prochain exercice', value: (r) => r.nextExerciseOn },
+    ],
+  }),
+  satisfaction: register({
+    title: 'Enquêtes de satisfaction client',
+    load: (tx) => listCustomerSurveys(tx),
+    columns: [
+      { header: 'Clôture', value: (r) => r.closedOn },
+      { header: 'Enquête', value: (r) => r.title },
+      { header: 'Méthode', value: (r) => SURVEY_METHOD_LABEL[r.method] },
+      { header: 'Segment', value: (r) => r.segment },
+      { header: 'Sollicités', value: (r) => r.invitedCount },
+      { header: 'Répondants', value: (r) => r.respondents },
+      { header: 'Promoteurs', value: (r) => r.promoters },
+      { header: 'Passifs', value: (r) => r.passives },
+      { header: 'Détracteurs', value: (r) => r.detractors },
+      { header: 'Satisfaits', value: (r) => r.satisfied },
+      { header: 'Score', value: (r) => r.score },
+      { header: 'Objectif', value: (r) => r.target },
+      { header: 'Verdict', value: (r) => SURVEY_VERDICT_LABEL[r.verdict] },
+      { header: 'Score précédent', value: (r) => r.previousScore },
+      { header: 'Enseignements', value: (r) => r.findings },
+      { header: 'Rapport', value: (r) => r.evidenceTitle },
     ],
   }),
 } as const;

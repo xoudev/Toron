@@ -24,6 +24,7 @@
     "./controles.css": "./src/styles/controles.css",
     "./sensibilisation.css": "./src/styles/sensibilisation.css",
     "./continuite.css": "./src/styles/continuite.css",
+    "./satisfaction.css": "./src/styles/satisfaction.css",
     "./board.css": "./src/styles/board.css",
     "./parametres.css": "./src/styles/parametres.css"
   },

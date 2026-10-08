@@ -144,7 +144,7 @@ describe('export complet des données', () => {
 describe('modules activables', () => {
   it('applique les valeurs par défaut de la nature du périmètre à la création', async () => {
     const smsi = await createTenantWithOwner(auth.db, { ...input(), baseSlug: 'modules-smsi', scopeKind: 'smsi' });
-    expect((await withTenant(app.db, smsi.id, getOrganisationProfile)).disabledModules).toEqual(['processus', 'non_conformites']);
+    expect((await withTenant(app.db, smsi.id, getOrganisationProfile)).disabledModules).toEqual(['processus', 'non_conformites', 'satisfaction']);
   });
   it('normalise, isole entre organisations et refuse une valeur inconnue en base', async () => {
     const a = await createTenantWithOwner(auth.db, { ...input(), baseSlug: 'modules-a' });

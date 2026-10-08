@@ -20,6 +20,7 @@ export * from './training.ts';
 export * from './continuity.ts';
 export * from './satisfaction.ts';
 export * from './audit-chain.ts';
+export * from './supplier-portal.ts';
 export {
   frameworksCovered,
   isMutualized,

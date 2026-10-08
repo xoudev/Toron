@@ -162,7 +162,8 @@ export interface VerifiedExport {
  * Vérification PUBLIQUE d'un poinçon (ADR-6). Passe par la fonction
  * SECURITY DEFINER verify_export : résout le slug SANS contexte tenant et
  * n'expose que type/empreinte/date — jamais le PDF ni le tenant. Prend le
- * client brut (pas de withTenant) : c'est l'unique accès public légitime.
+ * client brut (pas de withTenant), comme la résolution d'un lien du portail
+ * fournisseur : ce sont les deux seuls accès publics légitimes.
  */
 export async function verifyExport(db: Db, slug: string): Promise<VerifiedExport | null> {
   const rows = await db.execute(

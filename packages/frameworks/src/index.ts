@@ -8,3 +8,13 @@ export {
   type Iso27001Theme,
 } from './iso27001.ts';
 export { FRAMEWORK_CATALOG, type CatalogFramework, type CatalogRequirement } from './catalog.ts';
+export {
+  CONTROL_TEMPLATE_DOMAINS,
+  CONTROL_TEMPLATE_FRAMEWORKS,
+  controlTemplates,
+  type ControlTemplate,
+  type ControlTemplateDomain,
+  type ControlTemplateFramework,
+  type ControlTemplateFrequency,
+  type ControlTemplateMapping,
+} from './control-templates.ts';

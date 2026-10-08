@@ -205,6 +205,10 @@ export {
   type CreateSupplierRequestInput, type PortalRequest, type SupplierRequestRow,
 } from './queries/supplier-requests.ts';
 export {
+  activeFrameworkCoverage, adoptControlTemplates, listAdoptedTemplateKeys, syncTemplateMappings,
+  type ActiveFrameworkCoverage, type TemplateAdoption,
+} from './queries/control-templates.ts';
+export {
   createAudit,
   setAuditStatus,
   addFinding,

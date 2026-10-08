@@ -19,6 +19,7 @@ export * from './antivirus.ts';
 export * from './training.ts';
 export * from './continuity.ts';
 export * from './satisfaction.ts';
+export * from './audit-chain.ts';
 export {
   frameworksCovered,
   isMutualized,

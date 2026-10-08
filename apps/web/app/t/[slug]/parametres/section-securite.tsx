@@ -57,7 +57,7 @@ export function SectionSecurite({ viewer, members, profile }: { viewer: Viewer; 
           <dt>Isolation des données</dt><dd>Politiques de sécurité au niveau des lignes (RLS) PostgreSQL : chaque requête est confinée à votre organisation</dd>
           <dt>Région</dt><dd>{profile.region === 'eu-fr' ? 'Union européenne · France' : profile.region}</dd>
           <dt>Sous-traitants hors UE</dt><dd>Aucun</dd>
-          <dt>Journal d’audit</dt><dd>Écriture seule, horodaté, sans aucune fonction d’effacement</dd>
+          <dt>Journal d’audit</dt><dd>Écriture seule, horodaté, sans aucune fonction d’effacement — chaque entrée chaînée à la précédente par empreinte SHA-256, vérifiable depuis le journal</dd>
           <dt>Identifiants</dt><dd>UUID partout — aucun identifiant séquentiel exposé</dd>
         </dl>
       </article>

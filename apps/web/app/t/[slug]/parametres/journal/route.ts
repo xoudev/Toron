@@ -11,13 +11,18 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 const MAX_ROWS = 20_000;
 const PAGE = 200;
 
+// Numéro et empreintes : un auditeur qui conserve un export peut constater
+// plus tard que les entrées déjà exportées n'ont pas changé.
 const COLUMNS: CsvColumn<AuditRow>[] = [
+  { header: 'numero', value: (r) => r.seq },
   { header: 'horodatage', value: (r) => r.at },
   { header: 'acteur', value: (r) => r.actorName },
   { header: 'action', value: (r) => r.action },
   { header: 'type_objet', value: (r) => r.objectType },
   { header: 'id_objet', value: (r) => r.objectId },
   { header: 'ip', value: (r) => r.ip },
+  { header: 'empreinte_precedente', value: (r) => r.prevHash },
+  { header: 'empreinte', value: (r) => r.hash },
 ];
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {

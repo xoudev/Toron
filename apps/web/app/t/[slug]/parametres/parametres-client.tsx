@@ -28,6 +28,8 @@ export interface JournalPage {
   page: number;
   pageSize: number;
   filtre: string;
+  /** Tête de chaîne : dernier numéro attribué et son empreinte. */
+  head: { seq: number; hash: string } | null;
 }
 
 export function ParametresClient(props: {

@@ -171,3 +171,12 @@ description courte, phase cible pressentie.
   activités critiques touchées et comparer la durée d'interruption réelle
   à leur DMIA (retour d'expérience pour la revue de direction). Phase
   cible : V2.
+- **2026-10-08 · Vérification périodique du journal** — Faire vérifier le
+  chaînage du journal d'audit chaque nuit par le worker et alerter le
+  propriétaire et le RSSI à la première rupture, sans attendre qu'un
+  membre lance la vérification. Phase cible : V2.
+- **2026-10-08 · Ancrage externe de la tête de chaîne** — Inscrire la tête
+  du journal (numéro, empreinte) dans chaque livrable scellé et la faire
+  horodater par un prestataire qualifié eIDAS (RFC 3161), pour qu'une
+  réécriture complète du journal par un administrateur de la base se voie
+  aussi. Phase cible : V3.

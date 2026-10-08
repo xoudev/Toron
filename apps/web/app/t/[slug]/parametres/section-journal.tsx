@@ -1,5 +1,9 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useState, useTransition } from 'react';
+
+import { verifyJournalAction, type JournalCheck } from './actions';
 import type { JournalPage } from './parametres-client';
 
 const ACTION_FILTERS: { label: string; prefix: string }[] = [
@@ -19,10 +23,58 @@ const ACTION_FILTERS: { label: string; prefix: string }[] = [
   { label: 'Exports de registres', prefix: 'register.' },
   { label: 'Import', prefix: 'import.' },
   { label: 'Données', prefix: 'tenant.' },
+  { label: 'Vérifications du journal', prefix: 'journal.' },
 ];
 
 function fmt(d: Date): string {
   return new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+const shortHash = (h: string): string => `${h.slice(0, 16)}…`;
+
+function ChainPanel({ slug, head }: { slug: string; head: JournalPage['head'] }) {
+  const router = useRouter();
+  const [check, setCheck] = useState<JournalCheck | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  function verify() {
+    setError(null);
+    start(async () => {
+      const res = await verifyJournalAction(slug);
+      if (res.ok) { setCheck(res.data); router.refresh(); } else setError(res.error.message);
+    });
+  }
+
+  return (
+    <section className={`journal-chain${check ? (check.intact ? ' is-ok' : ' is-broken') : ''}`} aria-label="Intégrité du journal">
+      <div className="journal-chain-head">
+        <div>
+          <b>Chaîne d’intégrité</b>
+          <p className="hint">
+            {head ? (
+              <>Dernière entrée n° {head.seq.toLocaleString('fr-FR')} · empreinte <code className="ds-mono" title={head.hash}>{shortHash(head.hash)}</code></>
+            ) : 'Aucune entrée pour l’instant.'}
+          </p>
+        </div>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={verify} disabled={pending || !head}>
+          {pending ? 'Vérification…' : 'Vérifier l’intégrité'}
+        </button>
+      </div>
+      {check ? (
+        <div className="journal-chain-result" role="status">
+          <span className={`pill ${check.intact ? 'pill--ok' : 'pill--danger'}`}>{check.title}</span>
+          <p>{check.detail}</p>
+          <p className="hint">
+            Vérifiée le {fmt(new Date(check.checkedAt))}
+            {check.headHash ? <> sur la tête <code className="ds-mono" title={check.headHash}>{shortHash(check.headHash)}</code></> : null}
+            {' '}— la vérification est elle-même inscrite au journal.
+          </p>
+        </div>
+      ) : null}
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
+    </section>
+  );
 }
 
 export function SectionJournal({ slug, journal }: { slug: string; journal: JournalPage }) {
@@ -39,11 +91,14 @@ export function SectionJournal({ slug, journal }: { slug: string; journal: Journ
           <p className="hint">
             Chaque action métier, connexion à une organisation et export y est tracé avec son auteur, son
             horodatage et l’adresse IP d’origine. Le journal est en écriture seule : rien ne s’y modifie
-            ni ne s’en efface.
+            ni ne s’en efface. Chaque entrée est numérotée et scellée par une empreinte SHA-256 qui couvre
+            la précédente : une altération faite hors de l’application, même directement en base, se détecte.
           </p>
         </div>
         <a className="btn btn-ghost btn-sm" href={csv} download>Exporter en CSV</a>
       </div>
+
+      <ChainPanel slug={slug} head={journal.head} />
 
       <form method="get" action={`/t/${slug}/parametres`} className="journal-filters">
         <input type="hidden" name="section" value="journal" />
@@ -57,13 +112,14 @@ export function SectionJournal({ slug, journal }: { slug: string; journal: Journ
       </form>
 
       <div className="ds-table-card"><div className="ds-scroll">
-        <table className="ds-table" style={{ minWidth: 820 }}>
-          <thead><tr><th style={{ width: 160 }}>Horodatage</th><th style={{ width: 160 }}>Acteur</th><th>Action</th><th style={{ width: 130 }}>Objet</th><th style={{ width: 120 }}>IP</th></tr></thead>
+        <table className="ds-table" style={{ minWidth: 880 }}>
+          <thead><tr><th style={{ width: 70 }}>N°</th><th style={{ width: 160 }}>Horodatage</th><th style={{ width: 160 }}>Acteur</th><th>Action</th><th style={{ width: 130 }}>Objet</th><th style={{ width: 120 }}>IP</th></tr></thead>
           <tbody>
             {journal.rows.length === 0 ? (
-              <tr><td colSpan={5} className="ds-empty">Aucune entrée pour ce filtre.</td></tr>
+              <tr><td colSpan={6} className="ds-empty">Aucune entrée pour ce filtre.</td></tr>
             ) : journal.rows.map((a) => (
               <tr key={a.id} style={{ cursor: 'default' }}>
+                <td className="ds-mono" title={`Empreinte ${a.hash}`}>{a.seq}</td>
                 <td className="ds-mono">{fmt(a.at)}</td>
                 <td>{a.actorName ?? <span className="ds-muted">Système</span>}</td>
                 <td><span className="ds-id">{a.action}</span></td>

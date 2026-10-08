@@ -179,7 +179,7 @@ export {
   type ComplaintRow,
   type SatisfactionOverview,
 } from './queries/satisfaction.ts';
-export { listAuditLog, countAuditLog, type AuditRow } from './queries/audit.ts';
+export { listAuditLog, countAuditLog, getAuditChainHead, verifyAuditChain, type AuditRow, type AuditChainStatus } from './queries/audit.ts';
 export {
   createSupplier,
   updateSupplier,

@@ -1,6 +1,6 @@
 import { canConfigureOrganisation, canManageMembers, invitationState } from '@toron/core';
 import {
-  countAuditLog, exportedTableNames, getOrganisationProfile, listAuditLog, listInvitations, listLegalEntities,
+  countAuditLog, exportedTableNames, getAuditChainHead, getOrganisationProfile, listAuditLog, listInvitations, listLegalEntities,
   listScopeDetails, listSites, listTenantMemberDetails, withTenant,
 } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
@@ -45,6 +45,7 @@ export default async function ParametresPage({
     invitations: await listInvitations(tx),
     audit: await listAuditLog(tx, { limit: JOURNAL_PAGE_SIZE, offset: (page - 1) * JOURNAL_PAGE_SIZE, actionPrefix: filtre || undefined }),
     auditTotal: await countAuditLog(tx, { actionPrefix: filtre || undefined }),
+    chainHead: await getAuditChainHead(tx),
   }));
 
   const pendingInvitations = data.invitations.filter((i) => invitationState(i, now) === 'en_attente').length;
@@ -76,7 +77,7 @@ export default async function ParametresPage({
           members={data.members}
           invitations={data.invitations}
           pendingInvitations={pendingInvitations}
-          journal={{ rows: data.audit, total: data.auditTotal, page, pageSize: JOURNAL_PAGE_SIZE, filtre }}
+          journal={{ rows: data.audit, total: data.auditTotal, page, pageSize: JOURNAL_PAGE_SIZE, filtre, head: data.chainHead }}
           exportTables={exportedTableNames()}
         />
       </main>

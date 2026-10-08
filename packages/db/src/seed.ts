@@ -94,6 +94,14 @@ export const DEMO = {
   exerciseTableWms: 'd0000000-0000-4000-8000-0000000001b2',
   exerciseBasculeWms: 'd0000000-0000-4000-8000-0000000001b3',
   actionListesPapier: 'd0000000-0000-4000-8000-0000000001b4',
+  surveyNpsS2: 'd0000000-0000-4000-8000-0000000001c1',
+  surveyNpsS1: 'd0000000-0000-4000-8000-0000000001c2',
+  surveyCsatLivraison: 'd0000000-0000-4000-8000-0000000001c3',
+  complaintAvoir: 'd0000000-0000-4000-8000-0000000001d1',
+  complaintCasse: 'd0000000-0000-4000-8000-0000000001d2',
+  complaintRetards: 'd0000000-0000-4000-8000-0000000001d3',
+  complaintEtiquettes: 'd0000000-0000-4000-8000-0000000001d4',
+  complaintInversion: 'd0000000-0000-4000-8000-0000000001d5',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -1480,6 +1488,54 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
               'Enseignement de l’exercice du 14 mai : les listes du mode dégradé dataient de 2024.',
               'exercise', ${DEMO.exerciseTableWms}, ${DEMO.userAntoine}, '2026-10-31', 'p2', 'en_cours')
       ON CONFLICT (id) DO NOTHING`;
+
+    // ── Satisfaction client : deux baromètres NPS (en hausse, encore sous
+    // l'objectif), une mesure CSAT après livraison, cinq réclamations sur
+    // douze mois. Résultats agrégés uniquement, aucun client nommé.
+    const surveys = [
+      {
+        id: DEMO.surveyNpsS2, title: 'Baromètre NPS — clients e-commerce, second semestre 2025', method: 'nps',
+        segment: 'Clients e-commerce', closedOn: '2025-12-15', invited: 380, respondents: 95,
+        promoters: 45, passives: 30, detractors: 20, satisfied: null, target: 40,
+        findings: 'Détracteurs surtout motivés par les retards de fin d’année et le suivi des colis.',
+      },
+      {
+        id: DEMO.surveyNpsS1, title: 'Baromètre NPS — clients e-commerce, premier semestre 2026', method: 'nps',
+        segment: 'Clients e-commerce', closedOn: '2026-06-30', invited: 400, respondents: 100,
+        promoters: 52, passives: 31, detractors: 17, satisfied: null, target: 40,
+        findings: 'Progression nette après la mise en place des créneaux de livraison ; le suivi en temps réel reste le premier irritant.',
+      },
+      {
+        id: DEMO.surveyCsatLivraison, title: 'Satisfaction après livraison — troisième trimestre 2026', method: 'csat',
+        segment: 'Destinataires livrés', closedOn: '2026-09-30', invited: null, respondents: 212,
+        promoters: null, passives: null, detractors: null, satisfied: 178, target: 80,
+        findings: 'Les avis négatifs portent sur les livraisons en zone Est lyonnaise.',
+      },
+    ] as const;
+    for (const v of surveys) {
+      await sql`
+        INSERT INTO customer_surveys
+          (id, tenant_id, title, method, segment, closed_on, invited_count, respondents, promoters, passives, detractors, satisfied,
+           target, findings, owner_user_id, created_by)
+        VALUES (${v.id}, ${DEMO.tenantId}, ${v.title}, ${v.method}, ${v.segment}, ${v.closedOn}, ${v.invited}, ${v.respondents},
+                ${v.promoters}, ${v.passives}, ${v.detractors}, ${v.satisfied}, ${v.target}, ${v.findings}, ${DEMO.userCamille}, ${DEMO.userCamille})
+        ON CONFLICT (id) DO NOTHING`;
+    }
+
+    const complaints = [
+      [DEMO.complaintAvoir, 'Avoir non émis après un retour accepté', 'Le client attendait l’avoir depuis cinq semaines.', 'mineure', 'efficace', '2025-11-12'],
+      [DEMO.complaintCasse, 'Colis de mobilier livrés endommagés (lot du 12 mars)', 'Trois colis sur douze reçus abîmés, emballage insuffisant.', 'majeure', 'efficace', '2026-03-20'],
+      [DEMO.complaintRetards, 'Retards de livraison récurrents en zone Est lyonnaise', 'Six réclamations du même client en trois semaines.', 'majeure', 'en_traitement', '2026-09-03'],
+      [DEMO.complaintEtiquettes, 'Étiquettes de retour illisibles', 'Impression pâle sur l’imprimante du quai 2 à Meyzieu.', 'mineure', 'ouverte', '2026-09-15'],
+      [DEMO.complaintInversion, 'Références inversées dans une commande', 'Deux références voisines inversées à la préparation.', 'mineure', 'ouverte', '2026-10-02'],
+    ] as const;
+    for (const [id, title, description, gravity, status, openedOn] of complaints) {
+      await sql`
+        INSERT INTO nonconformities (id, tenant_id, title, description, source, gravity, status, opened_at, detected_by, owner_user_id)
+        VALUES (${id}, ${DEMO.tenantId}, ${title}, ${description}, 'reclamation_client', ${gravity}, ${status},
+                ${`${openedOn}T09:00:00+02:00`}, ${DEMO.userCamille}, ${DEMO.userCamille})
+        ON CONFLICT (id) DO NOTHING`;
+    }
   } finally {
     await sql.end();
   }

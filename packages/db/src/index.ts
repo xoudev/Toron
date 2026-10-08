@@ -164,6 +164,21 @@ export {
   type ContinuityActivityRef,
   type ContinuityExerciseRef,
 } from './queries/continuity.ts';
+export {
+  listCustomerSurveys,
+  createCustomerSurvey,
+  updateCustomerSurvey,
+  deleteCustomerSurvey,
+  getCustomerSurveyRef,
+  setCustomerSurveyEvidence,
+  listComplaints,
+  getSatisfactionOverview,
+  type CustomerSurveyRow,
+  type CustomerSurveyInput,
+  type CustomerSurveyRef,
+  type ComplaintRow,
+  type SatisfactionOverview,
+} from './queries/satisfaction.ts';
 export { listAuditLog, countAuditLog, type AuditRow } from './queries/audit.ts';
 export {
   createSupplier,

@@ -180,3 +180,15 @@ description courte, phase cible pressentie.
   horodater par un prestataire qualifié eIDAS (RFC 3161), pour qu'une
   réécriture complète du journal par un administrateur de la base se voie
   aussi. Phase cible : V3.
+- **2026-10-08 · Pièces jointes du portail fournisseur** — Permettre au
+  fournisseur de déposer ses attestations (certificat, rapport de test
+  d'intrusion, assurance) depuis le portail : type et taille bornés,
+  empreinte, antivirus, puis rattachement en attestation par
+  l'organisation à la validation. Phase cible : V2.
+- **2026-10-08 · Envoi et relances des demandes par e-mail** — Envoyer le
+  lien du portail au contact par e-mail (Scaleway TEM) et relancer avant
+  l'échéance, au lieu de le transmettre à la main. Phase cible : V2.
+- **2026-10-08 · e2e Playwright du portail fournisseur** — Demande créée
+  depuis la fiche → brouillon sur le portail → envoi incomplet refusé →
+  envoi → notification → examen et validation → lien clos. Vérifié
+  manuellement le 2026-10-08. Phase cible : V2.

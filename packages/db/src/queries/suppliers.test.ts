@@ -175,4 +175,10 @@ describe('évaluations et attestations fournisseurs', () => {
     expect(heb.due).toBe('2026-10-28');
     expect(heb.detail).toBe('Attestation à renouveler');
   });
+
+  it('« Mon travail » : une réponse reçue par le portail passe avant le reste, datée de son envoi', async () => {
+    const items = await withTenant(app.db, T, (tx) => listMyWork(tx, DEMO.userAntoine));
+    const transp = items.find((i) => i.kind === 'fournisseur' && i.id === DEMO.supplierTransporteur)!;
+    expect(transp).toMatchObject({ due: '2026-10-02', detail: 'Réponse du fournisseur à examiner' });
+  });
 });

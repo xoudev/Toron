@@ -149,6 +149,7 @@ export interface PortalRequest {
   tenantId: string;
   requestId: string;
   organisationName: string;
+  organisationSlug: string;
   supplierId: string;
   supplierName: string;
   contactName: string;
@@ -175,7 +176,7 @@ export async function resolvePortalRequest(db: Db, token: string): Promise<Porta
   if (!hit) return null;
   return withTenant(db, hit.tenant_id, async (tx) => {
     const [r] = (await tx.execute(sql`
-      SELECT t.name AS organisation_name, s.id AS supplier_id, s.name AS supplier_name, r.contact_name, r.message,
+      SELECT t.name AS organisation_name, t.slug AS organisation_slug, s.id AS supplier_id, s.name AS supplier_name, r.contact_name, r.message,
              r.status, r.due_on::text AS due_on, r.expires_on::text AS expires_on, r.answers, r.comments,
              r.submitted_at::text AS submitted_at
         FROM supplier_requests r
@@ -183,14 +184,14 @@ export async function resolvePortalRequest(db: Db, token: string): Promise<Porta
         JOIN tenants t ON t.id = r.tenant_id
        WHERE r.id = ${hit.request_id}
     `)) as unknown as {
-      organisation_name: string; supplier_id: string; supplier_name: string; contact_name: string; message: string | null;
+      organisation_name: string; organisation_slug: string; supplier_id: string; supplier_name: string; contact_name: string; message: string | null;
       status: SupplierRequestStatus; due_on: string; expires_on: string; answers: Partial<SupplierAnswers>;
       comments: Record<string, string>; submitted_at: string | null;
     }[];
     if (!r) return null;
     return {
       tenantId: hit.tenant_id, requestId: hit.request_id, organisationName: r.organisation_name,
-      supplierId: r.supplier_id, supplierName: r.supplier_name, contactName: r.contact_name, message: r.message,
+      organisationSlug: r.organisation_slug, supplierId: r.supplier_id, supplierName: r.supplier_name, contactName: r.contact_name, message: r.message,
       status: r.status, dueOn: r.due_on, expiresOn: r.expires_on, answers: r.answers, comments: r.comments,
       submittedAt: r.submitted_at ? new Date(r.submitted_at) : null,
     };

@@ -17,6 +17,13 @@ export function useOpenItem(ids: readonly string[]): [string | null, (id: string
   const [openId, setOpenIdState] = useState<string | null>(
     requested && ids.includes(requested) ? requested : null,
   );
+  // Lien suivi depuis la page déjà ouverte (notification, recherche) : le
+  // paramètre change sans remonter le composant, la fiche demandée s'ouvre.
+  const [seen, setSeen] = useState(requested);
+  if (requested !== seen) {
+    setSeen(requested);
+    if (requested && ids.includes(requested)) setOpenIdState(requested);
+  }
 
   const setOpenId = useCallback((id: string | null) => {
     setOpenIdState(id);

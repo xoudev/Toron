@@ -8,17 +8,23 @@ import {
   assessSupplier,
   supplierCorrectiveDefaults,
   supplierQuestion,
+  supplierRequestError,
 } from '@toron/core';
 import {
   addSupplierAttestation,
+  cancelSupplierRequest,
   createAction,
   createSupplier,
+  createSupplierRequest,
   currentOwner,
   getSupplierDetail,
   getSupplierRef,
+  getSupplierRequestRef,
+  markSupplierRequestValidated,
   notifyAssignment,
   recordSupplierAssessment,
   removeSupplierAttestation,
+  renewSupplierRequestLink,
   updateSupplier,
   withTenant,
   writeAuditEntry,
@@ -35,6 +41,7 @@ import {
   type ActionResult,
 } from '@/lib/action-guard';
 import { appDb } from '@/lib/db';
+import { env } from '@/lib/env';
 import { todayParis } from '@/lib/format';
 
 export type { ActionResult };
@@ -117,7 +124,14 @@ const AssessmentSchema = z.object({
   assessedOn: Day,
   answers: z.object(Object.fromEntries(SUPPLIER_QUESTIONS.map((q) => [q.key, z.enum(SUPPLIER_ANSWERS)]))).strict(),
   notes: z.string().trim().max(4000).optional().nullable(),
+  /** Réponse reçue par le portail que cette évaluation valide. */
+  requestId: z.uuid().optional().nullable(),
 });
+
+/** Réponse déjà validée par quelqu'un d'autre entre-temps : l'évaluation est annulée avec la transaction. */
+class RequestAlreadyClosed extends Error {}
+
+const REQUEST_CLOSED = 'Cette réponse a déjà été examinée ou la demande a été annulée — rechargez la fiche.';
 
 export async function recordSupplierAssessmentAction(slug: string, input: unknown): Promise<ActionResult<{ score: number }>> {
   const auth = await authorizeManager(slug);
@@ -132,6 +146,10 @@ export async function recordSupplierAssessmentAction(slug: string, input: unknow
     const res = await withTenant(appDb().db, auth.tenantId, async (tx) => {
       const ref = await getSupplierRef(tx, d.supplierId);
       if (!ref) return null;
+      if (d.requestId) {
+        const request = await getSupplierRequestRef(tx, d.requestId);
+        if (!request || request.supplierId !== d.supplierId || request.status !== 'soumise') return 'demande_close' as const;
+      }
       const result = assessSupplier(d.answers, ref.tier);
       if (!result.ok) return result;
       const id = await recordSupplierAssessment(tx, {
@@ -139,14 +157,103 @@ export async function recordSupplierAssessmentAction(slug: string, input: unknow
         answers: d.answers, score: result.score, rating: result.rating, notes: d.notes || null,
       });
       await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'supplier.assessment', objectType: 'supplier', objectId: d.supplierId, after: { assessmentId: id, score: result.score, rating: result.rating }, ip: auth.ip, userAgent: auth.userAgent });
+      if (d.requestId) {
+        if (!(await markSupplierRequestValidated(tx, { requestId: d.requestId, reviewerUserId: auth.userId, assessmentId: id }))) {
+          throw new RequestAlreadyClosed();
+        }
+        await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'supplier.request_validate', objectType: 'supplier_request', objectId: d.requestId, after: { assessmentId: id }, ip: auth.ip, userAgent: auth.userAgent });
+      }
       return result;
     });
     if (res === null) return { ok: false, error: appError('INTROUVABLE', 'Ce fournisseur n’existe plus — rechargez la page.') };
+    if (res === 'demande_close') return { ok: false, error: appError('DEMANDE_CLOSE', REQUEST_CLOSED) };
     if (!res.ok) return { ok: false, error: appError('SAISIE_INVALIDE', res.reason === 'sans_objet' ? 'Au moins une question doit s’appliquer à ce fournisseur.' : 'Évaluation incomplète — répondez à chaque question.') };
     revalidatePath(`/t/${slug}/fournisseurs`);
     return { ok: true, data: { score: res.score } };
   } catch (err) {
+    if (err instanceof RequestAlreadyClosed) return { ok: false, error: appError('DEMANDE_CLOSE', REQUEST_CLOSED) };
     return { ok: false, error: logFailure(err, appError('ECHEC_CREATION', 'L’enregistrement de l’évaluation a échoué — réessayez.')) };
+  }
+}
+
+// ── Portail fournisseur : demandes de réponse ──────────────────────────
+
+const RequestSchema = z.object({
+  supplierId: z.uuid(),
+  contactName: z.string().trim().min(2, 'Nom du contact trop court — 2 caractères minimum.').max(160, 'Nom du contact trop long — 160 caractères maximum.'),
+  contactEmail: z.string().trim().toLowerCase().pipe(z.email('Adresse e-mail du contact invalide — vérifiez sa saisie.').max(254)),
+  dueOn: Day,
+  message: z.string().trim().max(2000, 'Message trop long — 2 000 caractères maximum.').optional().nullable(),
+});
+
+function portalLink(token: string): string {
+  return `${env().BETTER_AUTH_URL.replace(/\/$/, '')}/fournisseur/${token}`;
+}
+
+export async function createSupplierRequestAction(slug: string, input: unknown): Promise<ActionResult<{ link: string; expiresOn: string }>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = RequestSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', parsed.error.issues[0]?.message ?? 'Demande invalide — vérifiez le contact et l’échéance.') };
+  const d = parsed.data;
+  const dueError = supplierRequestError({ dueOn: d.dueOn, today: todayParis() });
+  if (dueError) return { ok: false, error: appError('SAISIE_INVALIDE', dueError) };
+  try {
+    const created = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      if (!(await getSupplierRef(tx, d.supplierId))) return null;
+      const r = await createSupplierRequest(tx, {
+        tenantId: auth.tenantId, supplierId: d.supplierId, contactName: d.contactName, contactEmail: d.contactEmail,
+        message: d.message || null, dueOn: d.dueOn, requestedBy: auth.userId,
+      });
+      await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'supplier.request_create', objectType: 'supplier_request', objectId: r.id, after: { supplierId: d.supplierId, dueOn: d.dueOn, expiresOn: r.expiresOn }, ip: auth.ip, userAgent: auth.userAgent });
+      return r;
+    });
+    if (!created) return { ok: false, error: appError('INTROUVABLE', 'Ce fournisseur n’existe plus — rechargez la page.') };
+    revalidatePath(`/t/${slug}/fournisseurs`);
+    return { ok: true, data: { link: portalLink(created.token), expiresOn: created.expiresOn } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_CREATION', 'La demande n’a pas pu être créée — réessayez.')) };
+  }
+}
+
+export async function renewSupplierRequestLinkAction(slug: string, input: unknown): Promise<ActionResult<{ link: string; expiresOn: string }>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ requestId: z.uuid(), dueOn: Day }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Échéance invalide — choisissez une date.') };
+  const d = parsed.data;
+  const dueError = supplierRequestError({ dueOn: d.dueOn, today: todayParis() });
+  if (dueError) return { ok: false, error: appError('SAISIE_INVALIDE', dueError) };
+  try {
+    const renewed = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const r = await renewSupplierRequestLink(tx, d.requestId, d.dueOn);
+      if (r) await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'supplier.request_renew', objectType: 'supplier_request', objectId: d.requestId, after: { dueOn: d.dueOn, expiresOn: r.expiresOn }, ip: auth.ip, userAgent: auth.userAgent });
+      return r;
+    });
+    if (!renewed) return { ok: false, error: appError('DEMANDE_CLOSE', 'Cette demande n’attend plus de réponse : le fournisseur a répondu ou elle a été annulée — rechargez la fiche.') };
+    revalidatePath(`/t/${slug}/fournisseurs`);
+    return { ok: true, data: { link: portalLink(renewed.token), expiresOn: renewed.expiresOn } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_MISE_A_JOUR', 'Le nouveau lien n’a pas pu être créé — réessayez.')) };
+  }
+}
+
+export async function cancelSupplierRequestAction(slug: string, input: unknown): Promise<ActionResult> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ requestId: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Référence invalide.') };
+  try {
+    const done = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const ok = await cancelSupplierRequest(tx, parsed.data.requestId);
+      if (ok) await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'supplier.request_cancel', objectType: 'supplier_request', objectId: parsed.data.requestId, ip: auth.ip, userAgent: auth.userAgent });
+      return ok;
+    });
+    if (!done) return { ok: false, error: appError('DEMANDE_CLOSE', 'Cette demande est déjà close — rechargez la fiche.') };
+    revalidatePath(`/t/${slug}/fournisseurs`);
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_MISE_A_JOUR', 'L’annulation a échoué — réessayez.')) };
   }
 }
 

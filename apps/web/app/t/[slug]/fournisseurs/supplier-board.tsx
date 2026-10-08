@@ -7,16 +7,19 @@ import {
   SUPPLIER_ANSWER_LABEL,
   SUPPLIER_QUESTIONS,
   SUPPLIER_RATING_LABEL,
+  SUPPLIER_REQUEST_STATE_LABEL,
+  addDaysIso,
   assessSupplier,
   attestationFreshness,
   nextAssessmentDue,
   supplierAssessmentState,
   supplierQuestion,
+  supplierRequestState,
   type SupplierAnswer,
   type SupplierAnswers,
   type SupplierRating,
 } from '@toron/core';
-import type { SupplierDetail, SupplierSummary, TenantMember } from '@toron/db';
+import type { SupplierDetail, SupplierRequestRow, SupplierSummary, TenantMember } from '@toron/db';
 import { Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
@@ -27,10 +30,13 @@ import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   addSupplierAttestationAction,
+  cancelSupplierRequestAction,
   createSupplierAction,
+  createSupplierRequestAction,
   getSupplierDetailAction,
   recordSupplierAssessmentAction,
   removeSupplierAttestationAction,
+  renewSupplierRequestLinkAction,
   requestSupplierActionAction,
   updateSupplierAction,
 } from './supplier-actions';
@@ -43,6 +49,11 @@ function fmt(d: string | null): string {
   if (!d) return '—';
   const [y, m, day] = d.slice(0, 10).split('-');
   return `${day}/${m}/${y}`;
+}
+
+/** Date du jour à Paris, pour un horodatage reçu du serveur. */
+function fmtDay(d: Date | string): string {
+  return new Date(d).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 function RatingChip({ rating, score }: { rating: SupplierRating; score: number }) {
@@ -58,11 +69,17 @@ function AttestationCell({ s, today }: { s: SupplierSummary; today: string }) {
 
 function AssessmentCell({ s, today }: { s: SupplierSummary; today: string }) {
   const state = supplierAssessmentState(s.tier, s.lastAssessedOn, today);
-  if (state === 'jamais') return s.tier === 't1' ? <span className="sup-rating sup-rating--sous_reserve">Jamais évalué</span> : <span className="ds-muted">—</span>;
+  const request = s.responsesToReview > 0
+    ? <span className="sup-request sup-request--received">Réponse à examiner</span>
+    : s.openRequestDueOn ? <span className="sup-request">Questionnaire envoyé</span> : null;
+  if (state === 'jamais') {
+    if (request) return request;
+    return s.tier === 't1' ? <span className="sup-rating sup-rating--sous_reserve">Jamais évalué</span> : <span className="ds-muted">—</span>;
+  }
   return (
     <>
       <RatingChip rating={s.lastRating!} score={s.lastScore!} />
-      {state === 'a_refaire' ? <span className="sup-due">À refaire</span> : null}
+      {request ?? (state === 'a_refaire' ? <span className="sup-due">À refaire</span> : null)}
     </>
   );
 }
@@ -121,7 +138,7 @@ type Tab = 'fiche' | 'evaluation' | 'attestations' | 'actions';
 
 function SupplierDrawer({ slug, members, supplier, canManage, today, onClose }: { slug: string; members: TenantMember[]; supplier: SupplierSummary | null; canManage: boolean; today: string; onClose: () => void }) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>('fiche');
+  const [tab, setTab] = useState<Tab>(supplier && supplier.responsesToReview > 0 ? 'evaluation' : 'fiche');
   const [detail, setDetail] = useState<SupplierDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const supplierId = supplier?.id ?? null;
@@ -153,6 +170,7 @@ function SupplierDrawer({ slug, members, supplier, canManage, today, onClose }: 
   );
 
   const openActions = detail?.actions.filter((a) => a.status !== 'termine').length ?? 0;
+  const received = detail ? detail.requests.some((r) => r.status === 'soumise') : (supplier?.responsesToReview ?? 0) > 0;
 
   return (
     <Drawer header={header} labelId="frn-title" onClose={onClose}>
@@ -162,7 +180,7 @@ function SupplierDrawer({ slug, members, supplier, canManage, today, onClose }: 
             <h2 className="sup-title">{supplier.name}</h2>
             <div className="view-toggle sup-tabs" role="group" aria-label="Sections du fournisseur">
               <button type="button" aria-pressed={tab === 'fiche'} onClick={() => setTab('fiche')}>Fiche</button>
-              <button type="button" aria-pressed={tab === 'evaluation'} onClick={() => setTab('evaluation')}>Évaluation</button>
+              <button type="button" aria-pressed={tab === 'evaluation'} onClick={() => setTab('evaluation')}>Évaluation{received ? ' · réponse reçue' : ''}</button>
               <button type="button" aria-pressed={tab === 'attestations'} onClick={() => setTab('attestations')}>Attestations{detail ? ` · ${detail.attestations.length}` : ''}</button>
               <button type="button" aria-pressed={tab === 'actions'} onClick={() => setTab('actions')}>Actions{openActions ? ` · ${openActions}` : ''}</button>
             </div>
@@ -218,19 +236,33 @@ function SupplierForm({ slug, members, supplier, canManage, onClose }: { slug: s
 
 function EvaluationTab({ slug, supplier, detail, canManage, today, onChanged, onShowActions }: { slug: string; supplier: SupplierSummary; detail: SupplierDetail; canManage: boolean; today: string; onChanged: () => Promise<void>; onShowActions: () => void }) {
   const [editing, setEditing] = useState(false);
+  const [reviewing, setReviewing] = useState<SupplierRequestRow | null>(null);
   const last = detail.assessments[0] ?? null;
 
+  if (reviewing) {
+    return (
+      <AssessmentForm
+        slug={slug} supplier={supplier} previous={reviewing.answers as SupplierAnswers} today={today} review={reviewing}
+        onCancel={() => setReviewing(null)} onSaved={async () => { setReviewing(null); await onChanged(); }}
+      />
+    );
+  }
   if (editing) {
     return <AssessmentForm slug={slug} supplier={supplier} previous={last?.answers ?? null} today={today} onCancel={() => setEditing(false)} onSaved={async () => { setEditing(false); await onChanged(); }} />;
   }
 
+  const requests = <RequestsPanel slug={slug} supplier={supplier} requests={detail.requests} canManage={canManage} today={today} explain={!last} onChanged={onChanged} onReview={setReviewing} />;
+
   if (!last) {
     return (
-      <div className="empty-state">
-        <h2>Pas encore évalué</h2>
-        <p>{SUPPLIER_QUESTIONS.length} questions couvrent la gouvernance, les accès, la protection des données, les incidents, la continuité et le contrat. La note et l’appréciation sont calculées automatiquement.</p>
-        {canManage ? <button className="btn btn-primary btn-sm" onClick={() => setEditing(true)}>Évaluer ce fournisseur</button> : null}
-      </div>
+      <>
+        {requests}
+        <div className="empty-state">
+          <h2>Pas encore évalué</h2>
+          <p>{SUPPLIER_QUESTIONS.length} questions couvrent la gouvernance, les accès, la protection des données, les incidents, la continuité et le contrat. La note et l’appréciation sont calculées automatiquement.</p>
+          {canManage ? <button className="btn btn-primary btn-sm" onClick={() => setEditing(true)}>Évaluer ce fournisseur</button> : null}
+        </div>
+      </>
     );
   }
 
@@ -242,6 +274,7 @@ function EvaluationTab({ slug, supplier, detail, canManage, today, onChanged, on
 
   return (
     <>
+      {requests}
       <div className={`sup-summary sup-rating--${last.rating}`}>
         <span className="sup-score">{last.score}<small>/100</small></span>
         <span><RatingChip rating={last.rating} score={last.score} /></span>
@@ -311,7 +344,7 @@ function GapRow({ slug, supplierId, supplierName, questionKey, answer, blocking,
   );
 }
 
-function AssessmentForm({ slug, supplier, previous, today, onCancel, onSaved }: { slug: string; supplier: SupplierSummary; previous: SupplierAnswers | null; today: string; onCancel: () => void; onSaved: () => Promise<void> }) {
+function AssessmentForm({ slug, supplier, previous, today, review, onCancel, onSaved }: { slug: string; supplier: SupplierSummary; previous: SupplierAnswers | null; today: string; review?: SupplierRequestRow; onCancel: () => void; onSaved: () => Promise<void> }) {
   const [answers, setAnswers] = useState<SupplierAnswers>(() => ({ ...(previous ?? {}) }));
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -326,6 +359,7 @@ function AssessmentForm({ slug, supplier, previous, today, onCancel, onSaved }: 
         assessedOn: String(fd.get('assessedOn') ?? today),
         answers,
         notes: String(fd.get('notes') ?? '') || null,
+        requestId: review?.id ?? null,
       });
       if (r.ok) await onSaved();
       else setError(r.error.message);
@@ -334,7 +368,13 @@ function AssessmentForm({ slug, supplier, previous, today, onCancel, onSaved }: 
 
   return (
     <form onSubmit={keepValues(submit)}>
-      {previous ? <p className="sup-hint">Les réponses de la dernière évaluation sont reprises : modifiez celles qui ont changé.</p> : null}
+      {review ? (
+        <p className="sup-hint">
+          Réponses transmises par {review.contactName} le {review.submittedAt ? fmtDay(review.submittedAt) : '—'}. Vérifiez-les au regard
+          des commentaires et des pièces dont vous disposez, corrigez celles que vous ne retenez pas, puis validez : l’évaluation
+          est alors enregistrée à votre nom.
+        </p>
+      ) : previous ? <p className="sup-hint">Les réponses de la dernière évaluation sont reprises : modifiez celles qui ont changé.</p> : null}
       <label className="field">Date de l’évaluation<input type="date" name="assessedOn" defaultValue={today} max={today} required /></label>
       {SUPPLIER_QUESTIONS.map((q, i) => {
         const head = i === 0 || SUPPLIER_QUESTIONS[i - 1]!.theme !== q.theme ? <p className="sup-theme">{q.theme}</p> : null;
@@ -343,6 +383,7 @@ function AssessmentForm({ slug, supplier, previous, today, onCancel, onSaved }: 
             {head}
             <fieldset className="sup-question">
               <legend>{q.label}{q.blockingForCritical && supplier.tier === 't1' ? <span className="sup-blocking">Bloquant</span> : null}</legend>
+              {review?.comments[q.key] ? <p className="sup-supplier-comment"><span>Fournisseur</span>{review.comments[q.key]}</p> : null}
               <div className="sup-answers">
                 {SUPPLIER_ANSWERS.map((a) => (
                   <label key={a}>
@@ -355,15 +396,190 @@ function AssessmentForm({ slug, supplier, previous, today, onCancel, onSaved }: 
           </div>
         );
       })}
-      <label className="field" style={{ marginTop: 14 }}>Commentaire (sources consultées, réserves)<textarea name="notes" rows={3} maxLength={4000} /></label>
+      <label className="field" style={{ marginTop: 14 }}>Commentaire (sources consultées, réserves)<textarea name="notes" rows={3} maxLength={4000} defaultValue={review ? `Réponses du fournisseur reçues par le portail le ${review.submittedAt ? fmtDay(review.submittedAt) : '—'} (${review.contactName}).` : undefined} /></label>
       {error ? <p className="form-error" role="alert">{error}</p> : null}
       <div className="sup-preview" aria-live="polite">
         {preview.ok ? <RatingChip rating={preview.rating} score={preview.score} /> : <span>{answered}/{SUPPLIER_QUESTIONS.length} réponses</span>}
         <span className="spacer" />
         <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>Annuler</button>
-        <button type="submit" className="btn btn-primary btn-sm" disabled={pending || !preview.ok}>{pending ? 'Enregistrement…' : 'Enregistrer l’évaluation'}</button>
+        <button type="submit" className="btn btn-primary btn-sm" disabled={pending || !preview.ok}>{pending ? 'Enregistrement…' : review ? 'Valider la réponse' : 'Enregistrer l’évaluation'}</button>
       </div>
     </form>
+  );
+}
+
+// ── Portail fournisseur : demandes de réponse ───────────────────────────
+
+function RequestsPanel({ slug, supplier, requests, canManage, today, explain, onChanged, onReview }: { slug: string; supplier: SupplierSummary; requests: SupplierRequestRow[]; canManage: boolean; today: string; explain: boolean; onChanged: () => Promise<void>; onReview: (r: SupplierRequestRow) => void }) {
+  const [creating, setCreating] = useState(false);
+  const [link, setLink] = useState<{ link: string; expiresOn: string; email: string } | null>(null);
+  const received = requests.filter((r) => r.status === 'soumise');
+  const open = requests.filter((r) => r.status === 'envoyee' || r.status === 'en_cours');
+  const closed = requests.filter((r) => r.status === 'validee' || r.status === 'annulee');
+  const quiet = open.length === 0 && received.length === 0 && !link && !creating;
+
+  if (requests.length === 0 && !canManage) return null;
+
+  return (
+    <section className="sup-requests" aria-label="Questionnaire au fournisseur">
+      <div className="sup-requests-head">
+        <p className="drawer-section-label">Questionnaire au fournisseur</p>
+        {canManage && quiet ? <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCreating(true)}>Demander au fournisseur de répondre</button> : null}
+      </div>
+      {canManage && quiet && explain ? (
+        <p className="ds-muted sup-request-cta">Envoyez au contact du fournisseur un lien personnel : il répond lui-même au questionnaire, sans compte, puis vous validez sa réponse.</p>
+      ) : null}
+      {received.map((r) => {
+        const answered = Object.keys(r.answers).length;
+        const comments = Object.keys(r.comments).length;
+        return (
+          <div key={r.id} className="sup-response" role="status">
+            <span className="grow">
+              <b>Réponse reçue le {r.submittedAt ? fmtDay(r.submittedAt) : '—'}</b>
+              <small>{r.contactName} · {answered}/{SUPPLIER_QUESTIONS.length} réponses{comments ? ` · ${comments} commentaire${comments > 1 ? 's' : ''}` : ''}</small>
+            </span>
+            {canManage ? <button type="button" className="btn btn-primary btn-sm" onClick={() => onReview(r)}>Examiner la réponse</button> : <span className="ds-muted">À examiner par un responsable</span>}
+          </div>
+        );
+      })}
+      {link ? <PortalLink {...link} onDone={() => setLink(null)} /> : null}
+      {open.length > 0 ? (
+        <ul className="sup-list">
+          {open.map((r) => <OpenRequestRow key={r.id} slug={slug} request={r} canManage={canManage} today={today} onChanged={onChanged} onLink={setLink} />)}
+        </ul>
+      ) : null}
+      {creating ? (
+        <RequestForm slug={slug} supplier={supplier} today={today} onCancel={() => setCreating(false)} onCreated={async (l) => { setCreating(false); setLink(l); await onChanged(); }} />
+      ) : null}
+      {closed.length > 0 ? (
+        <details className="sup-requests-history">
+          <summary>Demandes précédentes · {closed.length}</summary>
+          <ul className="sup-list">
+          {closed.map((r) => (
+            <li key={r.id}>
+              <span className="grow">{r.contactName}<small>Demandée le {fmtDay(r.createdAt)}{r.reviewedAt ? ` · validée le ${fmtDay(r.reviewedAt)}${r.reviewedByName ? ` par ${r.reviewedByName}` : ''}` : ''}</small></span>
+              <span className={`sup-request${r.status === 'validee' ? ' sup-request--done' : ''}`}>{SUPPLIER_REQUEST_STATE_LABEL[r.status]}</span>
+            </li>
+          ))}
+          </ul>
+        </details>
+      ) : null}
+    </section>
+  );
+}
+
+function OpenRequestRow({ slug, request, canManage, today, onChanged, onLink }: { slug: string; request: SupplierRequestRow; canManage: boolean; today: string; onChanged: () => Promise<void>; onLink: (l: { link: string; expiresOn: string; email: string }) => void }) {
+  const [mode, setMode] = useState<'idle' | 'renew' | 'cancel'>('idle');
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const state = supplierRequestState(request.status, request.expiresOn, today);
+  const late = state !== 'expiree' && request.dueOn < today;
+
+  function renew(fd: FormData) {
+    setError(null);
+    start(async () => {
+      const r = await renewSupplierRequestLinkAction(slug, { requestId: request.id, dueOn: String(fd.get('dueOn') ?? '') });
+      if (r.ok) { setMode('idle'); onLink({ ...r.data, email: request.contactEmail }); await onChanged(); } else setError(r.error.message);
+    });
+  }
+  function cancel() {
+    setError(null);
+    start(async () => {
+      const r = await cancelSupplierRequestAction(slug, { requestId: request.id });
+      if (r.ok) { setMode('idle'); await onChanged(); } else setError(r.error.message);
+    });
+  }
+
+  return (
+    <li className="sup-open-request">
+      <span className="grow">
+        {request.contactName}
+        <small>{request.contactEmail} · demandée le {fmtDay(request.createdAt)}{request.requestedByName ? ` par ${request.requestedByName}` : ''} · échéance {fmt(request.dueOn)}</small>
+        {error ? <small className="form-error" role="alert">{error}</small> : null}
+        {mode === 'renew' ? (
+          <form className="sup-inline-form" onSubmit={keepValues(renew)}>
+            <label className="field">Nouvelle échéance<input type="date" name="dueOn" required min={addDaysIso(today, 1)} max={addDaysIso(today, 90)} defaultValue={request.dueOn > today ? request.dueOn : addDaysIso(today, 14)} /></label>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Création…' : 'Générer le lien'}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMode('idle')}>Annuler</button>
+            <small>L’ancien lien cessera aussitôt de fonctionner.</small>
+          </form>
+        ) : null}
+        {mode === 'cancel' ? (
+          <span className="sup-inline-form">
+            <small>Le fournisseur ne pourra plus répondre par ce lien.</small>
+            <button type="button" className="btn btn-danger btn-sm" onClick={cancel} disabled={pending}>{pending ? 'Annulation…' : 'Annuler la demande'}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMode('idle')}>Garder</button>
+          </span>
+        ) : null}
+      </span>
+      <span className={`sup-request${state === 'expiree' || late ? ' sup-request--late' : ''}`}>{late ? 'En retard' : SUPPLIER_REQUEST_STATE_LABEL[state]}</span>
+      {canManage && mode === 'idle' ? (
+        <span className="sup-request-actions">
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMode('renew')}>Nouveau lien</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMode('cancel')}>Annuler</button>
+        </span>
+      ) : null}
+    </li>
+  );
+}
+
+function RequestForm({ slug, supplier, today, onCancel, onCreated }: { slug: string; supplier: SupplierSummary; today: string; onCancel: () => void; onCreated: (l: { link: string; expiresOn: string; email: string }) => Promise<void> }) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  function submit(fd: FormData) {
+    setError(null);
+    const contactEmail = String(fd.get('contactEmail') ?? '');
+    start(async () => {
+      const r = await createSupplierRequestAction(slug, {
+        supplierId: supplier.id,
+        contactName: String(fd.get('contactName') ?? ''),
+        contactEmail,
+        dueOn: String(fd.get('dueOn') ?? ''),
+        message: String(fd.get('message') ?? '') || null,
+      });
+      if (r.ok) await onCreated({ ...r.data, email: contactEmail.trim() });
+      else setError(r.error.message);
+    });
+  }
+
+  return (
+    <form className="sup-request-form" onSubmit={keepValues(submit)}>
+      <div className="sup-request-grid">
+        <label className="field">Contact chez le fournisseur<input name="contactName" required minLength={2} maxLength={160} placeholder="Service sécurité, responsable qualité…" /></label>
+        <label className="field">Adresse e-mail du contact<input name="contactEmail" type="email" required maxLength={254} /></label>
+        <label className="field">Réponse attendue avant le<input name="dueOn" type="date" required min={addDaysIso(today, 1)} max={addDaysIso(today, 90)} defaultValue={addDaysIso(today, 21)} /></label>
+      </div>
+      <label className="field">Message au fournisseur (facultatif)<textarea name="message" rows={3} maxLength={2000} placeholder="Contexte de la demande, contrat concerné, pièces attendues…" /></label>
+      <p className="sup-hint">Le lien reste valable deux semaines après l’échéance. Le fournisseur ne voit que le questionnaire, votre message et le nom de votre organisation.</p>
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
+      <div className="dialog-actions">
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>Annuler</button>
+        <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Création…' : 'Créer le lien'}</button>
+      </div>
+    </form>
+  );
+}
+
+function PortalLink({ link, expiresOn, email, onDone }: { link: string; expiresOn: string; email: string; onDone: () => void }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+  return (
+    <div className="invite-link" role="status">
+      <p><b>Lien prêt pour {email}</b> — transmettez-le par votre messagerie habituelle. Il reste valable jusqu’au {fmt(expiresOn)} et n’est affiché qu’une seule fois.</p>
+      <div className="invite-link-row">
+        <input value={link} readOnly onFocus={(e) => e.currentTarget.select()} aria-label="Lien du questionnaire fournisseur" />
+        <button type="button" className="btn btn-ghost btn-sm" onClick={copy}>{copied ? 'Copié' : 'Copier'}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onDone}>Fermer</button>
+      </div>
+    </div>
   );
 }
 

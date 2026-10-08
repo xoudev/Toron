@@ -98,13 +98,16 @@ describe('évaluations et attestations fournisseurs', () => {
     expect(infog.lastAssessedOn).toBe('2025-06-20');
     expect(infog.nextAttestationExpiry).toBe('2026-09-15');
     expect(infog.openActionCount).toBe(1);
+    expect(infog).toMatchObject({ responsesToReview: 0, openRequestDueOn: '2026-10-30' });
     const transp = list.find((s) => s.id === DEMO.supplierTransporteur)!;
     expect(transp.lastScore).toBeNull();
     expect(transp.attestationCount).toBe(1);
+    expect(transp).toMatchObject({ responsesToReview: 1, openRequestDueOn: null });
 
     const detail = await withTenant(app.db, T, (tx) => getSupplierDetail(tx, DEMO.supplierInfogerance));
     expect(detail!.assessments[0]!.answers.incidents).toBe('non');
     expect(detail!.actions.map((a) => a.id)).toContain(DEMO.actionSupplierIncidents);
+    expect(detail!.requests.map((r) => [r.id, r.status])).toEqual([[DEMO.supplierRequestInfogerance, 'envoyee']]);
   });
 
   it('la dernière évaluation fait foi et l’historique est conservé', async () => {

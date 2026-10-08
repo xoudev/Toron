@@ -99,7 +99,7 @@ describe('bilan d’impact des activités critiques', () => {
 
   it('la vue de pilotage compte activités vitales, BIA à revoir et exercices planifiés', async () => {
     expect(await withTenant(app.db, T, (tx) => getContinuityOverview(tx, TODAY))).toEqual({
-      activities: 4, vital: 1, criticalUntested: 0, objectiveMissed: 0, biaDue: 1, exercisesPlanned: 1,
+      activities: 4, vital: 1, tested: 3, criticalUntested: 0, objectiveMissed: 0, biaDue: 1, exercisesPlanned: 1, exercisesHeld: 2,
     });
   });
 

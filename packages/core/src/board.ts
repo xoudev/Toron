@@ -44,6 +44,12 @@ export interface BoardInput {
    * direction) sans formation à jour ou à renouveler d'ici deux mois.
    */
   training: { held: number; withoutSheet: number; leaders: number; leadersUntrained: number; leadersDueSoon: number } | null;
+  /**
+   * null quand le module continuité est masqué. Activités critiques, dont
+   * fortes ou vitales sans exercice sur douze mois, objectifs de reprise
+   * manqués au dernier exercice, bilans d'impact de plus d'un an.
+   */
+  continuity: { activities: number; criticalUntested: number; objectiveMissed: number; biaDue: number } | null;
 }
 
 export type BoardTone = 'alerte' | 'vigilance' | 'positif';
@@ -68,6 +74,9 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
   if (i.incidents && i.incidents.nis2ImportantOpen > 0) out.push({ tone: 'alerte', text: `${s(i.incidents.nis2ImportantOpen, 'incident important NIS 2', 'incidents importants NIS 2')} en cours de traitement.` });
   if (i.controls.ineffective > 0) out.push({ tone: 'alerte', text: `${s(i.controls.ineffective, 'contrôle jugé inefficace', 'contrôles jugés inefficaces')} à la dernière revue.` });
   if (i.exceptions && i.exceptions.lapsed > 0) out.push({ tone: 'alerte', text: `${s(i.exceptions.lapsed, 'dérogation échue', 'dérogations échues')} sans clôture : l’écart n’est plus couvert.` });
+  if (i.continuity && i.continuity.objectiveMissed > 0) {
+    out.push({ tone: 'alerte', text: `${s(i.continuity.objectiveMissed, 'activité critique n’a pas tenu son objectif de reprise', 'activités critiques n’ont pas tenu leur objectif de reprise')} au dernier exercice.` });
+  }
   if (i.training && i.training.leadersUntrained > 0) {
     const nis2 = nis2Concerned(i);
     out.push({ tone: nis2 ? 'alerte' : 'vigilance', text: `${s(i.training.leadersUntrained, 'dirigeant', 'dirigeants')} sans formation à la cybersécurité à jour${nis2 ? ' (NIS 2, art. 20)' : ''}.` });
@@ -89,6 +98,12 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
   }
   if (i.controls.late > 0) out.push({ tone: 'vigilance', text: `${s(i.controls.late, 'contrôle en retard de revue', 'contrôles en retard de revue')} : efficacité non démontrée.` });
   if (i.evidencesStale > 0) out.push({ tone: 'vigilance', text: `${s(i.evidencesStale, 'preuve expirée ou bientôt expirée', 'preuves expirées ou bientôt expirées')}.` });
+  if (i.continuity && i.continuity.criticalUntested > 0) {
+    out.push({ tone: 'vigilance', text: `${s(i.continuity.criticalUntested, 'activité forte ou vitale', 'activités fortes ou vitales')} sans exercice de continuité depuis un an.` });
+  }
+  if (i.continuity && i.continuity.biaDue > 0) {
+    out.push({ tone: 'vigilance', text: `${s(i.continuity.biaDue, 'bilan d’impact', 'bilans d’impact')} de plus d’un an, à revoir.` });
+  }
   if (i.training) {
     if (i.training.leadersDueSoon > 0) out.push({ tone: 'vigilance', text: `Formation à la cybersécurité à renouveler d’ici deux mois pour ${s(i.training.leadersDueSoon, 'dirigeant', 'dirigeants')}.` });
     if (i.training.held === 0) out.push({ tone: 'vigilance', text: 'Aucune session de sensibilisation tenue sur douze mois.' });
@@ -98,6 +113,9 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
   if (i.obligations.applicable > 0 && i.obligations.met / i.obligations.applicable >= 0.8) out.push({ tone: 'positif', text: `${i.obligations.met} obligations respectées sur ${i.obligations.applicable}.` });
   if (i.risks && i.risks.critical === 0 && i.risks.high === 0) out.push({ tone: 'positif', text: 'Aucun risque élevé ou critique après traitement.' });
   if (i.controls.active > 0 && i.controls.late === 0 && i.controls.ineffective === 0) out.push({ tone: 'positif', text: 'Tous les contrôles sont revus dans les temps et jugés efficaces.' });
+  if (i.continuity && i.continuity.activities > 0 && i.continuity.criticalUntested === 0 && i.continuity.objectiveMissed === 0) {
+    out.push({ tone: 'positif', text: 'Activités critiques testées sur l’année, objectifs de reprise tenus.' });
+  }
   if (i.training && i.training.leaders > 0 && i.training.leadersUntrained === 0 && i.training.leadersDueSoon === 0) {
     out.push({ tone: 'positif', text: 'Formation à la cybersécurité des dirigeants à jour.' });
   }
@@ -136,5 +154,10 @@ export function boardDecisions(i: BoardInput): string[] {
       : `Arbitrer les moyens pour rétablir les ${i.controls.ineffective} contrôles jugés inefficaces.`);
   }
   if (i.exceptions && i.exceptions.pending > 0) out.push(`Accorder ou refuser ${s(i.exceptions.pending, 'demande de dérogation', 'demandes de dérogation')}.`);
+  if (i.continuity && i.continuity.objectiveMissed > 0) {
+    out.push(i.continuity.objectiveMissed === 1
+      ? 'Arbitrer les moyens pour tenir l’objectif de reprise manqué au dernier exercice.'
+      : `Arbitrer les moyens pour tenir les ${i.continuity.objectiveMissed} objectifs de reprise manqués au dernier exercice.`);
+  }
   return out;
 }

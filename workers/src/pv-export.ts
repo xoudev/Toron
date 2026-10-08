@@ -5,6 +5,7 @@ import {
   getReview,
   getReviewCounts,
   getReviewEntityName,
+  getContinuityOverview,
   getTrainingOverview,
   listControlLibrary,
   sealExport,
@@ -57,7 +58,8 @@ export async function processPvExport(
       const controls = (await listControlLibrary(tx, today)).filter((c) => c.status === 'actif');
       const { disabledModules } = await getOrganisationProfile(tx);
       const training = isModuleEnabled(disabledModules, 'sensibilisation') ? await getTrainingOverview(tx, today) : null;
-      return { review, metrics, counts, entityName, controls, training };
+      const continuity = isModuleEnabled(disabledModules, 'continuite') ? await getContinuityOverview(tx, today) : null;
+      return { review, metrics, counts, entityName, controls, training, continuity };
     });
     if (!data) {
       await withTenant(db, job.tenantId, (tx) => failExport(tx, job.id, 'Revue introuvable.'));
@@ -66,7 +68,7 @@ export async function processPvExport(
 
     // 2) Modèle + compilation (hors transaction)
     const slug = randomVerifySlug();
-    const { review, metrics, counts, entityName, controls, training } = data;
+    const { review, metrics, counts, entityName, controls, training, continuity } = data;
     const agenda = buildReviewAgenda({
       actionsOpen: metrics.actionsOpen,
       actionsOverdue: metrics.actionsOverdue,
@@ -90,6 +92,9 @@ export async function processPvExport(
       documentsReviewOverdue: metrics.documentsReviewOverdue,
       training: training && {
         held: training.held, participations: training.participations, leaders: training.leaders, leadersUpToDate: training.upToDate,
+      },
+      continuity: continuity && {
+        activities: continuity.activities, tested: continuity.tested, objectiveMissed: continuity.objectiveMissed, exercisesHeld: continuity.exercisesHeld,
       },
     });
 

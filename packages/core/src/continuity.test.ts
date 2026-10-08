@@ -58,7 +58,7 @@ describe('pilotage', () => {
       { criticality: 3, state: 'non_teste', assessedOn: '2026-02-10' },
       { criticality: 2, state: 'non_teste', assessedOn: '2025-09-15' },
       { criticality: 4, state: 'objectif_manque', assessedOn: '2026-02-10' },
-    ], TODAY)).toEqual({ activities: 5, vital: 2, criticalUntested: 1, objectiveMissed: 1, biaDue: 1 });
+    ], TODAY)).toEqual({ activities: 5, vital: 2, tested: 3, criticalUntested: 1, objectiveMissed: 1, biaDue: 1 });
   });
 
   it('les gestionnaires tiennent le BIA, l’auditeur et le lecteur consultent', () => {

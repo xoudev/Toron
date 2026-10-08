@@ -36,6 +36,9 @@ export async function processBoardExport(db: Db, job: ClaimedExport, publicBaseU
       ...(i.training && i.training.leaders > 0
         ? [{ label: 'Dirigeants formés à la cybersécurité', value: `${i.training.leaders - i.training.leadersUntrained} / ${i.training.leaders}` }]
         : []),
+      ...(i.continuity && i.continuity.activities > 0
+        ? [{ label: 'Objectifs de reprise manqués', value: `${i.continuity.objectiveMissed} / ${i.continuity.activities}` }]
+        : []),
     ];
 
     const model: BoardModel = {

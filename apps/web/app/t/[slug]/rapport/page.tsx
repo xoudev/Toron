@@ -74,6 +74,7 @@ export default async function RapportDirectionPage({ params }: { params: Promise
             {i.incidents ? <div><dt>Incidents en cours</dt><dd>{i.incidents.open}</dd></div> : null}
             <div><dt>Fiches RGPD complètes</dt><dd>{i.processing.total - i.processing.incomplete} / {i.processing.total}</dd></div>
             {i.training && i.training.leaders > 0 ? <div><dt>Dirigeants formés à la cybersécurité</dt><dd>{i.training.leaders - i.training.leadersUntrained} / {i.training.leaders}</dd></div> : null}
+            {i.continuity && i.continuity.activities > 0 ? <div><dt>Objectifs de reprise manqués</dt><dd>{i.continuity.objectiveMissed} / {i.continuity.activities}</dd></div> : null}
           </dl>
         </section>
 

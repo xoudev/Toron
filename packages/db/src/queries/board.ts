@@ -25,6 +25,7 @@ import { listActions, type ActionSummary } from './actions.ts';
 import { listControlLibrary } from './control-reviews.ts';
 import { getDashboardMetrics, getFrameworkCoverage } from './dashboard.ts';
 import { listExceptions } from './exceptions.ts';
+import { getContinuityOverview } from './continuity.ts';
 import { getTrainingOverview } from './training.ts';
 import { listIncidents } from './incidents.ts';
 import { listEntitiesNis2, listObligations } from './obligations.ts';
@@ -71,6 +72,7 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
     exceptions: on('derogations') ? await listExceptions(tx, today) : null,
     controls: (await listControlLibrary(tx, today)).filter((c) => c.status === 'actif'),
     training: on('sensibilisation') ? await getTrainingOverview(tx, today) : null,
+    continuity: on('continuite') ? await getContinuityOverview(tx, today) : null,
   };
 
   const overdue = d.actions.filter((a) => a.effectiveStatus === 'en_retard');
@@ -125,6 +127,12 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
       leaders: d.training.leaders,
       leadersUntrained: d.training.untrained,
       leadersDueSoon: d.training.dueSoon,
+    },
+    continuity: d.continuity && {
+      activities: d.continuity.activities,
+      criticalUntested: d.continuity.criticalUntested,
+      objectiveMissed: d.continuity.objectiveMissed,
+      biaDue: d.continuity.biaDue,
     },
   };
 

@@ -1,5 +1,7 @@
 import {
+  EXERCISE_WINDOW_MONTHS,
   activityContinuityState,
+  addMonthsIso,
   biaReviewDue,
   continuitySummary,
   type ActivityContinuityState,
@@ -349,13 +351,20 @@ export async function deleteContinuityExercise(tx: TenantTx, exerciseId: string)
   return row ?? null;
 }
 
-export type ContinuityOverview = ContinuitySummary & { exercisesPlanned: number };
+export type ContinuityOverview = ContinuitySummary & { exercisesPlanned: number; exercisesHeld: number };
 
-/** Vue de pilotage : activités, exercices planifiés. */
+/** Vue de pilotage : activités, exercices planifiés et réalisés sur douze mois. */
 export async function getContinuityOverview(tx: TenantTx, today: string): Promise<ContinuityOverview> {
   const activities = await listContinuityActivities(tx, today);
-  const [planned] = (await tx.execute(sql`
-    SELECT count(*) AS n FROM continuity_exercises WHERE status = 'planifie' AND scheduled_on >= ${today}
-  `)) as unknown as { n: number | string }[];
-  return { ...continuitySummary(activities, today), exercisesPlanned: Number(planned?.n ?? 0) };
+  const since = addMonthsIso(today, -EXERCISE_WINDOW_MONTHS);
+  const [counts] = (await tx.execute(sql`
+    SELECT count(*) FILTER (WHERE status = 'planifie' AND scheduled_on >= ${today}) AS planned,
+           count(*) FILTER (WHERE status = 'realise' AND scheduled_on > ${since} AND scheduled_on <= ${today}) AS held
+    FROM continuity_exercises
+  `)) as unknown as { planned: number | string; held: number | string }[];
+  return {
+    ...continuitySummary(activities, today),
+    exercisesPlanned: Number(counts?.planned ?? 0),
+    exercisesHeld: Number(counts?.held ?? 0),
+  };
 }

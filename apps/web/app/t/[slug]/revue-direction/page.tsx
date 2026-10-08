@@ -1,5 +1,7 @@
 import { buildReviewAgenda, canEditModule, reviewInputsReady, suggestNextReview } from '@toron/core';
-import { getDashboardMetrics, getReviewCounts, getTrainingOverview, listControlLibrary, listReviews, listTenantMembers, withTenant } from '@toron/db';
+import {
+  getContinuityOverview, getDashboardMetrics, getReviewCounts, getTrainingOverview, listControlLibrary, listReviews, listTenantMembers, withTenant,
+} from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
@@ -20,14 +22,15 @@ export default async function RevueDirectionPage({ params }: { params: Promise<{
   if (!(await getOrganisationOverview(ctx.tenantId)).enabled('revue_direction')) return <ModuleDisabled slug={slug} module="revue_direction" role={ctx.role} />;
   const canManage = canEditModule(ctx.role, 'revue_direction');
 
-  const trainingOn = (await getOrganisationOverview(ctx.tenantId)).enabled('sensibilisation');
-  const { reviews, metrics, counts, members, controls, training } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
+  const organisation = await getOrganisationOverview(ctx.tenantId);
+  const { reviews, metrics, counts, members, controls, training, continuity } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
     reviews: await listReviews(tx),
     metrics: await getDashboardMetrics(tx),
     counts: await getReviewCounts(tx),
     members: await listTenantMembers(tx),
     controls: (await listControlLibrary(tx, todayParis())).filter((c) => c.status === 'actif'),
-    training: trainingOn ? await getTrainingOverview(tx, todayParis()) : null,
+    training: organisation.enabled('sensibilisation') ? await getTrainingOverview(tx, todayParis()) : null,
+    continuity: organisation.enabled('continuite') ? await getContinuityOverview(tx, todayParis()) : null,
   }));
 
   const agenda = buildReviewAgenda({
@@ -52,6 +55,9 @@ export default async function RevueDirectionPage({ params }: { params: Promise<{
     evidencesStale: metrics.evidencesStale,
     documentsReviewOverdue: metrics.documentsReviewOverdue,
     training: training && { held: training.held, participations: training.participations, leaders: training.leaders, leadersUpToDate: training.upToDate },
+    continuity: continuity && {
+      activities: continuity.activities, tested: continuity.tested, objectiveMissed: continuity.objectiveMissed, exercisesHeld: continuity.exercisesHeld,
+    },
   });
   const ready = reviewInputsReady(agenda);
   const todayIso = new Date().toISOString().slice(0, 10);

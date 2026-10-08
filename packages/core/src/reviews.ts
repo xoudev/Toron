@@ -67,6 +67,8 @@ export interface ReviewInputs {
   documentsReviewOverdue: number;
   /** null quand le module sensibilisation est masqué. Sessions et participations sur douze mois. */
   training: { held: number; participations: number; leaders: number; leadersUpToDate: number } | null;
+  /** null quand le module continuité est masqué. Exercices réalisés sur douze mois et état des activités. */
+  continuity: { activities: number; tested: number; objectiveMissed: number; exercisesHeld: number } | null;
 }
 
 function plural(n: number, singular: string, plural_: string): string {
@@ -94,6 +96,19 @@ function trainingBullet(t: NonNullable<ReviewInputs['training']>): AgendaBullet 
     head: 'Sensibilisation —',
     body: `${sessions}${leaders}.`,
     tone: t.leadersUpToDate < t.leaders ? 'danger' : t.held === 0 ? 'warn' : 'ok',
+  };
+}
+
+function continuityBullet(c: NonNullable<ReviewInputs['continuity']>): AgendaBullet {
+  const exercises = c.exercisesHeld === 0
+    ? 'aucun exercice réalisé sur douze mois'
+    : `${plural(c.exercisesHeld, 'exercice réalisé', 'exercices réalisés')} sur douze mois`;
+  const coverage = c.activities === 0 ? '' : ` ; activités critiques testées : ${c.tested} sur ${c.activities}`;
+  const missed = c.objectiveMissed > 0 ? `, dont ${plural(c.objectiveMissed, 'objectif de reprise manqué', 'objectifs de reprise manqués')}` : '';
+  return {
+    head: 'Continuité —',
+    body: `${exercises}${coverage}${missed}.`,
+    tone: c.objectiveMissed > 0 ? 'danger' : c.tested < c.activities || c.exercisesHeld === 0 ? 'warn' : 'ok',
   };
 }
 
@@ -166,6 +181,7 @@ export function buildReviewAgenda(m: ReviewInputs): AgendaSection[] {
       bullets: [
         { head: 'Audits —', body: `${plural(m.auditsClosed, 'clôturé', 'clôturés')}, ${plural(m.auditsInProgress, 'en cours', 'en cours')}.`, tone: m.auditsInProgress > 0 ? 'warn' : 'ok' },
         { head: 'Revues de contrôle —', body: controlReviewLine(m), tone: m.controlsIneffective > 0 ? 'danger' : m.controlsLate > 0 ? 'warn' : 'ok' },
+        ...(m.continuity ? [continuityBullet(m.continuity)] : []),
         { head: 'Non-conformités —', body: `${plural(m.ncOpen, 'ouverte', 'ouvertes')}, ${plural(m.ncInEffectivenessCheck, 'en vérification d’efficacité (J+90)', 'en vérification d’efficacité (J+90)')}.`, tone: m.ncOpen > 0 ? 'warn' : 'ok' },
       ],
       kpis: [],

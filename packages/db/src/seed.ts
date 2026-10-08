@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 import { hash } from '@node-rs/argon2';
 import { OBLIGATION_CATALOG, assessSupplier, supplierQuestion, defaultRiskScale, riskBand, type RiskBand, type SupplierAnswers } from '@toron/core';
@@ -102,6 +102,8 @@ export const DEMO = {
   complaintRetards: 'd0000000-0000-4000-8000-0000000001d3',
   complaintEtiquettes: 'd0000000-0000-4000-8000-0000000001d4',
   complaintInversion: 'd0000000-0000-4000-8000-0000000001d5',
+  supplierRequestTransporteur: 'd0000000-0000-4000-8000-0000000001e1',
+  supplierRequestInfogerance: 'd0000000-0000-4000-8000-0000000001e2',
   slug: 'meridiane-logistics',
   // Identifiants de démonstration locaux — communiqués par la sortie du CLI.
   password: 'Meridiane#Demo2026',
@@ -968,6 +970,40 @@ export async function seedDemoTenant(connectionString: string): Promise<void> {
               'Avenant à négocier avant le renouvellement ; NIS 2 impose l’alerte précoce sous 24 h.',
               'supplier', ${DEMO.supplierInfogerance}, ${DEMO.userClaire}, '2026-11-15', 'p1', 'en_cours')
       ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, status = EXCLUDED.status`;
+
+    // Portail fournisseur : le transporteur, jamais évalué, a répondu
+    // lui-même au questionnaire (réponse à examiner) ; l'infogérant, à
+    // réévaluer, a reçu sa demande. Les jetons de démonstration sont
+    // aléatoires et jamais conservés : « Nouveau lien » en émet un.
+    const portalToken = () => createHash('sha256').update(randomBytes(32).toString('base64url'), 'utf8').digest('hex');
+    await sql`
+      INSERT INTO supplier_requests (id, tenant_id, supplier_id, contact_name, contact_email, message, token_hash, status,
+                                     due_on, expires_on, answers, comments, requested_by, submitted_at, created_at)
+      VALUES (${DEMO.supplierRequestTransporteur}, ${DEMO.tenantId}, ${DEMO.supplierTransporteur}, 'Service qualité et sécurité',
+              'qualite@transporteur-regional.example',
+              'Premier questionnaire de sécurité dans le cadre du contrat de livraison du dernier kilomètre.',
+              ${portalToken()}, 'soumise', '2026-10-10', '2026-10-24',
+              ${sql.json({
+                gouvernance: 'partiel', mfa: 'partiel', chiffrement: 'oui', localisation: 'oui', incidents: 'non',
+                continuite: 'partiel', vulnerabilites: 'partiel', sous_traitance: 'oui', rgpd: 'oui', reversibilite: 'oui', audit: 'non',
+              })},
+              ${sql.json({
+                gouvernance: 'Charte informatique signée par les salariés ; pas de responsable sécurité nommé, le directeur administratif assure le rôle.',
+                mfa: 'Double authentification sur le portail de suivi des tournées ; pas encore sur la messagerie.',
+                incidents: 'Aucun délai prévu au contrat. Nous pouvons nous engager sur 48 heures.',
+                continuite: 'Sauvegarde quotidienne du logiciel de tournées ; restauration jamais testée.',
+                audit: 'Pas d’audit externe à ce jour.',
+              })},
+              ${DEMO.userAntoine}, '2026-10-02 15:42:00+02', '2026-09-22 09:10:00+02')
+      ON CONFLICT (id) DO NOTHING`;
+    await sql`
+      INSERT INTO supplier_requests (id, tenant_id, supplier_id, contact_name, contact_email, message, token_hash, status,
+                                     due_on, expires_on, requested_by, created_at)
+      VALUES (${DEMO.supplierRequestInfogerance}, ${DEMO.tenantId}, ${DEMO.supplierInfogerance}, 'Responsable de la sécurité',
+              'securite@infogerance.example',
+              'Réévaluation annuelle avant le renouvellement du contrat, en particulier sur la notification des incidents.',
+              ${portalToken()}, 'envoyee', '2026-10-30', '2026-11-13', ${DEMO.userClaire}, '2026-10-01 11:00:00+02')
+      ON CONFLICT (id) DO NOTHING`;
 
     // ── Module 6.4 : registre des obligations ───────────────────────────
     // Meridiane Logistics est une entité importante NIS 2 (services

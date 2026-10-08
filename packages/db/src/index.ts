@@ -200,6 +200,11 @@ export {
   type SupplierSummary,
 } from './queries/suppliers.ts';
 export {
+  cancelSupplierRequest, createSupplierRequest, getSupplierRequestRef, hashPortalToken, listSupplierRequests,
+  markSupplierRequestValidated, notifySupplierResponse, renewSupplierRequestLink, resolvePortalRequest, savePortalDraft,
+  type CreateSupplierRequestInput, type PortalRequest, type SupplierRequestRow,
+} from './queries/supplier-requests.ts';
+export {
   createAudit,
   setAuditStatus,
   addFinding,

@@ -8,7 +8,7 @@ export const notifications = pgTable('notifications', {
   id: uuid('id').primaryKey().defaultRandom(),
   tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
   userId: uuid('user_id').notNull(),
-  kind: text('kind').notNull().$type<'assignation' | 'decision'>(),
+  kind: text('kind').notNull().$type<'assignation' | 'decision' | 'reponse'>(),
   subject: text('subject').notNull().$type<NotificationSubject>(),
   title: text('title').notNull(),
   href: text('href').notNull(),

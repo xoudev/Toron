@@ -4,6 +4,7 @@ import {
   awarenessSummary,
   canManageTraining,
   isLeaderRole,
+  leaderTrainingCounts,
   leaderTrainingDue,
   leaderTrainingState,
   trainingSessionError,
@@ -68,5 +69,12 @@ describe('formation des dirigeants (NIS 2, art. 20)', () => {
     expect(leaderTrainingState('2025-10-07', TODAY)).toBe('bientot');
     expect(leaderTrainingState('2025-10-06', TODAY)).toBe('a_renouveler');
     expect(leaderTrainingState(null, TODAY)).toBe('jamais');
+  });
+
+  it('compte les dirigeants à jour, à renouveler bientôt et sans formation à jour', () => {
+    expect(leaderTrainingCounts(['a_jour', 'bientot', 'a_renouveler', 'jamais', 'bientot'])).toEqual({
+      leaders: 5, upToDate: 3, dueSoon: 2, untrained: 2,
+    });
+    expect(leaderTrainingCounts([])).toEqual({ leaders: 0, upToDate: 0, dueSoon: 0, untrained: 0 });
   });
 });

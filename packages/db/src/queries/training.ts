@@ -1,8 +1,12 @@
 import {
   LEADER_ROLES,
+  awarenessSummary,
+  leaderTrainingCounts,
   leaderTrainingDue,
   leaderTrainingState,
   trainingSessionState,
+  type AwarenessSummary,
+  type LeaderTrainingCounts,
   type LeaderTrainingState,
   type MembershipRole,
   type TrainingKind,
@@ -214,4 +218,13 @@ export async function listLeaderTraining(tx: TenantTx, today: string): Promise<L
     dueOn: r.last_trained_on ? leaderTrainingDue(r.last_trained_on) : null,
     state: leaderTrainingState(r.last_trained_on, today),
   }));
+}
+
+export type TrainingOverview = AwarenessSummary & LeaderTrainingCounts;
+
+/** Bilan sur douze mois et formation des dirigeants, pour le tableau de bord, le rapport et la revue. */
+export async function getTrainingOverview(tx: TenantTx, today: string): Promise<TrainingOverview> {
+  const summary = awarenessSummary(await listTrainingSessions(tx, today), today);
+  const leaders = leaderTrainingCounts((await listLeaderTraining(tx, today)).map((l) => l.state));
+  return { ...summary, ...leaders };
 }

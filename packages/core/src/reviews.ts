@@ -65,6 +65,8 @@ export interface ReviewInputs {
   controlsIneffective: number;
   evidencesStale: number;
   documentsReviewOverdue: number;
+  /** null quand le module sensibilisation est masqué. Sessions et participations sur douze mois. */
+  training: { held: number; participations: number; leaders: number; leadersUpToDate: number } | null;
 }
 
 function plural(n: number, singular: string, plural_: string): string {
@@ -81,6 +83,18 @@ function controlReviewLine(m: ReviewInputs): string {
     m.controlsIneffective > 0 ? plural(m.controlsIneffective, 'jugé inefficace', 'jugés inefficaces') : null,
   ].filter((p): p is string => p !== null);
   return `sur ${plural(m.controlsActive, 'contrôle actif', 'contrôles actifs')} : ${parts.join(', ')}.`;
+}
+
+function trainingBullet(t: NonNullable<ReviewInputs['training']>): AgendaBullet {
+  const sessions = t.held === 0
+    ? 'aucune session tenue sur douze mois'
+    : `${plural(t.held, 'session tenue', 'sessions tenues')} sur douze mois, ${plural(t.participations, 'participation', 'participations')}`;
+  const leaders = t.leaders === 0 ? '' : ` ; dirigeants formés à jour : ${t.leadersUpToDate} sur ${t.leaders}`;
+  return {
+    head: 'Sensibilisation —',
+    body: `${sessions}${leaders}.`,
+    tone: t.leadersUpToDate < t.leaders ? 'danger' : t.held === 0 ? 'warn' : 'ok',
+  };
 }
 
 function treatmentPlanLine(m: ReviewInputs): string {
@@ -180,9 +194,10 @@ export function buildReviewAgenda(m: ReviewInputs): AgendaSection[] {
       bullets: [
         { head: 'Preuves —', body: m.evidencesStale > 0 ? `${plural(m.evidencesStale, 'preuve périmée', 'preuves périmées')} à renouveler.` : 'coffre de preuves à jour.', tone: m.evidencesStale > 0 ? 'warn' : 'ok' },
         { head: 'Documentaire —', body: m.documentsReviewOverdue > 0 ? `${plural(m.documentsReviewOverdue, 'document', 'documents')} en revue échue.` : 'revues documentaires à jour.', tone: m.documentsReviewOverdue > 0 ? 'warn' : 'ok' },
+        ...(m.training ? [trainingBullet(m.training)] : []),
       ],
       kpis: [],
-      hasData: m.evidencesStale > 0 || m.documentsReviewOverdue > 0,
+      hasData: m.evidencesStale > 0 || m.documentsReviewOverdue > 0 || m.training !== null,
     },
     {
       n: 7,

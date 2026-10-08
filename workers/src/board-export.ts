@@ -33,6 +33,9 @@ export async function processBoardExport(db: Db, job: ClaimedExport, publicBaseU
       { label: 'Obligations respectées', value: `${i.obligations.met} / ${i.obligations.applicable}` },
       ...(i.incidents ? [{ label: 'Incidents en cours', value: String(i.incidents.open) }] : []),
       { label: 'Fiches RGPD complètes', value: `${i.processing.total - i.processing.incomplete} / ${i.processing.total}` },
+      ...(i.training && i.training.leaders > 0
+        ? [{ label: 'Dirigeants formés à la cybersécurité', value: `${i.training.leaders - i.training.leadersUntrained} / ${i.training.leaders}` }]
+        : []),
     ];
 
     const model: BoardModel = {

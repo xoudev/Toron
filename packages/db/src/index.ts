@@ -136,6 +136,8 @@ export {
   getTrainingSessionRef,
   setTrainingSessionEvidence,
   listLeaderTraining,
+  getTrainingOverview,
+  type TrainingOverview,
   type TrainingSessionRow,
   type TrainingSessionInput,
   type TrainingSessionRef,

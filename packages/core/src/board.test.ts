@@ -14,11 +14,12 @@ const calm: BoardInput = {
   evidencesStale: 0,
   exceptions: { pending: 0, lapsed: 0 },
   controls: { active: 3, late: 0, ineffective: 0 },
+  training: { held: 3, withoutSheet: 0, leaders: 1, leadersUntrained: 0, leadersDueSoon: 0 },
 };
 
 describe('messages clés du rapport de direction', () => {
   it('une organisation sans point ouvert ne reçoit que des messages positifs', () => {
-    expect(boardMessages(calm).map((m) => m.tone)).toEqual(['positif', 'positif', 'positif', 'positif']);
+    expect(boardMessages(calm).map((m) => m.tone)).toEqual(['positif', 'positif', 'positif', 'positif', 'positif']);
   });
 
   it('classe les alertes avant la vigilance et accorde singulier et pluriel', () => {
@@ -110,6 +111,40 @@ describe('dérogations', () => {
   });
 });
 
+describe('sensibilisation et formation des dirigeants', () => {
+  it('alerte sur un dirigeant sans formation à jour et demande de la planifier', () => {
+    const input = { ...calm, training: { ...calm.training!, leadersUntrained: 1 } };
+    expect(boardMessages(input)[0]).toEqual({ tone: 'alerte', text: '1 dirigeant sans formation à la cybersécurité à jour (NIS 2, art. 20).' });
+    expect(boardMessages(input).some((m) => m.text.startsWith('Formation à la cybersécurité des dirigeants'))).toBe(false);
+    expect(boardDecisions(input)).toEqual(['Planifier la formation à la cybersécurité de 1 dirigeant (NIS 2, art. 20).']);
+  });
+
+  it('signale l’absence de session, les feuilles d’émargement manquantes et les renouvellements proches', () => {
+    const messages = boardMessages({ ...calm, training: { held: 0, withoutSheet: 0, leaders: 2, leadersUntrained: 0, leadersDueSoon: 2 } });
+    expect(messages).toContainEqual({ tone: 'vigilance', text: 'Aucune session de sensibilisation tenue sur douze mois.' });
+    expect(messages).toContainEqual({ tone: 'vigilance', text: 'Formation à la cybersécurité à renouveler d’ici deux mois pour 2 dirigeants.' });
+    expect(boardMessages({ ...calm, training: { ...calm.training!, withoutSheet: 2 } })).toContainEqual({
+      tone: 'vigilance', text: '2 sessions de sensibilisation sans feuille d’émargement au coffre de preuves.',
+    });
+  });
+
+  it('hors NIS 2, la formation des dirigeants reste un point de vigilance', () => {
+    const input = {
+      ...calm,
+      entities: [{ name: 'X', nis2: 'non_concernee' as const, registration: 'sans_objet' as const }],
+      training: { ...calm.training!, leadersUntrained: 2 },
+    };
+    expect(boardMessages(input)).toContainEqual({ tone: 'vigilance', text: '2 dirigeants sans formation à la cybersécurité à jour.' });
+    expect(boardDecisions(input)).toEqual(['Planifier la formation à la cybersécurité de 2 dirigeants.']);
+  });
+
+  it('module masqué : rien sur la sensibilisation, la décision NIS 2 garde la formation des dirigeants', () => {
+    const input = { ...calm, training: null, obligations: { ...calm.obligations, nis2Governance: 'en_cours' as const } };
+    expect(boardMessages(input).some((m) => /sensibilisation|formation/.test(m.text))).toBe(false);
+    expect(boardDecisions(input)).toEqual(['Approuver les mesures de cybersécurité et planifier la formation des dirigeants (NIS 2, art. 20).']);
+  });
+});
+
 describe('décisions attendues de la direction', () => {
   it('rien à décider quand tout est en ordre', () => {
     expect(boardDecisions(calm)).toEqual([]);
@@ -124,7 +159,7 @@ describe('décisions attendues de la direction', () => {
       suppliers: { watch: 1 },
     })).toEqual([
       'Accepter formellement ou refuser 2 risques dont le traitement retenu est l’acceptation.',
-      'Approuver les mesures de cybersécurité et planifier la formation des dirigeants (NIS 2, art. 20).',
+      'Approuver les mesures de gestion des risques de cybersécurité (NIS 2, art. 20).',
       'Arbitrer les moyens de l’action prioritaire en retard.',
       'Désigner un responsable pour 3 obligations.',
       'Statuer sur 1 fournisseur à suivre : maintien, plan d’amélioration ou remplacement.',

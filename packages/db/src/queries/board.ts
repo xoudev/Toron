@@ -25,6 +25,7 @@ import { listActions, type ActionSummary } from './actions.ts';
 import { listControlLibrary } from './control-reviews.ts';
 import { getDashboardMetrics, getFrameworkCoverage } from './dashboard.ts';
 import { listExceptions } from './exceptions.ts';
+import { getTrainingOverview } from './training.ts';
 import { listIncidents } from './incidents.ts';
 import { listEntitiesNis2, listObligations } from './obligations.ts';
 import { getOrganisationProfile } from './organisation.ts';
@@ -69,6 +70,7 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
     processing: await listProcessing(tx),
     exceptions: on('derogations') ? await listExceptions(tx, today) : null,
     controls: (await listControlLibrary(tx, today)).filter((c) => c.status === 'actif'),
+    training: on('sensibilisation') ? await getTrainingOverview(tx, today) : null,
   };
 
   const overdue = d.actions.filter((a) => a.effectiveStatus === 'en_retard');
@@ -116,6 +118,13 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
       active: d.controls.length,
       late: d.controls.filter((c) => c.reviewState === 'en_retard').length,
       ineffective: d.controls.filter((c) => c.lastResult === 'inefficace').length,
+    },
+    training: d.training && {
+      held: d.training.held,
+      withoutSheet: d.training.withoutSheet,
+      leaders: d.training.leaders,
+      leadersUntrained: d.training.untrained,
+      leadersDueSoon: d.training.dueSoon,
     },
   };
 

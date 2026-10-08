@@ -17,6 +17,7 @@ export * from './exceptions.ts';
 export * from './control-reviews.ts';
 export * from './training.ts';
 export * from './continuity.ts';
+export * from './satisfaction.ts';
 export * from './notifications.ts';
 export * from './audits.ts';
 export * from './reviews.ts';

@@ -1,5 +1,7 @@
 import { canManageControls, onboardingProgress, onboardingSteps, type OptionalModule } from '@toron/core';
-import { getDashboardExtras, getDashboardMetrics, getFrameworkCoverage, listControlLibrary, listExceptions, listProcesses, withTenant } from '@toron/db';
+import {
+  getDashboardExtras, getDashboardMetrics, getFrameworkCoverage, getTrainingOverview, listControlLibrary, listExceptions, listProcesses, withTenant,
+} from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 
 import { appDb } from '@/lib/db';
@@ -56,7 +58,7 @@ export default async function TenantAccueilPage({
 
   const overview = await getOrganisationOverview(ctx.tenantId);
   const today = todayParis();
-  const { m, x, coverage, processesAlert, controls, exceptions } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
+  const { m, x, coverage, processesAlert, controls, exceptions, training } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
     const procs = await listProcesses(tx);
     return {
       m: await getDashboardMetrics(tx),
@@ -65,6 +67,7 @@ export default async function TenantAccueilPage({
       processesAlert: procs.filter((p) => p.health === 'en_alerte').length,
       controls: (await listControlLibrary(tx, today)).filter((c) => c.status === 'actif'),
       exceptions: overview.enabled('derogations') ? await listExceptions(tx, today) : [],
+      training: overview.enabled('sensibilisation') ? await getTrainingOverview(tx, today) : null,
     };
   });
   // Efficacité des contrôles et dérogations : ce qui n'est plus démontré ou plus couvert.
@@ -92,9 +95,12 @@ export default async function TenantAccueilPage({
     { n: x.incidentsOpen, one: 'incident en cours (échéances NIS 2)', many: 'incidents en cours (échéances NIS 2)', href: `${base}/incidents`, tone: 'danger' as const, module: 'incidents' as const },
     { n: controlsIneffective, one: 'contrôle jugé inefficace', many: 'contrôles jugés inefficaces', href: `${base}/controles`, tone: 'danger' as const },
     { n: exceptionsLapsed, one: 'dérogation échue sans clôture', many: 'dérogations échues sans clôture', href: `${base}/derogations`, tone: 'danger' as const, module: 'derogations' as const },
+    { n: training?.untrained ?? 0, one: 'dirigeant sans formation cybersécurité à jour', many: 'dirigeants sans formation cybersécurité à jour', href: `${base}/sensibilisation`, tone: 'danger' as const, module: 'sensibilisation' as const },
     { n: x.ncOpen, one: 'non-conformité ouverte', many: 'non-conformités ouvertes', href: `${base}/non-conformites`, tone: 'warn' as const, module: 'non_conformites' as const },
     { n: controlsLate, one: 'contrôle en retard de revue', many: 'contrôles en retard de revue', href: `${base}/controles`, tone: 'warn' as const },
     { n: exceptionsPending, one: 'demande de dérogation à trancher', many: 'demandes de dérogation à trancher', href: `${base}/derogations`, tone: 'warn' as const, module: 'derogations' as const },
+    { n: training?.dueSoon ?? 0, one: 'formation de dirigeant à renouveler sous deux mois', many: 'formations de dirigeants à renouveler sous deux mois', href: `${base}/sensibilisation`, tone: 'warn' as const, module: 'sensibilisation' as const },
+    { n: training?.withoutSheet ?? 0, one: 'feuille d’émargement à déposer', many: 'feuilles d’émargement à déposer', href: `${base}/sensibilisation`, tone: 'warn' as const, module: 'sensibilisation' as const },
     { n: m.risksAttention, one: 'acceptation de risque à traiter', many: 'acceptations de risque à traiter', href: `${base}/risques`, tone: 'warn' as const, module: 'risques' as const },
     { n: m.evidencesStale, one: 'preuve à renouveler', many: 'preuves à renouveler', href: `${base}/preuves`, tone: 'warn' as const },
     { n: m.documentsReviewOverdue, one: 'document à revoir', many: 'documents à revoir', href: `${base}/documents`, tone: 'warn' as const },

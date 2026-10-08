@@ -157,3 +157,17 @@ description courte, phase cible pressentie.
 - **2026-10-07 · Rappel de la formation des dirigeants** — Notifier le
   dirigeant et le RSSI deux mois avant l'échéance de la formation (NIS 2,
   art. 20), comme les autres échéances du worker. Phase cible : V1.
+- **2026-10-08 · e2e Playwright de la continuité** — Bilan d'impact mis à
+  jour (responsable changé, notifié) → exercice planifié dans « Mon
+  travail » du pilote → résultat « non atteint » sans enseignements :
+  refus → reprise au-delà de la DMIA : objectif manqué, bandeau → action
+  corrective P1 reliée au plan d'action → rapport déposé au coffre.
+  Vérifié manuellement le 2026-10-08. Phase cible : MVP.
+- **2026-10-08 · Bilan d'impact par horizon** — Coter l'impact (financier,
+  opérationnel, réglementaire, image) à 4 h, 24 h, 72 h et une semaine,
+  et proposer la DMIA qui en découle, au lieu de la saisir directement.
+  Phase cible : V2.
+- **2026-10-08 · Incidents et continuité** — Rattacher un incident aux
+  activités critiques touchées et comparer la durée d'interruption réelle
+  à leur DMIA (retour d'expérience pour la revue de direction). Phase
+  cible : V2.

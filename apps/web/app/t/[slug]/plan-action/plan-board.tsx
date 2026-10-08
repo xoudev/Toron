@@ -31,11 +31,11 @@ const STATUS_LABEL: Record<ActionEffectiveStatus, string> = {
 const STORED_STATUSES: ActionStatus[] = ['planifie', 'en_cours', 'verification', 'termine'];
 const PRIORITY_LABEL: Record<string, string> = { p1: 'P1', p2: 'P2', p3: 'P3' };
 const ORIGIN_LABEL: Record<string, string> = {
-  risk: 'Risque', assessment: 'Écart', nc: 'NC', finding: 'Constat', incident: 'Incident', review: 'Revue', manual: 'Manuel', supplier: 'Fournisseur', control: 'Contrôle',
+  risk: 'Risque', assessment: 'Écart', nc: 'NC', finding: 'Constat', incident: 'Incident', review: 'Revue', manual: 'Manuel', supplier: 'Fournisseur', control: 'Contrôle', exercise: 'Exercice',
 };
 /** Écran qui sait ouvrir l'objet d'origine (`?ouvrir=`), pour revenir à la source d'une action. */
 const ORIGIN_SCREEN: Partial<Record<string, string>> = {
-  risk: 'risques', supplier: 'fournisseurs', nc: 'non-conformites', control: 'controles',
+  risk: 'risques', supplier: 'fournisseurs', nc: 'non-conformites', control: 'controles', exercise: 'continuite',
 };
 
 function fmtDate(d: string | null): string {

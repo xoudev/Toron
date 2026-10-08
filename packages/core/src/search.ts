@@ -4,7 +4,7 @@
 
 export const SEARCH_KINDS = [
   'risque', 'action', 'incident', 'nc', 'document', 'preuve', 'exigence', 'controle',
-  'audit', 'fournisseur', 'obligation', 'traitement', 'actif', 'processus', 'revue', 'derogation', 'formation',
+  'audit', 'fournisseur', 'obligation', 'traitement', 'actif', 'processus', 'revue', 'derogation', 'formation', 'continuite',
 ] as const;
 export type SearchKind = (typeof SEARCH_KINDS)[number];
 
@@ -26,6 +26,7 @@ export const SEARCH_KIND_META: Record<SearchKind, { label: string; prefix: strin
   revue: { label: 'Revue de direction', prefix: 'REV', path: '/revue-direction' },
   derogation: { label: 'Dérogation', prefix: 'DRG', path: '/derogations' },
   formation: { label: 'Session de formation', prefix: null, path: '/sensibilisation' },
+  continuite: { label: 'Continuité', prefix: null, path: '/continuite' },
 };
 
 export const SEARCH_MIN_LENGTH = 2;

@@ -23,6 +23,7 @@
     "./derogations.css": "./src/styles/derogations.css",
     "./controles.css": "./src/styles/controles.css",
     "./sensibilisation.css": "./src/styles/sensibilisation.css",
+    "./continuite.css": "./src/styles/continuite.css",
     "./board.css": "./src/styles/board.css",
     "./parametres.css": "./src/styles/parametres.css"
   },

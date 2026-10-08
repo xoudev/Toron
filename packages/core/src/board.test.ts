@@ -16,11 +16,12 @@ const calm: BoardInput = {
   controls: { active: 3, late: 0, ineffective: 0 },
   training: { held: 3, withoutSheet: 0, leaders: 1, leadersUntrained: 0, leadersDueSoon: 0 },
   continuity: { activities: 4, criticalUntested: 0, objectiveMissed: 0, biaDue: 0 },
+  satisfaction: { surveys: 3, belowTarget: 0, complaints: 2, complaintsPrevious: 4 },
 };
 
 describe('messages clés du rapport de direction', () => {
   it('une organisation sans point ouvert ne reçoit que des messages positifs', () => {
-    expect(boardMessages(calm).map((m) => m.tone)).toEqual(['positif', 'positif', 'positif', 'positif', 'positif', 'positif']);
+    expect(boardMessages(calm).map((m) => m.tone)).toEqual(['positif', 'positif', 'positif', 'positif', 'positif', 'positif', 'positif']);
   });
 
   it('classe les alertes avant la vigilance et accorde singulier et pluriel', () => {
@@ -164,6 +165,21 @@ describe('continuité d’activité', () => {
     const input = { ...calm, continuity: null };
     expect(boardMessages(input).some((m) => /reprise|bilan d’impact|continuité/.test(m.text))).toBe(false);
     expect(boardDecisions(input)).toEqual([]);
+  });
+});
+
+describe('satisfaction client', () => {
+  it('signale les enquêtes sous l’objectif et la hausse des réclamations', () => {
+    const messages = boardMessages({ ...calm, satisfaction: { surveys: 3, belowTarget: 2, complaints: 5, complaintsPrevious: 2 } });
+    expect(messages).toContainEqual({ tone: 'vigilance', text: '2 enquêtes de satisfaction sous l’objectif sur douze mois.' });
+    expect(messages).toContainEqual({ tone: 'vigilance', text: 'Réclamations clients en hausse : 5 sur douze mois, contre 2 l’année précédente.' });
+    expect(messages.some((m) => m.text.startsWith('Objectifs de satisfaction'))).toBe(false);
+  });
+
+  it('demande une mesure quand il n’y en a aucune, et se tait quand le module est masqué', () => {
+    expect(boardMessages({ ...calm, satisfaction: { surveys: 0, belowTarget: 0, complaints: 0, complaintsPrevious: 0 } }))
+      .toContainEqual({ tone: 'vigilance', text: 'Aucune mesure de satisfaction client sur douze mois.' });
+    expect(boardMessages({ ...calm, satisfaction: null }).some((m) => /satisfaction|réclamations/i.test(m.text))).toBe(false);
   });
 });
 

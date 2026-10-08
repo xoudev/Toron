@@ -6,6 +6,7 @@ import {
   getReviewCounts,
   getReviewEntityName,
   getContinuityOverview,
+  getSatisfactionOverview,
   getTrainingOverview,
   listControlLibrary,
   sealExport,
@@ -59,7 +60,8 @@ export async function processPvExport(
       const { disabledModules } = await getOrganisationProfile(tx);
       const training = isModuleEnabled(disabledModules, 'sensibilisation') ? await getTrainingOverview(tx, today) : null;
       const continuity = isModuleEnabled(disabledModules, 'continuite') ? await getContinuityOverview(tx, today) : null;
-      return { review, metrics, counts, entityName, controls, training, continuity };
+      const satisfaction = isModuleEnabled(disabledModules, 'satisfaction') ? await getSatisfactionOverview(tx, today) : null;
+      return { review, metrics, counts, entityName, controls, training, continuity, satisfaction };
     });
     if (!data) {
       await withTenant(db, job.tenantId, (tx) => failExport(tx, job.id, 'Revue introuvable.'));
@@ -68,7 +70,7 @@ export async function processPvExport(
 
     // 2) Modèle + compilation (hors transaction)
     const slug = randomVerifySlug();
-    const { review, metrics, counts, entityName, controls, training, continuity } = data;
+    const { review, metrics, counts, entityName, controls, training, continuity, satisfaction } = data;
     const agenda = buildReviewAgenda({
       actionsOpen: metrics.actionsOpen,
       actionsOverdue: metrics.actionsOverdue,
@@ -95,6 +97,12 @@ export async function processPvExport(
       },
       continuity: continuity && {
         activities: continuity.activities, tested: continuity.tested, objectiveMissed: continuity.objectiveMissed, exercisesHeld: continuity.exercisesHeld,
+      },
+      satisfaction: satisfaction && {
+        lastNps: satisfaction.lastNps && { score: satisfaction.lastNps.score, target: satisfaction.lastNps.target },
+        lastCsat: satisfaction.lastCsat && { score: satisfaction.lastCsat.score, target: satisfaction.lastCsat.target },
+        complaints: satisfaction.complaints,
+        complaintsPrevious: satisfaction.complaintsPrevious,
       },
     });
 

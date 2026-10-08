@@ -25,7 +25,29 @@ const BASE: ReviewInputs = {
   documentsReviewOverdue: 0,
   training: null,
   continuity: null,
+  satisfaction: null,
 };
+
+describe('satisfaction client à l’ordre du jour', () => {
+  const section6 = (m: ReviewInputs) => buildReviewAgenda(m).find((sec) => sec.n === 6)!;
+
+  it('rend compte des dernières mesures et des réclamations parmi les retours des parties intéressées', () => {
+    const sec = section6({
+      ...BASE,
+      satisfaction: { lastNps: { score: 35, target: 40 }, lastCsat: { score: 84, target: 80 }, complaints: 5, complaintsPrevious: 2 },
+    });
+    expect(sec.hasData).toBe(true);
+    expect(sec.bullets.find((b) => b.head === 'Clients —')).toEqual({
+      head: 'Clients —',
+      body: 'dernier NPS +35 (objectif +40) ; dernier CSAT 84 % (objectif 80 %) ; 5 réclamations sur douze mois (2 l’année précédente).',
+      tone: 'warn',
+    });
+  });
+
+  it('module masqué : pas de ligne', () => {
+    expect(section6(BASE).bullets.some((b) => b.head === 'Clients —')).toBe(false);
+  });
+});
 
 describe('continuité à l’ordre du jour', () => {
   const section4 = (m: ReviewInputs) => buildReviewAgenda(m).find((sec) => sec.n === 4)!;

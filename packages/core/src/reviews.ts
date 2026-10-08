@@ -69,6 +69,13 @@ export interface ReviewInputs {
   training: { held: number; participations: number; leaders: number; leadersUpToDate: number } | null;
   /** null quand le module continuité est masqué. Exercices réalisés sur douze mois et état des activités. */
   continuity: { activities: number; tested: number; objectiveMissed: number; exercisesHeld: number } | null;
+  /** null quand le module satisfaction est masqué. Dernières mesures et réclamations sur douze mois. */
+  satisfaction: {
+    lastNps: { score: number; target: number | null } | null;
+    lastCsat: { score: number; target: number | null } | null;
+    complaints: number;
+    complaintsPrevious: number;
+  } | null;
 }
 
 function plural(n: number, singular: string, plural_: string): string {
@@ -96,6 +103,21 @@ function trainingBullet(t: NonNullable<ReviewInputs['training']>): AgendaBullet 
     head: 'Sensibilisation —',
     body: `${sessions}${leaders}.`,
     tone: t.leadersUpToDate < t.leaders ? 'danger' : t.held === 0 ? 'warn' : 'ok',
+  };
+}
+
+function satisfactionBullet(c: NonNullable<ReviewInputs['satisfaction']>): AgendaBullet {
+  const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
+  const parts = [
+    c.lastNps ? `dernier NPS ${signed(c.lastNps.score)}${c.lastNps.target !== null ? ` (objectif ${signed(c.lastNps.target)})` : ''}` : null,
+    c.lastCsat ? `dernier CSAT ${c.lastCsat.score} %${c.lastCsat.target !== null ? ` (objectif ${c.lastCsat.target} %)` : ''}` : null,
+    `${plural(c.complaints, 'réclamation', 'réclamations')} sur douze mois (${c.complaintsPrevious} l’année précédente)`,
+  ].filter((p): p is string => p !== null);
+  const below = [c.lastNps, c.lastCsat].some((m) => m !== null && m.target !== null && m.score < m.target);
+  return {
+    head: 'Clients —',
+    body: `${parts.join(' ; ')}.`,
+    tone: below || c.complaints > c.complaintsPrevious ? 'warn' : c.lastNps === null && c.lastCsat === null ? 'muted' : 'ok',
   };
 }
 
@@ -211,9 +233,10 @@ export function buildReviewAgenda(m: ReviewInputs): AgendaSection[] {
         { head: 'Preuves —', body: m.evidencesStale > 0 ? `${plural(m.evidencesStale, 'preuve périmée', 'preuves périmées')} à renouveler.` : 'coffre de preuves à jour.', tone: m.evidencesStale > 0 ? 'warn' : 'ok' },
         { head: 'Documentaire —', body: m.documentsReviewOverdue > 0 ? `${plural(m.documentsReviewOverdue, 'document', 'documents')} en revue échue.` : 'revues documentaires à jour.', tone: m.documentsReviewOverdue > 0 ? 'warn' : 'ok' },
         ...(m.training ? [trainingBullet(m.training)] : []),
+        ...(m.satisfaction ? [satisfactionBullet(m.satisfaction)] : []),
       ],
       kpis: [],
-      hasData: m.evidencesStale > 0 || m.documentsReviewOverdue > 0 || m.training !== null,
+      hasData: m.evidencesStale > 0 || m.documentsReviewOverdue > 0 || m.training !== null || m.satisfaction !== null,
     },
     {
       n: 7,

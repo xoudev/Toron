@@ -1,6 +1,7 @@
 import { buildReviewAgenda, canEditModule, reviewInputsReady, suggestNextReview } from '@toron/core';
 import {
-  getContinuityOverview, getDashboardMetrics, getReviewCounts, getTrainingOverview, listControlLibrary, listReviews, listTenantMembers, withTenant,
+  getContinuityOverview, getDashboardMetrics, getReviewCounts, getSatisfactionOverview, getTrainingOverview, listControlLibrary, listReviews,
+  listTenantMembers, withTenant,
 } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
@@ -23,7 +24,7 @@ export default async function RevueDirectionPage({ params }: { params: Promise<{
   const canManage = canEditModule(ctx.role, 'revue_direction');
 
   const organisation = await getOrganisationOverview(ctx.tenantId);
-  const { reviews, metrics, counts, members, controls, training, continuity } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
+  const { reviews, metrics, counts, members, controls, training, continuity, satisfaction } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
     reviews: await listReviews(tx),
     metrics: await getDashboardMetrics(tx),
     counts: await getReviewCounts(tx),
@@ -31,6 +32,7 @@ export default async function RevueDirectionPage({ params }: { params: Promise<{
     controls: (await listControlLibrary(tx, todayParis())).filter((c) => c.status === 'actif'),
     training: organisation.enabled('sensibilisation') ? await getTrainingOverview(tx, todayParis()) : null,
     continuity: organisation.enabled('continuite') ? await getContinuityOverview(tx, todayParis()) : null,
+    satisfaction: organisation.enabled('satisfaction') ? await getSatisfactionOverview(tx, todayParis()) : null,
   }));
 
   const agenda = buildReviewAgenda({
@@ -57,6 +59,12 @@ export default async function RevueDirectionPage({ params }: { params: Promise<{
     training: training && { held: training.held, participations: training.participations, leaders: training.leaders, leadersUpToDate: training.upToDate },
     continuity: continuity && {
       activities: continuity.activities, tested: continuity.tested, objectiveMissed: continuity.objectiveMissed, exercisesHeld: continuity.exercisesHeld,
+    },
+    satisfaction: satisfaction && {
+      lastNps: satisfaction.lastNps && { score: satisfaction.lastNps.score, target: satisfaction.lastNps.target },
+      lastCsat: satisfaction.lastCsat && { score: satisfaction.lastCsat.score, target: satisfaction.lastCsat.target },
+      complaints: satisfaction.complaints,
+      complaintsPrevious: satisfaction.complaintsPrevious,
     },
   });
   const ready = reviewInputsReady(agenda);

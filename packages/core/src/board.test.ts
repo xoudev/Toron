@@ -15,11 +15,12 @@ const calm: BoardInput = {
   exceptions: { pending: 0, lapsed: 0 },
   controls: { active: 3, late: 0, ineffective: 0 },
   training: { held: 3, withoutSheet: 0, leaders: 1, leadersUntrained: 0, leadersDueSoon: 0 },
+  continuity: { activities: 4, criticalUntested: 0, objectiveMissed: 0, biaDue: 0 },
 };
 
 describe('messages clés du rapport de direction', () => {
   it('une organisation sans point ouvert ne reçoit que des messages positifs', () => {
-    expect(boardMessages(calm).map((m) => m.tone)).toEqual(['positif', 'positif', 'positif', 'positif', 'positif']);
+    expect(boardMessages(calm).map((m) => m.tone)).toEqual(['positif', 'positif', 'positif', 'positif', 'positif', 'positif']);
   });
 
   it('classe les alertes avant la vigilance et accorde singulier et pluriel', () => {
@@ -142,6 +143,27 @@ describe('sensibilisation et formation des dirigeants', () => {
     const input = { ...calm, training: null, obligations: { ...calm.obligations, nis2Governance: 'en_cours' as const } };
     expect(boardMessages(input).some((m) => /sensibilisation|formation/.test(m.text))).toBe(false);
     expect(boardDecisions(input)).toEqual(['Approuver les mesures de cybersécurité et planifier la formation des dirigeants (NIS 2, art. 20).']);
+  });
+});
+
+describe('continuité d’activité', () => {
+  it('alerte sur un objectif de reprise manqué et demande d’arbitrer les moyens', () => {
+    const input = { ...calm, continuity: { activities: 4, criticalUntested: 0, objectiveMissed: 1, biaDue: 0 } };
+    expect(boardMessages(input)[0]).toEqual({ tone: 'alerte', text: '1 activité critique n’a pas tenu son objectif de reprise au dernier exercice.' });
+    expect(boardDecisions(input)).toEqual(['Arbitrer les moyens pour tenir l’objectif de reprise manqué au dernier exercice.']);
+  });
+
+  it('signale les activités fortes ou vitales jamais testées et les bilans d’impact anciens', () => {
+    const messages = boardMessages({ ...calm, continuity: { activities: 4, criticalUntested: 2, objectiveMissed: 0, biaDue: 1 } });
+    expect(messages).toContainEqual({ tone: 'vigilance', text: '2 activités fortes ou vitales sans exercice de continuité depuis un an.' });
+    expect(messages).toContainEqual({ tone: 'vigilance', text: '1 bilan d’impact de plus d’un an, à revoir.' });
+    expect(messages.some((m) => m.text.startsWith('Activités critiques testées'))).toBe(false);
+  });
+
+  it('se tait quand le module est masqué', () => {
+    const input = { ...calm, continuity: null };
+    expect(boardMessages(input).some((m) => /reprise|bilan d’impact|continuité/.test(m.text))).toBe(false);
+    expect(boardDecisions(input)).toEqual([]);
   });
 });
 

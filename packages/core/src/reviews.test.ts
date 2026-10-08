@@ -24,7 +24,23 @@ const BASE: ReviewInputs = {
   evidencesStale: 0,
   documentsReviewOverdue: 0,
   training: null,
+  continuity: null,
 };
+
+describe('continuité à l’ordre du jour', () => {
+  const section4 = (m: ReviewInputs) => buildReviewAgenda(m).find((sec) => sec.n === 4)!;
+
+  it('rend compte des exercices parmi les résultats de surveillance et d’audit', () => {
+    expect(section4({ ...BASE, continuity: { activities: 4, tested: 3, objectiveMissed: 1, exercisesHeld: 3 } }).bullets).toContainEqual({
+      head: 'Continuité —', body: '3 exercices réalisés sur douze mois ; activités critiques testées : 3 sur 4, dont 1 objectif de reprise manqué.', tone: 'danger',
+    });
+    expect(section4({ ...BASE, continuity: { activities: 2, tested: 2, objectiveMissed: 0, exercisesHeld: 2 } }).bullets.find((b) => b.head === 'Continuité —')?.tone).toBe('ok');
+  });
+
+  it('module masqué : pas de ligne', () => {
+    expect(section4(BASE).bullets.some((b) => b.head.startsWith('Continuité'))).toBe(false);
+  });
+});
 
 describe('sensibilisation à l’ordre du jour', () => {
   const section6 = (m: ReviewInputs) => buildReviewAgenda(m).find((sec) => sec.n === 6)!;

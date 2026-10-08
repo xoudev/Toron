@@ -119,6 +119,8 @@ export interface ContinuityActivitySummary {
 export interface ContinuitySummary {
   activities: number;
   vital: number;
+  /** Activités couvertes par un exercice réalisé sur douze mois. */
+  tested: number;
   /** Activités vitales ou fortes (criticité ≥ 3) sans exercice réalisé sur douze mois. */
   criticalUntested: number;
   objectiveMissed: number;
@@ -129,6 +131,7 @@ export function continuitySummary(activities: readonly ContinuityActivitySummary
   return {
     activities: activities.length,
     vital: activities.filter((a) => a.criticality === 4).length,
+    tested: activities.filter((a) => a.state !== 'non_teste').length,
     criticalUntested: activities.filter((a) => a.criticality >= 3 && a.state === 'non_teste').length,
     objectiveMissed: activities.filter((a) => a.state === 'objectif_manque').length,
     biaDue: activities.filter((a) => biaReviewDue(a.assessedOn) < today).length,

@@ -50,6 +50,8 @@ export interface BoardInput {
    * manqués au dernier exercice, bilans d'impact de plus d'un an.
    */
   continuity: { activities: number; criticalUntested: number; objectiveMissed: number; biaDue: number } | null;
+  /** null quand le module satisfaction est masqué. Enquêtes et réclamations sur douze mois. */
+  satisfaction: { surveys: number; belowTarget: number; complaints: number; complaintsPrevious: number } | null;
 }
 
 export type BoardTone = 'alerte' | 'vigilance' | 'positif';
@@ -104,6 +106,13 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
   if (i.continuity && i.continuity.biaDue > 0) {
     out.push({ tone: 'vigilance', text: `${s(i.continuity.biaDue, 'bilan d’impact', 'bilans d’impact')} de plus d’un an, à revoir.` });
   }
+  if (i.satisfaction) {
+    if (i.satisfaction.surveys === 0) out.push({ tone: 'vigilance', text: 'Aucune mesure de satisfaction client sur douze mois.' });
+    if (i.satisfaction.belowTarget > 0) out.push({ tone: 'vigilance', text: `${s(i.satisfaction.belowTarget, 'enquête de satisfaction', 'enquêtes de satisfaction')} sous l’objectif sur douze mois.` });
+    if (i.satisfaction.complaints > i.satisfaction.complaintsPrevious) {
+      out.push({ tone: 'vigilance', text: `Réclamations clients en hausse : ${i.satisfaction.complaints} sur douze mois, contre ${i.satisfaction.complaintsPrevious} l’année précédente.` });
+    }
+  }
   if (i.training) {
     if (i.training.leadersDueSoon > 0) out.push({ tone: 'vigilance', text: `Formation à la cybersécurité à renouveler d’ici deux mois pour ${s(i.training.leadersDueSoon, 'dirigeant', 'dirigeants')}.` });
     if (i.training.held === 0) out.push({ tone: 'vigilance', text: 'Aucune session de sensibilisation tenue sur douze mois.' });
@@ -113,6 +122,9 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
   if (i.obligations.applicable > 0 && i.obligations.met / i.obligations.applicable >= 0.8) out.push({ tone: 'positif', text: `${i.obligations.met} obligations respectées sur ${i.obligations.applicable}.` });
   if (i.risks && i.risks.critical === 0 && i.risks.high === 0) out.push({ tone: 'positif', text: 'Aucun risque élevé ou critique après traitement.' });
   if (i.controls.active > 0 && i.controls.late === 0 && i.controls.ineffective === 0) out.push({ tone: 'positif', text: 'Tous les contrôles sont revus dans les temps et jugés efficaces.' });
+  if (i.satisfaction && i.satisfaction.surveys > 0 && i.satisfaction.belowTarget === 0) {
+    out.push({ tone: 'positif', text: 'Objectifs de satisfaction client atteints sur l’année.' });
+  }
   if (i.continuity && i.continuity.activities > 0 && i.continuity.criticalUntested === 0 && i.continuity.objectiveMissed === 0) {
     out.push({ tone: 'positif', text: 'Activités critiques testées sur l’année, objectifs de reprise tenus.' });
   }

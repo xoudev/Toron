@@ -26,6 +26,7 @@ import { listControlLibrary } from './control-reviews.ts';
 import { getDashboardMetrics, getFrameworkCoverage } from './dashboard.ts';
 import { listExceptions } from './exceptions.ts';
 import { getContinuityOverview } from './continuity.ts';
+import { getSatisfactionOverview } from './satisfaction.ts';
 import { getTrainingOverview } from './training.ts';
 import { listIncidents } from './incidents.ts';
 import { listEntitiesNis2, listObligations } from './obligations.ts';
@@ -73,6 +74,7 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
     controls: (await listControlLibrary(tx, today)).filter((c) => c.status === 'actif'),
     training: on('sensibilisation') ? await getTrainingOverview(tx, today) : null,
     continuity: on('continuite') ? await getContinuityOverview(tx, today) : null,
+    satisfaction: on('satisfaction') ? await getSatisfactionOverview(tx, today) : null,
   };
 
   const overdue = d.actions.filter((a) => a.effectiveStatus === 'en_retard');
@@ -133,6 +135,12 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
       criticalUntested: d.continuity.criticalUntested,
       objectiveMissed: d.continuity.objectiveMissed,
       biaDue: d.continuity.biaDue,
+    },
+    satisfaction: d.satisfaction && {
+      surveys: d.satisfaction.surveys,
+      belowTarget: d.satisfaction.belowTarget,
+      complaints: d.satisfaction.complaints,
+      complaintsPrevious: d.satisfaction.complaintsPrevious,
     },
   };
 

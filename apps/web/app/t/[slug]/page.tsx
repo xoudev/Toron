@@ -1,7 +1,7 @@
 import { canManageControls, onboardingProgress, onboardingSteps, type OptionalModule } from '@toron/core';
 import {
-  getContinuityOverview, getDashboardExtras, getDashboardMetrics, getFrameworkCoverage, getTrainingOverview, listControlLibrary, listExceptions, listProcesses,
-  withTenant,
+  getContinuityOverview, getDashboardExtras, getDashboardMetrics, getFrameworkCoverage, getSatisfactionOverview, getTrainingOverview, listControlLibrary,
+  listExceptions, listProcesses, withTenant,
 } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 
@@ -59,7 +59,7 @@ export default async function TenantAccueilPage({
 
   const overview = await getOrganisationOverview(ctx.tenantId);
   const today = todayParis();
-  const { m, x, coverage, processesAlert, controls, exceptions, training, continuity } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
+  const { m, x, coverage, processesAlert, controls, exceptions, training, continuity, satisfaction } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
     const procs = await listProcesses(tx);
     return {
       m: await getDashboardMetrics(tx),
@@ -70,6 +70,7 @@ export default async function TenantAccueilPage({
       exceptions: overview.enabled('derogations') ? await listExceptions(tx, today) : [],
       training: overview.enabled('sensibilisation') ? await getTrainingOverview(tx, today) : null,
       continuity: overview.enabled('continuite') ? await getContinuityOverview(tx, today) : null,
+      satisfaction: overview.enabled('satisfaction') ? await getSatisfactionOverview(tx, today) : null,
     };
   });
   // Efficacité des contrôles et dérogations : ce qui n'est plus démontré ou plus couvert.
@@ -106,6 +107,7 @@ export default async function TenantAccueilPage({
     { n: training?.withoutSheet ?? 0, one: 'feuille d’émargement à déposer', many: 'feuilles d’émargement à déposer', href: `${base}/sensibilisation`, tone: 'warn' as const, module: 'sensibilisation' as const },
     { n: continuity?.criticalUntested ?? 0, one: 'activité critique sans exercice depuis un an', many: 'activités critiques sans exercice depuis un an', href: `${base}/continuite`, tone: 'warn' as const, module: 'continuite' as const },
     { n: continuity?.biaDue ?? 0, one: 'bilan d’impact à revoir', many: 'bilans d’impact à revoir', href: `${base}/continuite`, tone: 'warn' as const, module: 'continuite' as const },
+    { n: satisfaction?.belowTarget ?? 0, one: 'enquête de satisfaction sous l’objectif', many: 'enquêtes de satisfaction sous l’objectif', href: `${base}/satisfaction`, tone: 'warn' as const, module: 'satisfaction' as const },
     { n: m.risksAttention, one: 'acceptation de risque à traiter', many: 'acceptations de risque à traiter', href: `${base}/risques`, tone: 'warn' as const, module: 'risques' as const },
     { n: m.evidencesStale, one: 'preuve à renouveler', many: 'preuves à renouveler', href: `${base}/preuves`, tone: 'warn' as const },
     { n: m.documentsReviewOverdue, one: 'document à revoir', many: 'documents à revoir', href: `${base}/documents`, tone: 'warn' as const },

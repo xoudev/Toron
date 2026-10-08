@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm';
 
 import * as schema from '../schema/index.ts';
 import type { TenantTx } from '../tenant.ts';
+import { listSupplierRequests, type SupplierRequestRow } from './supplier-requests.ts';
 
 // ── Couche d'accès des fournisseurs (module 5.10) ──────────────────────
 export type SupplierTier = 't1' | 't2' | 't3';
@@ -82,6 +83,10 @@ export interface SupplierSummary {
   /** Plus proche échéance parmi les attestations datées. */
   nextAttestationExpiry: string | null;
   openActionCount: number;
+  /** Réponses reçues par le portail, en attente d'examen. */
+  responsesToReview: number;
+  /** Échéance la plus proche des demandes encore ouvertes au fournisseur. */
+  openRequestDueOn: string | null;
 }
 
 interface RawSupplier {
@@ -100,6 +105,8 @@ interface RawSupplier {
   attestation_count: string;
   next_attestation_expiry: string | null;
   open_action_count: string;
+  responses_to_review: string;
+  open_request_due_on: string | null;
 }
 
 /** Registre des fournisseurs, triés par criticité (T1 d'abord). */
@@ -110,7 +117,10 @@ export async function listSuppliers(tx: TenantTx): Promise<SupplierSummary[]> {
            la.assessed_on::text AS last_assessed_on, la.score AS last_score, la.rating AS last_rating,
            (SELECT count(*) FROM supplier_attestations t WHERE t.supplier_id = s.id) AS attestation_count,
            (SELECT min(t.valid_until)::text FROM supplier_attestations t WHERE t.supplier_id = s.id) AS next_attestation_expiry,
-           (SELECT count(*) FROM actions a WHERE a.origin_type = 'supplier' AND a.origin_id = s.id AND a.status <> 'termine') AS open_action_count
+           (SELECT count(*) FROM actions a WHERE a.origin_type = 'supplier' AND a.origin_id = s.id AND a.status <> 'termine') AS open_action_count,
+           (SELECT count(*) FROM supplier_requests r WHERE r.supplier_id = s.id AND r.status = 'soumise') AS responses_to_review,
+           (SELECT min(r.due_on)::text FROM supplier_requests r
+             WHERE r.supplier_id = s.id AND r.status IN ('envoyee', 'en_cours')) AS open_request_due_on
     FROM suppliers s LEFT JOIN users o ON o.id = s.owner_user_id
     LEFT JOIN LATERAL (
       SELECT sa.assessed_on, sa.score, sa.rating FROM supplier_assessments sa
@@ -134,6 +144,8 @@ export async function listSuppliers(tx: TenantTx): Promise<SupplierSummary[]> {
     attestationCount: Number(r.attestation_count),
     nextAttestationExpiry: r.next_attestation_expiry,
     openActionCount: Number(r.open_action_count),
+    responsesToReview: Number(r.responses_to_review),
+    openRequestDueOn: r.open_request_due_on,
   }));
 }
 
@@ -241,6 +253,8 @@ export interface SupplierDetail {
   assessments: SupplierAssessmentRow[];
   attestations: SupplierAttestationRow[];
   actions: SupplierActionRow[];
+  /** Demandes de réponse adressées au fournisseur par le portail. */
+  requests: SupplierRequestRow[];
 }
 
 export async function getSupplierDetail(tx: TenantTx, supplierId: string): Promise<SupplierDetail | null> {
@@ -266,5 +280,6 @@ export async function getSupplierDetail(tx: TenantTx, supplierId: string): Promi
     assessments: assessments.map((a) => ({ id: a.id, assessedOn: a.assessed_on, assessorName: a.assessor_name, answers: parse(a.answers), score: a.score, rating: a.rating, notes: a.notes })),
     attestations: attestations.map((t) => ({ id: t.id, kind: t.kind, label: t.label, issuedOn: t.issued_on, validUntil: t.valid_until })),
     actions: actions.map((a) => ({ id: a.id, title: a.title, status: a.status, dueDate: a.due_date })),
+    requests: await listSupplierRequests(tx, supplierId),
   };
 }

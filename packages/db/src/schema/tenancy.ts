@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   date,
   inet,
@@ -158,4 +159,8 @@ export const auditLog = pgTable('audit_log', {
   after: jsonb('after'),
   ip: inet('ip'),
   userAgent: text('user_agent'),
+  // Chaînage (migration 0037) : calculés par la base à l'insertion, jamais fournis.
+  seq: bigint('seq', { mode: 'number' }),
+  prevHash: text('prev_hash'),
+  hash: text('hash'),
 });

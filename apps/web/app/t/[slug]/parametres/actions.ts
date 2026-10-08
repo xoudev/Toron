@@ -1,13 +1,13 @@
 'use server';
 
 import {
-  MEMBERSHIP_ROLES, SCOPE_KINDS, appError, assignableRoles, canConfigureOrganisation, canManageMembers,
-  memberRemovalVerdict, memberRoleChangeVerdict, normalizeEmail, OPTIONAL_MODULES,
+  MEMBERSHIP_ROLES, SCOPE_KINDS, appError, assignableRoles, auditChainVerdict, canConfigureOrganisation, canManageMembers,
+  memberRemovalVerdict, memberRoleChangeVerdict, normalizeEmail, OPTIONAL_MODULES, type AuditChainVerdict,
 } from '@toron/core';
 import {
   countOwners, createInvitation, deleteLegalEntity, deleteOrganisationScope, deleteSite, getMembership,
   getOrganisationProfile, isEmailMember, removeMember, revokeInvitation, saveLegalEntity, saveOrganisationScope,
-  saveSite, setDisabledModules, updateMemberRole, updateOrganisationProfile, withTenant, writeAuditEntry,
+  saveSite, setDisabledModules, updateMemberRole, updateOrganisationProfile, verifyAuditChain, withTenant, writeAuditEntry,
 } from '@toron/db';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -349,5 +349,45 @@ export async function setModulesAction(slug: string, input: unknown): Promise<Ac
     return { ok: true, data: { disabled } };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_MISE_A_JOUR', 'Les modules n’ont pas été enregistrés — réessayez.')) };
+  }
+}
+
+// ── Journal d'audit ─────────────────────────────────────────────────────
+
+export interface JournalCheck extends AuditChainVerdict {
+  entries: number;
+  headSeq: number;
+  headHash: string | null;
+  checkedAt: string;
+}
+
+/**
+ * Vérification du chaînage, ouverte à tout membre (l'auditeur en premier) :
+ * lecture seule, recalcul fait par la base. La vérification elle-même est
+ * inscrite au journal, avec son résultat.
+ */
+export async function verifyJournalAction(slug: string): Promise<ActionResult<JournalCheck>> {
+  const auth = await authorizeRole(slug, () => true, 'La vérification du journal est réservée aux membres de l’organisation.');
+  if (isActionError(auth)) return { ok: false, error: auth };
+  try {
+    const status = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const s = await verifyAuditChain(tx);
+      await writeAuditEntry(tx, {
+        tenantId: auth.tenantId, actorUserId: auth.userId, action: 'journal.verify', objectType: 'journal',
+        objectId: auth.tenantId,
+        after: { entries: s.entries, lastSeq: s.lastSeq, headSeq: s.headSeq, intact: s.intact, brokenAtSeq: s.brokenAtSeq },
+        ip: auth.ip, userAgent: auth.userAgent,
+      });
+      return s;
+    });
+    return {
+      ok: true,
+      data: {
+        ...auditChainVerdict(status),
+        entries: status.entries, headSeq: status.headSeq, headHash: status.headHash, checkedAt: new Date().toISOString(),
+      },
+    };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_VERIFICATION', 'La vérification du journal n’a pas abouti — réessayez dans un instant.')) };
   }
 }

@@ -302,6 +302,49 @@
   display: flex;
   gap: 6px;
 }
+.journal-chain {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+}
+.journal-chain.is-ok {
+  border-color: color-mix(in srgb, var(--ok) 35%, var(--border));
+}
+.journal-chain.is-broken {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+}
+.journal-chain-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.journal-chain-head b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.journal-chain code {
+  font-size: 11.5px;
+}
+.journal-chain-result {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+@media (max-width: 560px) {
+  .journal-chain-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .journal-chain code {
+    word-break: break-all;
+  }
+}
 .journal-filters {
   display: flex;
   flex-wrap: wrap;

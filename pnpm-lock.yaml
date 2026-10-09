@@ -79,6 +79,9 @@ importers:
       '@toron/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@toron/frameworks':
+        specifier: workspace:*
+        version: link:../../packages/frameworks
       '@toron/ui':
         specifier: workspace:*
         version: link:../../packages/ui

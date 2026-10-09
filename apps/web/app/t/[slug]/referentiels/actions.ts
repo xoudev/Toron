@@ -11,10 +11,12 @@ import {
   getFramework,
   mapControlToRequirement,
   setFrameworkHidden,
+  syncTemplateMappings,
   unmapControlFromRequirement,
   withTenant,
   writeAuditEntry,
 } from '@toron/db';
+import { controlTemplates } from '@toron/frameworks';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -244,13 +246,17 @@ export async function activateFrameworkAction(
   try {
     await withTenant(appDb().db, auth.tenantId, async (tx) => {
       await activateFrameworkOnScope(tx, auth.tenantId, parsed.data.scopeId, parsed.data.frameworkId);
+      // Les contrôles déjà repris des modèles se rattachent au référentiel activé.
+      const templateMappings = await syncTemplateMappings(tx, {
+        tenantId: auth.tenantId, frameworkId: parsed.data.frameworkId, templates: controlTemplates(),
+      });
       await writeAuditEntry(tx, {
         tenantId: auth.tenantId,
         actorUserId: auth.userId,
         action: 'framework.activate',
         objectType: 'scope_framework',
         objectId: parsed.data.frameworkId,
-        after: { scopeId: parsed.data.scopeId },
+        after: { scopeId: parsed.data.scopeId, templateMappings },
         ip: auth.ip,
         userAgent: auth.userAgent,
       });

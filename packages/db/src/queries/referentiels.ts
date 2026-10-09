@@ -20,6 +20,12 @@ export interface FrameworkSummary {
   requirementCount: number;
   /** Exigences dotées d'au moins un contrôle interne (couverture structurelle, pas conformité). */
   mappedRequirementCount: number;
+  /**
+   * Exigences feuilles (hors titres de chapitre et objectifs), et celles
+   * outillées : un contrôle rattaché à l'exigence ou à son chapitre la couvre.
+   */
+  leafRequirementCount: number;
+  mappedLeafCount: number;
   /** Contrôles internes distincts rattachés à une exigence de ce référentiel. */
   mappedControlCount: number;
   /** Nombre de périmètres du tenant sur lesquels le référentiel est activé (0 = disponible). */
@@ -39,6 +45,13 @@ const FRAMEWORK_COLUMNS = sql`
   (SELECT count(*) FROM requirements r WHERE r.framework_id = f.id
      AND EXISTS (SELECT 1 FROM control_requirements cr WHERE cr.requirement_id = r.id)
   ) AS mapped_requirement_count,
+  (SELECT count(*) FROM requirements r WHERE r.framework_id = f.id
+     AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id)) AS leaf_requirement_count,
+  (SELECT count(*) FROM requirements r WHERE r.framework_id = f.id
+     AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id)
+     AND EXISTS (SELECT 1 FROM control_requirements cr WHERE cr.requirement_id IN (
+           r.id, r.parent_id, (SELECT p.parent_id FROM requirements p WHERE p.id = r.parent_id)))
+  ) AS mapped_leaf_count,
   (SELECT count(DISTINCT cr.control_id) FROM control_requirements cr
      JOIN requirements r ON r.id = cr.requirement_id WHERE r.framework_id = f.id
   ) AS mapped_control_count,
@@ -56,6 +69,8 @@ function toFrameworkSummary(r: RawFramework): FrameworkSummary {
     isBuiltin: r.is_builtin,
     requirementCount: Number(r.requirement_count),
     mappedRequirementCount: Number(r.mapped_requirement_count),
+    leafRequirementCount: Number(r.leaf_requirement_count),
+    mappedLeafCount: Number(r.mapped_leaf_count),
     mappedControlCount: Number(r.mapped_control_count),
     activatedScopeCount: Number(r.activated_scope_count),
     hidden: r.hidden === true,
@@ -110,6 +125,8 @@ interface RawFramework {
   is_builtin: boolean;
   requirement_count: string | number;
   mapped_requirement_count: string | number;
+  leaf_requirement_count: string | number;
+  mapped_leaf_count: string | number;
   mapped_control_count: string | number;
   activated_scope_count: string | number;
   hidden: boolean;

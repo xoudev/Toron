@@ -12,6 +12,7 @@ import {
   reviewNeedsCorrection,
 } from '@toron/core';
 import {
+  adoptControlTemplates,
   createAction,
   createControlReview,
   getControlDetail,
@@ -23,6 +24,7 @@ import {
   writeAuditEntry,
   type ControlDetail,
 } from '@toron/db';
+import { CONTROL_TEMPLATE_DOMAINS, controlTemplates } from '@toron/frameworks';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -155,5 +157,38 @@ export async function recordControlReviewAction(slug: string, input: unknown): P
     return { ok: true, data: { reviewId: res.reviewId, actionId: res.actionId } };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_REVUE', 'L’enregistrement de la revue a échoué — réessayez.')) };
+  }
+}
+
+// ── Contrôles types ─────────────────────────────────────────────────────
+
+const DOMAIN_KEYS = CONTROL_TEMPLATE_DOMAINS.map((d) => d.key) as [string, ...string[]];
+
+/**
+ * Reprise des contrôles types des domaines choisis : créés en brouillon et
+ * rattachés aux référentiels intégrés activés. Un modèle déjà repris n'est
+ * pas dupliqué.
+ */
+export async function adoptControlTemplatesAction(slug: string, input: unknown): Promise<ActionResult<{ created: number; mappings: number }>> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = z.object({ domains: z.array(z.enum(DOMAIN_KEYS)).min(1).max(DOMAIN_KEYS.length) }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Choisissez au moins un domaine à reprendre.') };
+  const domains = new Set<string>(parsed.data.domains);
+  const templates = controlTemplates().filter((t) => domains.has(t.domain));
+  try {
+    const res = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const r = await adoptControlTemplates(tx, { tenantId: auth.tenantId, templates });
+      await writeAuditEntry(tx, {
+        tenantId: auth.tenantId, actorUserId: auth.userId, action: 'control.templates_adopt', objectType: 'control',
+        after: { domains: [...domains], created: r.created.length, skipped: r.skipped, mappings: r.mappings },
+        ip: auth.ip, userAgent: auth.userAgent,
+      });
+      return r;
+    });
+    revalidatePath(`/t/${slug}`, 'layout');
+    return { ok: true, data: { created: res.created.length, mappings: res.mappings } };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_CREATION', 'Les contrôles types n’ont pas pu être repris — réessayez.')) };
   }
 }

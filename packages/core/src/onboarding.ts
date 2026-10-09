@@ -50,8 +50,8 @@ export function onboardingSteps(i: OnboardingInput): OnboardingStep[] {
     },
     {
       key: 'controles', title: 'Décrire vos contrôles',
-      detail: 'Rattachez chaque mesure aux exigences qu’elle couvre : une preuve servira plusieurs référentiels.',
-      path: '/referentiels', cta: 'Rattacher', done: i.controls > 0,
+      detail: 'Partez des contrôles types, déjà rattachés à ISO 27001, NIS 2 et au RGPD, puis adaptez-les : une preuve servira plusieurs référentiels.',
+      path: '/controles', cta: 'Démarrer', done: i.controls > 0,
     },
     {
       key: 'evaluation', title: 'Lancer une première évaluation',

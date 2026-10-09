@@ -262,3 +262,135 @@
 .linked-control-review--inefficace {
   color: var(--danger);
 }
+/* ── Contrôles types : reprise en un geste ───────────────────────────── */
+.tpl-start {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px;
+}
+.tpl-start h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.tpl-panel {
+  display: grid;
+  gap: 14px;
+}
+.tpl-intro,
+.tpl-alt {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.tpl-domains {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.tpl-domains legend {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.tpl-domains legend span {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.tpl-domain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.tpl-domain:has(input:checked) {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.tpl-domain span {
+  flex: 1;
+}
+.tpl-domain small {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+.tpl-preview {
+  display: grid;
+  gap: 8px;
+}
+.tpl-preview .panel-section-label {
+  margin: 0;
+}
+.tpl-fw {
+  display: grid;
+  grid-template-columns: minmax(0, 200px) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+}
+.tpl-fw-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.tpl-fw-track {
+  display: flex;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.tpl-fw-before {
+  background: var(--ok);
+}
+.tpl-fw-after {
+  background: color-mix(in srgb, var(--ok) 45%, transparent);
+}
+.tpl-fw-count {
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+.tpl-warning {
+  font-size: 12.5px;
+  color: var(--warn);
+}
+.tpl-done {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--ok) 35%, var(--border));
+  border-radius: var(--radius-m);
+  background: color-mix(in srgb, var(--ok) 6%, transparent);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.tpl-done p {
+  flex: 1;
+}
+@media (max-width: 560px) {
+  .tpl-fw {
+    grid-template-columns: 1fr auto;
+  }
+  .tpl-fw-track {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}

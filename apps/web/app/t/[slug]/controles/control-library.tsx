@@ -11,6 +11,7 @@ import {
   dueLabel,
   reviewNeedsCorrection,
   type ControlReviewResult,
+  type TemplateCoverageFramework,
 } from '@toron/core';
 import type { ControlDetail, ControlLibraryRow, TenantMember } from '@toron/db';
 import { Drawer } from '@toron/ui';
@@ -22,6 +23,10 @@ import { keepValues } from '@/lib/forms';
 import { useOpenItem } from '@/lib/use-open-item';
 
 import { getControlDetailAction, recordControlReviewAction, updateControlAction } from './control-actions';
+import {
+  ControlTemplatesButton, ControlTemplatesStart, TemplateAdoptionNotice,
+  type TemplateAdoptionResult, type TemplateDomainOption, type TemplateOption,
+} from './control-templates';
 
 const FRAMEWORK_BADGE: Record<string, string> = { recyf: 'NIS 2', iso27001: 'ISO 27001', iso9001: 'ISO 9001', rgpd: 'RGPD' };
 const STATUS_LABEL: Record<string, string> = { brouillon: 'Brouillon', actif: 'Actif', archive: 'Archivé' };
@@ -32,9 +37,10 @@ function fmt(d: string | null): string {
   return `${day}/${m}/${y}`;
 }
 
-type View = 'tous' | 'en_retard' | 'bientot' | 'defaillants' | 'jamais' | 'sans_frequence';
+type View = 'tous' | 'a_adapter' | 'en_retard' | 'bientot' | 'defaillants' | 'jamais' | 'sans_frequence';
 const VIEWS: { key: View; label: string; match: (c: ControlLibraryRow) => boolean }[] = [
   { key: 'tous', label: 'Tous', match: () => true },
+  { key: 'a_adapter', label: 'À adapter', match: (c) => c.status === 'brouillon' },
   { key: 'en_retard', label: 'Revue en retard', match: (c) => c.status === 'actif' && c.reviewState === 'en_retard' },
   { key: 'bientot', label: 'Revue bientôt due', match: (c) => c.status === 'actif' && c.reviewState === 'bientot' },
   { key: 'defaillants', label: 'Défaillants', match: (c) => c.lastResult !== null && c.lastResult !== 'efficace' },
@@ -46,12 +52,15 @@ function ResultChip({ result }: { result: ControlReviewResult }) {
   return <span className={`ctl-result ctl-result--${result}`}>{CONTROL_REVIEW_RESULT_LABEL[result]}</span>;
 }
 
-export function ControlLibrary({ slug, today, canManage, canReview, exceptionsEnabled, controls, members }: {
+export function ControlLibrary({ slug, today, canManage, canReview, exceptionsEnabled, controls, members, templates }: {
   slug: string; today: string; canManage: boolean; canReview: boolean; exceptionsEnabled: boolean;
   controls: ControlLibraryRow[]; members: TenantMember[];
+  templates: { templates: TemplateOption[]; domains: TemplateDomainOption[]; adoptedKeys: string[]; coverage: TemplateCoverageFramework[] };
 }) {
   const [view, setView] = useState<View>('tous');
   const [query, setQuery] = useState('');
+  const [adoption, setAdoption] = useState<TemplateAdoptionResult | null>(null);
+  const onAdopted = (r: TemplateAdoptionResult) => { setAdoption(r); setView('a_adapter'); };
   const [openId, setOpenId] = useOpenItem(controls.map((c) => c.id));
   const open = controls.find((c) => c.id === openId) ?? null;
 
@@ -69,18 +78,16 @@ export function ControlLibrary({ slug, today, canManage, canReview, exceptionsEn
             return <button type="button" key={v.key} aria-pressed={view === v.key} onClick={() => setView(v.key)}>{v.label} · {n}</button>;
           })}
         </div>
+        {canManage && controls.length > 0 ? <ControlTemplatesButton slug={slug} {...templates} onAdopted={onAdopted} /> : null}
         <div className="ds-search">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M16.5 16.5 20.5 20.5" /></svg>
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un contrôle ou un responsable" aria-label="Rechercher un contrôle" />
         </div>
       </div>
 
+      {adoption ? <TemplateAdoptionNotice result={adoption} onClose={() => setAdoption(null)} /> : null}
       {controls.length === 0 ? (
-        <div className="empty-state">
-          <h2>Aucun contrôle interne</h2>
-          <p>Créez vos contrôles depuis un référentiel, en les rattachant aux exigences qu’ils couvrent : ils apparaîtront ici avec leur suivi d’efficacité.</p>
-          <a className="btn btn-primary btn-sm" href={`/t/${slug}/referentiels`}>Ouvrir les référentiels</a>
-        </div>
+        <ControlTemplatesStart slug={slug} canManage={canManage} {...templates} onAdopted={onAdopted} />
       ) : (
         <div className="ds-table-card"><div className="ds-scroll">
           <table className="ds-table" style={{ minWidth: 1000 }}>

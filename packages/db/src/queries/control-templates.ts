@@ -76,6 +76,7 @@ export async function adoptControlTemplates(tx: TenantTx, input: { tenantId: str
       result.skipped += 1;
       continue;
     }
+    // Reprise concurrente (deux onglets) : l'unicité par organisation tranche.
     const [row] = await tx.insert(schema.controls).values({
       tenantId: input.tenantId,
       title: t.title,
@@ -83,9 +84,14 @@ export async function adoptControlTemplates(tx: TenantTx, input: { tenantId: str
       reviewFrequency: t.frequency,
       status: 'brouillon',
       templateKey: t.key,
-    }).returning({ id: schema.controls.id });
-    result.created.push({ id: row!.id, key: t.key });
-    result.mappings += await insertMappings(tx, input.tenantId, row!.id, requirementIds(t, index));
+    }).onConflictDoNothing({ target: [schema.controls.tenantId, schema.controls.templateKey] })
+      .returning({ id: schema.controls.id });
+    if (!row) {
+      result.skipped += 1;
+      continue;
+    }
+    result.created.push({ id: row.id, key: t.key });
+    result.mappings += await insertMappings(tx, input.tenantId, row.id, requirementIds(t, index));
   }
   return result;
 }
@@ -116,8 +122,9 @@ export interface ActiveFrameworkCoverage {
   name: string;
   /**
    * Exigences feuilles (hors chapitres et objectifs), et celles déjà
-   * outillées : un contrôle rattaché à l'exigence, ou à son chapitre ou son
-   * objectif (rattachement de haut niveau, admis par l'écran), la couvre.
+   * outillées : un contrôle non archivé rattaché à l'exigence, ou à son
+   * chapitre ou son objectif (rattachement de haut niveau, admis par
+   * l'écran), la couvre.
    */
   leafCount: number;
   coveredRefs: string[];
@@ -131,7 +138,9 @@ export async function activeFrameworkCoverage(tx: TenantTx): Promise<ActiveFrame
               AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id))::int AS leaf_count,
            coalesce((SELECT array_agg(r.ref_id ORDER BY r.ref_id) FROM requirements r WHERE r.framework_id = f.id
               AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id)
-              AND EXISTS (SELECT 1 FROM control_requirements cr WHERE cr.requirement_id IN (
+              AND EXISTS (SELECT 1 FROM control_requirements cr
+                            JOIN controls c ON c.id = cr.control_id AND c.status <> 'archive'
+                           WHERE cr.requirement_id IN (
                     r.id, r.parent_id, (SELECT p.parent_id FROM requirements p WHERE p.id = r.parent_id)))), '{}') AS covered_refs
       FROM frameworks f
      WHERE f.tenant_id IS NULL

@@ -1,5 +1,6 @@
 import {
   boolean,
+  date,
   integer,
   pgTable,
   primaryKey,
@@ -71,6 +72,8 @@ export const controls = pgTable('controls', {
   status: controlStatus('status').notNull().default('actif'),
   /** Clé du contrôle type dont il est issu (migration 0039), sinon null. */
   templateKey: text('template_key'),
+  /** Dernier passage au statut actif : point de départ de la première revue. */
+  activatedOn: date('activated_on'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

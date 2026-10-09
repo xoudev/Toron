@@ -143,7 +143,7 @@ const DEFS: TemplateDef[] = [
   {
     key: 'risques.appreciation', domain: 'risques', frequency: 'annuelle',
     title: 'Appréciation et traitement des risques',
-    description: 'Une méthode documentée identifie, évalue et traite les risques de chaque système ; les risques résiduels sont acceptés par la direction et l’analyse est revue au moins tous les trois ans et après tout incident majeur.',
+    description: 'Une méthode documentée identifie, évalue et traite les risques de chaque système ; les risques résiduels sont acceptés par la direction et l’analyse est revue au moins tous les trois ans, après tout incident de sécurité et à chaque évolution majeure du contexte.',
     evidence: 'Registre des risques, plan de traitement et acceptations signées.',
     map: { iso27001: ['6.1.1', '6.1.2', '6.1.3', '8.2', '8.3'], recyf: ['16.1', '16.2', '16.3', '16.4'], dora: ['Ch.II'], iso9001: ['6'] },
   },
@@ -473,7 +473,7 @@ const DEFS: TemplateDef[] = [
     title: 'Notification réglementaire des incidents et violations',
     description: 'Les incidents significatifs sont notifiés dans les délais (NIS 2 : 24 h, 72 h, un mois ; RGPD : 72 h) aux autorités et, si besoin, aux personnes concernées.',
     evidence: 'Procédure de notification et notifications transmises.',
-    map: { iso27001: ['A.5.26'], rgpd: ['Art.33-34'], dora: ['Ch.III'] },
+    map: { iso27001: ['A.5.26'], rgpd: ['Art.33-34'], dora: ['Ch.III'], iso27701: ['6'] },
   },
   {
     key: 'incidents.retex', domain: 'incidents', frequency: 'semestrielle',
@@ -549,7 +549,7 @@ const DEFS: TemplateDef[] = [
     title: 'Analyses d’impact sur la vie privée',
     description: 'Les traitements à risque élevé font l’objet d’une analyse d’impact avant leur mise en œuvre.',
     evidence: 'Analyses d’impact réalisées et avis du référent RGPD.',
-    map: { iso27001: ['A.5.34'], rgpd: ['Art.35'] },
+    map: { iso27001: ['A.5.34'], rgpd: ['Art.35'], iso27701: ['7'] },
   },
   {
     key: 'conformite.audit', domain: 'conformite', frequency: 'annuelle',

@@ -118,6 +118,18 @@ describe('reprise des contrôles types', () => {
     expect(rgpd.coveredRefs.length).toBe(rgpd.leafCount);
   });
 
+  it('un contrôle rattaché à un objectif outille les moyens qui en relèvent', async () => {
+    const { tenantId, scopeId } = await newTenant('types-objectif');
+    await activate(tenantId, scopeId, 'recyf');
+    const [obj] = await admin`
+      SELECT r.id FROM requirements r JOIN frameworks f ON f.id = r.framework_id
+       WHERE f.tenant_id IS NULL AND f.code = 'recyf' AND r.ref_id = 'OBJ-08'`;
+    const [ctl] = await admin`INSERT INTO controls (tenant_id, title) VALUES (${tenantId}, 'Accès distants') RETURNING id`;
+    await admin`INSERT INTO control_requirements (control_id, requirement_id, tenant_id) VALUES (${(ctl as { id: string }).id}, ${(obj as { id: string }).id}, ${tenantId})`;
+    const recyf = (await coverage(tenantId)).find((c) => c.code === 'recyf')!;
+    expect(recyf.coveredRefs).toEqual(['8.1-EI/EE', '8.2-EI/EE', '8.3-EE', '8.4-EE', '8.5-EE']);
+  });
+
   it('une clé de modèle mal formée est refusée par la base', async () => {
     const { tenantId } = await newTenant('types-cle');
     await expect(admin`INSERT INTO controls (tenant_id, title, template_key) VALUES (${tenantId}, 'Contrôle', 'Pas une clé')`).rejects.toThrow(/check constraint/);

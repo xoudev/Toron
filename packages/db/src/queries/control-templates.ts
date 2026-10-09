@@ -114,7 +114,11 @@ export interface ActiveFrameworkCoverage {
   code: string;
   version: string;
   name: string;
-  /** Exigences feuilles (hors chapitres et objectifs), et celles déjà dotées d'un contrôle. */
+  /**
+   * Exigences feuilles (hors chapitres et objectifs), et celles déjà
+   * outillées : un contrôle rattaché à l'exigence, ou à son chapitre ou son
+   * objectif (rattachement de haut niveau, admis par l'écran), la couvre.
+   */
   leafCount: number;
   coveredRefs: string[];
 }
@@ -127,7 +131,8 @@ export async function activeFrameworkCoverage(tx: TenantTx): Promise<ActiveFrame
               AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id))::int AS leaf_count,
            coalesce((SELECT array_agg(r.ref_id ORDER BY r.ref_id) FROM requirements r WHERE r.framework_id = f.id
               AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id)
-              AND EXISTS (SELECT 1 FROM control_requirements cr WHERE cr.requirement_id = r.id)), '{}') AS covered_refs
+              AND EXISTS (SELECT 1 FROM control_requirements cr WHERE cr.requirement_id IN (
+                    r.id, r.parent_id, (SELECT p.parent_id FROM requirements p WHERE p.id = r.parent_id)))), '{}') AS covered_refs
       FROM frameworks f
      WHERE f.tenant_id IS NULL
        AND EXISTS (SELECT 1 FROM scope_frameworks sf WHERE sf.framework_id = f.id)

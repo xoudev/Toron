@@ -22,7 +22,8 @@ export interface FrameworkSummary {
   mappedRequirementCount: number;
   /**
    * Exigences feuilles (hors titres de chapitre et objectifs), et celles
-   * outillées : un contrôle rattaché à l'exigence ou à son chapitre la couvre.
+   * outillées : un contrôle non archivé rattaché à l'exigence ou à son
+   * chapitre la couvre.
    */
   leafRequirementCount: number;
   mappedLeafCount: number;
@@ -49,7 +50,9 @@ const FRAMEWORK_COLUMNS = sql`
      AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id)) AS leaf_requirement_count,
   (SELECT count(*) FROM requirements r WHERE r.framework_id = f.id
      AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id)
-     AND EXISTS (SELECT 1 FROM control_requirements cr WHERE cr.requirement_id IN (
+     AND EXISTS (SELECT 1 FROM control_requirements cr
+                   JOIN controls c ON c.id = cr.control_id AND c.status <> 'archive'
+                  WHERE cr.requirement_id IN (
            r.id, r.parent_id, (SELECT p.parent_id FROM requirements p WHERE p.id = r.parent_id)))
   ) AS mapped_leaf_count,
   (SELECT count(DISTINCT cr.control_id) FROM control_requirements cr

@@ -245,11 +245,14 @@ export async function activateFrameworkAction(
   }
   try {
     await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const before = await getFramework(tx, parsed.data.frameworkId);
       await activateFrameworkOnScope(tx, auth.tenantId, parsed.data.scopeId, parsed.data.frameworkId);
-      // Les contrôles déjà repris des modèles se rattachent au référentiel activé.
-      const templateMappings = await syncTemplateMappings(tx, {
-        tenantId: auth.tenantId, frameworkId: parsed.data.frameworkId, templates: controlTemplates(),
-      });
+      // Première activation : les contrôles déjà repris des modèles s'y rattachent.
+      // Activé ensuite sur un autre périmètre, on ne recrée pas les rattachements
+      // que l'organisation a retirés entre-temps.
+      const templateMappings = before && before.activatedScopeCount === 0
+        ? await syncTemplateMappings(tx, { tenantId: auth.tenantId, frameworkId: parsed.data.frameworkId, templates: controlTemplates() })
+        : 0;
       await writeAuditEntry(tx, {
         tenantId: auth.tenantId,
         actorUserId: auth.userId,

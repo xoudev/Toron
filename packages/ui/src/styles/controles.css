@@ -356,11 +356,13 @@
   background: var(--surface-2);
   overflow: hidden;
 }
+/* Outillage structurel, pas conformité : barre neutre comme sur les
+   référentiels ; le gain apporté par la reprise ressort en accent. */
 .tpl-fw-before {
-  background: var(--ok);
+  background: var(--text-3);
 }
 .tpl-fw-after {
-  background: color-mix(in srgb, var(--ok) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 60%, transparent);
 }
 .tpl-fw-count {
   font-size: 11.5px;

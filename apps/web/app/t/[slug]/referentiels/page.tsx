@@ -120,7 +120,7 @@ export default async function ReferentielsPage({
                   </div>
                   <div className="stat-row">
                     <div className="stat">
-                      <div className="stat-value mono">{f.requirementCount}</div>
+                      <div className="stat-value mono">{f.leafRequirementCount}</div>
                       <div className="stat-label">Exigences</div>
                     </div>
                     <div className="stat">
@@ -132,7 +132,7 @@ export default async function ReferentielsPage({
                       <div className="stat-label">Exigences outillées</div>
                     </div>
                   </div>
-                  <div className="tooling" title="Part d’exigences dotées d’au moins un contrôle interne">
+                  <div className="tooling" title="Part des exigences couvertes par au moins un contrôle interne, directement ou par leur chapitre">
                     <div className="tooling-track">
                       <div className="tooling-fill" style={{ width: `${toolingRate(f)}%` }} />
                     </div>
@@ -162,7 +162,7 @@ export default async function ReferentielsPage({
                       <div className="fw-card-title">{f.name}</div>
                       <div className="fw-card-meta">
                         {(FRAMEWORK_SUBTITLE[f.code] ?? f.code.toUpperCase())} · {formatVersion(f.version)} ·{' '}
-                        {f.requirementCount} exigences
+                        {f.leafRequirementCount} exigences
                       </div>
                     </div>
                     <span className={`badge ${f.isBuiltin ? 'badge--builtin' : 'badge--custom'}`}>

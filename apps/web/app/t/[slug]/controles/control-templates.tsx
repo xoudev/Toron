@@ -76,9 +76,11 @@ function TemplatesPanel({ slug, templates, domains, adoptedKeys, coverage, onAdo
   return (
     <div className="tpl-panel">
       <p className="tpl-intro">
-        {remaining.length} contrôles rédigés pour une PME ou une ETI, chacun déjà rattaché aux exigences qu’il couvre dans
-        ISO 27001, NIS 2 (ReCyF), le RGPD et les autres référentiels intégrés. Ils sont créés en brouillon : vous les adaptez, puis
-        vous les activez.
+        {remaining.length > 1
+          ? `${remaining.length} contrôles rédigés pour une PME ou une ETI, chacun déjà rattaché aux exigences qu’il couvre`
+          : 'Un contrôle rédigé pour une PME ou une ETI, déjà rattaché aux exigences qu’il couvre'}{' '}
+        dans ISO 27001, NIS 2 (ReCyF), le RGPD et les autres référentiels intégrés. Les contrôles repris sont créés en
+        brouillon : vous les adaptez, puis vous les activez.
       </p>
 
       <fieldset className="tpl-domains">
@@ -102,7 +104,7 @@ function TemplatesPanel({ slug, templates, domains, adoptedKeys, coverage, onAdo
         })}
       </fieldset>
 
-      <div className="tpl-preview" aria-live="polite">
+      <div className="tpl-preview">
         <p className="panel-section-label">Exigences outillées après reprise</p>
         {preview.length === 0 ? (
           <p className="tpl-warning">
@@ -116,9 +118,14 @@ function TemplatesPanel({ slug, templates, domains, adoptedKeys, coverage, onAdo
               <span className="tpl-fw-before" style={{ width: `${(p.before / Math.max(p.leafCount, 1)) * 100}%` }} />
               <span className="tpl-fw-after" style={{ width: `${((p.after - p.before) / Math.max(p.leafCount, 1)) * 100}%` }} />
             </span>
-            <span className="tpl-fw-count ds-mono">{p.before === p.after ? p.after : `${p.before} → ${p.after}`} / {p.leafCount}</span>
+            <span className="tpl-fw-count ds-mono" aria-hidden="true">{p.before === p.after ? p.after : `${p.before} → ${p.after}`} / {p.leafCount}</span>
+            <span className="sr-only">{p.name} : {p.after} exigences outillées sur {p.leafCount} après reprise, contre {p.before} aujourd’hui.</span>
           </div>
         ))}
+        <p className="sr-only" role="status">
+          {selected.length} contrôle{selected.length > 1 ? 's' : ''} sélectionné{selected.length > 1 ? 's' : ''}
+          {preview.length > 0 ? ` : ${preview.map((p) => `${p.name}, ${p.after} exigences outillées sur ${p.leafCount}`).join(' ; ')}.` : '.'}
+        </p>
       </div>
 
       {error ? <p className="form-error" role="alert">{error}</p> : null}

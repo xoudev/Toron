@@ -47,6 +47,7 @@ interface RawLibrary {
   owner_name: string | null;
   review_frequency: ReviewFrequency | null;
   created_on: string;
+  review_start_on: string;
   framework_codes: string[];
   mapped_requirement_count: number | string;
   last_reviewed_on: string | null;
@@ -62,6 +63,7 @@ export async function listControlLibrary(tx: TenantTx, today: string): Promise<C
   const rows = (await tx.execute(sql`
     SELECT c.id, c.title, c.description, c.status::text AS status, c.owner_user_id, o.name AS owner_name,
            c.review_frequency::text AS review_frequency, c.created_at::date::text AS created_on,
+           coalesce(c.activated_on, c.created_at::date)::text AS review_start_on,
            coalesce(array_agg(DISTINCT f.code) FILTER (WHERE f.code IS NOT NULL), '{}') AS framework_codes,
            count(DISTINCT cr.requirement_id) AS mapped_requirement_count,
            lr.reviewed_on::text AS last_reviewed_on, lr.result AS last_result,
@@ -87,7 +89,8 @@ export async function listControlLibrary(tx: TenantTx, today: string): Promise<C
   `)) as unknown as RawLibrary[];
 
   return rows.map((r) => {
-    const schedule = { frequency: r.review_frequency, lastReviewedOn: r.last_reviewed_on, createdOn: r.created_on };
+    // Jamais revu : la première revue part de l'activation (ou de la création).
+    const schedule = { frequency: r.review_frequency, lastReviewedOn: r.last_reviewed_on, createdOn: r.review_start_on };
     return {
       id: r.id,
       title: r.title,
@@ -239,6 +242,9 @@ export async function updateControl(tx: TenantTx, input: UpdateControlInput): Pr
       ownerUserId: input.ownerUserId,
       reviewFrequency: input.reviewFrequency,
       status: input.status,
+      // Passage au statut actif : date d'activation, point de départ de la première revue.
+      activatedOn: sql`CASE WHEN ${schema.controls.status} <> 'actif' AND ${input.status} = 'actif'
+                            THEN (now() AT TIME ZONE 'Europe/Paris')::date ELSE ${schema.controls.activatedOn} END`,
     })
     .where(eq(schema.controls.id, input.controlId))
     .returning({ id: schema.controls.id });

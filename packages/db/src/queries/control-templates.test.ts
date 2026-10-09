@@ -14,6 +14,7 @@ import {
   listAdoptedTemplateKeys,
   syncTemplateMappings,
 } from './control-templates.ts';
+import { listControlLibrary, updateControl } from './control-reviews.ts';
 import { activateFrameworkOnScope } from './referentiels.ts';
 
 let container: StartedPostgreSqlContainer;
@@ -128,6 +129,52 @@ describe('reprise des contrôles types', () => {
     await admin`INSERT INTO control_requirements (control_id, requirement_id, tenant_id) VALUES (${(ctl as { id: string }).id}, ${(obj as { id: string }).id}, ${tenantId})`;
     const recyf = (await coverage(tenantId)).find((c) => c.code === 'recyf')!;
     expect(recyf.coveredRefs).toEqual(['8.1-EI/EE', '8.2-EI/EE', '8.3-EE', '8.4-EE', '8.5-EE']);
+  });
+
+  it('deux reprises simultanées ne se gênent pas : chaque modèle est créé une seule fois', async () => {
+    const { tenantId, scopeId } = await newTenant('types-concurrence');
+    await activate(tenantId, scopeId, 'iso27001');
+    const [a, b] = await Promise.all([0, 1].map(() =>
+      withTenant(app.db, tenantId, (tx) => adoptControlTemplates(tx, { tenantId, templates }))));
+    expect(a!.created.length + b!.created.length).toBe(templates.length);
+    expect(a!.skipped + b!.skipped).toBe(templates.length);
+    const [n] = await admin`SELECT count(*)::int AS n FROM controls WHERE tenant_id = ${tenantId}`;
+    expect((n as { n: number }).n).toBe(templates.length);
+  });
+
+  it('un contrôle archivé n’outille plus rien', async () => {
+    const { tenantId, scopeId } = await newTenant('types-archive');
+    await activate(tenantId, scopeId, 'iso27001');
+    await withTenant(app.db, tenantId, (tx) => adoptControlTemplates(tx, { tenantId, templates: templates.filter((t) => t.key === 'postes.bureau_net') }));
+    expect((await coverage(tenantId))[0]!.coveredRefs).toEqual(['A.7.7']);
+    await admin`UPDATE controls SET status = 'archive' WHERE tenant_id = ${tenantId}`;
+    expect((await coverage(tenantId))[0]!.coveredRefs).toEqual([]);
+  });
+
+  it('activé longtemps après la reprise, un contrôle n’est pas aussitôt en retard de revue', async () => {
+    const { tenantId, scopeId } = await newTenant('types-activation');
+    await activate(tenantId, scopeId, 'iso27001');
+    const tpl = templates.find((t) => t.key === 'postes.malveillants')!;
+    expect(tpl.frequency).toBe('mensuelle');
+    const { created } = await withTenant(app.db, tenantId, (tx) => adoptControlTemplates(tx, { tenantId, templates: [tpl] }));
+    const id = created[0]!.id;
+    // Repris il y a six mois, adapté puis activé aujourd'hui.
+    await admin`UPDATE controls SET created_at = now() - interval '6 months' WHERE id = ${id}`;
+    await withTenant(app.db, tenantId, (tx) => updateControl(tx, {
+      controlId: id, title: tpl.title, description: null, ownerUserId: null, reviewFrequency: 'mensuelle', status: 'actif',
+    }));
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    const [row] = await withTenant(app.db, tenantId, (tx) => listControlLibrary(tx, today));
+    expect(row).toMatchObject({ status: 'actif' });
+    expect(row!.reviewState).not.toBe('en_retard');
+    expect(row!.nextReviewOn! > today).toBe(true);
+    // Une nouvelle mise à jour du contrôle déjà actif ne déplace pas la date d'activation.
+    const activatedOn = async () => ((await admin`SELECT activated_on::text FROM controls WHERE id = ${id}`)[0] as { activated_on: string }).activated_on;
+    const first = await activatedOn();
+    await withTenant(app.db, tenantId, (tx) => updateControl(tx, {
+      controlId: id, title: `${tpl.title} (adapté)`, description: null, ownerUserId: null, reviewFrequency: 'mensuelle', status: 'actif',
+    }));
+    expect(await activatedOn()).toBe(first);
   });
 
   it('une clé de modèle mal formée est refusée par la base', async () => {

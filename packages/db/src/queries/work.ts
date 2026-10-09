@@ -121,10 +121,10 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
       FROM processing_activities p WHERE p.owner_user_id = ${userId}
     UNION ALL
     -- Prochaine revue d'efficacité : une période après la dernière revue, ou
-    -- après la création pour un contrôle jamais revu.
+    -- après l'activation (à défaut la création) pour un contrôle jamais revu.
     SELECT 'controle', c.id, c.title,
            CASE WHEN c.review_frequency IS NULL THEN NULL ELSE
-             (coalesce((SELECT max(x.reviewed_on) FROM control_reviews x WHERE x.control_id = c.id), c.created_at::date)
+             (coalesce((SELECT max(x.reviewed_on) FROM control_reviews x WHERE x.control_id = c.id), c.activated_on, c.created_at::date)
               + make_interval(months => CASE c.review_frequency::text ${frequencyMonths} END))::date::text END,
            CASE WHEN EXISTS (SELECT 1 FROM control_reviews x WHERE x.control_id = c.id) THEN 'revue' ELSE 'premiere' END
       FROM controls c WHERE c.owner_user_id = ${userId} AND c.status = 'actif'

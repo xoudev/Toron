@@ -30,18 +30,29 @@ function InscriptionForm() {
       return;
     }
     setEnCours(true);
-    const { error } = await authClient.signUp.email({
-      name,
-      email,
-      password,
-      callbackURL: suite,
-    });
+    const { error } = await authClient.signUp
+      .email({
+        name,
+        email,
+        password,
+        callbackURL: suite,
+      })
+      // Réseau indisponible : message générique, sans laisser le bouton bloqué.
+      .catch(() => ({ error: { status: 0, code: undefined } }));
     if (error) {
       setEnCours(false);
+      // FAILED_TO_* (création du compte ou de la session) est une panne côté
+      // serveur, renvoyée pourtant en 400 ou 422 : ce n'est pas une erreur de saisie.
       setErreur(
         error.code?.startsWith('USER_ALREADY_EXISTS')
           ? 'Un compte existe déjà avec cette adresse — connectez-vous plutôt.'
-          : 'Création impossible — vérifiez les champs saisis puis réessayez.',
+          : error.status === 429
+            ? 'Trop de tentatives — patientez une minute puis réessayez.'
+            : error.code?.startsWith('FAILED_TO_')
+              ? 'Création impossible pour le moment — réessayez dans quelques instants.'
+              : error.status === 400 || error.status === 422
+                ? 'Création impossible — vérifiez les champs saisis puis réessayez.'
+                : 'Création impossible pour le moment — réessayez dans quelques instants.',
       );
       return;
     }

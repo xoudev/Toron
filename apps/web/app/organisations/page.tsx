@@ -2,6 +2,7 @@ import { MEMBERSHIP_ROLE_LABEL, type MembershipRole } from '@toron/core';
 import { listPendingInvitationsForEmail, schema } from '@toron/db';
 import { BrandMark, ThemeToggle } from '@toron/ui';
 import { eq } from 'drizzle-orm';
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -14,7 +15,9 @@ import { CreateTenantForm } from './create-tenant-form';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OrganisationsPage() {
+export const metadata: Metadata = { title: 'Vos organisations — Toron' };
+
+export default async function OrganisationsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await auth().api.getSession({ headers: await headers() });
   if (!session) redirect('/connexion');
 
@@ -31,8 +34,10 @@ export default async function OrganisationsPage() {
     .orderBy(schema.tenants.name);
   const invitations = await listPendingInvitationsForEmail(db, session.user.email);
 
-  // Un seul espace et aucune invitation : l'utilisateur y entre directement.
-  if (rows.length === 1 && invitations.length === 0) redirect(`/t/${rows[0]!.slug}`);
+  // Un seul espace et aucune invitation : l'utilisateur y entre directement,
+  // sauf s'il vient choisir ou créer un espace (« Changer d'organisation »).
+  const choisir = (await searchParams)['choisir'] !== undefined;
+  if (!choisir && rows.length === 1 && invitations.length === 0) redirect(`/t/${rows[0]!.slug}`);
 
   return (
     <main className="auth-page org-page">

@@ -40,6 +40,10 @@ function buildAuth() {
     }),
     emailAndPassword: {
       enabled: true,
+      // Règle annoncée dans Paramètres › Sécurité et au formulaire
+      // d'inscription : appliquée ici, pas seulement dans le navigateur
+      // (la bibliothèque accepte 8 caractères par défaut).
+      minPasswordLength: 12,
       // ADR-4 : argon2id, pas le scrypt par défaut.
       password: {
         hash: (password) => hash(password, ARGON2_OPTIONS),

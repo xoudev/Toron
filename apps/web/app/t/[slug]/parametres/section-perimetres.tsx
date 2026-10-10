@@ -88,6 +88,13 @@ export function SectionPerimetres({ slug, viewer, scopes, entities, sites }: {
             d’évaluation, des documents, des actifs, des audits ou des études EBIOS RM ne peut pas être
             supprimé : la suppression vous indiquera ce qui le retient.
           </p>
+          {deleting.frameworkCount > 0 ? (
+            <p className="hint">
+              {deleting.frameworkCount > 1
+                ? `Ses ${deleting.frameworkCount} référentiels actifs seront désactivés : vous devrez les réactiver sur un autre périmètre.`
+                : 'Son référentiel actif sera désactivé : vous devrez le réactiver sur un autre périmètre.'}
+            </p>
+          ) : null}
           {error ? <p className="form-error" role="alert">{error}</p> : null}
           <div className="dialog-actions">
             <button className="btn btn-ghost btn-sm" onClick={() => setDeleting(null)}>Annuler</button>

@@ -37,6 +37,10 @@ function MembersCard({ slug, viewer, members }: { slug: string; viewer: Viewer; 
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<TenantMemberDetail | null>(null);
+  // Le choix dans la liste ne fait que proposer : rien n'est envoyé au
+  // serveur avant confirmation (une flèche au clavier suffit à changer la
+  // valeur d'une liste fermée).
+  const [changing, setChanging] = useState<{ member: TenantMemberDetail; role: MembershipRole } | null>(null);
   const [pending, start] = useTransition();
   const allowed = assignableRoles(viewer.role);
 
@@ -44,7 +48,7 @@ function MembersCard({ slug, viewer, members }: { slug: string; viewer: Viewer; 
     setError(null);
     start(async () => {
       const res = await changeMemberRoleAction(slug, { userId: m.userId, role });
-      if (res.ok) router.refresh(); else setError(res.error.message);
+      if (res.ok) { setChanging(null); router.refresh(); } else setError(res.error.message);
     });
   }
   function remove(m: TenantMemberDetail) {
@@ -67,7 +71,8 @@ function MembersCard({ slug, viewer, members }: { slug: string; viewer: Viewer; 
           <h2>Membres ({members.length})</h2>
           <p className="hint">
             Un rôle par membre et par organisation. Les rôles Propriétaire, Direction et RSSI exigent la
-            double authentification : sans elle, l’accès à l’espace reste bloqué.
+            double authentification : sans elle, l’accès à l’espace reste bloqué. Propriétaire et
+            Direction sont suivis comme dirigeants pour la formation NIS 2 (art. 20).
           </p>
         </div>
       </div>
@@ -88,7 +93,7 @@ function MembersCard({ slug, viewer, members }: { slug: string; viewer: Viewer; 
                   </td>
                   <td>
                     {canEdit(m) ? (
-                      <select className="role-select" value={m.role} aria-label={`Rôle de ${m.name}`} disabled={pending} onChange={(e) => changeRole(m, e.target.value as MembershipRole)}>
+                      <select className="role-select" value={m.role} aria-label={`Rôle de ${m.name}`} disabled={pending} onChange={(e) => { const role = e.target.value as MembershipRole; if (role !== m.role) { setError(null); setChanging({ member: m, role }); } }}>
                         {MEMBERSHIP_ROLES.map((r) => <option key={r} value={r} disabled={!allowed.includes(r)}>{MEMBERSHIP_ROLE_LABEL[r]}</option>)}
                       </select>
                     ) : <span className="ds-chip">{MEMBERSHIP_ROLE_LABEL[m.role]}</span>}
@@ -110,6 +115,24 @@ function MembersCard({ slug, viewer, members }: { slug: string; viewer: Viewer; 
           </tbody>
         </table>
       </div></div>
+      {changing ? (
+        <Dialog title={`Passer ${changing.member.name || changing.member.email} de ${MEMBERSHIP_ROLE_LABEL[changing.member.role]} à ${MEMBERSHIP_ROLE_LABEL[changing.role]} ?`} onClose={() => setChanging(null)}>
+          <p className="hint">
+            {MEMBERSHIP_ROLE_LABEL[changing.role]} — {MEMBERSHIP_ROLE_PURPOSE[changing.role]} Le changement prend effet immédiatement.
+          </p>
+          {changing.role === 'owner' ? (
+            <p className="hint"><b>Un propriétaire a tous les droits</b>, y compris changer votre rôle ou vous retirer de l’organisation.</p>
+          ) : null}
+          {totpRequiredForRole(changing.role) && !changing.member.twoFactorEnabled ? (
+            <p className="hint"><b>Ce rôle exige la double authentification</b>, que ce membre n’a pas activée : son accès sera bloqué jusqu’à ce qu’il l’active.</p>
+          ) : null}
+          {error ? <p className="form-error" role="alert">{error}</p> : null}
+          <div className="dialog-actions">
+            <button className="btn btn-ghost btn-sm" onClick={() => setChanging(null)}>Annuler</button>
+            <button className="btn btn-primary btn-sm" onClick={() => changeRole(changing.member, changing.role)} disabled={pending}>{pending ? 'Changement…' : 'Changer le rôle'}</button>
+          </div>
+        </Dialog>
+      ) : null}
       {removing ? (
         <Dialog title="Retirer ce membre ?" onClose={() => setRemoving(null)}>
           <p className="hint">
@@ -134,6 +157,8 @@ function InviteCard({ slug, viewer, invitations }: { slug: string; viewer: Viewe
   const [copied, setCopied] = useState(false);
   const [pending, start] = useTransition();
   const now = new Date();
+  // Le rôle de propriétaire ne s'attribue jamais par invitation (voir le texte d'aide).
+  const canNameOwner = assignableRoles(viewer.role).includes('owner');
   const roles = assignableRoles(viewer.role).filter((r) => r !== 'owner');
   const visible = invitations.filter((i) => invitationState(i, now) !== 'revoquee').slice(0, 20);
 
@@ -168,7 +193,9 @@ function InviteCard({ slug, viewer, invitations }: { slug: string; viewer: Viewe
           <h2>Inviter un membre</h2>
           <p className="hint">
             Un lien personnel, valable 7 jours, à transmettre à la personne invitée. Il ne fonctionne
-            qu’avec un compte portant exactement cette adresse e-mail.
+            qu’avec un compte portant exactement cette adresse e-mail. Invitez votre dirigeant avec le
+            rôle Direction : il sera suivi pour la formation NIS 2 des dirigeants.
+            {canNameOwner ? ' Pour nommer un autre propriétaire, invitez-le avec le rôle Direction puis changez son rôle dans la liste une fois l’invitation acceptée.' : null}
           </p>
         </div>
       </div>

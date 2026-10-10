@@ -20,6 +20,7 @@ export * from './training.ts';
 export * from './continuity.ts';
 export * from './satisfaction.ts';
 export * from './audit-chain.ts';
+export * from './audit-labels.ts';
 export * from './supplier-portal.ts';
 export * from './control-templates.ts';
 export {

@@ -1,30 +1,11 @@
 'use client';
 
+import { AUDIT_ACTION_FILTERS, auditActionLabel, auditObjectLabel } from '@toron/core';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
 import { verifyJournalAction, type JournalCheck } from './actions';
 import type { JournalPage } from './parametres-client';
-
-const ACTION_FILTERS: { label: string; prefix: string }[] = [
-  { label: 'Toutes les actions', prefix: '' },
-  { label: 'Organisation & périmètres', prefix: 'organisation.' },
-  { label: 'Membres & invitations', prefix: 'membership.' },
-  { label: 'Invitations', prefix: 'invitation.' },
-  { label: 'Risques', prefix: 'risk.' },
-  { label: 'Plan d’action', prefix: 'action.' },
-  { label: 'Documents', prefix: 'document.' },
-  { label: 'Preuves', prefix: 'evidence.' },
-  { label: 'Incidents', prefix: 'incident.' },
-  { label: 'Non-conformités', prefix: 'nc.' },
-  { label: 'Contrôles', prefix: 'control.' },
-  { label: 'Évaluations', prefix: 'assessment.' },
-  { label: 'Livrables scellés', prefix: 'export.' },
-  { label: 'Exports de registres', prefix: 'register.' },
-  { label: 'Import', prefix: 'import.' },
-  { label: 'Données', prefix: 'tenant.' },
-  { label: 'Vérifications du journal', prefix: 'journal.' },
-];
 
 function fmt(d: Date): string {
   return new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -89,8 +70,9 @@ export function SectionJournal({ slug, journal }: { slug: string; journal: Journ
         <div>
           <h2>Journal d’audit</h2>
           <p className="hint">
-            Chaque action métier, connexion à une organisation et export y est tracé avec son auteur, son
-            horodatage et l’adresse IP d’origine. Le journal est en écriture seule : rien ne s’y modifie
+            Chaque action métier, changements de rôle et invitations compris, et chaque export (livrable
+            scellé, registre, journal, export complet) y est tracé avec son auteur, son horodatage et
+            l’adresse IP d’origine. Le journal est en écriture seule : rien ne s’y modifie
             ni ne s’en efface. Chaque entrée est numérotée et scellée par une empreinte SHA-256 qui couvre
             la précédente : une altération faite hors de l’application, même directement en base, se détecte.
           </p>
@@ -104,7 +86,7 @@ export function SectionJournal({ slug, journal }: { slug: string; journal: Journ
         <input type="hidden" name="section" value="journal" />
         <label className="field" style={{ margin: 0, minWidth: 220 }}>
           <select name="filtre" defaultValue={journal.filtre} aria-label="Filtrer le journal" onChange={(e) => e.currentTarget.form?.requestSubmit()}>
-            {ACTION_FILTERS.map((f) => <option key={f.prefix} value={f.prefix}>{f.label}</option>)}
+            {AUDIT_ACTION_FILTERS.map((f) => <option key={f.prefix} value={f.prefix}>{f.label}</option>)}
           </select>
         </label>
         <noscript><button className="btn btn-ghost btn-sm" type="submit">Filtrer</button></noscript>
@@ -122,8 +104,8 @@ export function SectionJournal({ slug, journal }: { slug: string; journal: Journ
                 <td className="ds-mono" title={`Empreinte ${a.hash}`}>{a.seq}</td>
                 <td className="ds-mono">{fmt(a.at)}</td>
                 <td>{a.actorName ?? <span className="ds-muted">Système</span>}</td>
-                <td><span className="ds-id">{a.action}</span></td>
-                <td className="ds-muted">{a.objectType}</td>
+                <td title={a.action}>{auditActionLabel(a.action)}</td>
+                <td className="ds-muted" title={a.objectType}>{auditObjectLabel(a.objectType)}</td>
                 <td className="ds-mono">{a.ip ?? '—'}</td>
               </tr>
             ))}

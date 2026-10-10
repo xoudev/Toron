@@ -44,8 +44,9 @@ function ProfileCard({ slug, viewer, profile }: { slug: string; viewer: Viewer; 
         <div>
           <h2>Profil de l’organisation</h2>
           <p className="hint">
-            Le nom apparaît dans la navigation et sur chaque livrable scellé. L’effectif et le
-            secteur situent votre organisation vis-à-vis de NIS 2 et dimensionnent les revues.
+            Le nom apparaît dans la navigation et sur chaque livrable scellé ; l’effectif s’affiche
+            dans l’en-tête de l’organisation. La qualification NIS 2 se fait par entité juridique,
+            dans <a href={`/t/${slug}/obligations`}>Obligations</a>.
           </p>
         </div>
         <span className="ds-mono">/t/{profile.slug}</span>
@@ -104,7 +105,7 @@ function EntitiesCard({ slug, viewer, entities }: { slug: string; viewer: Viewer
         {viewer.canConfigure ? <button className="btn btn-ghost btn-sm" onClick={() => setEditing('new')}>+ Ajouter une entité</button> : null}
       </div>
       {entities.length === 0 ? (
-        <p className="ds-empty">Aucune entité enregistrée — ajoutez la société principale pour y rattacher vos sites.</p>
+        <p className="ds-empty">Aucune entité enregistrée — ajoutez la société principale : elle porte vos sites et sa qualification NIS 2.</p>
       ) : (
         <div className="ds-table-card"><div className="ds-scroll">
           <table className="ds-table" style={{ minWidth: 520 }}>

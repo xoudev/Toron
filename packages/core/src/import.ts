@@ -6,47 +6,85 @@
  * travaille que sur des lignes déjà tabulées.
  */
 
+import { defaultRiskScale } from './risks.ts';
+
 export const IMPORT_TARGETS = ['risk', 'action', 'asset'] as const;
 export type ImportTarget = (typeof IMPORT_TARGETS)[number];
 
 export interface ParsedTable {
   headers: string[];
   rows: string[][];
+  /**
+   * Ligne du fichier où s'ouvre un guillemet jamais refermé : tout ce qui suit
+   * a été lu dans une seule cellule. L'appelant doit refuser le fichier en
+   * indiquant cette ligne plutôt que d'importer une table tronquée.
+   */
+  unclosedQuoteAt?: number;
 }
 
-function splitLine(line: string, sep: string): string[] {
-  const out: string[] = [];
+/**
+ * Découpe le texte en enregistrements, caractère par caractère. Un saut de
+ * ligne entre guillemets (cellule Excel saisie avec Alt+Entrée) reste dans la
+ * cellule ; hors guillemets, il termine l'enregistrement. Un guillemet n'ouvre
+ * une cellule entre guillemets qu'en début de cellule (`Écran 24"` reste
+ * littéral). Les lignes vides sont ignorées. Un guillemet ouvert jamais
+ * refermé est signalé par sa position (`unclosedQuoteAt`), jamais avalé en
+ * silence.
+ */
+function splitRecords(body: string, sep: string): { records: string[][]; unclosedQuoteAt: number | null } {
+  const records: string[][] = [];
+  let record: string[] = [];
   let cur = '';
   let inQuotes = false;
-  for (let i = 0; i < line.length; i += 1) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') { cur += '"'; i += 1; }
-      else inQuotes = !inQuotes;
-    } else if (ch === sep && !inQuotes) { out.push(cur); cur = ''; }
-    else cur += ch;
+  let quoteStart = 0;
+  const endRecord = (): void => {
+    if (record.length > 0 || cur.length > 0) {
+      record.push(cur);
+      records.push(record.map((s) => s.trim()));
+    }
+    record = [];
+    cur = '';
+  };
+  for (let i = 0; i < body.length; i += 1) {
+    const ch = body[i]!;
+    if (inQuotes) {
+      if (ch === '"' && body[i + 1] === '"') { cur += '"'; i += 1; }
+      else if (ch === '"') inQuotes = false;
+      else if (ch === '\r' && body[i + 1] === '\n') { cur += '\n'; i += 1; }
+      else cur += ch;
+    } else if (ch === '"' && cur.trim() === '') { cur = ''; inQuotes = true; quoteStart = i; }
+    else if (ch === sep) { record.push(cur); cur = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && body[i + 1] === '\n') i += 1;
+      endRecord();
+    } else cur += ch;
   }
-  out.push(cur);
-  return out.map((s) => s.trim());
+  endRecord();
+  // Numéro de ligne dans le fichier (et non d'enregistrement) : c'est là que
+  // l'utilisateur doit chercher le guillemet dans son éditeur.
+  const unclosedQuoteAt = inQuotes ? body.slice(0, quoteStart).split(/\r\n|\r|\n/).length : null;
+  return { records, unclosedQuoteAt };
 }
 
 /**
  * Parse un fichier tabulaire délimité (CSV, TSV, point-virgule — exports Excel).
- * Détecte le séparateur sur la première ligne. La 1ʳᵉ ligne est l'en-tête.
+ * Détecte le séparateur sur la première ligne. Le 1ᵉʳ enregistrement est l'en-tête.
  */
 export function parseDelimited(text: string): ParsedTable {
   // Retire un éventuel BOM (U+FEFF) en tête, sans caractère littéral.
   const body = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-  const lines = body.split(/\r?\n/).filter((l) => l.length > 0);
-  if (lines.length === 0) return { headers: [], rows: [] };
-  const head = lines[0]!;
+  const head = body.split(/\r?\n/).find((l) => l.length > 0);
+  if (head === undefined) return { headers: [], rows: [] };
   const sep = head.includes('\t') ? '\t' : head.includes(';') && !head.includes(',') ? ';' : ',';
-  const headers = splitLine(head, sep);
-  const rows = lines.slice(1).map((l) => splitLine(l, sep));
-  return { headers, rows };
+  const { records, unclosedQuoteAt } = splitRecords(body, sep);
+  if (records.length === 0) return { headers: [], rows: [] };
+  const table: ParsedTable = { headers: records[0]!, rows: records.slice(1) };
+  if (unclosedQuoteAt !== null) table.unclosedQuoteAt = unclosedQuoteAt;
+  return table;
 }
 
-type FieldKind = 'text' | 'int14' | 'int16' | 'date' | 'enum';
+/** `rating` : cotation G/V d'un risque, bornée par la taille de l'échelle active. */
+type FieldKind = 'text' | 'int14' | 'rating' | 'date' | 'enum';
 
 export interface FieldSpec {
   field: string;
@@ -93,10 +131,10 @@ export const TARGET_SPECS: Record<ImportTarget, TargetSpec> = {
       { field: 'title', label: 'Intitulé', aliases: ['intitule', 'titre', 'risque', 'nom', 'name'], required: true, kind: 'text' },
       { field: 'businessValue', label: 'Valeur métier', aliases: ['valeurmetier', 'valeur', 'actif', 'businessvalue'], required: false, kind: 'text' },
       { field: 'scenario', label: 'Scénario', aliases: ['scenario', 'description'], required: false, kind: 'text' },
-      { field: 'grossG', label: 'Gravité brute', aliases: ['gravitebrute', 'gbrut', 'gbrute', 'g'], required: true, kind: 'int16' },
-      { field: 'grossV', label: 'Vraisemblance brute', aliases: ['vraisemblancebrute', 'vbrut', 'vbrute', 'v'], required: true, kind: 'int16' },
-      { field: 'netG', label: 'Gravité nette', aliases: ['gravitenette', 'gnet', 'gnette'], required: true, kind: 'int16' },
-      { field: 'netV', label: 'Vraisemblance nette', aliases: ['vraisemblancenette', 'vnet', 'vnette'], required: true, kind: 'int16' },
+      { field: 'grossG', label: 'Gravité brute', aliases: ['gravitebrute', 'gbrut', 'gbrute', 'g'], required: true, kind: 'rating' },
+      { field: 'grossV', label: 'Vraisemblance brute', aliases: ['vraisemblancebrute', 'vbrut', 'vbrute', 'v'], required: true, kind: 'rating' },
+      { field: 'netG', label: 'Gravité nette', aliases: ['gravitenette', 'gnet', 'gnette'], required: true, kind: 'rating' },
+      { field: 'netV', label: 'Vraisemblance nette', aliases: ['vraisemblancenette', 'vnet', 'vnette'], required: true, kind: 'rating' },
       { field: 'treatment', label: 'Traitement', aliases: ['traitement', 'treatment', 'option'], required: false, kind: 'enum', enumValues: ['reduire', 'transferer', 'accepter', 'eviter'], valueAliases: TREATMENT_ALIASES },
     ],
   },
@@ -214,7 +252,7 @@ interface FieldError {
   suggestion: string;
 }
 
-function validateField(spec: FieldSpec, raw: string): { value: unknown } | { error: FieldError } {
+function validateField(spec: FieldSpec, raw: string, ratingMax: number): { value: unknown } | { error: FieldError } {
   const v = raw.trim();
   if (v === '') {
     if (spec.required) return { error: { cause: `« ${spec.label} » manquant`, suggestion: `renseignez la colonne « ${spec.label} »` } };
@@ -224,11 +262,16 @@ function validateField(spec: FieldSpec, raw: string): { value: unknown } | { err
     case 'text':
       return { value: v.slice(0, 2000) };
     case 'int14':
-    case 'int16': {
-      const max = spec.kind === 'int14' ? 4 : 6;
+    case 'rating': {
+      const max = spec.kind === 'int14' ? 4 : ratingMax;
       const n = Number(v);
       if (!Number.isInteger(n) || n < 1 || n > max) {
-        return { error: { cause: `« ${spec.label} » = ‹ ${v} › invalide`, suggestion: `entier entre 1 et ${max}` } };
+        // Une cotation entière au-delà de l'échelle est traitée pour tout le
+        // fichier par validateRows ; ici ne restent que 0, décimaux, texte.
+        const suggestion = spec.kind === 'int14'
+          ? `entier entre 1 et ${max}`
+          : `entier entre 1 et ${max} (échelle de risque de l’organisation)`;
+        return { error: { cause: `« ${spec.label} » = ‹ ${v} › invalide`, suggestion } };
       }
       return { value: n };
     }
@@ -255,6 +298,17 @@ function validateField(spec: FieldSpec, raw: string): { value: unknown } | { err
   }
 }
 
+export interface ValidateOptions {
+  /** Numéro de ligne de l'en-tête dans le fichier (1 par défaut). */
+  headerOffset?: number;
+  /**
+   * Taille de l'échelle de risque active du tenant : une cotation G/V au-delà
+   * signale un fichier coté sur une autre échelle, toutes ses lignes sont donc
+   * rejetées ici avec la cause. Taille de l'échelle par défaut si non précisée.
+   */
+  riskScaleSize?: number;
+}
+
 /**
  * Valide les lignes de données (hors en-tête) selon le mapping. Chaque ligne
  * est SOIT un objet valide, SOIT une ligne rejetée avec sa cause et sa
@@ -264,22 +318,48 @@ export function validateRows(
   dataRows: readonly string[][],
   target: ImportTarget,
   mapping: readonly ColumnMapping[],
-  headerOffset = 1,
+  { headerOffset = 1, riskScaleSize = defaultRiskScale().size }: ValidateOptions = {},
 ): ValidationResult {
   const spec = TARGET_SPECS[target];
   const byField = new Map(mapping.map((m) => [m.field, m.columnIndex]));
   const rows: Record<string, unknown>[] = [];
   const rejected: RejectedRow[] = [];
 
+  // Une seule cotation au-delà de l'échelle active trahit un fichier coté sur
+  // une autre échelle : ses « 4 » sur 5 ne valent pas un 4 sur 4. Importer les
+  // autres lignes telles quelles mélangerait deux échelles dans le registre
+  // (bandes, acceptations, priorités faussées) : tout le fichier est rejeté.
+  const ratingCols = spec.fields
+    .filter((f) => f.kind === 'rating')
+    .map((f) => byField.get(f.field))
+    .filter((idx): idx is number => typeof idx === 'number');
+  let fileScale = 0;
+  for (const cells of dataRows) {
+    for (const idx of ratingCols) {
+      const n = Number((cells[idx] ?? '').trim());
+      if (Number.isInteger(n) && n > fileScale) fileScale = n;
+    }
+  }
+  const scaleError: FieldError | null = fileScale > riskScaleSize
+    ? {
+        cause: `fichier coté sur au moins ${fileScale} niveaux, l’échelle de l’organisation en compte ${riskScaleSize}`,
+        suggestion: `convertissez toutes les cotations du fichier sur ${riskScaleSize} niveaux avant d’importer, pas seulement les lignes en écart`,
+      }
+    : null;
+
   dataRows.forEach((cells, i) => {
     const line = i + headerOffset + 1;
     if (cells.every((c) => (c ?? '').trim() === '')) return; // ligne vide ignorée silencieusement
+    if (scaleError) {
+      rejected.push({ line, cause: scaleError.cause, suggestion: scaleError.suggestion, raw: cells });
+      return;
+    }
     const obj: Record<string, unknown> = {};
     let firstError: FieldError | null = null;
     for (const f of spec.fields) {
       const idx = byField.get(f.field);
       const raw = idx === null || idx === undefined ? '' : cells[idx] ?? '';
-      const res = validateField(f, raw);
+      const res = validateField(f, raw, riskScaleSize);
       if ('error' in res) {
         firstError = res.error;
         break;

@@ -69,10 +69,13 @@ export async function recomputeLikelihood(tx: TenantTx, scenarioId: string): Pro
   return likelihood;
 }
 
-/** Génère le risque dans le registre unique (atelier 5, source 'ebios'). */
+/**
+ * Génère le risque dans le registre unique (atelier 5, source 'ebios'). La
+ * gravité est choisie par l'utilisateur ; la vraisemblance vient du scénario.
+ */
 export async function generateRiskFromScenario(
   tx: TenantTx,
-  input: { tenantId: string; scenarioId: string; scopeId: string; ratedBy: string },
+  input: { tenantId: string; scenarioId: string; scopeId: string; gravity: number; ratedBy: string },
 ): Promise<string> {
   const rows = (await tx.execute(sql`
     SELECT risk_source, target_objective, likelihood, generated_risk_id
@@ -83,7 +86,7 @@ export async function generateRiskFromScenario(
   if (sc.generated_risk_id) return sc.generated_risk_id;
   if (!sc.likelihood) throw new Error('Le scénario doit être coté avant génération.');
 
-  const { g, v } = scenarioRiskRating(sc.likelihood);
+  const { g, v } = scenarioRiskRating(sc.likelihood, input.gravity);
   const riskId = await createRisk(tx, {
     tenantId: input.tenantId,
     scopeId: input.scopeId,

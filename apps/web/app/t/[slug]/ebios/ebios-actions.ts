@@ -77,26 +77,28 @@ export async function addActionAction(slug: string, input: unknown): Promise<Act
   const parsed = z
     .object({ scenarioId: z.uuid(), phase: Phase, label: z.string().trim().min(2).max(300), mitreId: z.string().trim().max(20).optional().nullable(), mitreName: z.string().trim().max(80).optional().nullable() })
     .safeParse(input);
-  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Action invalide.') };
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Étape invalide — décrivez ce que fait l’attaquant (2 caractères au moins).') };
   const d = parsed.data;
   try {
     await withTenant(appDb().db, auth.tenantId, (tx) => addAction(tx, { tenantId: auth.tenantId, scenarioId: d.scenarioId, phase: d.phase, label: d.label, mitreId: d.mitreId ?? null, mitreName: d.mitreName ?? null }));
     revalidatePath(`/t/${slug}/ebios`);
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: logFailure(err, appError('ECHEC_ACTION', 'L’ajout de l’action a échoué.')) };
+    return { ok: false, error: logFailure(err, appError('ECHEC_ACTION', 'L’ajout de l’étape a échoué — réessayez.')) };
   }
 }
 
 export async function generateRiskAction(slug: string, input: unknown): Promise<ActionResult> {
   const auth = await authorizeManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
-  const parsed = z.object({ scenarioId: z.uuid(), scopeId: z.uuid() }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Génération invalide — un périmètre est requis.') };
+  // Gravité bornée à la taille maximale d'une échelle (6) ; l'échelle active
+  // du tenant est revérifiée à la création du risque.
+  const parsed = z.object({ scenarioId: z.uuid(), scopeId: z.uuid(), gravity: z.number().int().min(1).max(6) }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: appError('SAISIE_INVALIDE', 'Génération invalide — choisissez la gravité ; l’étude doit être rattachée à un périmètre.') };
   try {
     await withTenant(appDb().db, auth.tenantId, async (tx) => {
-      const riskId = await generateRiskFromScenario(tx, { tenantId: auth.tenantId, scenarioId: parsed.data.scenarioId, scopeId: parsed.data.scopeId, ratedBy: auth.userId });
-      await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'ebios.generate_risk', objectType: 'risk', objectId: riskId, after: { scenarioId: parsed.data.scenarioId }, ip: auth.ip, userAgent: auth.userAgent });
+      const riskId = await generateRiskFromScenario(tx, { tenantId: auth.tenantId, scenarioId: parsed.data.scenarioId, scopeId: parsed.data.scopeId, gravity: parsed.data.gravity, ratedBy: auth.userId });
+      await writeAuditEntry(tx, { tenantId: auth.tenantId, actorUserId: auth.userId, action: 'ebios.generate_risk', objectType: 'risk', objectId: riskId, after: { scenarioId: parsed.data.scenarioId, gravity: parsed.data.gravity }, ip: auth.ip, userAgent: auth.userAgent });
     });
     revalidatePath(`/t/${slug}/ebios`);
     revalidatePath(`/t/${slug}/risques`);

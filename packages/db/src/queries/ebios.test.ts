@@ -59,14 +59,18 @@ describe('ateliers EBIOS RM (module 5.4b)', () => {
 
   it('l’atelier 5 génère le risque dans le registre unique (source ebios)', async () => {
     const res = await withTenant(app.db, T, async (tx) => {
-      const riskId = await generateRiskFromScenario(tx, { tenantId: T, scenarioId: DEMO.ebiosSc1, scopeId: DEMO.scopeSmsi, ratedBy: DEMO.userClaire });
-      const rows = (await tx.execute(sql`SELECT source, title FROM risks WHERE id = ${riskId}`)) as unknown as { source: string; title: string }[];
+      const riskId = await generateRiskFromScenario(tx, { tenantId: T, scenarioId: DEMO.ebiosSc1, scopeId: DEMO.scopeSmsi, gravity: 4, ratedBy: DEMO.userClaire });
+      const rows = (await tx.execute(sql`SELECT source, title, gross_g, gross_v, net_g FROM risks WHERE id = ${riskId}`)) as unknown as { source: string; title: string; gross_g: number; gross_v: number; net_g: number }[];
       const d = await getStudy(tx, DEMO.ebiosStudy);
-      return { source: rows[0]?.source, title: rows[0]?.title, linked: d?.scenarios.find((s) => s.id === DEMO.ebiosSc1)?.generatedRiskId, riskId };
+      return { source: rows[0]?.source, title: rows[0]?.title, g: rows[0]?.gross_g, v: rows[0]?.gross_v, netG: rows[0]?.net_g, linked: d?.scenarios.find((s) => s.id === DEMO.ebiosSc1)?.generatedRiskId, riskId };
     });
     expect(res.source).toBe('ebios');
     expect(res.title).toContain('Cybercriminel');
     expect(res.linked).toBe(res.riskId);
+    // Gravité choisie par l'utilisateur, vraisemblance dérivée de la kill chain (v3).
+    expect(res.g).toBe(4);
+    expect(res.netG).toBe(4);
+    expect(res.v).toBe(3);
   });
 
   it('isolation cross-tenant (RLS)', async () => {

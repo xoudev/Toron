@@ -3,6 +3,8 @@
  * Pures et testées — l'UI et la couche d'accès les invoquent (PLAN §13).
  */
 
+import type { Nis2Qualification } from './obligations.ts';
+
 export const ASSESSMENT_ITEM_STATUSES = [
   'conforme',
   'ecart',
@@ -57,6 +59,17 @@ export function scoreAssessment(items: readonly { status: AssessmentItemStatus }
 }
 
 /**
+ * La Déclaration d'applicabilité peut-elle être scellée ? Il faut au moins
+ * une exigence applicable évaluée (conforme ou écart). Les exclusions posées
+ * à la création de la campagne (ex. moyens ReCyF réservés aux entités
+ * essentielles) ne comptent pas : sans évaluation humaine, le PDF scellé ne
+ * contiendrait que des « à évaluer ».
+ */
+export function soaExportReady(score: CoverageScore): boolean {
+  return score.counts.conforme + score.counts.ecart > 0;
+}
+
+/**
  * Justification obligatoire pour une exclusion (statut « non applicable »)
  * — reflète la contrainte CHECK en base, réutilisable pour valider côté
  * client avant l'aller-retour serveur (S2).
@@ -77,6 +90,74 @@ export function isSoaItemValid(input: SoaItemInput): boolean {
 }
 
 /**
+ * Colonnes SoA dérivées du statut, calculées côté serveur : une exigence est
+ * incluse dans la Déclaration d'applicabilité sauf exclusion (non
+ * applicable), et seule une exclusion garde sa justification — une exigence
+ * repassée de N/A à conforme n'imprime plus l'ancienne justification.
+ */
+export function normalizeSoaItem(
+  status: AssessmentItemStatus,
+  justification: string | null | undefined,
+): { soaIncluded: boolean; soaJustification: string | null } {
+  const excluded = status === 'non_applicable';
+  const text = justification?.trim() ?? '';
+  return { soaIncluded: !excluded, soaJustification: excluded && text.length > 0 ? text : null };
+}
+
+/**
+ * Une exigence peut-elle être exclue (non applicable) ? ISO/IEC 27001 :
+ * seules les mesures de l'Annexe A s'excluent ; les clauses 4 à 10 du
+ * système de management sont toutes exigées pour la certification. Les
+ * autres référentiels admettent l'exclusion justifiée.
+ */
+export function exclusionAllowed(frameworkCode: string, ref: string): boolean {
+  if (frameworkCode === 'iso27001') return ref.startsWith('A.');
+  return true;
+}
+
+/** Catégorie NIS 2 retenue pour une campagne ReCyF : entité importante ou essentielle. */
+export type RecyfEntityKind = 'ei' | 'ee';
+
+/**
+ * Catégorie proposée au lancement d'une campagne ReCyF, d'après la
+ * qualification NIS 2 des entités juridiques : essentielle dès qu'une entité
+ * l'est, importante si une l'est, inconnue (null) sinon — l'évaluateur choisit.
+ */
+export function recyfEntityKindDefault(statuses: readonly Nis2Qualification['status'][]): RecyfEntityKind | null {
+  if (statuses.includes('ee')) return 'ee';
+  if (statuses.includes('ei')) return 'ei';
+  return null;
+}
+
+/** Applicabilité d'un moyen ReCyF par catégorie d'entité (données du référentiel). */
+export interface RecyfMeanApplicability {
+  ref: string;
+  ei: boolean;
+  ee: boolean;
+}
+
+/**
+ * Moyens ReCyF qui ne concernent pas la catégorie d'entité (pour une entité
+ * importante : ceux réservés aux entités essentielles). Ils entrent dans la
+ * campagne déjà exclus, avec une justification générée que l'évaluateur
+ * peut reprendre — ils ne pèsent plus sur le score (RM §5.3).
+ */
+export function recyfPreExclusions(
+  means: readonly RecyfMeanApplicability[],
+  entity: RecyfEntityKind,
+  version: string,
+): { refs: string[]; justification: string } {
+  const label = `ReCyF v${version.replace(/^v/i, '')}`;
+  return {
+    refs: means.filter((m) => (entity === 'ei' ? !m.ei : !m.ee)).map((m) => m.ref),
+    justification:
+      entity === 'ei'
+        ? `Mesure exigée des seules entités essentielles (${label}) — organisation qualifiée entité importante.`
+        : `Mesure exigée des seules entités importantes (${label}) — organisation qualifiée entité essentielle.`,
+  };
+}
+
+/**
  * Une exigence d'un AUTRE référentiel, couverte par le même contrôle que
  * l'exigence source, et son statut actuel dans sa propre campagne (null si
  * aucune campagne ne la porte).
@@ -84,20 +165,26 @@ export function isSoaItemValid(input: SoaItemInput): boolean {
 export interface MutualizedPeer {
   requirementId: string;
   requirementRef: string;
+  frameworkId: string;
   frameworkCode: string;
   frameworkName: string;
   viaControlTitle: string;
   currentStatus: AssessmentItemStatus | null;
+  /** true si la campagne qui porte currentStatus est en cours (une campagne clôturée est figée). */
+  campaignOpen: boolean;
 }
 
 export interface StatusSuggestion {
   requirementId: string;
   requirementRef: string;
+  frameworkId: string;
   frameworkCode: string;
   frameworkName: string;
   suggestedStatus: AssessmentItemStatus;
   /** Traçabilité affichée à l'humain qui valide (RM §5.3, décision 2026-07-18). */
   reason: string;
+  /** false si aucune campagne en cours ne porte l'exigence du pair : rien à hériter pour l'instant. */
+  hasCampaign: boolean;
 }
 
 /**
@@ -121,10 +208,12 @@ export function suggestInheritedStatuses(
     suggestions.push({
       requirementId: peer.requirementId,
       requirementRef: peer.requirementRef,
+      frameworkId: peer.frameworkId,
       frameworkCode: peer.frameworkCode,
       frameworkName: peer.frameworkName,
       suggestedStatus: 'conforme',
       reason: `Couvert par le contrôle « ${peer.viaControlTitle} », déjà conforme pour ${source.requirementRef}.`,
+      hasCampaign: peer.campaignOpen,
     });
   }
   return suggestions;

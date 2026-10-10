@@ -1,4 +1,4 @@
-import { canManageControls } from '@toron/core';
+import { canManageControls, nis2Qualification, recyfEntityKindDefault } from '@toron/core';
 import {
   getAssessmentItems,
   getFramework,
@@ -7,6 +7,7 @@ import {
   listControlLinks,
   listControlLibrary,
   listControls,
+  listEntitiesNis2,
   listExceptions,
   listExportsForObject,
   listScopes,
@@ -48,11 +49,18 @@ export default async function ReferentielDetailPage({
     const framework = await getFramework(tx, frameworkId);
     if (!framework) return null;
     const assessments = await listAssessments(tx, frameworkId);
-    // La campagne active : celle demandée, sinon la plus récente en cours.
+    // La campagne active : celle demandée, sinon la plus récente en cours,
+    // sinon la plus récente tout court (clôturée, consultable).
     const active =
       assessments.find((a) => a.id === selectedCampaignId) ??
       assessments.find((a) => a.status === 'en_cours') ??
+      assessments[0] ??
       null;
+    // ReCyF : catégorie d'entité proposée d'après la qualification NIS 2.
+    const nis2Default =
+      framework.code === 'recyf'
+        ? recyfEntityKindDefault((await listEntitiesNis2(tx)).map((e) => nis2Qualification({ ...e, override: e.override }).status))
+        : null;
     let items: AssessmentItemRow[] = [];
     let exportsList: ExportSummary[] = [];
     if (active) {
@@ -81,6 +89,7 @@ export default async function ReferentielDetailPage({
       activeCampaign: active,
       items,
       exportsList,
+      nis2Default,
     };
   });
   if (!data) notFound();
@@ -103,6 +112,7 @@ export default async function ReferentielDetailPage({
           exportsList={data.exportsList}
           controlExceptions={data.controlExceptions}
           controlReviews={data.controlReviews}
+          nis2Default={data.nis2Default}
         />
       </main>
     </>

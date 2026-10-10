@@ -145,7 +145,7 @@ export async function seedRecyfFramework(connectionString: string): Promise<void
 
       for (const mean of objective.means) {
         const meanGuidance = [
-          `Attendu — EI : ${mean.ei ? 'oui' : 'non'} · EE : ${mean.ee ? 'oui' : 'non'}.`,
+          `Exigé des entités importantes : ${mean.ei ? 'oui' : 'non'} · des entités essentielles : ${mean.ee ? 'oui' : 'non'}.`,
           mean.condition ? `Condition : ${mean.condition}` : null,
         ]
           .filter(Boolean)

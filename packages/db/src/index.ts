@@ -50,12 +50,16 @@ export {
 } from './queries/referentiels.ts';
 export {
   createAssessment,
+  addRequirementToOpenAssessments,
   listAssessments,
   getAssessmentItems,
   setAssessmentItemStatus,
   getMutualizedPeers,
   getSoaHeader,
   closeAssessment,
+  getAssessmentItemContext,
+  findGapAction,
+  type AssessmentItemContext,
   type CreateAssessmentInput,
   type AssessmentSummary,
   type AssessmentItemRow,

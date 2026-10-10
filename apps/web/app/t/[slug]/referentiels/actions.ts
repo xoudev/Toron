@@ -4,6 +4,7 @@ import { appError, type ControlDeleteImpact } from '@toron/core';
 import {
   activateFrameworkOnScope,
   addCustomRequirement,
+  addRequirementToOpenAssessments,
   createControl,
   createCustomFramework,
   deleteControl,
@@ -384,13 +385,20 @@ export async function addCustomRequirementAction(
         title: parsed.data.title,
         guidance: parsed.data.guidance ?? null,
       });
+      // Une campagne déjà lancée l'évalue aussi : sans item, le panneau
+      // d'évaluation n'aurait rien à enregistrer.
+      const openCampaigns = await addRequirementToOpenAssessments(tx, {
+        tenantId: auth.tenantId,
+        frameworkId: parsed.data.frameworkId,
+        requirementId: id,
+      });
       await writeAuditEntry(tx, {
         tenantId: auth.tenantId,
         actorUserId: auth.userId,
         action: 'requirement.create_custom',
         objectType: 'requirement',
         objectId: id,
-        after: { ref: parsed.data.ref },
+        after: { ref: parsed.data.ref, openCampaigns },
         ip: auth.ip,
         userAgent: auth.userAgent,
       });
@@ -403,9 +411,24 @@ export async function addCustomRequirementAction(
     revalidatePath(`/t/${slug}/referentiels`, 'layout');
     return { ok: true, data: { requirementId: result.id } };
   } catch (err) {
+    if (isDuplicateRef(err)) {
+      return {
+        ok: false,
+        error: appError('REFERENCE_EXISTANTE', `La référence « ${parsed.data.ref} » existe déjà dans ce référentiel — choisissez-en une autre.`),
+      };
+    }
     return {
       ok: false,
       error: logFailure(err, appError('ECHEC_CREATION', 'L’ajout de l’exigence a échoué — réessayez.')),
     };
   }
+}
+
+/** Violation de requirements_framework_ref_unique (23505), sous l'enveloppe Drizzle. */
+function isDuplicateRef(err: unknown): boolean {
+  for (let cur: unknown = err; cur instanceof Error; cur = cur.cause) {
+    const pg = cur as { code?: unknown; constraint_name?: unknown };
+    if (pg.code === '23505' && pg.constraint_name === 'requirements_framework_ref_unique') return true;
+  }
+  return false;
 }

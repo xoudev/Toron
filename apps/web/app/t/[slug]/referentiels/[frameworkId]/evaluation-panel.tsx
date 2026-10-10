@@ -2,6 +2,7 @@
 
 import {
   ASSESSMENT_ITEM_STATUSES,
+  exclusionAllowed,
   soaJustificationRequired,
   type AssessmentItemStatus,
   type StatusSuggestion,
@@ -33,6 +34,7 @@ export function EvaluationPanel({
   slug,
   canManage,
   frameworkId,
+  frameworkCode,
   assessmentId,
   requirement,
   item,
@@ -40,6 +42,7 @@ export function EvaluationPanel({
   slug: string;
   canManage: boolean;
   frameworkId: string;
+  frameworkCode: string;
   assessmentId: string;
   requirement: RequirementNode;
   item: AssessmentItemRow | null;
@@ -51,9 +54,12 @@ export function EvaluationPanel({
   const [justification, setJustification] = useState(item?.soaJustification ?? '');
   const [statement, setStatement] = useState(item?.statement ?? '');
   const [suggestions, setSuggestions] = useState<StatusSuggestion[] | null>(null);
-  const [gapAction, setGapAction] = useState<'idle' | 'done'>('idle');
+  const [gapAction, setGapAction] = useState<{ actionId: string; existing: boolean } | null>(null);
 
   const naNeedsJustif = soaJustificationRequired(status);
+  // ISO 27001 : les clauses 4 à 10 ne s'excluent pas (core.exclusionAllowed).
+  const canExclude = exclusionAllowed(frameworkCode, requirement.ref);
+  const statuses = ASSESSMENT_ITEM_STATUSES.filter((s) => canExclude || s !== 'non_applicable');
 
   function createCorrectiveAction() {
     setError(null);
@@ -64,7 +70,7 @@ export function EvaluationPanel({
         requirementRef: requirement.ref,
         requirementTitle: requirement.title,
       });
-      if (res.ok) setGapAction('done');
+      if (res.ok) setGapAction(res.data);
       else setError(res.error.message);
     });
   }
@@ -114,7 +120,7 @@ export function EvaluationPanel({
     <div className="panel-section">
       <div className="panel-section-label">Évaluation — statut de conformité</div>
       <div className="status-choices" role="group" aria-label="Statut de l’exigence">
-        {ASSESSMENT_ITEM_STATUSES.map((s) => (
+        {statuses.map((s) => (
           <button
             key={s}
             className="status-choice"
@@ -125,6 +131,11 @@ export function EvaluationPanel({
           </button>
         ))}
       </div>
+      {canExclude ? null : (
+        <p style={{ margin: '-4px 0 10px', fontSize: 11.5, color: 'var(--text-3)' }}>
+          Les clauses 4 à 10 ne peuvent pas être exclues ; seules les mesures de l’Annexe A le peuvent.
+        </p>
+      )}
 
       <label className="field">
         Constat (facultatif)
@@ -158,11 +169,13 @@ export function EvaluationPanel({
         {pending ? 'Enregistrement…' : 'Enregistrer le statut'}
       </button>
 
-      {status === 'ecart' ? (
+      {/* Seul un écart enregistré se convertit en action, une seule par écart. */}
+      {item?.status === 'ecart' ? (
         <div style={{ marginTop: 10 }}>
-          {gapAction === 'done' ? (
-            <p style={{ fontSize: 12, color: 'var(--ok)' }}>
-              Action corrective créée — retrouvez-la dans <a href={`/t/${slug}/plan-action`}>Plan d’action</a>.
+          {gapAction ? (
+            <p style={{ fontSize: 12, color: gapAction.existing ? 'var(--text-2)' : 'var(--ok)' }}>
+              {gapAction.existing ? 'Action déjà ouverte pour cet écart — ' : 'Action corrective créée — '}
+              <a href={`/t/${slug}/plan-action?ouvrir=${gapAction.actionId}`}>voir dans le plan d’action</a>.
             </p>
           ) : (
             <button className="btn btn-ghost btn-sm" disabled={pending} onClick={createCorrectiveAction}>
@@ -174,19 +187,21 @@ export function EvaluationPanel({
 
       {suggestions && suggestions.length > 0 ? (
         <div className="inherit-suggestion" style={{ marginTop: 12 }}>
-          <b>Prouvez une fois, couvrez tout.</b> Ce contrôle couvre aussi&nbsp;:
+          <b>Prouvez une fois, couvrez tout.</b> Les contrôles rattachés couvrent aussi&nbsp;:
           {suggestions.map((s) => (
-            <div className="inherit-peer" key={s.requirementId}>
+            <a className="inherit-peer" key={s.requirementId} href={`/t/${slug}/referentiels/${s.frameworkId}`}>
               <span className="mut-tag">
                 <span className="mut-tag-dot" aria-hidden="true" />
                 {FRAMEWORK_BADGE[s.frameworkCode] ?? s.frameworkCode.toUpperCase()}
               </span>
               <span className="chip-ref">{s.requirementRef}</span>
-              <span style={{ color: 'var(--text-2)' }}>— peut hériter « conforme »</span>
-            </div>
+              <span style={{ color: 'var(--text-2)' }}>
+                {s.hasCampaign ? `— peut hériter « conforme ». ${s.reason}` : '— aucune campagne en cours sur ce référentiel.'}
+              </span>
+            </a>
           ))}
           <p style={{ marginTop: 8, fontSize: 11, color: 'var(--text-3)' }}>
-            Ouvrez la campagne du référentiel concerné pour valider ces statuts (traçabilité conservée).
+            Ouvrez le référentiel concerné pour valider ces statuts dans sa campagne (traçabilité conservée).
           </p>
         </div>
       ) : null}

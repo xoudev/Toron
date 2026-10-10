@@ -4,6 +4,7 @@ import {
   controlDeleteImpact,
   frameworksCovered,
   isMutualized,
+  recommendedFrameworks,
   type CoveredRequirement,
 } from './referentiels.ts';
 
@@ -96,5 +97,31 @@ describe('controlDeleteImpact (RM §5.2)', () => {
     const partage = recyf?.requirements.find((r) => r.requirementId === 'partage');
     expect(seul?.becomesUncovered).toBe(true);
     expect(partage?.becomesUncovered).toBe(false);
+  });
+});
+
+describe('recommendedFrameworks', () => {
+  it('SMSI : ISO 27001, ReCyF et RGPD', () => {
+    expect([...recommendedFrameworks(['smsi']).keys()]).toEqual(['iso27001', 'recyf', 'rgpd']);
+  });
+
+  it('QMS : ISO 9001 seul', () => {
+    expect([...recommendedFrameworks(['qms']).entries()]).toEqual([['iso9001', 'qms']]);
+  });
+
+  it('mixte : les deux familles, rattachées au périmètre mixte', () => {
+    const r = recommendedFrameworks(['mixte']);
+    expect(r.get('iso27001')).toBe('mixte');
+    expect(r.get('iso9001')).toBe('mixte');
+  });
+
+  it('une nature pure l’emporte sur « mixte »', () => {
+    const r = recommendedFrameworks(['mixte', 'smsi']);
+    expect(r.get('iso27001')).toBe('smsi');
+    expect(r.get('iso9001')).toBe('mixte');
+  });
+
+  it('aucun périmètre : aucune recommandation', () => {
+    expect(recommendedFrameworks([]).size).toBe(0);
   });
 });

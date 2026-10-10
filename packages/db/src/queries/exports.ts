@@ -139,17 +139,32 @@ export async function listExportsForObject(
     .orderBy(desc(schema.exports.createdAt));
 }
 
-/** Le PDF scellé d'un export (pour le téléchargement authentifié). */
+/**
+ * Le PDF scellé d'un export (pour le téléchargement authentifié), avec sa
+ * date de scellement et, pour une SoA, le code du référentiel évalué : de
+ * quoi nommer le fichier sans ambiguïté.
+ */
 export async function getExportPdf(
   tx: TenantTx,
   exportId: string,
-): Promise<{ pdf: Buffer; sha256: string; type: string } | null> {
+): Promise<{ pdf: Buffer; sha256: string; type: string; sealedAt: Date | null; frameworkCode: string | null } | null> {
   const [row] = await tx
-    .select({ pdf: schema.exports.pdf, sha256: schema.exports.sha256, type: schema.exports.type })
+    .select({
+      pdf: schema.exports.pdf,
+      sha256: schema.exports.sha256,
+      type: schema.exports.type,
+      sealedAt: schema.exports.sealedAt,
+      frameworkCode: schema.frameworks.code,
+    })
     .from(schema.exports)
+    .leftJoin(
+      schema.assessments,
+      and(eq(schema.exports.type, 'soa'), eq(schema.assessments.id, schema.exports.objectRef)),
+    )
+    .leftJoin(schema.frameworks, eq(schema.frameworks.id, schema.assessments.frameworkId))
     .where(and(eq(schema.exports.id, exportId), eq(schema.exports.status, 'scelle')));
   if (!row || !row.pdf || !row.sha256) return null;
-  return { pdf: row.pdf, sha256: row.sha256, type: row.type };
+  return { pdf: row.pdf, sha256: row.sha256, type: row.type, sealedAt: row.sealedAt, frameworkCode: row.frameworkCode };
 }
 
 export interface VerifiedExport {

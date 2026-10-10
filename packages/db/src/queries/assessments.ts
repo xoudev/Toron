@@ -1,5 +1,5 @@
 import type { AssessmentItemStatus } from '@toron/core';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '../schema/index.ts';
 import type { TenantTx } from '../tenant.ts';
@@ -15,11 +15,18 @@ export interface CreateAssessmentInput {
   frameworkId: string;
   scopeId: string;
   campaignLabel: string;
+  /**
+   * Exigences (par référence) qui entrent déjà exclues, avec leur
+   * justification — ex. les moyens ReCyF réservés aux entités essentielles
+   * pour une entité importante (core.recyfPreExclusions).
+   */
+  excluded?: { refs: readonly string[]; justification: string };
 }
 
 /**
  * Crée une campagne d'évaluation et pré-remplit un item « à évaluer » par
- * exigence feuille du référentiel. Renvoie l'id de la campagne.
+ * exigence feuille du référentiel (« non applicable » pour les exigences
+ * pré-exclues). Renvoie l'id de la campagne.
  */
 export async function createAssessment(tx: TenantTx, input: CreateAssessmentInput): Promise<string> {
   const [row] = await tx
@@ -43,7 +50,50 @@ export async function createAssessment(tx: TenantTx, input: CreateAssessmentInpu
     WHERE r.framework_id = ${input.frameworkId}
       AND NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id)
   `);
+  if (input.excluded && input.excluded.refs.length > 0) {
+    await tx
+      .update(schema.assessmentItems)
+      .set({ status: 'non_applicable', soaIncluded: false, soaJustification: input.excluded.justification })
+      .where(
+        and(
+          eq(schema.assessmentItems.assessmentId, assessmentId),
+          inArray(
+            schema.assessmentItems.requirementId,
+            tx
+              .select({ id: schema.requirements.id })
+              .from(schema.requirements)
+              .where(
+                and(
+                  eq(schema.requirements.frameworkId, input.frameworkId),
+                  inArray(schema.requirements.refId, [...input.excluded.refs]),
+                ),
+              ),
+          ),
+        ),
+      );
+  }
   return assessmentId;
+}
+
+/**
+ * Exigence ajoutée après le lancement d'une campagne (référentiel interne) :
+ * elle entre « à évaluer » dans chaque campagne non clôturée du référentiel,
+ * comme si elle avait existé à la création. Une campagne clôturée reste
+ * figée. Renvoie le nombre de campagnes complétées.
+ */
+export async function addRequirementToOpenAssessments(
+  tx: TenantTx,
+  input: { tenantId: string; frameworkId: string; requirementId: string },
+): Promise<number> {
+  const rows = await tx.execute(sql`
+    INSERT INTO assessment_items (tenant_id, assessment_id, requirement_id)
+    SELECT ${input.tenantId}, a.id, ${input.requirementId}
+    FROM assessments a
+    WHERE a.framework_id = ${input.frameworkId} AND a.status <> 'cloturee'
+    ON CONFLICT ON CONSTRAINT assessment_items_assessment_req_unique DO NOTHING
+    RETURNING id
+  `);
+  return (rows as unknown as { id: string }[]).length;
 }
 
 export interface AssessmentSummary {
@@ -145,6 +195,66 @@ interface RawItem {
   assessed_at: Date | null;
 }
 
+export interface AssessmentItemContext {
+  campaignStatus: string;
+  frameworkCode: string;
+  requirementRef: string;
+  status: AssessmentItemStatus;
+}
+
+/**
+ * Contexte d'un item avant écriture : statut de la campagne (une campagne
+ * clôturée est figée), référentiel et référence de l'exigence (règles
+ * d'exclusion), statut enregistré. null si l'exigence n'est pas dans la campagne.
+ */
+export async function getAssessmentItemContext(
+  tx: TenantTx,
+  assessmentId: string,
+  requirementId: string,
+): Promise<AssessmentItemContext | null> {
+  const rows = await tx.execute(sql`
+    SELECT a.status AS campaign_status, f.code AS framework_code, r.ref_id AS requirement_ref, ai.status
+    FROM assessment_items ai
+    JOIN assessments a ON a.id = ai.assessment_id
+    JOIN frameworks f ON f.id = a.framework_id
+    JOIN requirements r ON r.id = ai.requirement_id
+    WHERE ai.assessment_id = ${assessmentId} AND ai.requirement_id = ${requirementId}
+  `);
+  const r = (rows as unknown as {
+    campaign_status: string;
+    framework_code: string;
+    requirement_ref: string;
+    status: AssessmentItemStatus;
+  }[])[0];
+  return r
+    ? { campaignStatus: r.campaign_status, frameworkCode: r.framework_code, requirementRef: r.requirement_ref, status: r.status }
+    : null;
+}
+
+/**
+ * Action corrective déjà ouverte depuis cette campagne pour cette exigence
+ * (origine + lien), ou null : un écart ne produit qu'une action ouverte. Une
+ * action terminée alors que l'écart demeure (correction inefficace) n'empêche
+ * pas d'en ouvrir une nouvelle.
+ */
+export async function findGapAction(
+  tx: TenantTx,
+  assessmentId: string,
+  requirementId: string,
+): Promise<string | null> {
+  const rows = await tx.execute(sql`
+    SELECT ac.id
+    FROM actions ac
+    JOIN action_links al ON al.action_id = ac.id
+      AND al.target_type = 'requirement' AND al.target_id = ${requirementId}
+    WHERE ac.origin_type = 'assessment' AND ac.origin_id = ${assessmentId}
+      AND ac.status <> 'termine'
+    ORDER BY ac.created_at
+    LIMIT 1
+  `);
+  return (rows as unknown as { id: string }[])[0]?.id ?? null;
+}
+
 export interface SetItemStatusInput {
   assessmentId: string;
   requirementId: string;
@@ -192,32 +302,40 @@ export interface SoaHeader {
   campaignLabel: string;
 }
 
-/** En-tête de la Déclaration d'applicabilité (référentiel, périmètre, entité). */
+/**
+ * En-tête de la Déclaration d'applicabilité (référentiel, périmètre, entité).
+ * Sans entité juridique déclarée, l'entité est l'organisation elle-même —
+ * jamais le nom du périmètre.
+ */
 export async function getSoaHeader(tx: TenantTx, assessmentId: string): Promise<SoaHeader | null> {
   const rows = await tx.execute(sql`
     SELECT
       f.name AS framework_name,
       s.name AS scope_name,
       a.campaign_label,
-      (SELECT le.name FROM legal_entities le WHERE le.tenant_id = a.tenant_id
-         ORDER BY le.created_at LIMIT 1) AS entity_name
+      COALESCE(
+        (SELECT le.name FROM legal_entities le WHERE le.tenant_id = a.tenant_id
+           ORDER BY le.created_at LIMIT 1),
+        t.name
+      ) AS entity_name
     FROM assessments a
     JOIN frameworks f ON f.id = a.framework_id
     JOIN scopes s ON s.id = a.scope_id
+    JOIN tenants t ON t.id = a.tenant_id
     WHERE a.id = ${assessmentId}
   `);
   const list = rows as unknown as {
     framework_name: string;
     scope_name: string;
     campaign_label: string;
-    entity_name: string | null;
+    entity_name: string;
   }[];
   if (list.length === 0) return null;
   const r = list[0]!;
   return {
     frameworkName: r.framework_name,
     scopeName: r.scope_name,
-    entityName: r.entity_name ?? r.scope_name,
+    entityName: r.entity_name,
     campaignLabel: r.campaign_label,
   };
 }
@@ -225,18 +343,22 @@ export async function getSoaHeader(tx: TenantTx, assessmentId: string): Promise<
 export interface MutualizedPeerRow {
   requirementId: string;
   requirementRef: string;
+  frameworkId: string;
   frameworkCode: string;
   frameworkName: string;
   viaControlTitle: string;
   currentStatus: AssessmentItemStatus | null;
+  campaignOpen: boolean;
 }
 
 /**
  * Pairs mutualisés d'une exigence : les exigences d'AUTRES référentiels
- * couvertes par un même contrôle, avec leur statut courant (dernière
- * campagne les portant, ou null). Alimente la suggestion d'héritage
- * (core.suggestInheritedStatuses). Un pair par exigence (contrôle arbitraire
- * si plusieurs les relient).
+ * couvertes par un même contrôle, avec leur statut courant (campagne en
+ * cours la plus récente qui les porte, comme la page du référentiel, à
+ * défaut la dernière clôturée, ou null) et l'état de cette campagne : une
+ * campagne clôturée est figée, rien n'y est héritable. Alimente la
+ * suggestion d'héritage (core.suggestInheritedStatuses). Un pair par
+ * exigence (contrôle arbitraire si plusieurs les relient).
  */
 export async function getMutualizedPeers(
   tx: TenantTx,
@@ -246,10 +368,12 @@ export async function getMutualizedPeers(
     SELECT DISTINCT ON (peer.id)
       peer.id AS requirement_id,
       peer.ref_id AS requirement_ref,
+      pf.id AS framework_id,
       pf.code AS framework_code,
       pf.name AS framework_name,
       c.title AS via_control_title,
-      latest.status AS current_status
+      latest.status AS current_status,
+      COALESCE(latest.campaign_status = 'en_cours', false) AS campaign_open
     FROM control_requirements cr_src
     JOIN requirements src ON src.id = cr_src.requirement_id
     JOIN control_requirements cr_peer ON cr_peer.control_id = cr_src.control_id
@@ -257,11 +381,11 @@ export async function getMutualizedPeers(
     JOIN frameworks pf ON pf.id = peer.framework_id
     JOIN controls c ON c.id = cr_src.control_id
     LEFT JOIN LATERAL (
-      SELECT ai.status
+      SELECT ai.status, a.status AS campaign_status
       FROM assessment_items ai
       JOIN assessments a ON a.id = ai.assessment_id
       WHERE ai.requirement_id = peer.id
-      ORDER BY a.created_at DESC
+      ORDER BY (a.status = 'en_cours') DESC, a.created_at DESC
       LIMIT 1
     ) latest ON true
     WHERE cr_src.requirement_id = ${requirementId}
@@ -271,20 +395,24 @@ export async function getMutualizedPeers(
   return (rows as unknown as RawPeer[]).map((r) => ({
     requirementId: r.requirement_id,
     requirementRef: r.requirement_ref,
+    frameworkId: r.framework_id,
     frameworkCode: r.framework_code,
     frameworkName: r.framework_name,
     viaControlTitle: r.via_control_title,
     currentStatus: r.current_status,
+    campaignOpen: r.campaign_open,
   }));
 }
 
 interface RawPeer {
   requirement_id: string;
   requirement_ref: string;
+  framework_id: string;
   framework_code: string;
   framework_name: string;
   via_control_title: string;
   current_status: AssessmentItemStatus | null;
+  campaign_open: boolean;
 }
 
 /** Clôture une campagne (gèle son état ; l'historique reste dans les campagnes). */

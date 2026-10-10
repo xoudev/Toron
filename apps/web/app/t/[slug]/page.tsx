@@ -13,6 +13,7 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 export const dynamic = 'force-dynamic';
 
 const BANDS = ['critique', 'eleve', 'moyen', 'faible'] as const;
+const BAND_LABEL: Record<(typeof BANDS)[number], string> = { critique: 'critique', eleve: 'élevé', moyen: 'moyen', faible: 'faible' };
 
 export default async function TenantAccueilPage({
   params,
@@ -59,14 +60,18 @@ export default async function TenantAccueilPage({
 
   const overview = await getOrganisationOverview(ctx.tenantId);
   const today = todayParis();
-  const { m, x, coverage, processesAlert, controls, exceptions, training, continuity, satisfaction } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
+  const { m, x, coverage, processesAlert, controls, controlDrafts, exceptions, training, continuity, satisfaction } = await withTenant(appDb().db, ctx.tenantId, async (tx) => {
     const procs = await listProcesses(tx);
+    const library = await listControlLibrary(tx, today);
     return {
       m: await getDashboardMetrics(tx),
       x: await getDashboardExtras(tx),
       coverage: await getFrameworkCoverage(tx),
       processesAlert: procs.filter((p) => p.health === 'en_alerte').length,
-      controls: (await listControlLibrary(tx, today)).filter((c) => c.status === 'actif'),
+      // Seuls les contrôles actifs sont démontrés ; les brouillons (contrôles
+      // types repris) restent à adapter avant de compter.
+      controls: library.filter((c) => c.status === 'actif'),
+      controlDrafts: library.filter((c) => c.status === 'brouillon').length,
       exceptions: overview.enabled('derogations') ? await listExceptions(tx, today) : [],
       training: overview.enabled('sensibilisation') ? await getTrainingOverview(tx, today) : null,
       continuity: overview.enabled('continuite') ? await getContinuityOverview(tx, today) : null,
@@ -76,18 +81,24 @@ export default async function TenantAccueilPage({
   // Efficacité des contrôles et dérogations : ce qui n'est plus démontré ou plus couvert.
   const controlsLate = controls.filter((c) => c.reviewState === 'en_retard').length;
   const controlsIneffective = controls.filter((c) => c.lastResult === 'inefficace').length;
+  const controlsMutualized = controls.filter((c) => c.mutualized).length;
   const exceptionsPending = exceptions.filter((e) => e.state === 'en_attente').length;
   const exceptionsLapsed = exceptions.filter((e) => e.state === 'echue').length;
   const base = `/t/${slug}`;
   const steps = onboardingSteps({
-    scopes: x.scopesTotal, frameworksActive: m.frameworksActive, members: x.membersTotal,
-    controls: m.controlsTotal, risks: m.risksTotal, assessments: x.assessmentsTotal,
-    evidences: m.evidencesTotal, documents: m.documentsTotal,
+    scopes: x.scopesTotal, entities: overview.profile.entityCount, frameworksActive: m.frameworksActive, members: x.membersTotal,
+    controlsActive: controls.length, controlsDraft: controlDrafts, risks: m.risksTotal, actions: x.actionsTotal, assets: x.assetsTotal,
+    assessments: x.assessmentsTotal, evidences: m.evidencesTotal, documentsPublished: m.documentsTotal - m.documentsUnpublished,
+    firstActiveFrameworkId: coverage[0]?.frameworkId ?? null,
   });
   const progress = onboardingProgress(steps);
   // Sans données, « rien d'urgent » n'aurait aucun sens : on ne l'affirme
-  // que si l'organisation suit effectivement quelque chose.
-  const hasData = m.risksTotal + m.actionsOpen + m.evidencesTotal + m.documentsTotal + m.controlsTotal + x.incidentsOpen + x.ncOpen > 0;
+  // que si l'organisation suit effectivement quelque chose (les brouillons de
+  // contrôles ne suivent encore rien).
+  const hasData = m.risksTotal + m.actionsOpen + m.evidencesTotal + m.documentsTotal + controls.length + x.incidentsOpen + x.ncOpen > 0;
+  // Exigences encore « à évaluer » dans les dernières campagnes : sans écart
+  // relevé, c'est ce qui reste à faire, pas une absence de manque.
+  const toEvaluate = coverage.reduce((n, f) => n + (f.campaign?.score.counts.a_evaluer ?? 0), 0);
   const maxBand = Math.max(1, ...Object.values(m.risksByBand));
 
   // Priorités concrètes de la semaine, dérivées des indicateurs (seuls les
@@ -120,7 +131,7 @@ export default async function TenantAccueilPage({
     { label: 'Incidents en cours', value: x.incidentsOpen, href: `${base}/incidents`, module: 'incidents' as const },
     { label: 'Processus cartographiés', value: x.processesTotal, sub: x.processesTotal === 0 ? undefined : processesAlert > 0 ? `${processesAlert} en alerte` : 'santé OK', href: `${base}/processus`, module: 'processus' as const },
     { label: 'Revues de direction tenues', value: x.reviewsHeld, href: `${base}/revue-direction`, module: 'revue_direction' as const },
-    { label: 'Référentiels au catalogue', value: x.frameworksAvailable, sub: `${x.requirementsTotal} exigences`, href: `${base}/referentiels` },
+    { label: 'Référentiels au catalogue', value: x.frameworksAvailable, sub: `${x.requirementsTotal.toLocaleString('fr-FR')} exigence${x.requirementsTotal > 1 ? 's' : ''}`, href: `${base}/referentiels` },
   ].filter((t) => on(t.module));
 
   return (
@@ -160,28 +171,43 @@ export default async function TenantAccueilPage({
         ) : null}
 
         <div className={`kpi-grid${on('risques') ? '' : ' kpi-grid--5'}`}>
-          <a className={`card kpi ${m.coveragePct === null ? '' : 'kpi--ok'}`} href={`${base}/referentiels`}>
+          {/* Liseré : orange s'il reste des écarts, vert seulement si une part est conforme. */}
+          <a className={`card kpi ${m.coveragePct === null ? '' : m.gaps > 0 ? 'kpi--warn' : m.coveragePct > 0 ? 'kpi--ok' : ''}`} href={`${base}/referentiels`}>
             <span className="kpi-label">Couverture de conformité</span>
-            <span className="kpi-value">{m.coveragePct === null ? '—' : `${m.coveragePct}%`}</span>
+            <span className="kpi-value">{m.coveragePct === null ? '—' : `${m.coveragePct}\u202f%`}</span>
             <div className="coverage-bar" aria-hidden="true">
               <span style={{ width: `${m.coveragePct ?? 0}%` }} />
             </div>
             <span className={`kpi-sub${m.gaps > 0 ? ' alert' : ''}`}>
-              {m.gaps} écart{m.gaps > 1 ? 's' : ''} · {m.frameworksActive} référentiel{m.frameworksActive > 1 ? 's' : ''} actif{m.frameworksActive > 1 ? 's' : ''}
+              {/* Sans évaluation, « 0 écart » se lirait « aucun manque ». */}
+              {m.coveragePct === null && m.frameworksActive === 0
+                ? 'Aucun référentiel activé'
+                : <>
+                    {m.coveragePct === null
+                      ? 'Aucune évaluation lancée'
+                      : m.gaps === 0 && toEvaluate > 0
+                        ? `${toEvaluate} à évaluer`
+                        : `${m.gaps} écart${m.gaps > 1 ? 's' : ''}`}
+                    {' · '}{m.frameworksActive} référentiel{m.frameworksActive > 1 ? 's' : ''} actif{m.frameworksActive > 1 ? 's' : ''}
+                  </>}
             </span>
           </a>
 
           <a className={`card kpi ${controlsIneffective > 0 ? 'kpi--danger' : controlsLate > 0 ? 'kpi--warn' : ''}`} href={`${base}/controles`}>
-            <span className="kpi-label">Contrôles</span>
-            <span className="kpi-value">{m.controlsTotal}</span>
+            <span className="kpi-label">Contrôles actifs</span>
+            <span className="kpi-value">{controls.length}</span>
             <span className={`kpi-sub${controlsIneffective + controlsLate > 0 ? ' alert' : ''}`}>
-              {m.controlsTotal === 0
-                ? 'Aucun contrôle décrit'
+              {controls.length === 0
+                ? controlDrafts > 0
+                  ? `${controlDrafts} en brouillon à adapter`
+                  : 'Aucun contrôle décrit'
                 : controlsIneffective > 0
                   ? `${controlsIneffective} jugé${controlsIneffective > 1 ? 's' : ''} inefficace${controlsIneffective > 1 ? 's' : ''}`
                   : controlsLate > 0
                     ? `${controlsLate} en retard de revue`
-                    : `${m.controlsMutualized} mutualisé${m.controlsMutualized > 1 ? 's' : ''} — prouvé${m.controlsMutualized > 1 ? 's' : ''} une fois`}
+                    : controlsMutualized > 0
+                      ? `${controlsMutualized} mutualisé${controlsMutualized > 1 ? 's' : ''} — prouvé${controlsMutualized > 1 ? 's' : ''} une fois`
+                      : 'Aucun contrôle mutualisé'}
             </span>
           </a>
 
@@ -195,7 +221,7 @@ export default async function TenantAccueilPage({
                   key={b}
                   className={`risk-spark-seg seg--${b}`}
                   style={{ opacity: m.risksByBand[b] === 0 ? 0.25 : 0.4 + 0.6 * (m.risksByBand[b] / maxBand) }}
-                  title={`${m.risksByBand[b]} ${b}`}
+                  title={`${m.risksByBand[b]} risque${m.risksByBand[b] > 1 ? 's' : ''} ${BAND_LABEL[b]}${m.risksByBand[b] > 1 ? 's' : ''}`}
                 />
               ))}
             </div>
@@ -225,7 +251,16 @@ export default async function TenantAccueilPage({
             <span className="kpi-label">Documents</span>
             <span className="kpi-value">{m.documentsTotal}</span>
             <span className={`kpi-sub${m.documentsReviewOverdue > 0 ? ' alert' : ''}`}>
-              {m.documentsTotal === 0 ? 'Aucun document' : m.documentsReviewOverdue > 0 ? `${m.documentsReviewOverdue} à revoir` : 'Revues à jour'}
+              {/* « Revues à jour » seulement si tout est publié et la revue planifiée. */}
+              {m.documentsTotal === 0
+                ? 'Aucun document'
+                : m.documentsReviewOverdue > 0
+                  ? `${m.documentsReviewOverdue} à revoir`
+                  : m.documentsUnpublished > 0
+                    ? `${m.documentsUnpublished} à publier`
+                    : m.documentsWithoutReviewDate > 0
+                      ? `${m.documentsWithoutReviewDate} sans date de revue`
+                      : 'Revues à jour'}
             </span>
           </a>
         </div>
@@ -247,7 +282,7 @@ export default async function TenantAccueilPage({
                     {f.campaign && f.campaign.score.scorePct !== null ? (
                       <>
                         <span className="coverage-bar" aria-hidden="true"><span style={{ width: `${f.campaign.score.scorePct}%` }} /></span>
-                        <span className="coverage-pct mono">{f.campaign.score.scorePct} %</span>
+                        <span className="coverage-pct mono">{`${f.campaign.score.scorePct}\u202f%`}</span>
                         <span className="coverage-counts">
                           <span className={f.campaign.score.gaps > 0 ? 'alert' : undefined}>{f.campaign.score.gaps} écart{f.campaign.score.gaps > 1 ? 's' : ''}</span>
                           {' · '}{f.campaign.score.counts.a_evaluer} à évaluer

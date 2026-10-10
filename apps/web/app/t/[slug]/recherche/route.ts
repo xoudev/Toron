@@ -31,8 +31,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
   const results: SearchResult[] = hits.map((h) => {
     const meta = SEARCH_KIND_META[h.kind];
+    // Une exigence s'ouvre dans son référentiel, désignée par `exigence`.
     const href = h.kind === 'exigence' && h.parentId
-      ? `${base}/referentiels/${h.parentId}`
+      ? `${base}/referentiels/${h.parentId}?exigence=${h.id}`
       : `${base}${meta.path}?ouvrir=${h.id}`;
     return { kind: h.kind, label: meta.label, code: refCodeFor(h.kind, h.id), title: h.title, detail: h.detail, href };
   });

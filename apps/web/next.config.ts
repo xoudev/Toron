@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
   // Les paquets internes sont consommés en source TypeScript
   transpilePackages: ['@toron/core', '@toron/db', '@toron/ui', '@toron/frameworks'],
   poweredByHeader: false,
+  // Les dépôts de fichiers (preuves, versions de documents) passent par des
+  // actions serveur : sans ces deux réglages, Next coupe à 1 Mo (actions) et
+  // 10 Mo (proxy), en-têtes multipart compris. La limite métier de 10 Mo par
+  // fichier est vérifiée ensuite, avec un message clair.
+  experimental: {
+    serverActions: { bodySizeLimit: '11mb' },
+    proxyClientMaxBodySize: '11mb',
+  },
   // Pas de trace des appels d'actions serveur, dont les arguments peuvent
   // porter un jeton ou des données personnelles, ni des chemins qui portent
   // un jeton (portail fournisseur, invitations).

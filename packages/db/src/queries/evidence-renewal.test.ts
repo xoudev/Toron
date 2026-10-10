@@ -89,4 +89,16 @@ describe('renouvellement des preuves', () => {
     const [row] = await admin`SELECT superseded_by FROM evidences WHERE id = ${DEMO.evidenceInventaire}`;
     expect(row!.superseded_by).toBeNull();
   });
+
+  it('sans échéance saisie, la validité suit la récurrence héritée', async () => {
+    const res = await withTenant(app.db, T, (tx) => renewEvidence(tx, {
+      tenantId: T, previousId: DEMO.evidenceFormationDirigeants, fileName: 'attestations-2026.pdf',
+      content: Buffer.from('%PDF-1.7 attestations'), sha256: SHA('e'), collectedAt: '2026-10-06', validUntil: null,
+      collectorUserId: DEMO.userClaire,
+    }));
+    expect(res).toMatchObject({ outcome: 'renouvelee', validUntil: '2027-10-06' });
+    if (res.outcome !== 'renouvelee') return;
+    const renewed = (await withTenant(app.db, T, listEvidences)).find((e) => e.id === res.evidenceId);
+    expect(renewed).toMatchObject({ recurrence: 'annuelle', validUntil: '2027-10-06', freshness: 'fraiche' });
+  });
 });

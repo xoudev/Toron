@@ -5,6 +5,7 @@ export * from './onboarding.ts';
 export * from './work.ts';
 export * from './search.ts';
 export * from './csv.ts';
+export * from './download.ts';
 export * from './acknowledgements.ts';
 export * from './modules.ts';
 export * from './suppliers.ts';
@@ -125,6 +126,12 @@ export {
   freshnessRank,
   freshnessNeedsAttention,
   suggestedValidUntil,
+  effectiveValidUntil,
+  EVIDENCE_MAX_BYTES,
+  EVIDENCE_EXTENSIONS,
+  EVIDENCE_ACCEPT,
+  EVIDENCE_FORMATS_LABEL,
+  evidenceFileError,
   type EvidenceType,
   type EvidenceRecurrence,
   type FreshnessState,

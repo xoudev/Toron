@@ -74,3 +74,55 @@ export function suggestedValidUntil(collectedAt: string, recurrence: EvidenceRec
   target.setUTCDate(Math.min(d!, lastDay));
   return target.toISOString().slice(0, 10);
 }
+
+/**
+ * Validité retenue au dépôt : la date saisie, sinon celle que propose la
+ * récurrence. Une preuve récurrente sans échéance passerait pour permanente
+ * et ne serait jamais signalée à renouveler.
+ */
+export function effectiveValidUntil(collectedAt: string, recurrence: EvidenceRecurrence, validUntil: string | null): string | null {
+  return validUntil ?? suggestedValidUntil(collectedAt, recurrence);
+}
+
+/** Taille maximale d'un fichier de preuve (§8). */
+export const EVIDENCE_MAX_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Allowlist des extensions de preuve (§8) : PDF, images, CSV et texte,
+ * bureautique Word, Excel, PowerPoint, ODT et ODS (dont tous les formats de
+ * l'espace Documents), archives ZIP.
+ */
+export const EVIDENCE_EXTENSIONS = [
+  'pdf', 'png', 'jpg', 'jpeg', 'csv', 'txt', 'md', 'json',
+  'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'zip',
+] as const;
+
+/** Valeur de l'attribut `accept` des sélecteurs de fichier de preuve. */
+export const EVIDENCE_ACCEPT = EVIDENCE_EXTENSIONS.map((e) => `.${e}`).join(',');
+
+/**
+ * Formats admis, tels qu'annoncés sous les champs de dépôt et dans le refus :
+ * nommés un à un, une famille (« LibreOffice ») promettrait l'.odp, refusé.
+ */
+export const EVIDENCE_FORMATS_LABEL = 'PDF, images (PNG, JPG), CSV, texte, Word, Excel, PowerPoint, ODT, ODS, ZIP';
+
+/**
+ * Contrôle d'un fichier de preuve avant dépôt : vide, trop volumineux ou d'un
+ * format hors allowlist. Appliqué dans le navigateur pour prévenir avant
+ * l'envoi, et sur le serveur, qui fait foi. Rend null si le fichier est admis.
+ */
+export function evidenceFileError(file: { name: string; size: number }): { code: string; message: string } | null {
+  if (file.size === 0) {
+    return { code: 'FICHIER_VIDE', message: 'Le fichier choisi est vide — choisissez le bon fichier.' };
+  }
+  if (file.size > EVIDENCE_MAX_BYTES) {
+    return { code: 'FICHIER_TROP_GROS', message: 'Fichier trop volumineux — 10 Mo maximum. Compressez-le ou scindez-le.' };
+  }
+  const dot = file.name.lastIndexOf('.');
+  const ext = dot === -1 ? '' : file.name.slice(dot + 1).toLowerCase();
+  if (!(EVIDENCE_EXTENSIONS as readonly string[]).includes(ext)) {
+    const found = ext ? `Format non admis (.${ext})` : 'Fichier sans extension';
+    return { code: 'TYPE_REFUSE', message: `${found} — formats acceptés : ${EVIDENCE_FORMATS_LABEL}.` };
+  }
+  return null;
+}

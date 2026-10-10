@@ -1,6 +1,13 @@
 'use client';
 
-import { suggestedValidUntil, type EvidenceRecurrence, type FreshnessState } from '@toron/core';
+import {
+  EVIDENCE_ACCEPT,
+  EVIDENCE_FORMATS_LABEL,
+  evidenceFileError,
+  suggestedValidUntil,
+  type EvidenceRecurrence,
+  type FreshnessState,
+} from '@toron/core';
 import type { AccessLogRow, EvidenceHistoryRow, EvidenceLinkRow, EvidenceSummary } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
@@ -22,6 +29,8 @@ type ControlLite = { id: string; title: string };
 const FRESH_LABEL: Record<FreshnessState, string> = { expiree: 'Expirée', bientot: 'Bientôt', fraiche: 'Fraîche', permanente: 'Permanente' };
 const TYPE_LABEL: Record<string, string> = { capture: 'Capture', export: 'Export', attestation: 'Attestation', rapport: 'Rapport', pv: 'PV' };
 const RECURRENCE_LABEL: Record<string, string> = { ponctuelle: 'Ponctuelle', trimestrielle: 'Trimestrielle', semestrielle: 'Semestrielle', annuelle: 'Annuelle' };
+const ACCESS_LABEL: Record<string, string> = { consultation: 'Consultation', telechargement: 'Téléchargement' };
+const FILE_HINT = `${EVIDENCE_FORMATS_LABEL} — 10 Mo maximum.`;
 
 function fmtDate(d: string | null): string {
   if (!d) return '—';
@@ -30,6 +39,19 @@ function fmtDate(d: string | null): string {
 }
 function FreshTag({ f }: { f: FreshnessState }) {
   return <span className={`fresh-tag fresh--${f}`}>{FRESH_LABEL[f]}</span>;
+}
+/**
+ * Sans contrôle, une preuve ne peut être rattachée à rien : on dit où les
+ * créer à qui peut ensuite cocher les rattachements, un simple constat sinon.
+ */
+function NoControlHint({ slug, canManage }: { slug: string; canManage: boolean }) {
+  if (!canManage) return <p className="risk-mut-hint">Aucun contrôle interne pour l’instant.</p>;
+  return (
+    <p className="risk-mut-hint">
+      Aucun contrôle pour l’instant. Créez ou reprenez vos contrôles dans{' '}
+      <a href={`/t/${slug}/controles`}>Contrôles internes</a>, puis revenez cocher ceux que cette preuve démontre.
+    </p>
+  );
 }
 
 export function EvidenceVault({ slug, canManage, evidences, controls }: { slug: string; canManage: boolean; evidences: EvidenceSummary[]; controls: ControlLite[] }) {
@@ -62,7 +84,7 @@ export function EvidenceVault({ slug, canManage, evidences, controls }: { slug: 
       <div className="ds-stat-row">
         <div className="ds-stat"><span className="ds-stat-value">{stats.upToDate === null ? '—' : `${stats.upToDate}%`}</span><span className="ds-stat-label">à jour</span></div>
         <div className="ds-stat"><span className={`ds-stat-value${stats.expired > 0 ? ' alert' : ''}`}>{stats.expired}</span><span className="ds-stat-label">expirée{stats.expired > 1 ? 's' : ''}</span></div>
-        <div className="ds-stat"><span className="ds-stat-value">{stats.soon}</span><span className="ds-stat-label">expirent sous 30 j</span></div>
+        <div className="ds-stat"><span className="ds-stat-value">{stats.soon}</span><span className="ds-stat-label">expire{stats.soon > 1 ? 'nt' : ''} sous 30 jours</span></div>
       </div>
 
       <div className="ds-toolbar">
@@ -127,13 +149,31 @@ export function EvidenceVault({ slug, canManage, evidences, controls }: { slug: 
 
 function CreateDialog({ slug, controls, onClose }: { slug: string; controls: ControlLite[]; onClose: () => void }) {
   const router = useRouter();
+  const today = todayParis();
+  const [collectedAt, setCollectedAt] = useState(today);
+  const [recurrence, setRecurrence] = useState<EvidenceRecurrence>('ponctuelle');
+  const [validUntil, setValidUntil] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Comme au renouvellement, la validité suit la récurrence : une preuve
+  // récurrente sans échéance passerait pour permanente.
+  function changeCollected(v: string) {
+    setCollectedAt(v);
+    const suggested = v ? suggestedValidUntil(v, recurrence) : null;
+    if (suggested) setValidUntil(suggested);
+  }
+  function changeRecurrence(r: EvidenceRecurrence) {
+    setRecurrence(r);
+    setValidUntil(collectedAt ? suggestedValidUntil(collectedAt, r) ?? '' : '');
+  }
   function submit(fd: FormData) {
     setError(null);
     const file = fileRef.current?.files?.[0];
     if (!file) { setError('Choisissez un fichier.'); return; }
+    const invalid = evidenceFileError(file);
+    if (invalid) { setError(invalid.message); return; }
     fd.set('file', file);
     start(async () => { const res = await createEvidenceAction(slug, fd); if (res.ok) { onClose(); router.refresh(); } else setError(res.error.message); });
   }
@@ -143,17 +183,21 @@ function CreateDialog({ slug, controls, onClose }: { slug: string; controls: Con
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="PV de test de restauration…" /></label>
         <div className="risk-form-grid">
           <label className="field">Type<select name="type" defaultValue="export">{Object.entries(TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-          <label className="field">Récurrence<select name="recurrence" defaultValue="ponctuelle">{Object.entries(RECURRENCE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-          <label className="field">Date de collecte<input type="date" name="collectedAt" required /></label>
-          <label className="field">Valide jusqu’au<input type="date" name="validUntil" /></label>
-          <label className="field field--full">Contrôle couvert (mutualisation)<select name="controlId" defaultValue=""><option value="">— Aucun —</option>{controls.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
+          <label className="field">Récurrence<select name="recurrence" value={recurrence} onChange={(e) => changeRecurrence(e.target.value as EvidenceRecurrence)}>{Object.entries(RECURRENCE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+          <label className="field">Date de collecte<input type="date" name="collectedAt" value={collectedAt} max={today} onChange={(e) => changeCollected(e.target.value)} required /></label>
+          <label className="field">Valide jusqu’au<input type="date" name="validUntil" value={validUntil} min={collectedAt || undefined} onChange={(e) => setValidUntil(e.target.value)} /></label>
+          {controls.length > 0 ? (
+            <label className="field field--full">Contrôle couvert (mutualisation)<select name="controlId" defaultValue=""><option value="">— Aucun —</option>{controls.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
+          ) : (
+            <div className="field--full"><NoControlHint slug={slug} canManage /></div>
+          )}
         </div>
         <div className="upload-drop">
-          <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.csv,.txt,.md,.docx,.xlsx,.zip,.json" required />
-          <p className="risk-mut-hint" style={{ margin: 0 }}>Empreinte SHA-256 calculée à l’ingestion. 10 Mo max.</p>
+          <input ref={fileRef} type="file" accept={EVIDENCE_ACCEPT} required />
+          <p className="risk-mut-hint" style={{ margin: 0 }}>{FILE_HINT} Empreinte SHA-256 calculée au dépôt.</p>
         </div>
         {error ? <p className="form-error" role="alert">{error}</p> : null}
-        <div className="dialog-actions"><button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Annuler</button><button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Ingestion…' : 'Ajouter la preuve'}</button></div>
+        <div className="dialog-actions"><button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Annuler</button><button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Dépôt…' : 'Ajouter la preuve'}</button></div>
       </form>
     </Dialog>
   );
@@ -209,7 +253,7 @@ function DetailDrawer({ slug, ev, controls, canManage, onOpen, onClose }: { slug
 
       <div className="drawer-section">
         <p className="drawer-section-label">Contrôles couverts (mutualisation)</p>
-        {links === null ? <p className="risk-mut-hint">Chargement…</p> : controls.length === 0 ? <p className="risk-mut-hint">Aucun contrôle interne à rattacher.</p> : (
+        {links === null ? <p className="risk-mut-hint">Chargement…</p> : controls.length === 0 ? <NoControlHint slug={slug} canManage={canManage && !superseded} /> : (
           <div className="control-link-list">
             {controls.map((c) => (
               <label className="control-link-row" key={c.id}><input type="checkbox" checked={linkedControlIds.has(c.id)} disabled={!canManage || superseded || pending} onChange={(e) => toggle(c.id, e.target.checked)} />{c.title}</label>
@@ -236,7 +280,7 @@ function DetailDrawer({ slug, ev, controls, canManage, onOpen, onClose }: { slug
         <p className="drawer-section-label">Journal des accès</p>
         {access.length === 0 ? <p className="risk-mut-hint">Aucun accès enregistré.</p> : (
           <div className="access-log">
-            {access.map((a, i) => <div className="access-row" key={i}><span>{a.userName ?? 'Utilisateur'} — {a.kind}</span><span className="ds-mono">{new Date(a.at).toLocaleString('fr-FR')}</span></div>)}
+            {access.map((a, i) => <div className="access-row" key={i}><span>{a.userName ?? 'Utilisateur'} — {ACCESS_LABEL[a.kind] ?? a.kind}</span><span className="ds-mono">{new Date(a.at).toLocaleString('fr-FR')}</span></div>)}
           </div>
         )}
       </div>
@@ -261,6 +305,8 @@ function RenewSection({ slug, ev, onRenewed }: { slug: string; ev: EvidenceSumma
     setError(null);
     const file = fileRef.current?.files?.[0];
     if (!file) { setError('Choisissez le nouveau fichier de preuve.'); return; }
+    const invalid = evidenceFileError(file);
+    if (invalid) { setError(invalid.message); return; }
     const fd = new FormData();
     fd.set('previousId', ev.id); fd.set('collectedAt', collectedAt); fd.set('validUntil', validUntil); fd.set('file', file);
     start(async () => {
@@ -276,7 +322,8 @@ function RenewSection({ slug, ev, onRenewed }: { slug: string; ev: EvidenceSumma
         Déposez la nouvelle collecte : elle reprend les contrôles couverts, et cette version reste consultable
         dans l’historique.
       </p>
-      <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.csv,.txt,.md,.docx,.xlsx,.zip,.json" aria-label="Nouveau fichier de preuve" />
+      <input ref={fileRef} type="file" accept={EVIDENCE_ACCEPT} aria-label="Nouveau fichier de preuve" />
+      <p className="risk-mut-hint" style={{ margin: 0 }}>{FILE_HINT}</p>
       <div className="risk-form-grid">
         <label className="field">Date de collecte<input type="date" value={collectedAt} max={today} onChange={(e) => changeCollected(e.target.value)} required /></label>
         <label className="field">Valide jusqu’au<input type="date" value={validUntil} min={collectedAt} onChange={(e) => setValidUntil(e.target.value)} /></label>

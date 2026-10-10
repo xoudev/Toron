@@ -1,3 +1,4 @@
+import { attachmentDisposition } from '@toron/core';
 import { getEvidenceContent, logAccess, withTenant } from '@toron/db';
 import { z } from 'zod';
 
@@ -6,11 +7,7 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 
 // Téléchargement d'une preuve : réservé aux membres du tenant (tout rôle),
 // via withTenant (RLS). Chaque téléchargement est JOURNALISÉ (RM §5.7 :
-// journal des accès). Nom de fichier assaini pour l'en-tête.
-function safeFilename(name: string | null): string {
-  const base = (name ?? 'preuve').replace(/[^\w.\- ]+/g, '_').slice(0, 120);
-  return base.length > 0 ? base : 'preuve';
-}
+// journal des accès). Nom de fichier assaini pour l'en-tête, accents gardés.
 
 export async function GET(
   _req: Request,
@@ -42,7 +39,7 @@ export async function GET(
   return new Response(new Uint8Array(found.content), {
     headers: {
       'Content-Type': 'application/octet-stream',
-      'Content-Disposition': `attachment; filename="${safeFilename(found.fileName)}"`,
+      'Content-Disposition': attachmentDisposition(found.fileName, 'preuve'),
       'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'private, no-store',
     },

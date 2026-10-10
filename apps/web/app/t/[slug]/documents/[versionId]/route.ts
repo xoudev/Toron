@@ -1,4 +1,4 @@
-import { canManageControls } from '@toron/core';
+import { attachmentDisposition, canManageControls } from '@toron/core';
 import { getVersionContent, withTenant } from '@toron/db';
 import { z } from 'zod';
 
@@ -8,11 +8,7 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 // Téléchargement du contenu d'une version documentaire : tout membre peut
 // télécharger une version publiée ; un brouillon reste réservé aux rôles qui
 // gèrent la documentation. Lecture via withTenant (RLS). Nom de fichier
-// assaini pour l'en-tête Content-Disposition.
-function safeFilename(name: string | null): string {
-  const base = (name ?? 'document').replace(/[^\w.\- ]+/g, '_').slice(0, 120);
-  return base.length > 0 ? base : 'document';
-}
+// assaini pour l'en-tête Content-Disposition, accents gardés.
 
 export async function GET(
   _req: Request,
@@ -33,7 +29,7 @@ export async function GET(
   return new Response(new Uint8Array(found.content), {
     headers: {
       'Content-Type': 'application/octet-stream',
-      'Content-Disposition': `attachment; filename="${safeFilename(found.fileName)}"`,
+      'Content-Disposition': attachmentDisposition(found.fileName, 'document'),
       'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'private, no-store',
     },

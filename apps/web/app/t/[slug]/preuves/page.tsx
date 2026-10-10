@@ -1,4 +1,4 @@
-import { canManageControls } from '@toron/core';
+import { canManageControls, freshnessNeedsAttention } from '@toron/core';
 import { listControls, listEvidences, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
@@ -22,7 +22,9 @@ export default async function PreuvesPage({ params }: { params: Promise<{ slug: 
     controls: await listControls(tx),
   }));
 
-  const stale = evidences.filter((e) => e.freshness === 'expiree' || e.freshness === 'bientot').length;
+  // Seules les preuves en vigueur sont à renouveler : une version remplacée
+  // reste expirée dans l'historique sans rien demander.
+  const stale = evidences.filter((e) => e.supersededById === null && freshnessNeedsAttention(e.freshness)).length;
 
   return (
     <>
@@ -44,8 +46,9 @@ export default async function PreuvesPage({ params }: { params: Promise<{ slug: 
           <div>
             <h1>Coffre de preuves</h1>
             <p className="sub">
-              Preuves empreintées (SHA-256) et datées de fraîcheur. Une preuve liée à un contrôle
-              mutualisé couvre plusieurs référentiels — une preuve expirée signale, elle ne déclasse pas.
+              Chaque fichier reçoit une empreinte SHA-256, qui prouve qu’il n’a pas été modifié, et une
+              date de validité. Une preuve rattachée à un contrôle sert pour tous les référentiels qu’il
+              couvre. Une preuve expirée est signalée, mais ne change pas seule le statut d’une exigence.
             </p>
           </div>
         </div>
@@ -53,7 +56,7 @@ export default async function PreuvesPage({ params }: { params: Promise<{ slug: 
         {stale > 0 ? (
           <div className="mut-band" style={{ marginBottom: 16 }}>
             <p>
-              <b>{stale} preuve{stale > 1 ? 's' : ''} à renouveler</b> — expirée ou bientôt échue.
+              <b>{stale} preuve{stale > 1 ? 's' : ''} à renouveler</b> — expirée{stale > 1 ? 's' : ''} ou bientôt échue{stale > 1 ? 's' : ''}.
             </p>
           </div>
         ) : null}

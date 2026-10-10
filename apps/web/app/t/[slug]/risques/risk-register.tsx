@@ -4,7 +4,7 @@ import { treatmentActionPriority, treatmentPlanNeedsAttention, type ActionEffect
 import type { ActionSummary, RiskSummary, ScopeSummary, TenantMember } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition, type KeyboardEvent } from 'react';
 
 import { initials, refCode, todayParis } from '@/lib/format';
 import { keepValues } from '@/lib/forms';
@@ -68,6 +68,30 @@ function fmtDate(d: string | null): string {
   return `${day}/${m}/${y}`;
 }
 
+function onEnter(e: KeyboardEvent<HTMLElement>, open: () => void) {
+  if (e.target !== e.currentTarget) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    open();
+  }
+}
+
+// Déclaré au niveau du module : défini dans un formulaire, il serait recréé à
+// chaque rendu et le <select> perdrait le focus clavier à chaque changement.
+function LevelSelect({ name, value, onChange, labels, size, disabled = false }: {
+  name: string; value: number; onChange: (n: number) => void; labels: string[]; size: number; disabled?: boolean;
+}) {
+  return (
+    <label className="field" style={{ minWidth: 88 }}>{name}
+      <select value={value} onChange={(e) => onChange(Number(e.target.value))} disabled={disabled}>
+        {Array.from({ length: size }, (_, i) => i + 1).map((l) => (
+          <option key={l} value={l}>{labels[l - 1] ? `${l} — ${labels[l - 1]}` : l}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function Level({ band, gv, target = false }: { band: RiskBand | null; gv?: string; target?: boolean }) {
   if (!band) return <span className="ds-mono">—</span>;
   return (
@@ -118,7 +142,8 @@ export function RiskRegister({
         (r) =>
           r.title.toLowerCase().includes(q) ||
           refCode('RSK', r.id).toLowerCase().includes(q) ||
-          (r.businessValue ?? '').toLowerCase().includes(q),
+          (r.businessValue ?? '').toLowerCase().includes(q) ||
+          (r.scenario ?? '').toLowerCase().includes(q),
       );
     }
     return list;
@@ -184,6 +209,13 @@ export function RiskRegister({
               ))}
             </div>
             <div style={{ textAlign: 'center', marginTop: 8, paddingLeft: 22 }} className="ds-mono">VRAISEMBLANCE</div>
+            {scale.gLabels.length > 0 ? (
+              <p className="risk-mut-hint" style={{ marginTop: 8 }}>
+                Gravité : {scale.gLabels.map((l, i) => `${i + 1} ${l}`).join(' · ')}
+                <br />
+                Vraisemblance : {scale.vLabels.map((l, i) => `${i + 1} ${l}`).join(' · ')}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="risk-overview-side">
@@ -252,7 +284,7 @@ export function RiskRegister({
                 <tr><td colSpan={9} className="ds-empty">{filter || facet || query ? 'Aucun risque ne correspond.' : 'Aucun risque enregistré.'}</td></tr>
               ) : (
                 shown.map((r) => (
-                  <tr key={r.id} onClick={() => setOpenId(r.id)}>
+                  <tr key={r.id} tabIndex={0} onClick={() => setOpenId(r.id)} onKeyDown={(e) => onEnter(e, () => setOpenId(r.id))}>
                     <td className="ds-id">{refCode('RSK', r.id)}</td>
                     <td>
                       <div className="ds-primary">{r.title}</div>
@@ -328,7 +360,6 @@ function RiskDrawer({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const levels = Array.from({ length: scale.size }, (_, i) => i + 1);
   const [gg, setGg] = useState(risk.grossG);
   const [gv, setGv] = useState(risk.grossV);
   const [ng, setNg] = useState(risk.netG);
@@ -356,14 +387,6 @@ function RiskDrawer({
       nextReview: String(fd.get('nextReview') ?? '') || null,
     }));
   }
-
-  const LevelSelect = ({ value, onChange, name, labels }: { value: number; onChange: (n: number) => void; name: string; labels: string[] }) => (
-    <label className="field" style={{ minWidth: 88 }}>{name}
-      <select value={value} onChange={(e) => onChange(Number(e.target.value))} disabled={!canManage}>
-        {levels.map((l) => <option key={l} value={l} title={labels[l - 1]}>{l}</option>)}
-      </select>
-    </label>
-  );
 
   const header = (
     <>
@@ -418,15 +441,15 @@ function RiskDrawer({
         <p className="drawer-section-label">Cotation</p>
         <div className="rating-row">
           <div className="rating-pair">
-            <LevelSelect value={gg} onChange={setGg} name="G brute" labels={scale.gLabels} />
-            <LevelSelect value={gv} onChange={setGv} name="V brute" labels={scale.vLabels} />
+            <LevelSelect value={gg} onChange={setGg} name="Gravité brute" labels={scale.gLabels} size={scale.size} disabled={!canManage} />
+            <LevelSelect value={gv} onChange={setGv} name="Vraisemblance brute" labels={scale.vLabels} size={scale.size} disabled={!canManage} />
           </div>
           <div className="rating-preview"><Level band={bandOf(gg, gv)} gv={`${gg}×${gv}`} /></div>
         </div>
         <div className="rating-row" style={{ marginTop: 10 }}>
           <div className="rating-pair">
-            <LevelSelect value={ng} onChange={setNg} name="G nette" labels={scale.gLabels} />
-            <LevelSelect value={nv} onChange={setNv} name="V nette" labels={scale.vLabels} />
+            <LevelSelect value={ng} onChange={setNg} name="Gravité nette" labels={scale.gLabels} size={scale.size} disabled={!canManage} />
+            <LevelSelect value={nv} onChange={setNv} name="Vraisemblance nette" labels={scale.vLabels} size={scale.size} disabled={!canManage} />
           </div>
           <div className="rating-preview"><Level band={bandOf(ng, nv)} gv={`${ng}×${nv}`} /></div>
           {canManage ? (
@@ -451,11 +474,13 @@ function RiskCreateDialog({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const levels = Array.from({ length: scale.size }, (_, i) => i + 1);
   const [gg, setGg] = useState(3);
   const [gv, setGv] = useState(3);
-  const [ng, setNg] = useState(2);
-  const [nv, setNv] = useState(2);
+  // La cotation nette suit la brute tant qu'on ne la modifie pas : sans mesure
+  // déjà en place, le risque net est le risque brut.
+  const [net, setNet] = useState<{ g: number; v: number } | null>(null);
+  const ng = net?.g ?? gg;
+  const nv = net?.v ?? gv;
 
   function submit(fd: FormData) {
     setError(null);
@@ -474,13 +499,6 @@ function RiskCreateDialog({
       if (res.ok) { onClose(); router.refresh(); } else setError(res.error.message);
     });
   }
-  const LevelSelect = ({ value, onChange, name, labels }: { value: number; onChange: (n: number) => void; name: string; labels: string[] }) => (
-    <label className="field" style={{ minWidth: 88 }}>{name}
-      <select value={value} onChange={(e) => onChange(Number(e.target.value))}>
-        {levels.map((l) => <option key={l} value={l} title={labels[l - 1]}>{l}</option>)}
-      </select>
-    </label>
-  );
 
   return (
     <Dialog title="Nouveau risque" onClose={onClose}>
@@ -514,13 +532,14 @@ function RiskCreateDialog({
         <div className="rating-block">
           <p className="rating-block-title">Cotation</p>
           <div className="rating-row">
-            <div className="rating-pair"><LevelSelect value={gg} onChange={setGg} name="Gravité brute" labels={scale.gLabels} /><LevelSelect value={gv} onChange={setGv} name="Vrais. brute" labels={scale.vLabels} /></div>
+            <div className="rating-pair"><LevelSelect value={gg} onChange={setGg} name="Gravité brute" labels={scale.gLabels} size={scale.size} /><LevelSelect value={gv} onChange={setGv} name="Vraisemblance brute" labels={scale.vLabels} size={scale.size} /></div>
             <div className="rating-preview"><Level band={bandOf(gg, gv)} gv={`${gg}×${gv}`} /></div>
           </div>
           <div className="rating-row" style={{ marginTop: 10 }}>
-            <div className="rating-pair"><LevelSelect value={ng} onChange={setNg} name="Gravité nette" labels={scale.gLabels} /><LevelSelect value={nv} onChange={setNv} name="Vrais. nette" labels={scale.vLabels} /></div>
+            <div className="rating-pair"><LevelSelect value={ng} onChange={(n) => setNet({ g: n, v: nv })} name="Gravité nette" labels={scale.gLabels} size={scale.size} /><LevelSelect value={nv} onChange={(n) => setNet({ g: ng, v: n })} name="Vraisemblance nette" labels={scale.vLabels} size={scale.size} /></div>
             <div className="rating-preview"><Level band={bandOf(ng, nv)} gv={`${ng}×${nv}`} /></div>
           </div>
+          <p className="risk-mut-hint" style={{ margin: '8px 0 0' }}>Brute : sans aucune mesure. Nette : compte tenu des mesures déjà en place ; elle reste égale à la brute tant que vous ne la modifiez pas.</p>
         </div>
         {error ? <p className="form-error" role="alert">{error}</p> : null}
         <div className="dialog-actions">
@@ -664,9 +683,9 @@ function TreatmentPlan({ slug, risk, members, canManage }: { slug: string; risk:
             </label>
             <label className="field">Priorité
               <select name="priority" defaultValue={treatmentActionPriority(risk.netBand)}>
-                <option value="p1">P1 — urgente</option>
-                <option value="p2">P2 — normale</option>
-                <option value="p3">P3 — différable</option>
+                <option value="p1">P1 — haute</option>
+                <option value="p2">P2 — moyenne</option>
+                <option value="p3">P3 — basse</option>
               </select>
             </label>
           </div>
@@ -686,25 +705,40 @@ function TreatmentPlan({ slug, risk, members, canManage }: { slug: string; risk:
 function ControlLinks({ slug, riskId, controls, canManage }: { slug: string; riskId: string; controls: ControlLite[]; canManage: boolean }) {
   const router = useRouter();
   const [linked, setLinked] = useState<Set<string> | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   useEffect(() => {
     let alive = true;
-    getRiskControlsAction(slug, riskId).then((res) => { if (alive && res.ok) setLinked(new Set(res.data.controlIds)); });
+    getRiskControlsAction(slug, riskId).then((res) => {
+      if (!alive) return;
+      if (res.ok) setLinked(new Set(res.data.controlIds));
+      else setError(res.error.message);
+    });
     return () => { alive = false; };
   }, [slug, riskId]);
 
   function toggle(controlId: string, next: boolean) {
-    setLinked((s) => { const c = new Set(s ?? []); if (next) c.add(controlId); else c.delete(controlId); return c; });
-    start(async () => { const res = await toggleRiskControlAction(slug, { riskId, controlId, linked: next }); if (res.ok) router.refresh(); });
+    const mark = (on: boolean) => setLinked((s) => { const c = new Set(s ?? []); if (on) c.add(controlId); else c.delete(controlId); return c; });
+    setError(null);
+    mark(next);
+    start(async () => {
+      const res = await toggleRiskControlAction(slug, { riskId, controlId, linked: next });
+      if (res.ok) router.refresh();
+      else { mark(!next); setError(res.error.message); }
+    });
   }
 
   return (
     <div className="drawer-section">
       <p className="drawer-section-label">Contrôles atténuants</p>
       {controls.length === 0 ? (
-        <p className="risk-mut-hint">Aucun contrôle interne — créez-en dans Référentiels.</p>
+        <p className="risk-mut-hint">
+          {canManage
+            ? <>Aucun contrôle interne pour l’instant — <a href={`/t/${slug}/controles`}>partez des contrôles types</a> dans Contrôles internes.</>
+            : 'Aucun contrôle interne pour l’instant.'}
+        </p>
       ) : linked === null ? (
-        <p className="risk-mut-hint">Chargement…</p>
+        error ? null : <p className="risk-mut-hint">Chargement…</p>
       ) : (
         <div className="control-link-list">
           {controls.map((c) => (
@@ -715,6 +749,7 @@ function ControlLinks({ slug, riskId, controls, canManage }: { slug: string; ris
           ))}
         </div>
       )}
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
       <p className="risk-mut-hint" style={{ marginTop: 6 }}>Un contrôle mutualisé qui atténue ce risque prouve aussi la conformité côté référentiels.</p>
     </div>
   );

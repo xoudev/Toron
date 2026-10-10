@@ -4,7 +4,7 @@ import { KANBAN_COLUMNS, type ActionEffectiveStatus, type ActionStatus } from '@
 import type { ActionDetail, ActionSummary, TenantMember } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition, type KeyboardEvent } from 'react';
 
 import { initials, refCode } from '@/lib/format';
 import { keepValues } from '@/lib/forms';
@@ -46,6 +46,14 @@ function fmtDate(d: string | null): string {
 function StatusTag({ status }: { status: ActionEffectiveStatus }) {
   return <span className={`status-tag st--${status}`}>{STATUS_LABEL[status]}</span>;
 }
+// Ignore les touches venues d'un élément interne (case de sélection de la ligne).
+function onEnter(e: KeyboardEvent<HTMLElement>, open: () => void) {
+  if (e.target !== e.currentTarget) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    open();
+  }
+}
 
 // Filtres rapides : « ouvertes » par défaut, initialisables depuis l'URL
 // (?statut=en_retard, ?responsable=moi) pour les liens du tableau de bord.
@@ -67,7 +75,7 @@ function matchesStatus(a: ActionSummary, f: StatusFilter): boolean {
   return a.status === f;
 }
 
-export function PlanBoard({ slug, canManage, actions, members, viewerId }: { slug: string; canManage: boolean; actions: ActionSummary[]; members: TenantMember[]; viewerId: string }) {
+export function PlanBoard({ slug, canManage, risksEnabled, actions, members, viewerId }: { slug: string; canManage: boolean; risksEnabled: boolean; actions: ActionSummary[]; members: TenantMember[]; viewerId: string }) {
   const params = useSearchParams();
   const initialStatus = STATUS_FILTERS.find((f) => f.key === params.get('statut'))?.key ?? 'ouvertes';
   const [view, setView] = useState<'table' | 'kanban'>('table');
@@ -130,7 +138,7 @@ export function PlanBoard({ slug, canManage, actions, members, viewerId }: { slu
       </div>
 
       {view === 'table' ? (
-        <TableView actions={shown} canManage={canManage} selected={selected} onToggleSel={toggleSel} onOpen={setOpenId} filtered={filtered} />
+        <TableView slug={slug} risksEnabled={risksEnabled} actions={shown} canManage={canManage} selected={selected} onToggleSel={toggleSel} onOpen={setOpenId} filtered={filtered} />
       ) : (
         <KanbanView actions={shown} onOpen={setOpenId} />
       )}
@@ -139,17 +147,26 @@ export function PlanBoard({ slug, canManage, actions, members, viewerId }: { slu
         <BulkBar slug={slug} count={selected.size} ids={[...selected]} onDone={() => setSelected(new Set())} />
       ) : null}
 
-      {creating ? <ActionCreateDialog slug={slug} members={members} onClose={() => setCreating(false)} /> : null}
+      {creating ? <ActionCreateDialog slug={slug} risksEnabled={risksEnabled} members={members} onClose={() => setCreating(false)} /> : null}
       {open ? <ActionDrawer slug={slug} members={members} action={open} canManage={canManage} onClose={() => setOpenId(null)} /> : null}
     </>
   );
 }
 
-function TableView({ actions, canManage, selected, onToggleSel, onOpen, filtered }: { actions: ActionSummary[]; canManage: boolean; selected: Set<string>; onToggleSel: (id: string) => void; onOpen: (id: string) => void; filtered: boolean }) {
+function TableView({ slug, risksEnabled, actions, canManage, selected, onToggleSel, onOpen, filtered }: { slug: string; risksEnabled: boolean; actions: ActionSummary[]; canManage: boolean; selected: Set<string>; onToggleSel: (id: string) => void; onOpen: (id: string) => void; filtered: boolean }) {
   if (actions.length === 0) {
     return filtered
       ? <div className="empty-state"><h2>Aucune action ne correspond</h2><p>Élargissez les filtres ou réinitialisez-les.</p></div>
-      : <div className="empty-state"><h2>Aucune action</h2><p>Elles naîtront de vos évaluations, audits et incidents — ou créez-en une.</p></div>;
+      : (
+        <div className="empty-state">
+          <h2>Aucune action</h2>
+          <p>
+            {canManage && risksEnabled
+              ? <>Pour traiter un risque, ouvrez-le dans le <a href={`/t/${slug}/risques`}>Registre des risques</a> et utilisez « + Planifier une action » : l’action y restera liée. Vous pouvez aussi créer ici une action libre.</>
+              : `Elles naîtront de vos évaluations, audits et incidents${canManage ? ' — ou créez-en une' : ''}.`}
+          </p>
+        </div>
+      );
   }
   return (
     <div className="ds-table-card">
@@ -162,7 +179,7 @@ function TableView({ actions, canManage, selected, onToggleSel, onOpen, filtered
               <th style={{ minWidth: 260 }}>Action</th>
               <th style={{ width: 92 }}>Origine</th>
               <th style={{ width: 54 }}>Prio</th>
-              <th style={{ width: 150 }}>Propriétaire</th>
+              <th style={{ width: 150 }}>Responsable</th>
               <th style={{ width: 92 }}>Échéance</th>
               <th style={{ width: 96 }}>Avancement</th>
               <th style={{ width: 118 }}>Statut</th>
@@ -170,7 +187,7 @@ function TableView({ actions, canManage, selected, onToggleSel, onOpen, filtered
           </thead>
           <tbody>
             {actions.map((a) => (
-              <tr key={a.id} onClick={() => onOpen(a.id)}>
+              <tr key={a.id} tabIndex={0} onClick={() => onOpen(a.id)} onKeyDown={(e) => onEnter(e, () => onOpen(a.id))}>
                 {canManage ? <td onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selected.has(a.id)} onChange={() => onToggleSel(a.id)} aria-label={`Sélectionner ${a.title}`} /></td> : null}
                 <td className="ds-id">{refCode('ACT', a.id)}</td>
                 <td><div className="ds-primary">{a.title}</div></td>
@@ -198,7 +215,7 @@ function KanbanView({ actions, onOpen }: { actions: ActionSummary[]; onOpen: (id
           <div className="kanban-col" key={col}>
             <div className="kanban-col-head"><StatusTag status={col} /><span className="kanban-col-count">{items.length}</span></div>
             {items.map((a) => (
-              <div className={`action-card st--${a.effectiveStatus}`} key={a.id} onClick={() => onOpen(a.id)}>
+              <div className={`action-card st--${a.effectiveStatus}`} key={a.id} role="button" tabIndex={0} onClick={() => onOpen(a.id)} onKeyDown={(e) => onEnter(e, () => onOpen(a.id))}>
                 <div className="action-card-title">{a.title}</div>
                 <div className="action-card-meta"><span className="ds-id">{refCode('ACT', a.id)}</span><span className={`prio prio--${a.priority}`}>{PRIORITY_LABEL[a.priority]}</span><span className="origin-tag">{ORIGIN_LABEL[a.originType] ?? a.originType}</span></div>
                 <div className="action-card-foot"><span className="ds-avatar" title={a.ownerName ?? undefined}>{initials(a.ownerName)}</span>{a.subtaskTotal > 0 ? <span className="mini-progress" title={`${a.subtaskDone}/${a.subtaskTotal}`}><span style={{ width: `${Math.round((a.subtaskDone / a.subtaskTotal) * 100)}%` }} /></span> : null}<span className="ds-mono">{fmtDate(a.dueDate)}</span></div>
@@ -232,7 +249,7 @@ function BulkBar({ slug, count, ids, onDone }: { slug: string; count: number; id
   );
 }
 
-function ActionCreateDialog({ slug, members, onClose }: { slug: string; members: TenantMember[]; onClose: () => void }) {
+function ActionCreateDialog({ slug, risksEnabled, members, onClose }: { slug: string; risksEnabled: boolean; members: TenantMember[]; onClose: () => void }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -249,10 +266,14 @@ function ActionCreateDialog({ slug, members, onClose }: { slug: string; members:
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="Corriger l’écart…" /></label>
         <label className="field">Description<textarea name="description" rows={2} /></label>
         <div className="risk-form-grid">
-          <label className="field">Propriétaire<select name="ownerUserId" defaultValue=""><option value="">— Non attribuée —</option>{members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</select></label>
+          <label className="field">Responsable<select name="ownerUserId" defaultValue=""><option value="">— Non attribuée —</option>{members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</select></label>
           <label className="field">Priorité<select name="priority" defaultValue="p2"><option value="p1">P1 — haute</option><option value="p2">P2 — moyenne</option><option value="p3">P3 — basse</option></select></label>
           <label className="field">Échéance<input type="date" name="dueDate" /></label>
         </div>
+        {/* Après les champs : le lien ne doit pas prendre le focus initial du Dialog. */}
+        {risksEnabled ? (
+          <p className="risk-mut-hint">Action libre, rattachée à aucun risque. Pour traiter un risque, ouvrez-le dans le <a href={`/t/${slug}/risques`}>Registre des risques</a> et utilisez « + Planifier une action » : l’action y restera liée.</p>
+        ) : null}
         {error ? <p className="form-error" role="alert">{error}</p> : null}
         <div className="dialog-actions"><button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Annuler</button><button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Création…' : 'Créer l’action'}</button></div>
       </form>
@@ -304,7 +325,7 @@ function ActionDrawer({ slug, members, action, canManage, onClose }: { slug: str
         <label className="field">Intitulé<input name="title" defaultValue={action.title} minLength={2} required disabled={!canManage} /></label>
         <label className="field">Description<textarea name="description" defaultValue={action.description ?? ''} rows={2} disabled={!canManage} /></label>
         <div className="risk-form-grid">
-          <label className="field">Propriétaire<select name="ownerUserId" defaultValue={action.ownerUserId ?? ''} disabled={!canManage}><option value="">— Non attribuée —</option>{members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</select></label>
+          <label className="field">Responsable<select name="ownerUserId" defaultValue={action.ownerUserId ?? ''} disabled={!canManage}><option value="">— Non attribuée —</option>{members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</select></label>
           <label className="field">Priorité<select name="priority" defaultValue={action.priority} disabled={!canManage}><option value="p1">P1 — haute</option><option value="p2">P2 — moyenne</option><option value="p3">P3 — basse</option></select></label>
           <label className="field">Échéance<input type="date" name="dueDate" defaultValue={action.dueDate?.slice(0, 10) ?? ''} disabled={!canManage} /></label>
         </div>

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
 import { appDb } from '@/lib/db';
+import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { PlanBoard } from './plan-board';
@@ -16,6 +17,7 @@ export default async function PlanActionPage({ params }: { params: Promise<{ slu
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
   const canManage = canManageControls(ctx.role);
+  const risksEnabled = (await getOrganisationOverview(ctx.tenantId)).enabled('risques');
 
   const { actions, members } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
     actions: await listActions(tx),
@@ -28,7 +30,7 @@ export default async function PlanActionPage({ params }: { params: Promise<{ slu
   return (
     <>
       <Topbar
-        crumbRoot="Conformité"
+        crumbRoot="Pilotage"
         crumbCurrent="Plan d’action"
         actions={
           <>
@@ -60,7 +62,7 @@ export default async function PlanActionPage({ params }: { params: Promise<{ slu
           </div>
         ) : null}
 
-        <PlanBoard slug={slug} canManage={canManage} actions={actions} members={members} viewerId={ctx.userId} />
+        <PlanBoard slug={slug} canManage={canManage} risksEnabled={risksEnabled} actions={actions} members={members} viewerId={ctx.userId} />
       </main>
     </>
   );

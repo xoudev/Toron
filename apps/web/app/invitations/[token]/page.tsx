@@ -1,4 +1,4 @@
-import { INVITATION_STATE_LABEL, MEMBERSHIP_ROLE_LABEL } from '@toron/core';
+import { INVITATION_STATE_LABEL, MEMBERSHIP_ROLE_LABEL, MEMBERSHIP_ROLE_PURPOSE, totpRequiredForRole } from '@toron/core';
 import { acceptInvitation, previewInvitation } from '@toron/db';
 import { BrandMark } from '@toron/ui';
 import { headers } from 'next/headers';
@@ -48,9 +48,17 @@ export default async function InvitationPage({ params }: { params: Promise<{ tok
           <span className="org-brand"><BrandMark size={22} /><b>toron</b></span>
           <h1>{preview.tenantName} vous invite sur Toron</h1>
           <p>
-            Rôle proposé : <b>{MEMBERSHIP_ROLE_LABEL[preview.role]}</b>. L’invitation est réservée à
-            l’adresse <b>{preview.maskedEmail}</b> : connectez-vous avec ce compte, ou créez-le avec
-            cette adresse. Vous reviendrez ensuite automatiquement ici.
+            Rôle proposé : <b>{MEMBERSHIP_ROLE_LABEL[preview.role]}</b> — {MEMBERSHIP_ROLE_PURPOSE[preview.role]}
+          </p>
+          {totpRequiredForRole(preview.role) ? (
+            <p>
+              Ce rôle exige la double authentification : gardez à portée de main une application
+              d’authentification sur votre téléphone, elle vous sera demandée à la première ouverture.
+            </p>
+          ) : null}
+          <p>
+            L’invitation est réservée à l’adresse <b>{preview.maskedEmail}</b> : connectez-vous avec
+            ce compte, ou créez-le avec cette adresse. Vous reviendrez ensuite automatiquement ici.
           </p>
           <a className="btn btn-primary" href={`/connexion?suite=${encodeURIComponent(suite)}`}>Se connecter</a>
           <p className="auth-alt">

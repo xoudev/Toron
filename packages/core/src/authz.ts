@@ -28,15 +28,19 @@ export const MEMBERSHIP_ROLE_LABEL: Record<MembershipRole, string> = {
   lecteur: 'Lecteur',
 };
 
-/** Ce que chaque rôle est censé faire, en une phrase, pour guider l'attribution. */
+/**
+ * Ce que chaque rôle peut faire, en une phrase, pour guider l'attribution.
+ * Reflète la matrice ci-dessous (droits réels), pas une intention : un
+ * libellé qui sous-estime un rôle fait accorder plus qu'on ne le croit.
+ */
 export const MEMBERSHIP_ROLE_PURPOSE: Record<MembershipRole, string> = {
-  owner: 'Administre l’organisation, ses membres et sa facturation.',
-  direction: 'Arbitre, accepte les risques et préside la revue de direction.',
-  rssi: 'Pilote le SMSI : référentiels, risques, incidents, preuves.',
-  resp_qualite: 'Pilote le QMS : processus, non-conformités, audits internes.',
-  pilote: 'Tient à jour son processus, ses indicateurs et ses actions.',
+  owner: 'Tous les droits, y compris nommer un autre propriétaire ; suivi comme dirigeant (formation NIS 2).',
+  direction: 'Tous les droits sauf nommer, modifier ou retirer un propriétaire : membres, configuration et tous les modules ; suivi comme dirigeant (formation NIS 2).',
+  rssi: 'Tous les droits sauf la gestion des membres : modules SMSI comme QMS, organisation, périmètres, revue de direction, décision sur les dérogations.',
+  resp_qualite: 'Mêmes droits que RSSI, sans double authentification obligatoire ; libellé destiné au responsable du QMS.',
+  pilote: 'Mêmes droits que Contributeur ; libellé destiné aux pilotes de processus ISO 9001.',
   auditeur: 'Constate et documente, sans modifier ce qu’il audite.',
-  contributeur: 'Réalise des actions et dépose des preuves.',
+  contributeur: 'Crée et modifie les objets de conformité (contrôles, risques, actions, documents, preuves, incidents, audits, non-conformités…), en supprime certains (contrôles, obligations, traitements…) et peut accepter un risque ; ne gère ni l’organisation, ni la revue de direction, ni les membres.',
   lecteur: 'Consulte sans jamais modifier.',
 };
 

@@ -1,12 +1,16 @@
 import { csvFileName, toCsv, type CsvColumn } from '@toron/core';
-import { listAuditLog, withTenant, type AuditRow } from '@toron/db';
+import { listAuditLog, withTenant, writeAuditEntry, type AuditRow } from '@toron/db';
+import { headers } from 'next/headers';
 
+import { normalizeIp } from '@/lib/action-guard';
 import { appDb } from '@/lib/db';
 import { todayParis } from '@/lib/format';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 // Export CSV du journal d'audit (§8.2 : consultable, filtrable, exportable).
 // Lecture réservée aux membres de l'organisation ; même filtre que l'écran.
+// L'export est lui-même tracé, après lecture : il ne figure pas dans le
+// fichier qu'il produit.
 
 const MAX_ROWS = 20_000;
 const PAGE = 200;
@@ -34,6 +38,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   const filtre = (url.searchParams.get('filtre') ?? '').slice(0, 40);
   if (!/^[a-z_.]*$/.test(filtre)) return new Response('Filtre invalide', { status: 400 });
 
+  const h = await headers();
   const rows: AuditRow[] = [];
   await withTenant(appDb().db, ctx.tenantId, async (tx) => {
     for (let offset = 0; offset < MAX_ROWS; offset += PAGE) {
@@ -41,6 +46,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       rows.push(...page);
       if (page.length < PAGE) break;
     }
+    await writeAuditEntry(tx, {
+      tenantId: ctx.tenantId, actorUserId: ctx.userId, action: 'journal.export', objectType: 'journal',
+      objectId: ctx.tenantId, after: { filtre: filtre || null, lignes: rows.length },
+      ip: normalizeIp(h.get('x-forwarded-for')), userAgent: h.get('user-agent') || undefined,
+    });
   });
 
   return new Response(toCsv(COLUMNS, rows), {

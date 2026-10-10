@@ -1,9 +1,10 @@
 import {
-  LEADER_ROLES,
   awarenessSummary,
   leaderTrainingCounts,
   leaderTrainingDue,
   leaderTrainingState,
+  ownersStandInForLeaders,
+  trackedLeaderRoles,
   trainingSessionState,
   type AwarenessSummary,
   type LeaderTrainingCounts,
@@ -199,15 +200,25 @@ export interface LeaderTrainingRow {
   state: LeaderTrainingState;
 }
 
+/**
+ * Rôles suivis comme dirigeants dans l'organisation courante : la direction,
+ * à défaut le propriétaire (règle du cœur, trackedLeaderRoles).
+ */
+export async function listLeaderRoles(tx: TenantTx): Promise<MembershipRole[]> {
+  const rows = (await tx.execute(sql`SELECT DISTINCT role::text AS role FROM memberships`)) as unknown as { role: MembershipRole }[];
+  return trackedLeaderRoles(rows.map((r) => r.role));
+}
+
 /** Formation cybersécurité des dirigeants (NIS 2, art. 20) : dernière session « dirigeants » tenue. */
 export async function listLeaderTraining(tx: TenantTx, today: string): Promise<LeaderTrainingRow[]> {
+  const leaderRoles = await listLeaderRoles(tx);
   const rows = (await tx.execute(sql`
     SELECT u.id AS user_id, u.name, m.role::text AS role,
            (SELECT max(s.held_on)::text FROM training_attendees a
               JOIN training_sessions s ON s.id = a.session_id
              WHERE a.user_id = u.id AND s.kind = 'formation_dirigeants' AND s.held_on <= ${today}) AS last_trained_on
     FROM memberships m JOIN users u ON u.id = m.user_id
-    WHERE m.role::text IN (${sql.join(LEADER_ROLES.map((r) => sql`${r}`), sql`, `)})
+    WHERE m.role::text IN (${sql.join(leaderRoles.map((r) => sql`${r}`), sql`, `)})
     ORDER BY u.name
   `)) as unknown as { user_id: string; name: string; role: MembershipRole; last_trained_on: string | null }[];
   return rows.map((r) => ({
@@ -220,11 +231,15 @@ export async function listLeaderTraining(tx: TenantTx, today: string): Promise<L
   }));
 }
 
-export type TrainingOverview = AwarenessSummary & LeaderTrainingCounts;
+export type TrainingOverview = AwarenessSummary & LeaderTrainingCounts & {
+  /** Aucun membre Direction : le propriétaire est suivi comme dirigeant à sa place. */
+  ownersAsLeaders: boolean;
+};
 
 /** Bilan sur douze mois et formation des dirigeants, pour le tableau de bord, le rapport et la revue. */
 export async function getTrainingOverview(tx: TenantTx, today: string): Promise<TrainingOverview> {
   const summary = awarenessSummary(await listTrainingSessions(tx, today), today);
-  const leaders = leaderTrainingCounts((await listLeaderTraining(tx, today)).map((l) => l.state));
-  return { ...summary, ...leaders };
+  const rows = await listLeaderTraining(tx, today);
+  const leaders = leaderTrainingCounts(rows.map((l) => l.state));
+  return { ...summary, ...leaders, ownersAsLeaders: ownersStandInForLeaders(rows.map((l) => l.role)) };
 }

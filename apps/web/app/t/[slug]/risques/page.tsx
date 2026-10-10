@@ -9,6 +9,7 @@ import {
   withTenant,
 } from '@toron/db';
 import { BrandMark, ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -20,6 +21,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { RiskRegister } from './risk-register';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Registre des risques — Toron' };
 
 export default async function RisquesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

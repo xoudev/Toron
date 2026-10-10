@@ -4,6 +4,7 @@ import {
   listExceptions, listProcesses, withTenant,
 } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 
 import { appDb } from '@/lib/db';
 import { todayParis } from '@/lib/format';
@@ -11,6 +12,8 @@ import { getOrganisationOverview } from '@/lib/organisation-overview';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Tableau de bord — Toron' };
 
 const BANDS = ['critique', 'eleve', 'moyen', 'faible'] as const;
 const BAND_LABEL: Record<(typeof BANDS)[number], string> = { critique: 'critique', eleve: 'élevé', moyen: 'moyen', faible: 'faible' };
@@ -109,11 +112,13 @@ export default async function TenantAccueilPage({
     { n: x.incidentsOpen, one: 'incident en cours (échéances NIS 2)', many: 'incidents en cours (échéances NIS 2)', href: `${base}/incidents`, tone: 'danger' as const, module: 'incidents' as const },
     { n: controlsIneffective, one: 'contrôle jugé inefficace', many: 'contrôles jugés inefficaces', href: `${base}/controles`, tone: 'danger' as const },
     { n: exceptionsLapsed, one: 'dérogation échue sans clôture', many: 'dérogations échues sans clôture', href: `${base}/derogations`, tone: 'danger' as const, module: 'derogations' as const },
-    { n: training?.untrained ?? 0, one: 'dirigeant sans formation cybersécurité à jour', many: 'dirigeants sans formation cybersécurité à jour', href: `${base}/sensibilisation`, tone: 'danger' as const, module: 'sensibilisation' as const },
+    { n: training && !training.ownersAsLeaders ? training.untrained : 0, one: 'dirigeant sans formation cybersécurité à jour', many: 'dirigeants sans formation cybersécurité à jour', href: `${base}/sensibilisation`, tone: 'danger' as const, module: 'sensibilisation' as const },
     { n: continuity?.objectiveMissed ?? 0, one: 'objectif de reprise manqué au dernier exercice', many: 'objectifs de reprise manqués au dernier exercice', href: `${base}/continuite`, tone: 'danger' as const, module: 'continuite' as const },
     { n: x.ncOpen, one: 'non-conformité ouverte', many: 'non-conformités ouvertes', href: `${base}/non-conformites`, tone: 'warn' as const, module: 'non_conformites' as const },
     { n: controlsLate, one: 'contrôle en retard de revue', many: 'contrôles en retard de revue', href: `${base}/controles`, tone: 'warn' as const },
     { n: exceptionsPending, one: 'demande de dérogation à trancher', many: 'demandes de dérogation à trancher', href: `${base}/derogations`, tone: 'warn' as const, module: 'derogations' as const },
+    // Faute de membre Direction, c'est le propriétaire (souvent le RSSI) qui est suivi : point de vigilance, pas d'alerte.
+    { n: training?.ownersAsLeaders ? training.untrained : 0, one: 'propriétaire sans formation cybersécurité à jour, suivi faute de membre Direction', many: 'propriétaires sans formation cybersécurité à jour, suivis faute de membre Direction', href: `${base}/sensibilisation`, tone: 'warn' as const, module: 'sensibilisation' as const },
     { n: training?.dueSoon ?? 0, one: 'formation de dirigeant à renouveler sous deux mois', many: 'formations de dirigeants à renouveler sous deux mois', href: `${base}/sensibilisation`, tone: 'warn' as const, module: 'sensibilisation' as const },
     { n: training?.withoutSheet ?? 0, one: 'feuille d’émargement à déposer', many: 'feuilles d’émargement à déposer', href: `${base}/sensibilisation`, tone: 'warn' as const, module: 'sensibilisation' as const },
     { n: continuity?.criticalUntested ?? 0, one: 'activité critique sans exercice depuis un an', many: 'activités critiques sans exercice depuis un an', href: `${base}/continuite`, tone: 'warn' as const, module: 'continuite' as const },

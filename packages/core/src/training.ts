@@ -38,6 +38,25 @@ export function isLeaderRole(role: MembershipRole): boolean {
   return LEADER_ROLES.includes(role);
 }
 
+/**
+ * Rôles suivis comme dirigeants, d'après les rôles des membres de
+ * l'organisation : la direction ; à défaut de membre Direction, le
+ * propriétaire. Le créateur d'une organisation en est propriétaire sans en
+ * être forcément le dirigeant (souvent le RSSI) : dès que la direction est
+ * invitée, c'est elle qui est suivie.
+ */
+export function trackedLeaderRoles(memberRoles: readonly MembershipRole[]): MembershipRole[] {
+  return memberRoles.includes('direction') ? ['direction'] : ['owner'];
+}
+
+/**
+ * Les dirigeants suivis ne sont que des propriétaires, faute de membre
+ * Direction : l'alerte de formation se nuance et propose d'inviter la direction.
+ */
+export function ownersStandInForLeaders(leaderRoles: readonly MembershipRole[]): boolean {
+  return leaderRoles.length > 0 && leaderRoles.every((r) => r === 'owner');
+}
+
 export type TrainingSessionState = 'a_venir' | 'realisee';
 
 export const TRAINING_SESSION_STATE_LABEL: Record<TrainingSessionState, string> = {

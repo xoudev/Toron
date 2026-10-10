@@ -1,6 +1,7 @@
 import { canManageControls } from '@toron/core';
 import { listDocuments, listProcesses, listScopes, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -10,6 +11,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { DocumentsBoard } from './documents-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Documents — Toron' };
 
 export default async function DocumentsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

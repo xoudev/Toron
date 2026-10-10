@@ -16,6 +16,7 @@ import {
   type ExportSummary,
 } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { z } from 'zod';
 
@@ -28,17 +29,30 @@ import { ReferentielDetail } from './detail';
 
 export const dynamic = 'force-dynamic';
 
+/** Titre d'onglet : le nom du référentiel, pour distinguer plusieurs onglets ouverts. */
+export async function generateMetadata({ params }: { params: Promise<{ slug: string; frameworkId: string }> }): Promise<Metadata> {
+  const { slug, frameworkId } = await params;
+  const fallback: Metadata = { title: 'Référentiel — Toron' };
+  if (!z.uuid().safeParse(frameworkId).success) return fallback;
+  const ctx = await getTenantContext(slug);
+  if (ctx.verdict !== 'autorise') return fallback;
+  const framework = await withTenant(appDb().db, ctx.tenantId, (tx) => getFramework(tx, frameworkId));
+  return framework ? { title: `${framework.name} — Toron` } : fallback;
+}
+
 export default async function ReferentielDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string; frameworkId: string }>;
-  searchParams: Promise<{ campaign?: string }>;
+  searchParams: Promise<{ campaign?: string; exigence?: string }>;
 }) {
   const { slug, frameworkId } = await params;
-  const { campaign } = await searchParams;
+  const { campaign, exigence } = await searchParams;
   if (!z.uuid().safeParse(frameworkId).success) notFound();
   const selectedCampaignId = campaign && z.uuid().safeParse(campaign).success ? campaign : null;
+  // Exigence à ouvrir (lien de la recherche Ctrl+K) ; ignorée si elle n'appartient pas au référentiel.
+  const initialReqId = exigence && z.uuid().safeParse(exigence).success ? exigence : null;
 
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
@@ -101,6 +115,7 @@ export default async function ReferentielDetailPage({
         <ReferentielDetail
           slug={slug}
           canManage={canManage}
+          initialReqId={initialReqId}
           scopes={data.scopes}
           framework={data.framework}
           tree={data.tree}

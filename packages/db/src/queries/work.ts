@@ -1,7 +1,6 @@
 import {
   BIA_REVIEW_MONTHS,
   EXCEPTION_DECIDER_ROLES,
-  LEADER_ROLES,
   LEADER_TRAINING_MONTHS,
   PROCESSING_REVIEW_MONTHS,
   REASSESSMENT_MONTHS,
@@ -14,6 +13,7 @@ import { sql } from 'drizzle-orm';
 
 import type { TenantTx } from '../tenant.ts';
 import { listRisks } from './risks.ts';
+import { listLeaderRoles } from './training.ts';
 
 // ── « Mon travail » : éléments assignés à un membre dans tous les modules ──
 // Lecture seule, dans le contexte RLS de l'organisation courante : la
@@ -59,6 +59,7 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
     Object.entries(REVIEW_FREQUENCY_MONTHS).map(([frequency, months]) => sql`WHEN ${frequency} THEN ${months}::int`),
     sql` `,
   );
+  const leaderRoles = await listLeaderRoles(tx);
   const rows = (await tx.execute(sql`
     SELECT 'action' AS kind, a.id, a.title, a.due_date::text AS due, a.status::text AS detail
       FROM actions a WHERE a.owner_user_id = ${userId} AND a.status <> 'termine'
@@ -156,7 +157,7 @@ export async function listMyWork(tx: TenantTx, userId: string): Promise<WorkItem
              WHERE a.user_id = m.user_id AND s.kind = 'formation_dirigeants' AND s.held_on <= CURRENT_DATE),
            NULL
       FROM memberships m
-      WHERE m.user_id = ${userId} AND m.role::text IN (${sql.join(LEADER_ROLES.map((r) => sql`${r}`), sql`, `)})
+      WHERE m.user_id = ${userId} AND m.role::text IN (${sql.join(leaderRoles.map((r) => sql`${r}`), sql`, `)})
     UNION ALL
     -- Bilan d'impact d'une activité dont on répond : à revoir un an après.
     SELECT 'continuite', a.id, a.name, (a.assessed_on + make_interval(months => ${BIA_REVIEW_MONTHS}::int))::date::text, 'bia'

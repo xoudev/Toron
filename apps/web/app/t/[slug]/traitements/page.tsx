@@ -1,6 +1,7 @@
 import { OBLIGATION_STATUS_LABEL, canManageControls, processingGaps, processorAgreementState } from '@toron/core';
 import { listEntitiesNis2, listObligations, listProcessing, listSuppliers, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -11,6 +12,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { ProcessingBoard } from './processing-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Registre des traitements — Toron' };
 
 export default async function TraitementsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -35,7 +38,7 @@ export default async function TraitementsPage({ params }: { params: Promise<{ sl
       <Topbar
         crumbRoot="Pilotage"
         crumbCurrent="Traitements RGPD"
-        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{items.length} TRAITEMENTS</span><ExportCsvLink slug={slug} registre="traitements" /><ThemeToggle /></>}
+        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{items.length} TRAITEMENT{items.length > 1 ? 'S' : ''}</span><ExportCsvLink slug={slug} registre="traitements" /><ThemeToggle /></>}
       />
       <main className="app-page">
         <div className="page-head">

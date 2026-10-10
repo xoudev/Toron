@@ -1,6 +1,7 @@
 import { canManageControls, freshnessNeedsAttention } from '@toron/core';
 import { listControls, listEvidences, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -10,6 +11,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { EvidenceVault } from './evidence-vault';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Coffre de preuves — Toron' };
 
 export default async function PreuvesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

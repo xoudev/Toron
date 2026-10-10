@@ -7,6 +7,8 @@ import {
   leaderTrainingCounts,
   leaderTrainingDue,
   leaderTrainingState,
+  ownersStandInForLeaders,
+  trackedLeaderRoles,
   trainingSessionError,
   trainingSessionState,
 } from './training.ts';
@@ -59,6 +61,20 @@ describe('formation des dirigeants (NIS 2, art. 20)', () => {
     expect(isLeaderRole('direction')).toBe(true);
     expect(isLeaderRole('owner')).toBe(true);
     expect(isLeaderRole('rssi')).toBe(false);
+  });
+
+  it('suit la direction ; le propriétaire seulement tant qu’aucun membre n’a le rôle Direction', () => {
+    expect(trackedLeaderRoles(['owner'])).toEqual(['owner']);
+    expect(trackedLeaderRoles(['owner', 'rssi', 'contributeur'])).toEqual(['owner']);
+    expect(trackedLeaderRoles(['owner', 'direction', 'rssi'])).toEqual(['direction']);
+    expect(trackedLeaderRoles([])).toEqual(['owner']);
+  });
+
+  it('repère les propriétaires suivis à la place d’une direction absente', () => {
+    expect(ownersStandInForLeaders(['owner'])).toBe(true);
+    expect(ownersStandInForLeaders(['owner', 'owner'])).toBe(true);
+    expect(ownersStandInForLeaders(['direction'])).toBe(false);
+    expect(ownersStandInForLeaders([])).toBe(false);
   });
 
   it('une formation vaut douze mois ; son renouvellement se planifie deux mois avant', () => {

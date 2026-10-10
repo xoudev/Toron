@@ -13,6 +13,8 @@ export interface BoardModel {
   nis2: { title: string; detail: string }[];
   frameworks: string[];
   risks: { ref: string; title: string; level: string; treatment: string; owner: string }[] | null;
+  /** Registre des risques vide : la section le dit, plutôt que de taire l'absence d'analyse. */
+  riskRegisterEmpty?: boolean;
   overdueActions: { ref: string; title: string; priority: string; due: string; owner: string }[];
   // Poinçon (ADR-6)
   verifyUrl: string;

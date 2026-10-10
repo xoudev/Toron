@@ -2,6 +2,7 @@ import { canManageControls, canRecordControlReview } from '@toron/core';
 import { activeFrameworkCoverage, listAdoptedTemplateKeys, listControlLibrary, listTenantMembers, withTenant } from '@toron/db';
 import { CONTROL_TEMPLATE_DOMAINS, controlTemplates } from '@toron/frameworks';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -13,6 +14,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { ControlLibrary } from './control-library';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Contrôles internes — Toron' };
 
 export default async function ControlesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -37,7 +40,7 @@ export default async function ControlesPage({ params }: { params: Promise<{ slug
       <Topbar
         crumbRoot="Pilotage"
         crumbCurrent="Contrôles internes"
-        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{active.length} ACTIFS</span><ExportCsvLink slug={slug} registre="controles" /><ThemeToggle /></>}
+        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{active.length} CONTRÔLE{active.length > 1 ? 'S' : ''} ACTIF{active.length > 1 ? 'S' : ''}</span><ExportCsvLink slug={slug} registre="controles" /><ThemeToggle /></>}
       />
       <main className="app-page">
         <div className="page-head">

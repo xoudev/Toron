@@ -1,6 +1,7 @@
 import { canManageControls } from '@toron/core';
 import { listIncidents, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -12,6 +13,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { IncidentsBoard } from './incidents-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Incidents — Toron' };
 
 export default async function IncidentsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

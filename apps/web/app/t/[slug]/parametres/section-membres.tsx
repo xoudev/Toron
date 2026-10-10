@@ -71,8 +71,9 @@ function MembersCard({ slug, viewer, members }: { slug: string; viewer: Viewer; 
           <h2>Membres ({members.length})</h2>
           <p className="hint">
             Un rôle par membre et par organisation. Les rôles Propriétaire, Direction et RSSI exigent la
-            double authentification : sans elle, l’accès à l’espace reste bloqué. Propriétaire et
-            Direction sont suivis comme dirigeants pour la formation NIS 2 (art. 20).
+            double authentification : sans elle, l’accès à l’espace reste bloqué. La direction est
+            suivie pour la formation des dirigeants (NIS 2, art. 20) ; à défaut de membre Direction,
+            le propriétaire l’est à sa place.
           </p>
         </div>
       </div>

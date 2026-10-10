@@ -1,6 +1,7 @@
 import { canManageControls } from '@toron/core';
 import { listActions, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -11,6 +12,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { PlanBoard } from './plan-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Plan d’action — Toron' };
 
 export default async function PlanActionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

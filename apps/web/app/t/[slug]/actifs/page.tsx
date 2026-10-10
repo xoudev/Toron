@@ -1,6 +1,7 @@
 import { canManageControls } from '@toron/core';
 import { listAssets, listRisks, listScopes, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -12,6 +13,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { AssetInventory } from './asset-inventory';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Cartographie des actifs — Toron' };
 
 export default async function ActifsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

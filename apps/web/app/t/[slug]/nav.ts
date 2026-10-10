@@ -121,7 +121,7 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0, disable
           iconPath: 'M12 3.5 19.5 6.5v5.2c0 4.3-3.1 7.6-7.5 8.8-4.4-1.2-7.5-4.5-7.5-8.8V6.5Z M9.2 12h5.6',
         },
         {
-          label: 'Audits',
+          label: 'Audits internes',
           href: `${base}/audits`,
           active: isActive(`${base}/audits`),
           iconPath: 'M9 5.5h6 M7 6.5h10v13H7z M9.5 12.5l1.8 1.8 3.5-3.8',

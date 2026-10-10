@@ -3,6 +3,7 @@ import {
 } from '@toron/core';
 import { getSatisfactionOverview, listComplaints, listCustomerSurveys, listEvidences, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -15,6 +16,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { SatisfactionBoard } from './satisfaction-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Satisfaction client — Toron' };
 
 const TREND_WORD = { hausse: 'en hausse', baisse: 'en baisse', stable: 'stable' } as const;
 
@@ -45,7 +48,7 @@ export default async function SatisfactionPage({ params }: { params: Promise<{ s
       <Topbar
         crumbRoot="Qualité"
         crumbCurrent="Satisfaction client"
-        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{summary.surveys} ENQUÊTES SUR 12 MOIS</span><ExportCsvLink slug={slug} registre="satisfaction" /><ThemeToggle /></>}
+        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{summary.surveys} ENQUÊTE{summary.surveys > 1 ? 'S' : ''} SUR 12 MOIS</span><ExportCsvLink slug={slug} registre="satisfaction" /><ThemeToggle /></>}
       />
       <main className="app-page">
         <div className="page-head">

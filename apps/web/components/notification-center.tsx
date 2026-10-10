@@ -40,10 +40,13 @@ export function NotificationCenter({ slug }: { slug: string }) {
     function onOpen() {
       setOpen(true);
       setError(null);
-      listMyNotificationsAction(slug).then((r) => {
-        if (r.ok) setItems(r.data);
-        else setError(r.error.message);
-      });
+      listMyNotificationsAction(slug)
+        .then((r) => {
+          if (r.ok) setItems(r.data);
+          else setError(r.error.message);
+        })
+        // Appel rejeté (coupure réseau, serveur injoignable) : jamais de chargement sans fin.
+        .catch(() => setError('Les notifications n’ont pas pu être chargées — vérifiez votre connexion, puis rouvrez le panneau.'));
     }
     window.addEventListener(NOTIFICATIONS_OPEN_EVENT, onOpen);
     return () => window.removeEventListener(NOTIFICATIONS_OPEN_EVENT, onOpen);

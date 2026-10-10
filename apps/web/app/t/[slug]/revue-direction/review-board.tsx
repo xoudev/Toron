@@ -8,6 +8,7 @@ import { useEffect, useState, useTransition } from 'react';
 
 import { frDate, initials, refCode } from '@/lib/format';
 import { keepValues } from '@/lib/forms';
+import { useOpenItem } from '@/lib/use-open-item';
 
 import {
   addDecisionAction,
@@ -41,7 +42,7 @@ export function ReviewBoard({
   nextReviewDefault: string;
 }) {
   const [creating, setCreating] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenItem(reviews.map((r) => r.id));
 
   return (
     <>

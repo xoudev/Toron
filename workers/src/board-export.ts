@@ -27,7 +27,7 @@ export async function processBoardExport(db: Db, job: ClaimedExport, publicBaseU
     const slug = randomVerifySlug();
 
     const kpis: BoardModel['kpis'] = [
-      { label: 'Couverture des exigences évaluées', value: i.coveragePct === null ? '—' : `${i.coveragePct} %` },
+      { label: 'Couverture des exigences applicables', value: i.coveragePct === null ? '—' : `${i.coveragePct} %` },
       ...(i.risks ? [{ label: 'Risques critiques / élevés (nets)', value: `${i.risks.critical} / ${i.risks.high}` }] : []),
       { label: 'Actions en retard / ouvertes', value: `${i.actions.overdue} / ${i.actions.open}` },
       { label: 'Obligations respectées', value: `${i.obligations.met} / ${i.obligations.applicable}` },
@@ -64,6 +64,7 @@ export async function processBoardExport(db: Db, job: ClaimedExport, publicBaseU
         ref: refCodeFor('risque', x.id) ?? '', title: x.title, level: x.netBand ? BAND_LABEL[x.netBand] ?? x.netBand : '—',
         treatment: TREATMENT_LABEL[x.treatment] ?? x.treatment, owner: x.ownerName ?? '—',
       })),
+      riskRegisterEmpty: i.risks !== null && i.risks.total === 0,
       overdueActions: r.overdueActions.map((a) => ({
         ref: refCodeFor('action', a.id) ?? '', title: a.title, priority: a.priority.toUpperCase(), due: frDay(a.dueDate), owner: a.ownerName ?? '—',
       })),

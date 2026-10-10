@@ -4,6 +4,7 @@ import {
   listScopeDetails, listSites, listTenantMemberDetails, withTenant,
 } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -15,6 +16,8 @@ import { ParametresClient } from './parametres-client';
 import { parseSection } from './sections';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Paramètres & administration — Toron' };
 
 const JOURNAL_PAGE_SIZE = 50;
 

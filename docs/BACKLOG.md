@@ -206,3 +206,20 @@ description courte, phase cible pressentie.
   panneau d'évaluation et la Déclaration d'applicabilité (RM §5.6). Le
   sous-titre de l'écran Documents ne le promet plus d'ici là. Phase
   cible : V1.
+- **2026-10-10 · Mot de passe oublié** — Aucune récupération n'existe :
+  configurer l'envoi d'e-mails (Scaleway TEM), puis `sendResetPassword` de
+  Better Auth avec un jeton court, un lien « Mot de passe oublié ? » sous
+  le champ de connexion et une page de nouveau mot de passe. Bloquant pour
+  un client sans second propriétaire. Phase cible : MVP (déploiement).
+- **2026-10-10 · Codes de secours et TOTP depuis le compte** — Les codes de
+  secours sont désormais acceptés à la connexion, mais rien ne permet d'en
+  générer de nouveaux ni de reconfigurer le TOTP après un changement de
+  téléphone. Ajouter ces deux actions sur `/securite/2fa`, avec
+  confirmation du mot de passe. Phase cible : MVP.
+- **2026-10-10 · Ctrl+K vers l'exigence elle-même** — Une exigence trouvée
+  par la recherche ouvre son référentiel, mais pas l'exigence : passer
+  `?exigence=<id>` et sélectionner le nœud et l'exigence à l'ouverture du
+  détail. Phase cible : MVP.
+- **2026-10-10 · Prévenir le nouveau propriétaire d'un document** — Le
+  changement de propriétaire d'un document ne notifie personne, faute de
+  sujet « document » dans les notifications. Phase cible : V1.

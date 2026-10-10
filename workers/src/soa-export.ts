@@ -7,7 +7,7 @@ import {
   type ClaimedExport,
   type Db,
 } from '@toron/db';
-import { scoreAssessment, type AssessmentItemStatus } from '@toron/core';
+import { normalizeSoaItem, scoreAssessment, type AssessmentItemStatus } from '@toron/core';
 import { compileSoa, randomVerifySlug, sha256Hex, type SoaModel } from '@toron/typst';
 
 const STATUS_LABEL: Record<AssessmentItemStatus, string> = {
@@ -62,13 +62,19 @@ export async function processSoaExport(
       generatedAtLabel: DATE_FORMAT.format(now()),
       coveragePct: score.scorePct,
       gaps: score.gaps,
-      rows: data.items.map((i) => ({
-        ref: i.requirementRef,
-        title: i.requirementTitle,
-        status: STATUS_LABEL[i.status],
-        included: i.soaIncluded,
-        justification: i.soaJustification,
-      })),
+      // Inclusion et justification dérivées du statut, pas des colonnes : les
+      // items enregistrés avant cette règle (N/A « incluse », justification
+      // restée après retour à conforme) sortent aussi corrects.
+      rows: data.items.map((i) => {
+        const soa = normalizeSoaItem(i.status, i.soaJustification);
+        return {
+          ref: i.requirementRef,
+          title: i.requirementTitle,
+          status: STATUS_LABEL[i.status],
+          included: soa.soaIncluded,
+          justification: soa.soaJustification,
+        };
+      }),
       verifyUrl: `${publicBaseUrl.replace(/\/$/, '')}/verifier/${slug}`,
       verifySlug: slug,
     };

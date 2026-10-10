@@ -8,6 +8,7 @@ import {
   type ControlReviewResult,
   type ControlReviewState,
   type ExceptionState,
+  type RecyfEntityKind,
 } from '@toron/core';
 import type {
   AssessmentItemRow,
@@ -21,9 +22,12 @@ import type {
 } from '@toron/db';
 import { Dialog } from '@toron/ui';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+
+import { keepValues } from '@/lib/forms';
 
 import {
+  addCustomRequirementAction,
   createControlAction,
   deleteControlAction,
   getControlDeleteImpactAction,
@@ -106,6 +110,7 @@ interface Props {
   exportsList: ExportSummary[];
   controlExceptions: ControlException[];
   controlReviews: ControlReviewSummary[];
+  nis2Default: RecyfEntityKind | null;
 }
 
 export function ReferentielDetail({
@@ -122,6 +127,7 @@ export function ReferentielDetail({
   exportsList,
   controlExceptions,
   controlReviews,
+  nis2Default,
 }: Props) {
   const itemsByReq = useMemo(
     () => new Map(items.map((i) => [i.requirementId, i])),
@@ -213,6 +219,8 @@ export function ReferentielDetail({
         slug={slug}
         canManage={canManage}
         frameworkId={framework.id}
+        frameworkCode={framework.code}
+        nis2Default={nis2Default}
         scopes={scopes}
         assessments={assessments}
         activeCampaign={activeCampaign}
@@ -231,7 +239,8 @@ export function ReferentielDetail({
                 return (
                   <button
                     key={n.id}
-                    className={`tree-node ${n.id === activeNodeId ? 'tree-node--active' : ''}`}
+                    className={`tree-node ${n.id === activeNode?.id ? 'tree-node--active' : ''}`}
+                    aria-current={n.id === activeNode?.id ? 'true' : undefined}
                     onClick={() => {
                       setActiveNodeId(n.id);
                       setSelectedReqId(null);
@@ -269,9 +278,19 @@ export function ReferentielDetail({
               {mutualizedOnly ? ' mutualisée' + (rows.length > 1 ? 's' : '') : ''}
             </div>
           </div>
+          {/* Résumé du nœud (ex. objectif ReCyF et son applicabilité) quand il liste des enfants. */}
+          {activeNode?.guidance && (childrenByParent.get(activeNode.id)?.length ?? 0) > 0 ? (
+            <p className="panel-guidance" style={{ margin: 0, padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
+              {activeNode.guidance}
+            </p>
+          ) : null}
           {rows.length === 0 ? (
             <p style={{ padding: '20px 16px', color: 'var(--text-3)', fontSize: '12.5px' }}>
-              {mutualizedOnly ? 'Aucune exigence mutualisée dans ce nœud.' : 'Aucune exigence dans ce nœud.'}
+              {mutualizedOnly
+                ? 'Aucune exigence mutualisée dans ce nœud.'
+                : !framework.isBuiltin && canManage
+                  ? 'Ce référentiel interne n’a pas encore d’exigence — ajoutez la première ci-dessous.'
+                  : 'Aucune exigence dans ce nœud.'}
             </p>
           ) : (
             rows.map((r) => {
@@ -285,6 +304,7 @@ export function ReferentielDetail({
                   className={`req-row ${mutualized ? 'req-row--mutualized' : ''} ${
                     r.id === selectedReqId ? 'req-row--selected' : ''
                   }`}
+                  aria-current={r.id === selectedReqId ? 'true' : undefined}
                   onClick={() => setSelectedReqId(r.id)}
                 >
                   <span className="req-thread" aria-hidden="true" />
@@ -327,14 +347,20 @@ export function ReferentielDetail({
               );
             })
           )}
+          {!framework.isBuiltin && canManage ? (
+            <AddRequirementForm slug={slug} frameworkId={framework.id} />
+          ) : null}
         </div>
 
         {/* ─── Panneau détail : mapping ─── */}
+        {/* key : chaque exigence repart de son propre item (statut, constat, saisie). */}
         {selectedReq ? (
           <RequirementPanel
+            key={selectedReq.id}
             slug={slug}
             canManage={canManage}
             frameworkId={framework.id}
+            frameworkCode={framework.code}
             requirement={selectedReq}
             linkedControlIds={linkedByReq.get(selectedReq.id) ?? []}
             controls={controls}
@@ -352,10 +378,53 @@ export function ReferentielDetail({
   );
 }
 
+/** Ajout d'une exigence à un référentiel interne (les référentiels intégrés sont immuables). */
+function AddRequirementForm({ slug, frameworkId }: { slug: string; frameworkId: string }) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  function submit(formData: FormData, form: HTMLFormElement) {
+    setError(null);
+    start(async () => {
+      const res = await addCustomRequirementAction(slug, {
+        frameworkId,
+        ref: String(formData.get('ref') ?? ''),
+        title: String(formData.get('title') ?? ''),
+      });
+      if (res.ok) {
+        form.reset();
+        router.refresh();
+      } else {
+        setError(res.error.message);
+      }
+    });
+  }
+
+  return (
+    <form onSubmit={keepValues(submit)} style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+      <div className="panel-section-label">Ajouter une exigence</div>
+      <label className="field">
+        Référence
+        <input name="ref" placeholder="EG-01" maxLength={40} required />
+      </label>
+      <label className="field">
+        Intitulé
+        <input name="title" placeholder="Chiffrer les postes nomades" minLength={2} maxLength={300} required />
+      </label>
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
+      <button type="submit" className="btn btn-ghost btn-sm" disabled={pending}>
+        {pending ? 'Ajout…' : 'Ajouter l’exigence'}
+      </button>
+    </form>
+  );
+}
+
 function RequirementPanel({
   slug,
   canManage,
   frameworkId,
+  frameworkCode,
   requirement,
   linkedControlIds,
   controls,
@@ -370,6 +439,7 @@ function RequirementPanel({
   slug: string;
   canManage: boolean;
   frameworkId: string;
+  frameworkCode: string;
   requirement: RequirementNode;
   linkedControlIds: string[];
   controls: ControlSummary[];
@@ -387,6 +457,13 @@ function RequirementPanel({
   const [pickId, setPickId] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+
+  // Au clavier, le panneau suit la liste dans le DOM : on y amène le focus à
+  // chaque exigence ouverte, pour atteindre ses actions sans retraverser la liste.
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, [requirement.id]);
 
   const linkedSet = new Set(linkedControlIds);
   const available = controls.filter((c) => !linkedSet.has(c.id));
@@ -405,7 +482,9 @@ function RequirementPanel({
       <div className="panel-header">
         <div className="panel-header-body">
           <span className="chip-ref">{requirement.ref}</span>
-          <div className="panel-title">{requirement.title}</div>
+          <div className="panel-title" ref={titleRef} tabIndex={-1}>
+            {requirement.title}
+          </div>
           {requirement.guidance ? <p className="panel-guidance">{requirement.guidance}</p> : null}
         </div>
         <button className="icon-btn" onClick={onClose} aria-label="Fermer le panneau">
@@ -417,9 +496,11 @@ function RequirementPanel({
 
       {activeCampaign && activeCampaign.status === 'en_cours' ? (
         <EvaluationPanel
+          key={`${activeCampaign.id}:${requirement.id}`}
           slug={slug}
           canManage={canManage}
           frameworkId={frameworkId}
+          frameworkCode={frameworkCode}
           assessmentId={activeCampaign.id}
           requirement={requirement}
           item={item}
@@ -430,7 +511,8 @@ function RequirementPanel({
           <span className={`status-pill status-pill--${item.status}`}>
             {assessmentStatusLabel(item.status)}
           </span>
-          {item.soaJustification ? (
+          {/* Seule une exclusion porte une justification (core.normalizeSoaItem). */}
+          {item.status === 'non_applicable' && item.soaJustification ? (
             <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-2)' }}>
               Justification&nbsp;: {item.soaJustification}
             </p>

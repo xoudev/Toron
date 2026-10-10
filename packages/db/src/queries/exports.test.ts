@@ -6,6 +6,7 @@ import { createDb, type DbHandle } from '../client.ts';
 import { applyMigrations } from '../migrate.ts';
 import { DEMO, seedDemoTenant, seedIso27001Framework, seedRecyfFramework } from '../seed.ts';
 import { withTenant } from '../tenant.ts';
+import { createAssessment } from './assessments.ts';
 import {
   claimNextExport,
   createExport,
@@ -70,6 +71,23 @@ describe('cycle de vie d’un export scellé', () => {
     expect(result.afterStatus).toBe('scelle');
     expect(result.pdf?.sha256).toBe(SHA);
     expect(result.pdf?.pdf.toString()).toContain('%PDF');
+  });
+
+  it('le PDF d’une SoA porte sa date de scellement et le code du référentiel évalué', async () => {
+    const [iso] = (await admin`SELECT id FROM frameworks WHERE tenant_id IS NULL AND code = 'iso27001'`) as unknown as { id: string }[];
+    const pdf = await withTenant(app.db, T, async (tx) => {
+      const assessmentId = await createAssessment(tx, {
+        tenantId: T,
+        frameworkId: iso!.id,
+        scopeId: DEMO.scopeSmsi,
+        campaignLabel: 'Campagne export nommé',
+      });
+      const id = await createExport(tx, { tenantId: T, type: 'soa', objectRef: assessmentId, requestedBy: DEMO.userClaire });
+      await sealExport(tx, { exportId: id, pdf: Buffer.from('%PDF'), sha256: SHA, verifySlug: 'soa-nommee-0001' });
+      return getExportPdf(tx, id);
+    });
+    expect(pdf?.frameworkCode).toBe('iso27001');
+    expect(pdf?.sealedAt).toBeInstanceOf(Date);
   });
 
   it('la contrainte refuse un export « scellé » incomplet (sans empreinte)', async () => {

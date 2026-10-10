@@ -4,6 +4,32 @@
  * (PLAN §13 : la logique ne vit jamais dans les composants React).
  */
 
+import { SCOPE_KINDS, type ScopeKind } from './organisation.ts';
+
+const RECOMMENDED_BY_SCOPE_KIND: Record<ScopeKind, readonly string[]> = {
+  smsi: ['iso27001', 'recyf', 'rgpd'],
+  qms: ['iso9001'],
+  mixte: ['iso27001', 'recyf', 'rgpd', 'iso9001'],
+};
+
+/**
+ * Référentiels recommandés d'après la nature des périmètres de
+ * l'organisation : code du référentiel → nature du périmètre qui le justifie
+ * (une nature pure l'emporte sur « mixte »). Une aide au choix dans le
+ * catalogue, pas une qualification réglementaire.
+ */
+export function recommendedFrameworks(scopeKinds: readonly ScopeKind[]): Map<string, ScopeKind> {
+  const present = new Set(scopeKinds);
+  const recommended = new Map<string, ScopeKind>();
+  for (const kind of SCOPE_KINDS) {
+    if (!present.has(kind)) continue;
+    for (const code of RECOMMENDED_BY_SCOPE_KIND[kind]) {
+      if (!recommended.has(code)) recommended.set(code, kind);
+    }
+  }
+  return recommended;
+}
+
 /** Une exigence couverte par un contrôle, avec son référentiel d'origine. */
 export interface CoveredRequirement {
   frameworkId: string;

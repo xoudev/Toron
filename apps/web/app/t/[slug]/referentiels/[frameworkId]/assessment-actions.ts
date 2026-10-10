@@ -3,7 +3,10 @@
 import {
   appError,
   ASSESSMENT_ITEM_STATUSES,
+  exclusionAllowed,
   isSoaItemValid,
+  normalizeSoaItem,
+  recyfPreExclusions,
   suggestInheritedStatuses,
   type StatusSuggestion,
 } from '@toron/core';
@@ -12,11 +15,15 @@ import {
   createAction,
   createAssessment,
   createExport,
+  findGapAction,
+  getAssessmentItemContext,
+  getFramework,
   getMutualizedPeers,
   setAssessmentItemStatus,
   withTenant,
   writeAuditEntry,
 } from '@toron/db';
+import { recyf } from '@toron/frameworks';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -31,12 +38,13 @@ function revalidateDetail(slug: string, frameworkId: string) {
 /**
  * CA §5.5 : convertir un écart d'évaluation en action corrective en 1 clic.
  * L'action est pré-liée à sa campagne (origine) et à l'exigence concernée —
- * la conversion ne perd jamais la traçabilité (RM §5.5).
+ * la conversion ne perd jamais la traçabilité (RM §5.5). Un écart enregistré
+ * ne produit qu'une action : si elle existe déjà, on la renvoie.
  */
 export async function createActionFromGapAction(
   slug: string,
   input: { assessmentId: string; requirementId: string; requirementRef: string; requirementTitle: string },
-): Promise<ActionResult<{ actionId: string }>> {
+): Promise<ActionResult<{ actionId: string; existing: boolean }>> {
   const auth = await authorizeManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
   const parsed = z
@@ -52,7 +60,11 @@ export async function createActionFromGapAction(
   }
   const d = parsed.data;
   try {
-    const actionId = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+    const result = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const item = await getAssessmentItemContext(tx, d.assessmentId, d.requirementId);
+      if (!item || item.status !== 'ecart') return { outcome: 'not_gap' as const };
+      const existing = await findGapAction(tx, d.assessmentId, d.requirementId);
+      if (existing) return { outcome: 'existing' as const, actionId: existing };
       const id = await createAction(tx, {
         tenantId: auth.tenantId,
         title: `Corriger l’écart — ${d.requirementRef} ${d.requirementTitle}`.slice(0, 200),
@@ -73,10 +85,16 @@ export async function createActionFromGapAction(
         ip: auth.ip,
         userAgent: auth.userAgent,
       });
-      return id;
+      return { outcome: 'created' as const, actionId: id };
     });
-    revalidatePath(`/t/${slug}/plan-action`);
-    return { ok: true, data: { actionId } };
+    if (result.outcome === 'not_gap') {
+      return {
+        ok: false,
+        error: appError('ECART_NON_ENREGISTRE', 'Cette exigence n’est pas enregistrée en écart — enregistrez d’abord le statut « Écart », puis créez l’action.'),
+      };
+    }
+    if (result.outcome === 'created') revalidatePath(`/t/${slug}/plan-action`);
+    return { ok: true, data: { actionId: result.actionId, existing: result.outcome === 'existing' } };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_CREATION', 'La création de l’action a échoué — réessayez.')) };
   }
@@ -84,7 +102,7 @@ export async function createActionFromGapAction(
 
 export async function createAssessmentAction(
   slug: string,
-  input: { frameworkId: string; scopeId: string; campaignLabel: string },
+  input: { frameworkId: string; scopeId: string; campaignLabel: string; nis2Entity?: string },
 ): Promise<ActionResult<{ assessmentId: string }>> {
   const auth = await authorizeManager(slug);
   if (isActionError(auth)) return { ok: false, error: auth };
@@ -93,18 +111,31 @@ export async function createAssessmentAction(
       frameworkId: z.uuid(),
       scopeId: z.uuid(),
       campaignLabel: z.string().trim().min(2, '2 caractères minimum').max(160),
+      nis2Entity: z.enum(['ei', 'ee']).optional(),
     })
     .safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: appError('SAISIE_INVALIDE', 'Campagne invalide — choisissez un périmètre et un intitulé.') };
   }
+  const d = parsed.data;
   try {
-    const assessmentId = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+    const result = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const fw = await getFramework(tx, d.frameworkId);
+      if (!fw) return { outcome: 'not_found' as const };
+      // ReCyF : la catégorie d'entité décide des moyens qui la concernent ;
+      // ceux réservés à l'autre catégorie entrent déjà exclus et justifiés.
+      let excluded: { refs: string[]; justification: string } | undefined;
+      if (fw.code === 'recyf') {
+        if (!d.nis2Entity) return { outcome: 'entity_required' as const };
+        const data = recyf();
+        excluded = recyfPreExclusions(data.objectives.flatMap((o) => o.means), d.nis2Entity, data.version);
+      }
       const id = await createAssessment(tx, {
         tenantId: auth.tenantId,
-        frameworkId: parsed.data.frameworkId,
-        scopeId: parsed.data.scopeId,
-        campaignLabel: parsed.data.campaignLabel,
+        frameworkId: d.frameworkId,
+        scopeId: d.scopeId,
+        campaignLabel: d.campaignLabel,
+        excluded,
       });
       await writeAuditEntry(tx, {
         tenantId: auth.tenantId,
@@ -112,14 +143,25 @@ export async function createAssessmentAction(
         action: 'assessment.create',
         objectType: 'assessment',
         objectId: id,
-        after: { campaignLabel: parsed.data.campaignLabel },
+        after: excluded
+          ? { campaignLabel: d.campaignLabel, nis2Entity: d.nis2Entity, preExcluded: excluded.refs.length }
+          : { campaignLabel: d.campaignLabel },
         ip: auth.ip,
         userAgent: auth.userAgent,
       });
-      return id;
+      return { outcome: 'created' as const, id };
     });
-    revalidateDetail(slug, parsed.data.frameworkId);
-    return { ok: true, data: { assessmentId } };
+    if (result.outcome === 'not_found') {
+      return { ok: false, error: appError('REFERENTIEL_INTROUVABLE', 'Ce référentiel n’existe plus — rechargez la page.') };
+    }
+    if (result.outcome === 'entity_required') {
+      return {
+        ok: false,
+        error: appError('ENTITE_NIS2_REQUISE', 'Précisez si l’organisation est une entité importante ou essentielle, puis relancez.'),
+      };
+    }
+    revalidateDetail(slug, d.frameworkId);
+    return { ok: true, data: { assessmentId: result.id } };
   } catch (err) {
     return {
       ok: false,
@@ -136,7 +178,6 @@ export async function setItemStatusAction(
     requirementId: string;
     status: string;
     statement?: string | null;
-    soaIncluded?: boolean;
     soaJustification?: string | null;
   },
 ): Promise<ActionResult> {
@@ -149,7 +190,6 @@ export async function setItemStatusAction(
       requirementId: z.uuid(),
       status: z.enum(ASSESSMENT_ITEM_STATUSES),
       statement: z.string().trim().max(2000).nullish(),
-      soaIncluded: z.boolean().optional(),
       soaJustification: z.string().trim().max(2000).nullish(),
     })
     .safeParse(input);
@@ -164,15 +204,23 @@ export async function setItemStatusAction(
       error: appError('JUSTIFICATION_REQUISE', 'Une exclusion (non applicable) exige une justification — saisissez-la, puis validez.'),
     };
   }
+  // Inclusion dans la SoA et justification se déduisent du statut, pas du client.
+  const soa = normalizeSoaItem(parsed.data.status, parsed.data.soaJustification);
   try {
-    const affected = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+    const outcome = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const item = await getAssessmentItemContext(tx, parsed.data.assessmentId, parsed.data.requirementId);
+      if (!item) return 'not_found' as const;
+      if (item.campaignStatus === 'cloturee') return 'closed' as const;
+      if (parsed.data.status === 'non_applicable' && !exclusionAllowed(item.frameworkCode, item.requirementRef)) {
+        return 'not_excludable' as const;
+      }
       const n = await setAssessmentItemStatus(tx, {
         assessmentId: parsed.data.assessmentId,
         requirementId: parsed.data.requirementId,
         status: parsed.data.status,
         statement: parsed.data.statement ?? null,
-        soaIncluded: parsed.data.soaIncluded,
-        soaJustification: parsed.data.soaJustification ?? null,
+        soaIncluded: soa.soaIncluded,
+        soaJustification: soa.soaJustification,
         assessedBy: auth.userId,
       });
       if (n > 0) {
@@ -187,10 +235,22 @@ export async function setItemStatusAction(
           userAgent: auth.userAgent,
         });
       }
-      return n;
+      return n > 0 ? ('updated' as const) : ('not_found' as const);
     });
-    if (affected === 0) {
+    if (outcome === 'not_found') {
       return { ok: false, error: appError('ITEM_INTROUVABLE', 'Cette exigence n’est pas dans la campagne — rechargez la page.') };
+    }
+    if (outcome === 'closed') {
+      return {
+        ok: false,
+        error: appError('CAMPAGNE_CLOTUREE', 'Cette campagne est clôturée, ses statuts sont figés — ouvrez une nouvelle campagne pour réévaluer.'),
+      };
+    }
+    if (outcome === 'not_excludable') {
+      return {
+        ok: false,
+        error: appError('EXCLUSION_INTERDITE', 'Les clauses 4 à 10 d’ISO 27001 ne peuvent pas être exclues ; seules les mesures de l’Annexe A le peuvent — choisissez un autre statut.'),
+      };
     }
     revalidateDetail(slug, parsed.data.frameworkId);
     return { ok: true, data: undefined };

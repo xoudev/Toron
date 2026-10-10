@@ -40,16 +40,29 @@ export function CreateFrameworkButton({ slug }: { slug: string }) {
 
   return (
     <>
-      <button className="btn btn-primary btn-sm" onClick={() => setOpen(true)}>
+      <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>
         Créer un référentiel
       </button>
       {open ? (
         <Dialog title="Créer un référentiel interne" onClose={() => setOpen(false)}>
           <form onSubmit={keepValues(submit)}>
-            <p>Un référentiel d’exigences propre à votre organisation (exigences groupe, politique interne).</p>
+            <p>
+              Un référentiel d’exigences propre à votre organisation (exigences groupe, politique interne). Vous
+              y ajouterez ses exigences depuis sa page, une fois créé.
+            </p>
             <label className="field">
               Code
-              <input name="code" placeholder="exigences_groupe" pattern="[a-z0-9_]+" required />
+              <input
+                name="code"
+                placeholder="exigences_groupe"
+                pattern="[a-z0-9_]+"
+                title="Minuscules, chiffres et _ uniquement"
+                aria-describedby="framework-code-help"
+                required
+              />
+              <span id="framework-code-help" style={{ fontSize: 11.5, color: 'var(--text-3)' }}>
+                Identifiant court : minuscules, chiffres et _ ; il sert de sigle au référentiel dans Toron.
+              </span>
             </label>
             <label className="field">
               Version
@@ -77,17 +90,27 @@ export function CreateFrameworkButton({ slug }: { slug: string }) {
 
 export function FrameworkVisibilityButton({ slug, frameworkId, hidden }: { slug: string; frameworkId: string; hidden: boolean }) {
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   function toggle() {
+    setError(null);
     start(async () => {
       const res = await setFrameworkHiddenAction(slug, { frameworkId, hidden: !hidden });
       if (res.ok) router.refresh();
+      else setError(res.error.message);
     });
   }
   return (
-    <button className="btn btn-ghost btn-sm" disabled={pending} onClick={toggle} title={hidden ? 'Rétablir dans le catalogue' : 'Masquer du catalogue'}>
-      {hidden ? '↺ Rétablir' : '⊘ Masquer'}
-    </button>
+    <>
+      <button className="btn btn-ghost btn-sm" disabled={pending} onClick={toggle} title={hidden ? 'Rétablir dans le catalogue' : 'Masquer du catalogue'}>
+        {hidden ? '↺ Rétablir' : '⊘ Masquer'}
+      </button>
+      {error ? (
+        <p className="form-error" role="alert" style={{ flexBasis: '100%', margin: 0 }}>
+          {error}
+        </p>
+      ) : null}
+    </>
   );
 }
 
@@ -119,13 +142,8 @@ export function ActivateFrameworkButton({
     });
   }
 
-  if (scopes.length === 0) {
-    return (
-      <a className="btn btn-ghost btn-sm" href={`/t/${slug}/referentiels/${frameworkId}`}>
-        Consulter
-      </a>
-    );
-  }
+  // Sans périmètre, rien à activer : la carte garde son lien « Consulter ».
+  if (scopes.length === 0) return null;
 
   return (
     <>
@@ -134,7 +152,10 @@ export function ActivateFrameworkButton({
       </button>
       {open ? (
         <Dialog title="Activer sur un périmètre" onClose={() => setOpen(false)}>
-          <p>Le référentiel sera suivi sur le périmètre de management choisi.</p>
+          <p>
+            Le référentiel sera suivi sur le périmètre de management choisi. L’activation ne peut pas être
+            annulée pour l’instant : consultez d’abord le référentiel si vous hésitez.
+          </p>
           <label className="field">
             Périmètre
             <select value={scopeId} onChange={(e) => setScopeId(e.target.value)}>

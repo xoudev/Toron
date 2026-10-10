@@ -1,4 +1,4 @@
-import { canManageControls } from '@toron/core';
+import { canManageControls, recommendedFrameworks, SCOPE_KIND_SHORT } from '@toron/core';
 import { listControls, listFrameworks, listScopes, withTenant, type FrameworkSummary } from '@toron/db';
 import { BrandMark, ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
@@ -21,6 +21,18 @@ const FRAMEWORK_SUBTITLE: Record<string, string> = {
   iso22301: 'Continuité d’activité',
   dora: 'Résilience TIC · Finance',
   secnumcloud: 'Cloud · ANSSI',
+};
+
+// Ce que couvre chaque référentiel, en mots simples, pour choisir avant d'activer.
+const FRAMEWORK_PURPOSE: Record<string, string> = {
+  iso27001: 'Norme internationale de sécurité de l’information, certifiable.',
+  recyf: 'Mesures de cybersécurité attendues par l’ANSSI des entités soumises à NIS 2.',
+  rgpd: 'Protection des données personnelles, applicable à toute organisation qui en traite.',
+  iso9001: 'Norme internationale de management de la qualité, certifiable.',
+  iso27701: 'Extension d’ISO 27001 à la protection de la vie privée.',
+  iso22301: 'Norme de continuité d’activité, certifiable.',
+  dora: 'Exigé des entités financières de l’UE depuis janvier 2025.',
+  secnumcloud: 'Qualification ANSSI des offres de cloud de confiance.',
 };
 
 // Taux d'outillage sur les exigences feuilles : les titres de chapitre et les
@@ -54,7 +66,11 @@ export default async function ReferentielsPage({
   const active = frameworks.filter((f) => f.activatedScopeCount > 0);
   // Un référentiel activé n'est jamais masqué ; les autres se répartissent
   // entre disponibles (visibles) et masqués (rétablissables).
-  const available = frameworks.filter((f) => f.activatedScopeCount === 0 && !f.hidden);
+  // Les référentiels recommandés pour la nature des périmètres passent en tête.
+  const recommended = recommendedFrameworks(scopes.map((s) => s.kind));
+  const available = frameworks
+    .filter((f) => f.activatedScopeCount === 0 && !f.hidden)
+    .sort((a, b) => Number(recommended.has(b.code)) - Number(recommended.has(a.code)));
   const hidden = frameworks.filter((f) => f.activatedScopeCount === 0 && f.hidden);
   const mutualizedCount = controls.filter((c) => c.mutualized).length;
   const activeCodes = active.map((f) => f.code.toUpperCase());
@@ -104,6 +120,10 @@ export default async function ReferentielsPage({
             <div className="section-rule">
               <span className="section-rule-label">Référentiels actifs ({active.length})</span>
             </div>
+            <p className="catalog-note">
+              Exigence outillée : au moins un contrôle interne y est rattaché. La conformité se mesure dans une
+              campagne d’évaluation, depuis la page du référentiel.
+            </p>
             <div className="catalog-grid">
               {active.map((f) => (
                 <article className="card fw-card" key={f.id}>
@@ -132,7 +152,7 @@ export default async function ReferentielsPage({
                       <div className="stat-label">Exigences outillées</div>
                     </div>
                   </div>
-                  <div className="tooling" title="Part des exigences couvertes par au moins un contrôle interne, directement ou par leur chapitre">
+                  <div className="tooling" title="Part des exigences auxquelles est rattaché au moins un contrôle interne, directement ou par leur chapitre">
                     <div className="tooling-track">
                       <div className="tooling-fill" style={{ width: `${toolingRate(f)}%` }} />
                     </div>
@@ -169,17 +189,19 @@ export default async function ReferentielsPage({
                       {f.isBuiltin ? 'Intégré' : 'Interne'}
                     </span>
                   </div>
+                  {FRAMEWORK_PURPOSE[f.code] ? <p className="fw-card-desc">{FRAMEWORK_PURPOSE[f.code]}</p> : null}
+                  {recommended.has(f.code) ? (
+                    <span className="fw-card-reco">
+                      Recommandé pour votre périmètre {SCOPE_KIND_SHORT[recommended.get(f.code)!]}
+                    </span>
+                  ) : null}
                   <div className="fw-card-foot">
-                    {canManage ? (
-                      <>
-                        <ActivateFrameworkButton slug={slug} frameworkId={f.id} scopes={scopes} />
-                        <FrameworkVisibilityButton slug={slug} frameworkId={f.id} hidden={false} />
-                      </>
-                    ) : (
-                      <a className="btn btn-ghost btn-sm" href={`/t/${slug}/referentiels/${f.id}`}>
-                        Consulter
-                      </a>
-                    )}
+                    {/* Consulter avant d'activer : l'activation n'est pas réversible pour l'instant. */}
+                    {canManage ? <ActivateFrameworkButton slug={slug} frameworkId={f.id} scopes={scopes} /> : null}
+                    <a className="btn btn-ghost btn-sm" href={`/t/${slug}/referentiels/${f.id}`}>
+                      Consulter
+                    </a>
+                    {canManage ? <FrameworkVisibilityButton slug={slug} frameworkId={f.id} hidden={false} /> : null}
                   </div>
                 </article>
               ))}

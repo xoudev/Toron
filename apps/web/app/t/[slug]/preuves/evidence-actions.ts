@@ -2,7 +2,7 @@
 
 import { createHash } from 'node:crypto';
 
-import { appError } from '@toron/core';
+import { appError, effectiveValidUntil, evidenceFileError } from '@toron/core';
 import {
   createEvidence,
   linkEvidence,
@@ -38,21 +38,13 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DateReq = z.string().regex(DATE_RE, 'Date attendue au format AAAA-MM-JJ');
 const DateOpt = z.string().regex(DATE_RE, 'Date attendue au format AAAA-MM-JJ').optional().nullable();
 
-const MAX_BYTES = 10 * 1024 * 1024;
-const ALLOWED_EXT = ['pdf', 'png', 'jpg', 'jpeg', 'csv', 'txt', 'md', 'docx', 'xlsx', 'zip', 'json'];
-
 /** Contrôles communs à tout fichier de preuve : présence, taille, extension. */
 function checkUpload(file: FormDataEntryValue | null): { ok: true; file: File } | { ok: false; error: ReturnType<typeof appError> } {
-  if (!(file instanceof File) || file.size === 0) {
+  if (!(file instanceof File)) {
     return { ok: false, error: appError('FICHIER_MANQUANT', 'Choisissez un fichier à téléverser.') };
   }
-  if (file.size > MAX_BYTES) {
-    return { ok: false, error: appError('FICHIER_TROP_GROS', 'Fichier trop volumineux — 10 Mo maximum.') };
-  }
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
-  if (!ALLOWED_EXT.includes(ext)) {
-    return { ok: false, error: appError('TYPE_REFUSE', `Type de fichier non autorisé (.${ext}). Formats admis : ${ALLOWED_EXT.join(', ')}.`) };
-  }
+  const invalid = evidenceFileError(file);
+  if (invalid) return { ok: false, error: appError(invalid.code, invalid.message) };
   return { ok: true, file };
 }
 
@@ -107,7 +99,8 @@ export async function createEvidenceAction(
         content,
         sha256,
         collectedAt: d.collectedAt,
-        validUntil: d.validUntil ?? null,
+        // Une preuve récurrente sans échéance saisie prend celle de sa récurrence.
+        validUntil: effectiveValidUntil(d.collectedAt, d.recurrence, d.validUntil ?? null),
         recurrence: d.recurrence,
         collectorUserId: auth.userId,
         links: d.controlId ? [{ targetType: 'control', targetId: d.controlId }] : [],
@@ -127,7 +120,7 @@ export async function createEvidenceAction(
     revalidatePath(`/t/${slug}/preuves`);
     return { ok: true, data: { evidenceId } };
   } catch (err) {
-    return { ok: false, error: logFailure(err, appError('ECHEC_INGESTION', 'L’ingestion de la preuve a échoué — réessayez.')) };
+    return { ok: false, error: logFailure(err, appError('ECHEC_INGESTION', 'Le dépôt de la preuve a échoué — réessayez.')) };
   }
 }
 
@@ -220,7 +213,7 @@ export async function renewEvidenceAction(slug: string, formData: FormData): Pro
       if (r.outcome === 'renouvelee') {
         await writeAuditEntry(tx, {
           tenantId: auth.tenantId, actorUserId: auth.userId, action: 'evidence.renew', objectType: 'evidence',
-          objectId: r.evidenceId, before: { evidenceId: d.previousId }, after: { sha256, validUntil: d.validUntil ?? null, antivirus: scan.antivirus },
+          objectId: r.evidenceId, before: { evidenceId: d.previousId }, after: { sha256, validUntil: r.validUntil, antivirus: scan.antivirus },
           ip: auth.ip, userAgent: auth.userAgent,
         });
       }

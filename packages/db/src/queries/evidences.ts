@@ -1,4 +1,5 @@
 import {
+  effectiveValidUntil,
   freshnessRank,
   freshnessState,
   type EvidenceRecurrence,
@@ -281,7 +282,7 @@ export async function listAccessLog(tx: TenantTx, evidenceId: string): Promise<A
 // ── Renouvellement ──────────────────────────────────────────────────────
 
 export type RenewResult =
-  | { outcome: 'renouvelee'; evidenceId: string; title: string }
+  | { outcome: 'renouvelee'; evidenceId: string; title: string; validUntil: string | null }
   | { outcome: 'introuvable' }
   | { outcome: 'deja_remplacee'; supersededBy: string };
 
@@ -289,7 +290,8 @@ export type RenewResult =
  * Renouvelle une preuve : la nouvelle hérite de l'intitulé, du type, de la
  * récurrence et des rattachements ; l'ancienne est marquée remplacée dans la
  * même transaction (verrou de ligne : deux renouvellements simultanés ne
- * peuvent pas remplacer la même preuve).
+ * peuvent pas remplacer la même preuve). Sans échéance saisie, la validité
+ * suit la récurrence, comme au dépôt.
  */
 export async function renewEvidence(tx: TenantTx, input: {
   tenantId: string; previousId: string; fileName: string; content: Buffer; sha256: string;
@@ -304,13 +306,14 @@ export async function renewEvidence(tx: TenantTx, input: {
 
   const links = await tx.select({ targetType: schema.evidenceLinks.targetType, targetId: schema.evidenceLinks.targetId })
     .from(schema.evidenceLinks).where(eq(schema.evidenceLinks.evidenceId, prev.id));
+  const validUntil = effectiveValidUntil(input.collectedAt, prev.recurrence, input.validUntil);
   const id = await createEvidence(tx, {
     tenantId: input.tenantId, title: prev.title, type: prev.type, fileName: input.fileName, content: input.content,
-    sha256: input.sha256, collectedAt: input.collectedAt, validUntil: input.validUntil, recurrence: prev.recurrence,
+    sha256: input.sha256, collectedAt: input.collectedAt, validUntil, recurrence: prev.recurrence,
     collectorUserId: input.collectorUserId, links,
   });
   await tx.update(schema.evidences).set({ supersededBy: id, supersededAt: new Date() }).where(eq(schema.evidences.id, prev.id));
-  return { outcome: 'renouvelee', evidenceId: id, title: prev.title };
+  return { outcome: 'renouvelee', evidenceId: id, title: prev.title, validUntil };
 }
 
 export interface EvidenceHistoryRow {

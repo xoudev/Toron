@@ -68,11 +68,18 @@ export async function antivirusGate(
     }));
     return { ok: false, error: appError('FICHIER_INFECTE', `Fichier refusé : l’antivirus y a détecté « ${result.signature} ». Il n’a pas été enregistré.`) };
   }
+  // Service de la plateforme, pas un réglage de l'organisation : on renvoie
+  // vers le support, avec la référence qui retrouve l'incident dans les logs.
+  const correlationId = crypto.randomUUID();
   return {
     ok: false,
     error: logFailure(
       new Error(`analyse antivirus impossible : ${result.detail.slice(0, 120)}`),
-      appError('ANTIVIRUS_INDISPONIBLE', 'L’analyse antivirus est indisponible : le fichier n’a pas été enregistré. Réessayez dans quelques minutes ; si cela persiste, prévenez votre administrateur.'),
+      appError(
+        'ANTIVIRUS_INDISPONIBLE',
+        `L’analyse antivirus est indisponible : le fichier n’a pas été enregistré. Réessayez dans quelques minutes ; si cela persiste, contactez le support Toron en indiquant la référence ${correlationId}.`,
+        correlationId,
+      ),
     ),
   };
 }

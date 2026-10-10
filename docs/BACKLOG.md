@@ -144,6 +144,12 @@ description courte, phase cible pressentie.
 - **2026-10-07 · Revue de contrôle avec preuve nouvelle** — Déposer la
   preuve de la revue (capture, export) depuis le formulaire de revue, au
   lieu de la choisir parmi les preuves déjà rattachées. Phase cible : V1.
+- **2026-10-10 · Rattacher une preuve directement à une exigence** — Le
+  modèle admet la liaison preuve → exigence (PLAN §5.7 : liaison n-n
+  contrôles/exigences), mais le coffre ne propose que les contrôles : sans
+  contrôle, une preuve déposée ne couvre rien. Ajouter dans la fiche de la
+  preuve un choix d'exigences des référentiels activés (recherche par
+  identifiant), à côté des contrôles. Phase cible : MVP (reliquat).
 - **2026-10-07 · e2e Playwright de la sensibilisation** — Nouvelle session
   tenue (présents inférieurs aux membres cochés : refus) → dépôt de la
   feuille d'émargement depuis la fiche (coffre, antivirus) → indicateur

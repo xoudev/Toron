@@ -15,8 +15,17 @@
 
 	header -Server
 
+	# Les liens d'invitation et du portail fournisseur portent un jeton dans
+	# le chemin, et parfois encodé dans ?suite= : il est masqué avant
+	# l'écriture du journal, et l'en-tête Referer n'y figure pas.
 	log {
 		output stdout
-		format json
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp "(?i)(/(?:invitations|fournisseur)/|%2F(?:invitations|fournisseur)%2F)[A-Za-z0-9_-]+" "$1[masque]"
+				request>headers>Referer delete
+			}
+		}
 	}
 }

@@ -99,6 +99,12 @@ Meridiane Logistics du seed.
   ports 80/443 pour Caddy), `no-new-privileges`.
 - Images tirées par digest, provenance vérifiable :
   `gh attestation verify oci://ghcr.io/xoudev/toron-web@<digest> -R xoudev/Toron`.
+- Journaux d'accès de Caddy sans jeton : le jeton des liens d'invitation
+  et du portail fournisseur, porté par le chemin (et parfois encodé dans
+  `?suite=`), est remplacé par `[masque]` avant l'écriture, et l'en-tête
+  `Referer` n'est pas journalisé. Vérification : la sortie de
+  `docker compose … logs caddy` ne contient que des
+  `/invitations/[masque]` et `/fournisseur/[masque]`.
 - Secrets applicatifs générés sur le serveur (`/opt/toron/.env`, mode
   600), absents du dépôt et de GitHub. Rôles Postgres applicatifs sans
   superutilisateur ni BYPASSRLS.

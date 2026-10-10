@@ -29,6 +29,10 @@ export interface DashboardMetrics {
   evidencesStale: number;
   documentsTotal: number;
   documentsReviewOverdue: number;
+  /** Documents sans aucune version publiée : rien d'opposable encore. */
+  documentsUnpublished: number;
+  /** Documents sans date de revue : leur revue n'est pas planifiée. */
+  documentsWithoutReviewDate: number;
 }
 
 interface RawCounts {
@@ -44,6 +48,8 @@ interface RawCounts {
   evidences_stale: number | string;
   documents_total: number | string;
   documents_review_overdue: number | string;
+  documents_unpublished: number | string;
+  documents_without_review_date: number | string;
 }
 
 export async function getDashboardMetrics(tx: TenantTx): Promise<DashboardMetrics> {
@@ -63,7 +69,10 @@ export async function getDashboardMetrics(tx: TenantTx): Promise<DashboardMetric
       (SELECT count(*) FROM evidences WHERE superseded_by IS NULL) AS evidences_total,
       (SELECT count(*) FROM evidences WHERE superseded_by IS NULL AND valid_until IS NOT NULL AND valid_until <= CURRENT_DATE + 30) AS evidences_stale,
       (SELECT count(*) FROM documents) AS documents_total,
-      (SELECT count(*) FROM documents WHERE review_due < CURRENT_DATE) AS documents_review_overdue
+      (SELECT count(*) FROM documents WHERE review_due < CURRENT_DATE) AS documents_review_overdue,
+      (SELECT count(*) FROM documents d WHERE NOT EXISTS
+         (SELECT 1 FROM document_versions v WHERE v.document_id = d.id AND v.status = 'publie')) AS documents_unpublished,
+      (SELECT count(*) FROM documents WHERE review_due IS NULL) AS documents_without_review_date
   `)) as unknown as RawCounts[];
 
   // Bandes de risque (dépendent de l'échelle) + acceptations à traiter.
@@ -141,6 +150,8 @@ export async function getDashboardMetrics(tx: TenantTx): Promise<DashboardMetric
     evidencesStale: Number(raw!.evidences_stale),
     documentsTotal: Number(raw!.documents_total),
     documentsReviewOverdue: Number(raw!.documents_review_overdue),
+    documentsUnpublished: Number(raw!.documents_unpublished),
+    documentsWithoutReviewDate: Number(raw!.documents_without_review_date),
   };
 }
 
@@ -151,10 +162,14 @@ export interface DashboardExtras {
   processesTotal: number;
   reviewsHeld: number;
   frameworksAvailable: number;
+  /** Exigences feuilles des référentiels visibles : la somme des cartes du catalogue. */
   requirementsTotal: number;
   scopesTotal: number;
   membersTotal: number;
   assessmentsTotal: number;
+  /** Registres importables (mise en route « Reprendre l'existant »). */
+  actionsTotal: number;
+  assetsTotal: number;
 }
 
 /**
@@ -173,10 +188,15 @@ export async function getDashboardExtras(tx: TenantTx): Promise<DashboardExtras>
       (SELECT count(*) FROM management_reviews WHERE status = 'tenue') AS reviews_held,
       (SELECT count(*) FROM frameworks f WHERE NOT EXISTS
          (SELECT 1 FROM framework_visibility fv WHERE fv.framework_id = f.id AND fv.hidden)) AS frameworks_available,
-      (SELECT count(*) FROM requirements) AS requirements_total,
+      (SELECT count(*) FROM requirements r
+         WHERE NOT EXISTS (SELECT 1 FROM requirements c WHERE c.parent_id = r.id)
+           AND NOT EXISTS (SELECT 1 FROM framework_visibility fv WHERE fv.framework_id = r.framework_id AND fv.hidden)
+      ) AS requirements_total,
       (SELECT count(*) FROM scopes) AS scopes_total,
       (SELECT count(*) FROM memberships) AS members_total,
-      (SELECT count(*) FROM assessments) AS assessments_total
+      (SELECT count(*) FROM assessments) AS assessments_total,
+      (SELECT count(*) FROM actions) AS actions_total,
+      (SELECT count(*) FROM assets) AS assets_total
   `);
   const r = (rows as unknown as Record<string, number | string>[])[0]!;
   return {
@@ -190,6 +210,8 @@ export async function getDashboardExtras(tx: TenantTx): Promise<DashboardExtras>
     scopesTotal: Number(r['scopes_total']),
     membersTotal: Number(r['members_total']),
     assessmentsTotal: Number(r['assessments_total']),
+    actionsTotal: Number(r['actions_total']),
+    assetsTotal: Number(r['assets_total']),
   };
 }
 

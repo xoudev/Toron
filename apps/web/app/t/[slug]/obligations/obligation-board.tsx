@@ -69,6 +69,17 @@ export function ObligationBoard({ slug, today, canManage, canConfigure, entities
         {entities.map((v) => (
           <EntityCard key={v.entity.id} slug={slug} view={v} canConfigure={canConfigure} canManage={canManage} onQualify={() => setQualifying(v)} />
         ))}
+        {/* Une organisation neuve n'a pas d'entité : sans elle, ni qualification ni suggestions. */}
+        {entities.length === 0 ? (
+          <article className="obl-entity">
+            <div className="obl-entity-head"><h2>Aucune entité juridique enregistrée</h2></div>
+            <p className="obl-entity-reason">
+              Ajoutez votre société pour obtenir sa qualification NIS 2 et les obligations qui s’appliquent.
+              {canConfigure ? null : ' Demandez-le à un administrateur de l’organisation.'}
+            </p>
+            {canConfigure ? <a className="btn btn-ghost btn-sm" href={`/t/${slug}/parametres?section=organisation`}>Ajouter une entité</a> : null}
+          </article>
+        ) : null}
       </section>
 
       <div className="obl-summary">
@@ -97,7 +108,10 @@ export function ObligationBoard({ slug, today, canManage, canConfigure, entities
       {obligations.length === 0 ? (
         <div className="empty-state">
           <h2>Registre vide</h2>
-          <p>Qualifiez vos entités ci-dessus : Toron propose les obligations NIS 2 et RGPD qui s’appliquent. Ajoutez ensuite vos exigences sectorielles et contractuelles.</p>
+          <p>
+            {entities.length === 0 ? 'Ajoutez d’abord votre entité juridique' : 'Qualifiez vos entités ci-dessus'} : Toron propose les obligations NIS 2 et RGPD qui
+            s’appliquent. Ajoutez ensuite vos exigences sectorielles et contractuelles.
+          </p>
         </div>
       ) : (
         <div className="ds-table-card"><div className="ds-scroll">

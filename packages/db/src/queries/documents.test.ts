@@ -10,6 +10,7 @@ import { withTenant } from '../tenant.ts';
 import {
   addVersion,
   createDocument,
+  getDocumentRef,
   getVersionBody,
   getVersionContent,
   linkRequirement,
@@ -18,6 +19,7 @@ import {
   listVersions,
   publishVersion,
   setDocumentProcess,
+  updateDocument,
 } from './documents.ts';
 import { createProcess } from './processes.ts';
 import { PG_IMAGE } from '../test-image.ts';
@@ -114,6 +116,28 @@ describe('éditeur intégré + rattachement processus (module 5.6)', () => {
   });
 });
 
+describe('en-tête d’un document modifiable après création', () => {
+  it('reporter la date de revue solde une revue échue ; intitulé et propriétaire suivent', async () => {
+    const { before, ref, after, missing } = await withTenant(app.db, T, async (tx) => {
+      const docId = await createDocument(tx, { tenantId: T, type: 'pssi', title: 'Test — PSSI à revoir', reviewDue: '2020-01-15' });
+      const before = (await listDocuments(tx)).find((d) => d.id === docId);
+      const ref = await getDocumentRef(tx, docId);
+      await updateDocument(tx, { documentId: docId, title: 'Test — PSSI revue', ownerUserId: DEMO.userClaire, reviewDue: '2099-01-15' });
+      const after = (await listDocuments(tx)).find((d) => d.id === docId);
+      const missing = await updateDocument(tx, { documentId: '00000000-0000-4000-8000-000000000000', title: 'x', ownerUserId: null, reviewDue: null });
+      return { before, ref, after, missing };
+    });
+    expect(before?.reviewOverdue).toBe(true);
+    expect(before?.ownerUserId).toBeNull();
+    expect(ref).toEqual({ title: 'Test — PSSI à revoir', ownerUserId: null, reviewDue: '2020-01-15' });
+    expect(after?.title).toBe('Test — PSSI revue');
+    expect(after?.ownerUserId).toBe(DEMO.userClaire);
+    expect(after?.reviewDue).toBe('2099-01-15');
+    expect(after?.reviewOverdue).toBe(false);
+    expect(missing).toBe(0);
+  });
+});
+
 describe('immuabilité d’une version publiée (RM §5.6)', () => {
   it('une version publiée ne peut plus être modifiée (trigger)', async () => {
     const vId = await withTenant(app.db, T, async (tx) => {
@@ -178,5 +202,13 @@ describe('isolation', () => {
     const seen = await withTenant(app.db, (other as { id: string }).id, (tx) => listDocuments(tx));
     expect(seen.some((d) => d.id === id)).toBe(false);
     expect(seen).toHaveLength(0);
+    // Ni modifiable depuis l'autre tenant.
+    const touched = await withTenant(app.db, (other as { id: string }).id, (tx) =>
+      updateDocument(tx, { documentId: id, title: 'Détourné', ownerUserId: null, reviewDue: null }),
+    );
+    expect(touched).toBe(0);
+    expect(await withTenant(app.db, (other as { id: string }).id, (tx) => getDocumentRef(tx, id))).toBeNull();
+    const mine = await withTenant(app.db, T, (tx) => listDocuments(tx));
+    expect(mine.find((d) => d.id === id)?.title).toBe('Doc isolé');
   });
 });

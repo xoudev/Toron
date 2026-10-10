@@ -333,6 +333,8 @@ export {
 export {
   createDocument,
   setDocumentProcess,
+  updateDocument,
+  getDocumentRef,
   addVersion,
   getVersionBody,
   publishVersion,
@@ -345,6 +347,8 @@ export {
   listDocumentRequirementIds,
   listDocumentsCoveringRequirement,
   type CreateDocumentInput,
+  type UpdateDocumentInput,
+  type DocumentRef,
   type AddVersionInput,
   type DocumentSummary,
   type DocumentVersionRow,

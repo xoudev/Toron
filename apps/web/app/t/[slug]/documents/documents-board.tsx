@@ -1,10 +1,10 @@
 'use client';
 
-import { DOCUMENT_TEMPLATES, acknowledgementProgress, type DocumentType } from '@toron/core';
+import { DOCUMENT_TEMPLATES, DOCUMENT_TYPES, DOCUMENT_TYPE_LABEL, acknowledgementProgress } from '@toron/core';
 import type { DocumentSummary, DocumentVersionRow, ScopeSummary, TenantMember } from '@toron/db';
 import { Dialog, Drawer } from '@toron/ui';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition, type KeyboardEvent } from 'react';
 
 import { exportDocx } from '@/lib/document-export';
 import { initials, refCode } from '@/lib/format';
@@ -23,20 +23,25 @@ import {
   getVersionsAction,
   publishVersionAction,
   setDocumentProcessAction,
+  updateDocumentAction,
 } from './document-actions';
 
 type ProcessOption = { id: string; name: string };
 
-const TYPE_LABEL: Record<string, string> = {
-  pssi: 'PSSI', politique: 'Politique', procedure: 'Procédure', charte: 'Charte', pca_pra: 'PCA / PRA', fiche_processus: 'Fiche processus', autre: 'Autre',
-};
 function fmtDate(d: string | null): string {
   if (!d) return '—';
   const [y, m, day] = d.slice(0, 10).split('-');
   return `${day}/${m}/${y}`;
 }
 
-export function DocumentsBoard({ slug, canManage, documents, scopes, members, processes }: { slug: string; canManage: boolean; documents: DocumentSummary[]; scopes: ScopeSummary[]; members: TenantMember[]; processes: ProcessOption[] }) {
+function onEnter(e: KeyboardEvent<HTMLTableRowElement>, open: () => void) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    open();
+  }
+}
+
+export function DocumentsBoard({ slug, canManage, currentUserId, documents, scopes, members, processes }: { slug: string; canManage: boolean; currentUserId: string; documents: DocumentSummary[]; scopes: ScopeSummary[]; members: TenantMember[]; processes: ProcessOption[] }) {
   const [query, setQuery] = useState('');
   const [processFilter, setProcessFilter] = useState('');
   const [creating, setCreating] = useState(false);
@@ -93,10 +98,10 @@ export function DocumentsBoard({ slug, canManage, documents, scopes, members, pr
               </thead>
               <tbody>
                 {shown.map((d) => (
-                  <tr key={d.id} onClick={() => setOpenId(d.id)}>
+                  <tr key={d.id} tabIndex={0} onClick={() => setOpenId(d.id)} onKeyDown={(e) => onEnter(e, () => setOpenId(d.id))}>
                     <td className="ds-id">{refCode('DOC', d.id)}</td>
                     <td><div className="ds-primary">{d.title}{d.requirementCount > 0 ? <small>{d.requirementCount} exigence{d.requirementCount > 1 ? 's' : ''} couverte{d.requirementCount > 1 ? 's' : ''}</small> : null}</div></td>
-                    <td><span className="ds-chip">{TYPE_LABEL[d.type] ?? d.type}</span></td>
+                    <td><span className="ds-chip">{DOCUMENT_TYPE_LABEL[d.type]}</span></td>
                     <td className="ds-muted">{d.processName ?? '—'}</td>
                     <td className="ds-mono">{d.latestSemver ? `v${d.latestSemver}` : '—'}</td>
                     <td>{d.latestStatus ? <span className={`doc-status doc-status--${d.latestStatus}`}>{d.latestStatus === 'publie' ? 'Publié' : 'Brouillon'}</span> : <span className="ds-mono">—</span>}</td>
@@ -116,22 +121,21 @@ export function DocumentsBoard({ slug, canManage, documents, scopes, members, pr
       )}
 
       {templatesOpen ? <TemplatesDialog onClose={() => setTemplatesOpen(false)} /> : null}
-      {creating ? <CreateDialog slug={slug} scopes={scopes} members={members} processes={processes} onClose={() => setCreating(false)} /> : null}
-      {open ? <VersionsDrawer slug={slug} doc={open} canManage={canManage} processes={processes} onClose={() => setOpenId(null)} /> : null}
+      {creating ? <CreateDialog slug={slug} currentUserId={currentUserId} scopes={scopes} members={members} processes={processes} onClose={() => setCreating(false)} /> : null}
+      {open ? <VersionsDrawer slug={slug} doc={open} canManage={canManage} members={members} processes={processes} onClose={() => setOpenId(null)} /> : null}
     </>
   );
 }
 
 function TemplatesDialog({ onClose }: { onClose: () => void }) {
-  const types = Object.keys(DOCUMENT_TEMPLATES) as DocumentType[];
   return (
     <Dialog title="Modèles de documents" onClose={onClose}>
       <p className="risk-mut-hint" style={{ marginTop: 0 }}>Téléchargez un modèle prêt à remplir (Word), ou créez un document du type voulu pour l’éditer directement dans Toron.</p>
       <div className="version-list">
-        {types.map((t) => (
+        {DOCUMENT_TYPES.map((t) => (
           <div className="version-row" key={t}>
-            <span className="grow" style={{ fontSize: 13 }}>{TYPE_LABEL[t] ?? t}</span>
-            <button className="btn btn-ghost btn-sm" onClick={() => exportDocx(`Modèle — ${TYPE_LABEL[t] ?? t}`, `Modèle de document Toron`, DOCUMENT_TEMPLATES[t].html)}>↓ Word (.doc)</button>
+            <span className="grow" style={{ fontSize: 13 }}>{DOCUMENT_TYPE_LABEL[t]}</span>
+            <button className="btn btn-ghost btn-sm" onClick={() => exportDocx(`Modèle — ${DOCUMENT_TYPE_LABEL[t]}`, `Modèle de document Toron`, DOCUMENT_TEMPLATES[t].html)}>↓ Word (.doc)</button>
           </div>
         ))}
       </div>
@@ -140,18 +144,23 @@ function TemplatesDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-function CreateDialog({ slug, scopes, members, processes, onClose }: { slug: string; scopes: ScopeSummary[]; members: TenantMember[]; processes: ProcessOption[]; onClose: () => void }) {
+function CreateDialog({ slug, currentUserId, scopes, members, processes, onClose }: { slug: string; currentUserId: string; scopes: ScopeSummary[]; members: TenantMember[]; processes: ProcessOption[]; onClose: () => void }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  // Le FormData ne porte pas le bouton qui a soumis le formulaire : le choix
+  // « Créer » / « Créer et éditer » est retenu au clic.
+  const toEditor = useRef(false);
   function submit(fd: FormData) {
     setError(null);
-    const openEditor = fd.get('_editor') === '1';
+    const openEditor = toEditor.current;
     start(async () => {
       const res = await createDocumentAction(slug, { type: String(fd.get('type') ?? 'autre'), title: String(fd.get('title') ?? ''), scopeId: String(fd.get('scopeId') ?? '') || null, processId: String(fd.get('processId') ?? '') || null, ownerUserId: String(fd.get('ownerUserId') ?? '') || null, reviewDue: String(fd.get('reviewDue') ?? '') || null });
       if (res.ok) {
         onClose();
-        if (openEditor) router.push(`/t/${slug}/documents/editer/${res.data.documentId}`);
+        // Navigation complète : un retour arrière depuis l'éditeur quitte la page
+        // et déclenche l'avertissement sur le texte non enregistré.
+        if (openEditor) window.location.assign(`/t/${slug}/documents/editer/${res.data.documentId}`);
         else router.refresh();
       } else setError(res.error.message);
     });
@@ -161,25 +170,27 @@ function CreateDialog({ slug, scopes, members, processes, onClose }: { slug: str
       <form onSubmit={keepValues(submit)}>
         <label className="field">Intitulé<input name="title" minLength={2} required placeholder="Politique de sécurité…" /></label>
         <div className="risk-form-grid">
-          <label className="field">Type<select name="type" defaultValue="politique">{Object.entries(TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+          <label className="field">Type<select name="type" defaultValue="politique">{DOCUMENT_TYPES.map((t) => <option key={t} value={t}>{DOCUMENT_TYPE_LABEL[t]}</option>)}</select></label>
           <label className="field">Périmètre<select name="scopeId" defaultValue={scopes[0]?.id ?? ''}><option value="">—</option>{scopes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
-          <label className="field">Processus<select name="processId" defaultValue=""><option value="">— Aucun —</option>{processes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
-          <label className="field">Propriétaire<select name="ownerUserId" defaultValue=""><option value="">— Non attribué —</option>{members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</select></label>
+          {processes.length > 0 ? <label className="field">Processus<select name="processId" defaultValue=""><option value="">— Aucun —</option>{processes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label> : null}
+          <label className="field">Propriétaire<select name="ownerUserId" defaultValue={currentUserId}><option value="">— Non attribué —</option>{members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</select></label>
           <label className="field">Date de revue<input type="date" name="reviewDue" /></label>
         </div>
+        <p className="risk-mut-hint" style={{ marginTop: 0 }}>La date de revue apparaît dans « Mon travail » du propriétaire et signale le document une fois dépassée. Elle reste modifiable depuis la fiche.</p>
         {error ? <p className="form-error" role="alert">{error}</p> : null}
         <div className="dialog-actions">
           <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Annuler</button>
-          <button type="submit" className="btn btn-ghost btn-sm" disabled={pending}>Créer</button>
-          <button type="submit" name="_editor" value="1" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Création…' : 'Créer et éditer'}</button>
+          <button type="submit" className="btn btn-ghost btn-sm" disabled={pending} onClick={() => { toEditor.current = false; }}>Créer</button>
+          <button type="submit" className="btn btn-primary btn-sm" disabled={pending} onClick={() => { toEditor.current = true; }}>{pending ? 'Création…' : 'Créer et éditer'}</button>
         </div>
       </form>
     </Dialog>
   );
 }
 
-function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: string; doc: DocumentSummary; canManage: boolean; processes: ProcessOption[]; onClose: () => void }) {
+function VersionsDrawer({ slug, doc, canManage, members, processes, onClose }: { slug: string; doc: DocumentSummary; canManage: boolean; members: TenantMember[]; processes: ProcessOption[]; onClose: () => void }) {
   const router = useRouter();
+  const [editing, setEditing] = useState(false);
   const [versions, setVersions] = useState<DocumentVersionRow[] | null>(null);
   const [nextSemver, setNextSemver] = useState('1.0');
   const [viewing, setViewing] = useState<{ id: string; body: string } | null>(null);
@@ -220,29 +231,37 @@ function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: st
   const header = (
     <>
       <span className="ds-id" id="doc-drawer-title">{refCode('DOC', doc.id)}</span>
-      <span className="ds-chip">{TYPE_LABEL[doc.type] ?? doc.type}</span>
+      <span className="ds-chip">{DOCUMENT_TYPE_LABEL[doc.type]}</span>
       {doc.reviewOverdue ? <span className="ds-accept-badge pending">REVUE ÉCHUE</span> : null}
     </>
   );
 
   return (
     <Drawer header={header} labelId="doc-drawer-title" onClose={onClose}>
-      <div className="drawer-section">
-        <div className="ds-primary" style={{ fontSize: 14 }}>{doc.title}</div>
-        <p className="ds-muted" style={{ marginTop: 4 }}>Prochaine revue : {fmtDate(doc.reviewDue)}{doc.reviewOverdue ? ' — échue' : ''}</p>
-        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className="ds-muted" style={{ fontSize: 12 }}>Processus :</span>
+      {editing ? <DocumentForm key={doc.id} slug={slug} doc={doc} members={members} onDone={() => setEditing(false)} /> : (
+        <div className="drawer-section">
+          <div className="ds-primary" style={{ fontSize: 14 }}>{doc.title}</div>
+          <p className="ds-muted" style={{ marginTop: 4 }}>Propriétaire : {doc.ownerName ?? 'non attribué'} · Prochaine revue : {fmtDate(doc.reviewDue)}{doc.reviewOverdue ? ' — échue' : ''}</p>
+          {canManage && doc.reviewOverdue ? <p className="risk-mut-hint" style={{ margin: '4px 0 0' }}>Document relu ? Reportez la date de revue avec « Modifier la fiche ».</p> : null}
+          {processes.length > 0 || doc.processId ? (
+            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="ds-muted" style={{ fontSize: 12 }}>Processus :</span>
+              {canManage ? (
+                <select value={doc.processId ?? ''} disabled={pending} onChange={(e) => reassignProcess(e.target.value || null)} aria-label="Processus" style={{ fontSize: 12, maxWidth: 220 }}>
+                  <option value="">— Aucun —</option>
+                  {processes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              ) : <span style={{ fontSize: 12.5 }}>{doc.processName ?? '—'}</span>}
+            </div>
+          ) : null}
           {canManage ? (
-            <select value={doc.processId ?? ''} disabled={pending} onChange={(e) => reassignProcess(e.target.value || null)} style={{ fontSize: 12, maxWidth: 220 }}>
-              <option value="">— Aucun —</option>
-              {processes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          ) : <span style={{ fontSize: 12.5 }}>{doc.processName ?? '—'}</span>}
+            <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <a className="btn btn-primary btn-sm" href={`/t/${slug}/documents/editer/${doc.id}`}>✎ Ouvrir l’éditeur</a>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>Modifier la fiche</button>
+            </div>
+          ) : null}
         </div>
-        {canManage ? (
-          <a className="btn btn-primary btn-sm" style={{ marginTop: 10 }} href={`/t/${slug}/documents/editer/${doc.id}`}>✎ Ouvrir l’éditeur</a>
-        ) : null}
-      </div>
+      )}
 
       <AcknowledgementSection slug={slug} doc={doc} canManage={canManage} />
 
@@ -286,6 +305,47 @@ function VersionsDrawer({ slug, doc, canManage, processes, onClose }: { slug: st
       ) : null}
       {error ? <p className="form-error" role="alert">{error}</p> : null}
     </Drawer>
+  );
+}
+
+function DocumentForm({ slug, doc, members, onDone }: { slug: string; doc: DocumentSummary; members: TenantMember[]; onDone: () => void }) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  // Propriétaire parti de l'organisation : absent de la liste des membres, il
+  // reste proposé pour ne pas être désattribué à l'insu du gestionnaire.
+  const formerOwner = doc.ownerUserId && !members.some((m) => m.userId === doc.ownerUserId) ? doc.ownerUserId : null;
+
+  function submit(fd: FormData) {
+    setError(null);
+    start(async () => {
+      const res = await updateDocumentAction(slug, {
+        documentId: doc.id,
+        title: String(fd.get('title') ?? ''),
+        ownerUserId: String(fd.get('ownerUserId') ?? '') || null,
+        reviewDue: String(fd.get('reviewDue') ?? '') || null,
+      });
+      if (res.ok) { router.refresh(); onDone(); } else setError(res.error.message);
+    });
+  }
+
+  return (
+    <form onSubmit={keepValues(submit)} className="drawer-section">
+      <p className="drawer-section-label">Fiche du document</p>
+      <label className="field">Intitulé<input name="title" required minLength={2} maxLength={200} defaultValue={doc.title} /></label>
+      <div className="risk-form-grid">
+        <label className="field">Propriétaire
+          <select name="ownerUserId" defaultValue={doc.ownerUserId ?? ''}><option value="">— Non attribué —</option>{formerOwner ? <option value={formerOwner}>{doc.ownerName ?? 'Propriétaire actuel'} (ancien membre)</option> : null}{members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</select>
+        </label>
+        <label className="field">Date de revue<input type="date" name="reviewDue" defaultValue={doc.reviewDue?.slice(0, 10) ?? ''} /></label>
+      </div>
+      <p className="risk-mut-hint" style={{ marginTop: 0 }}>Une fois le document relu, reportez la date de revue : l’alerte « revue échue » disparaît.</p>
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
+      <div className="dialog-actions">
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onDone}>Annuler</button>
+        <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? 'Enregistrement…' : 'Enregistrer'}</button>
+      </div>
+    </form>
   );
 }
 

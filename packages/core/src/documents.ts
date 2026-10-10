@@ -14,6 +14,17 @@ export const DOCUMENT_TYPES = [
 ] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 
+/** Libellé affiché d'un type (registre, fiche, en-tête des exports). */
+export const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
+  pssi: 'PSSI',
+  politique: 'Politique',
+  procedure: 'Procédure',
+  charte: 'Charte',
+  pca_pra: 'PCA / PRA',
+  fiche_processus: 'Fiche processus',
+  autre: 'Autre',
+};
+
 export const DOCUMENT_VERSION_STATUSES = ['brouillon', 'publie'] as const;
 export type DocumentVersionStatus = (typeof DOCUMENT_VERSION_STATUSES)[number];
 

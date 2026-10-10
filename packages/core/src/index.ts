@@ -113,6 +113,7 @@ export {
 } from './actions.ts';
 export {
   DOCUMENT_TYPES,
+  DOCUMENT_TYPE_LABEL,
   DOCUMENT_VERSION_STATUSES,
   DOCUMENT_TEMPLATES,
   canEditVersion,

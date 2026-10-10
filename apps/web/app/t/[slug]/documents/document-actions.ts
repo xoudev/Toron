@@ -8,12 +8,15 @@ import {
   addVersion,
   createDocument,
   getAcknowledgementStatus,
+  getDocumentRef,
   setAcknowledgementRequired,
   getVersionBody,
+  isTenantMember,
   latestSemver,
   listVersions,
   publishVersion,
   setDocumentProcess,
+  updateDocument,
   withTenant,
   writeAuditEntry,
   type DocumentVersionRow,
@@ -86,7 +89,7 @@ export async function createDocumentAction(
         action: 'document.create',
         objectType: 'document',
         objectId: id,
-        after: { type: d.type, title: d.title },
+        after: { type: d.type, title: d.title, ownerUserId: d.ownerUserId ?? null, reviewDue: d.reviewDue ?? null },
         ip: auth.ip,
         userAgent: auth.userAgent,
       });
@@ -181,7 +184,7 @@ export async function writeVersionAction(slug: string, input: unknown): Promise<
     revalidatePath(`/t/${slug}/documents`);
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: logFailure(err, appError('ECHEC_VERSION', 'L’enregistrement a échoué — le numéro de version existe peut-être déjà.')) };
+    return { ok: false, error: logFailure(err, appError('ECHEC_VERSION', 'L’enregistrement a échoué — ce numéro de version existe peut-être déjà : changez-le (champ « v » en haut à droite), puis réessayez.')) };
   }
 }
 
@@ -196,6 +199,47 @@ export async function setDocumentProcessAction(slug: string, input: unknown): Pr
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: logFailure(err, appError('ECHEC_RATTACHEMENT', 'Le rattachement au processus a échoué.')) };
+  }
+}
+
+const UpdateSchema = z.object({
+  documentId: z.uuid(),
+  title: z.string().trim().min(2, '2 caractères minimum').max(200),
+  ownerUserId: z.uuid().nullable(),
+  reviewDue: DateStr,
+});
+
+/** Met à jour l'en-tête d'un document : intitulé, propriétaire, date de revue. */
+export async function updateDocumentAction(slug: string, input: unknown): Promise<ActionResult> {
+  const auth = await authorizeManager(slug);
+  if (isActionError(auth)) return { ok: false, error: auth };
+  const parsed = UpdateSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: appError('SAISIE_INVALIDE', 'Fiche invalide — un intitulé de 2 caractères au moins est requis.') };
+  }
+  const d = parsed.data;
+  try {
+    const res = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      const ref = await getDocumentRef(tx, d.documentId);
+      if (!ref) return 'introuvable' as const;
+      // Un propriétaire parti de l'organisation reste en place tant qu'on ne le change pas.
+      if (d.ownerUserId && d.ownerUserId !== ref.ownerUserId && !(await isTenantMember(tx, d.ownerUserId))) return 'proprietaire' as const;
+      const n = await updateDocument(tx, { documentId: d.documentId, title: d.title, ownerUserId: d.ownerUserId, reviewDue: d.reviewDue ?? null });
+      if (n === 0) return 'introuvable' as const;
+      // L'état antérieur garde la trace d'une revue reportée et de l'ancien propriétaire.
+      await writeAuditEntry(tx, {
+        tenantId: auth.tenantId, actorUserId: auth.userId, action: 'document.update', objectType: 'document', objectId: d.documentId,
+        before: { title: ref.title, ownerUserId: ref.ownerUserId, reviewDue: ref.reviewDue },
+        after: { title: d.title, ownerUserId: d.ownerUserId, reviewDue: d.reviewDue ?? null }, ip: auth.ip, userAgent: auth.userAgent,
+      });
+      return 'ok' as const;
+    });
+    if (res === 'introuvable') return { ok: false, error: appError('INTROUVABLE', 'Ce document n’existe plus — rechargez la page.') };
+    if (res === 'proprietaire') return { ok: false, error: appError('PROPRIETAIRE_INVALIDE', 'Le propriétaire choisi ne fait plus partie de l’organisation — choisissez-en un autre.') };
+    revalidatePath(`/t/${slug}`, 'layout');
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: logFailure(err, appError('ECHEC_MISE_A_JOUR', 'La mise à jour du document a échoué — réessayez.')) };
   }
 }
 

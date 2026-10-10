@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { DOCUMENT_TEMPLATES, canEditVersion, documentTemplate, hardenDocumentHtml, nextSemver, reviewOverdue } from './documents.ts';
+import { DOCUMENT_TEMPLATES, DOCUMENT_TYPES, DOCUMENT_TYPE_LABEL, canEditVersion, documentTemplate, hardenDocumentHtml, nextSemver, reviewOverdue } from './documents.ts';
+
+describe('libellés des types de document', () => {
+  it('chaque type a un libellé lisible, jamais le code brut', () => {
+    for (const type of DOCUMENT_TYPES) {
+      expect(DOCUMENT_TYPE_LABEL[type]).toBeTruthy();
+      expect(DOCUMENT_TYPE_LABEL[type]).not.toBe(type);
+    }
+    expect(DOCUMENT_TYPE_LABEL.procedure).toBe('Procédure');
+    expect(DOCUMENT_TYPE_LABEL.fiche_processus).toBe('Fiche processus');
+  });
+});
 
 describe('immuabilité d’une version publiée (RM §5.6)', () => {
   it('seul un brouillon est modifiable', () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { documentTemplate } from '@toron/core';
+import { documentTemplate, nextSemver as bumpSemver } from '@toron/core';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
@@ -9,8 +9,24 @@ import { sanitizeDocumentHtml } from '@/lib/sanitize-html';
 
 import { writeVersionAction } from '../../document-actions';
 
-const TEXT_COLORS = ['#1c1e1d', '#cb4e0a', '#b23327', '#2e7d4f', '#2456b8', '#946200', '#6b21a8', '#ffffff'];
-const HILITE_COLORS = ['#fff3bf', '#ffd6cc', '#d3f9d8', '#d0ebff', '#f3d9fa', 'transparent'];
+const TEXT_COLORS = [
+  { value: '#1c1e1d', label: 'Noir' },
+  { value: '#cb4e0a', label: 'Orange' },
+  { value: '#b23327', label: 'Rouge' },
+  { value: '#2e7d4f', label: 'Vert' },
+  { value: '#2456b8', label: 'Bleu' },
+  { value: '#946200', label: 'Ocre' },
+  { value: '#6b21a8', label: 'Violet' },
+  { value: '#ffffff', label: 'Blanc' },
+];
+const HILITE_COLORS = [
+  { value: '#fff3bf', label: 'Jaune' },
+  { value: '#ffd6cc', label: 'Saumon' },
+  { value: '#d3f9d8', label: 'Vert' },
+  { value: '#d0ebff', label: 'Bleu' },
+  { value: '#f3d9fa', label: 'Mauve' },
+  { value: 'transparent', label: 'Aucun' },
+];
 const FONTS = [
   { label: 'Police', value: '' },
   { label: 'Sans', value: 'Segoe UI, Arial, sans-serif' },
@@ -51,6 +67,7 @@ export function DocumentEditor({
   processName,
   initialBody,
   nextSemver,
+  hasDraft,
   entityMeta,
 }: {
   slug: string;
@@ -60,23 +77,31 @@ export function DocumentEditor({
   processName: string | null;
   initialBody: string;
   nextSemver: string;
+  hasDraft: boolean;
   entityMeta: string;
 }) {
   const router = useRouter();
   const editorRef = useRef<HTMLDivElement>(null);
+  const rangeRef = useRef<Range | null>(null);
   const [semver, setSemver] = useState(nextSemver);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  // Un brouillon attend d'être publié : la barre d'état renvoie vers la fiche.
+  const [draft, setDraft] = useState(hasDraft);
   const [words, setWords] = useState(0);
   const [block, setBlock] = useState('P');
   const [active, setActive] = useState<{ bold: boolean; italic: boolean; underline: boolean }>({ bold: false, italic: false, underline: false });
   const [pending, start] = useTransition();
+  const loaded = useRef(false);
 
+  // Contenu injecté au premier chargement seulement : le rafraîchissement qui
+  // suit un enregistrement ne doit pas écraser la saisie en cours.
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.innerHTML = sanitizeDocumentHtml(initialBody);
-      setWords(wordsOf(editorRef.current));
-    }
+    if (loaded.current || !editorRef.current) return;
+    loaded.current = true;
+    editorRef.current.innerHTML = sanitizeDocumentHtml(initialBody);
+    setWords(wordsOf(editorRef.current));
   }, [initialBody]);
 
   // Reflète l'état de la sélection dans la barre (comme Word).
@@ -84,6 +109,7 @@ export function DocumentEditor({
     if (!editorRef.current) return;
     const sel = window.getSelection();
     if (sel && sel.rangeCount && editorRef.current.contains(sel.anchorNode)) {
+      rangeRef.current = sel.getRangeAt(0).cloneRange();
       let b = document.queryCommandValue('formatBlock').toUpperCase();
       if (!b || b === 'DIV') b = 'P';
       setBlock(b);
@@ -95,9 +121,19 @@ export function DocumentEditor({
     return () => document.removeEventListener('selectionchange', refreshState);
   }, [refreshState]);
 
+  // Texte non enregistré : le navigateur demande confirmation avant de quitter
+  // la page (lien, barre latérale, fermeture de l'onglet).
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
   function onEdit() {
     setWords(wordsOf(editorRef.current));
     setStatus(null);
+    setDirty(true);
   }
 
   function currentHtml(): string {
@@ -111,13 +147,25 @@ export function DocumentEditor({
     if (body.replace(/<[^>]*>/g, '').trim().length === 0) { setError('Le document est vide.'); return; }
     start(async () => {
       const res = await writeVersionAction(slug, { documentId, semver, body });
-      if (res.ok) { setStatus(`Version ${semver} enregistrée (brouillon).`); router.refresh(); }
-      else setError(res.error.message);
+      if (res.ok) {
+        // Chaque enregistrement crée une version : le suivant prend le numéro d'après.
+        const next = bumpSemver(semver);
+        setSemver(next);
+        setDirty(currentHtml() !== body);
+        setDraft(true);
+        setStatus(`Version ${semver} enregistrée (brouillon). Le prochain enregistrement créera la ${next}.`);
+        router.refresh();
+      } else setError(res.error.message);
     });
   }
 
+  // Remplacement direct du contenu : hors de la pile d'annulation, d'où la confirmation.
   function insertTemplate() {
-    if (editorRef.current) { editorRef.current.innerHTML = sanitizeDocumentHtml(documentTemplate(docType)); onEdit(); }
+    const editor = editorRef.current;
+    if (!editor) return;
+    if (wordsOf(editor) > 0 && !window.confirm('Remplacer tout le contenu par le modèle ? Le texte non enregistré sera perdu, sans annulation possible.')) return;
+    editor.innerHTML = sanitizeDocumentHtml(documentTemplate(docType));
+    onEdit();
   }
 
   function addLink() {
@@ -171,13 +219,30 @@ export function DocumentEditor({
     onEdit();
   }
 
+  // Au clavier, le focus est sur le bouton : l'éditeur le reprend, à
+  // l'endroit de la dernière sélection, avant d'appliquer la commande.
+  function restoreSelection() {
+    const editor = editorRef.current;
+    if (!editor || document.activeElement === editor) return;
+    editor.focus();
+    const range = rangeRef.current;
+    const sel = window.getSelection();
+    if (range && sel) { sel.removeAllRanges(); sel.addRange(range); }
+  }
+
   const meta = `${entityMeta}${processName ? ` · Processus : ${processName}` : ''}`;
-  const keep = (fn: () => void) => (e: React.MouseEvent) => { e.preventDefault(); fn(); refreshState(); };
+  const ficheHref = `/t/${slug}/documents?ouvrir=${documentId}`;
+  // mousedown ne doit pas ôter la sélection du texte ; l'action part au clic
+  // (souris, ou Entrée / Espace au clavier).
+  const keep = (fn: () => void) => ({
+    onMouseDown: (e: React.MouseEvent) => e.preventDefault(),
+    onClick: () => { restoreSelection(); fn(); refreshState(); },
+  });
 
   return (
     <main className="app-page doc-editor-page">
       <div className="doc-editor-bar">
-        <a className="btn btn-ghost btn-sm" href={`/t/${slug}/documents`}>← Documents</a>
+        <a className="btn btn-ghost btn-sm" href={ficheHref}>← Documents</a>
         <span className="doc-editor-title">{title}</span>
         <span className="spacer" />
         <label className="doc-editor-semver">v<input value={semver} onChange={(e) => setSemver(e.target.value)} aria-label="Version" /></label>
@@ -187,8 +252,8 @@ export function DocumentEditor({
       </div>
 
       <div className="doc-toolbar" role="toolbar" aria-label="Mise en forme">
-        <button className="tb-btn" title="Annuler (Ctrl+Z)" onMouseDown={keep(() => cmd('undo'))}>↶</button>
-        <button className="tb-btn" title="Rétablir (Ctrl+Y)" onMouseDown={keep(() => cmd('redo'))}>↷</button>
+        <button className="tb-btn" title="Annuler (Ctrl+Z)" aria-label="Annuler (Ctrl+Z)" {...keep(() => cmd('undo'))}>↶</button>
+        <button className="tb-btn" title="Rétablir (Ctrl+Y)" aria-label="Rétablir (Ctrl+Y)" {...keep(() => cmd('redo'))}>↷</button>
         <span className="tb-sep" />
         <select className="tb-select" title="Style de paragraphe" value={block} onChange={(e) => { cmd('formatBlock', e.target.value); refreshState(); }} onMouseDown={(e) => e.stopPropagation()}>
           {BLOCKS.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
@@ -200,35 +265,38 @@ export function DocumentEditor({
           {SIZES.map((s) => <option key={s.label} value={s.value}>{s.label}</option>)}
         </select>
         <span className="tb-sep" />
-        <button className={`tb-btn${active.bold ? ' on' : ''}`} title="Gras (Ctrl+B)" onMouseDown={keep(() => cmd('bold'))}><b>G</b></button>
-        <button className={`tb-btn${active.italic ? ' on' : ''}`} title="Italique (Ctrl+I)" onMouseDown={keep(() => cmd('italic'))}><i>I</i></button>
-        <button className={`tb-btn${active.underline ? ' on' : ''}`} title="Souligné (Ctrl+U)" onMouseDown={keep(() => cmd('underline'))}><u>S</u></button>
-        <button className="tb-btn" title="Barré" onMouseDown={keep(() => cmd('strikeThrough'))}><s>B</s></button>
+        <button className={`tb-btn${active.bold ? ' on' : ''}`} title="Gras (Ctrl+B)" aria-label="Gras (Ctrl+B)" aria-pressed={active.bold} {...keep(() => cmd('bold'))}><b>G</b></button>
+        <button className={`tb-btn${active.italic ? ' on' : ''}`} title="Italique (Ctrl+I)" aria-label="Italique (Ctrl+I)" aria-pressed={active.italic} {...keep(() => cmd('italic'))}><i>I</i></button>
+        <button className={`tb-btn${active.underline ? ' on' : ''}`} title="Souligné (Ctrl+U)" aria-label="Souligné (Ctrl+U)" aria-pressed={active.underline} {...keep(() => cmd('underline'))}><u>S</u></button>
+        <button className="tb-btn" title="Barré" aria-label="Barré" {...keep(() => cmd('strikeThrough'))}><s>B</s></button>
         <span className="tb-swatches" title="Couleur du texte">
           <span className="tb-swatch-label">A</span>
-          {TEXT_COLORS.map((c) => <button key={c} className="tb-swatch" style={{ background: c }} title={`Texte ${c}`} onMouseDown={keep(() => cmd('foreColor', c))} />)}
+          {TEXT_COLORS.map((c) => <button key={c.value} className="tb-swatch" style={{ background: c.value }} title={`Couleur du texte : ${c.label}`} aria-label={`Couleur du texte : ${c.label}`} {...keep(() => cmd('foreColor', c.value))} />)}
         </span>
         <span className="tb-swatches" title="Surlignage">
           <span className="tb-swatch-label">◐</span>
-          {HILITE_COLORS.map((c) => <button key={c} className="tb-swatch" style={{ background: c === 'transparent' ? 'repeating-linear-gradient(45deg,#ccc,#ccc 3px,#fff 3px,#fff 6px)' : c }} title={c === 'transparent' ? 'Aucun' : `Surlignage ${c}`} onMouseDown={keep(() => cmd('hiliteColor', c))} />)}
+          {HILITE_COLORS.map((c) => {
+            const name = c.value === 'transparent' ? 'Sans surlignage' : `Surlignage ${c.label.toLowerCase()}`;
+            return <button key={c.value} className="tb-swatch" style={{ background: c.value === 'transparent' ? 'repeating-linear-gradient(45deg,#ccc,#ccc 3px,#fff 3px,#fff 6px)' : c.value }} title={name} aria-label={name} {...keep(() => cmd('hiliteColor', c.value))} />;
+          })}
         </span>
         <span className="tb-sep" />
-        <button className="tb-btn" title="Liste à puces" onMouseDown={keep(() => cmd('insertUnorderedList'))}>• —</button>
-        <button className="tb-btn" title="Liste numérotée" onMouseDown={keep(() => cmd('insertOrderedList'))}>1.</button>
-        <button className="tb-btn" title="Diminuer le retrait" onMouseDown={keep(() => cmd('outdent'))}>⇤</button>
-        <button className="tb-btn" title="Augmenter le retrait" onMouseDown={keep(() => cmd('indent'))}>⇥</button>
+        <button className="tb-btn" title="Liste à puces" aria-label="Liste à puces" {...keep(() => cmd('insertUnorderedList'))}>• —</button>
+        <button className="tb-btn" title="Liste numérotée" aria-label="Liste numérotée" {...keep(() => cmd('insertOrderedList'))}>1.</button>
+        <button className="tb-btn" title="Diminuer le retrait" aria-label="Diminuer le retrait" {...keep(() => cmd('outdent'))}>⇤</button>
+        <button className="tb-btn" title="Augmenter le retrait" aria-label="Augmenter le retrait" {...keep(() => cmd('indent'))}>⇥</button>
         <span className="tb-sep" />
-        <button className="tb-btn" title="Aligner à gauche" onMouseDown={keep(() => cmd('justifyLeft'))}>⯇</button>
-        <button className="tb-btn" title="Centrer" onMouseDown={keep(() => cmd('justifyCenter'))}>≡</button>
-        <button className="tb-btn" title="Aligner à droite" onMouseDown={keep(() => cmd('justifyRight'))}>⯈</button>
-        <button className="tb-btn" title="Justifier" onMouseDown={keep(() => cmd('justifyFull'))}>▤</button>
+        <button className="tb-btn" title="Aligner à gauche" aria-label="Aligner à gauche" {...keep(() => cmd('justifyLeft'))}>⯇</button>
+        <button className="tb-btn" title="Centrer" aria-label="Centrer" {...keep(() => cmd('justifyCenter'))}>≡</button>
+        <button className="tb-btn" title="Aligner à droite" aria-label="Aligner à droite" {...keep(() => cmd('justifyRight'))}>⯈</button>
+        <button className="tb-btn" title="Justifier" aria-label="Justifier" {...keep(() => cmd('justifyFull'))}>▤</button>
         <span className="tb-sep" />
-        <button className="tb-btn" title="Insérer un lien" onMouseDown={keep(addLink)}>🔗</button>
-        <button className="tb-btn" title="Trait horizontal" onMouseDown={keep(() => cmd('insertHorizontalRule'))}>―</button>
-        <button className="tb-btn" title="Effacer la mise en forme" onMouseDown={keep(() => cmd('removeFormat'))}>⌫</button>
+        <button className="tb-btn" title="Insérer un lien" aria-label="Insérer un lien" {...keep(addLink)}>🔗</button>
+        <button className="tb-btn" title="Trait horizontal" aria-label="Trait horizontal" {...keep(() => cmd('insertHorizontalRule'))}>―</button>
+        <button className="tb-btn" title="Effacer la mise en forme" aria-label="Effacer la mise en forme" {...keep(() => cmd('removeFormat'))}>⌫</button>
         <span className="spacer" />
-        <button className="tb-btn tb-text" title="Insérer un sommaire cliquable" onMouseDown={keep(insertToc)}>Sommaire</button>
-        <button className="tb-btn tb-text" title="Réinsérer le modèle du type" onMouseDown={keep(insertTemplate)}>Modèle</button>
+        <button className="tb-btn tb-text" title="Insérer un sommaire cliquable" {...keep(insertToc)}>Sommaire</button>
+        <button className="tb-btn tb-text" title="Remplacer tout le contenu par le modèle du type" {...keep(insertTemplate)}>Modèle</button>
       </div>
 
       <div className="doc-page-sheet">
@@ -240,7 +308,9 @@ export function DocumentEditor({
         <span className="spacer" />
         {status ? <span className="doc-editor-ok">{status}</span> : null}
         {error ? <span className="form-error" role="alert" style={{ margin: 0 }}>{error}</span> : null}
-        {!status && !error ? <span className="risk-mut-hint" style={{ margin: 0 }}>Brouillon — publiez la version depuis la fiche du document (une version publiée est immuable).</span> : null}
+        {dirty && !error ? <span className="risk-mut-hint" style={{ margin: 0 }}>Modifications non enregistrées</span> : null}
+        {!dirty && !status && !error && !draft ? <span className="risk-mut-hint" style={{ margin: 0 }}>Aucun brouillon en cours — « Enregistrer » crée la version {semver} en brouillon.</span> : null}
+        {!dirty && !error && draft ? <a className="link-btn" href={ficheHref} title="Une version publiée est immuable.">Publier depuis la fiche du document →</a> : null}
       </div>
     </main>
   );

@@ -1,4 +1,4 @@
-import { canManageControls, documentTemplate, nextSemver } from '@toron/core';
+import { DOCUMENT_TYPE_LABEL, canManageControls, documentTemplate, nextSemver } from '@toron/core';
 import { getVersionBody, latestSemver, listDocuments, listVersions, withTenant } from '@toron/db';
 import { redirect } from 'next/navigation';
 
@@ -21,12 +21,12 @@ export default async function DocumentEditorPage({ params }: { params: Promise<{
     const versions = await listVersions(tx, documentId);
     const latestBodyVersion = versions.find((v) => v.hasBody) ?? null;
     const body = latestBodyVersion ? await getVersionBody(tx, latestBodyVersion.id) : null;
-    return { doc, body, next: nextSemver(await latestSemver(tx, documentId)) };
+    return { doc, body, hasDraft: versions.some((v) => v.status === 'brouillon'), next: nextSemver(await latestSemver(tx, documentId)) };
   });
   if (!data) redirect(`/t/${slug}/documents`);
 
   const initial = data.body ?? documentTemplate(data.doc.type);
-  const entityMeta = `${ctx.tenantName} · ${data.doc.type.replace('_', '/').toUpperCase()}`;
+  const entityMeta = `${ctx.tenantName} · ${DOCUMENT_TYPE_LABEL[data.doc.type]}`;
 
   return (
     <DocumentEditor
@@ -37,6 +37,7 @@ export default async function DocumentEditorPage({ params }: { params: Promise<{
       processName={data.doc.processName}
       initialBody={initial}
       nextSemver={data.next}
+      hasDraft={data.hasDraft}
       entityMeta={entityMeta}
     />
   );

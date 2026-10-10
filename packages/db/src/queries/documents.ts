@@ -49,6 +49,42 @@ export async function setDocumentProcess(tx: TenantTx, documentId: string, proce
   return u.length;
 }
 
+export interface UpdateDocumentInput {
+  documentId: string;
+  title: string;
+  ownerUserId: string | null;
+  reviewDue: string | null;
+}
+
+/**
+ * Met à jour l'en-tête d'un document : intitulé, propriétaire, date de revue
+ * (reporter la date solde une revue échue). Les versions ne sont pas
+ * touchées. Renvoie le nombre de lignes affectées (0 si introuvable).
+ */
+export async function updateDocument(tx: TenantTx, input: UpdateDocumentInput): Promise<number> {
+  const u = await tx
+    .update(schema.documents)
+    .set({ title: input.title, ownerUserId: input.ownerUserId, reviewDue: input.reviewDue })
+    .where(eq(schema.documents.id, input.documentId))
+    .returning({ id: schema.documents.id });
+  return u.length;
+}
+
+export interface DocumentRef {
+  title: string;
+  ownerUserId: string | null;
+  reviewDue: string | null;
+}
+
+/** En-tête actuel d'un document (état « avant » du journal), ou null. */
+export async function getDocumentRef(tx: TenantTx, documentId: string): Promise<DocumentRef | null> {
+  const [row] = await tx
+    .select({ title: schema.documents.title, ownerUserId: schema.documents.ownerUserId, reviewDue: schema.documents.reviewDue })
+    .from(schema.documents)
+    .where(eq(schema.documents.id, documentId));
+  return row ?? null;
+}
+
 export interface AddVersionInput {
   tenantId: string;
   documentId: string;
@@ -118,6 +154,7 @@ export interface DocumentSummary {
   scopeName: string | null;
   processId: string | null;
   processName: string | null;
+  ownerUserId: string | null;
   ownerName: string | null;
   reviewDue: string | null;
   reviewOverdue: boolean;
@@ -142,6 +179,7 @@ interface RawDocument {
   scope_name: string | null;
   process_id: string | null;
   process_name: string | null;
+  owner_user_id: string | null;
   owner_name: string | null;
   review_due: string | null;
   version_count: number | string;
@@ -160,7 +198,7 @@ interface RawDocument {
 export async function listDocuments(tx: TenantTx): Promise<DocumentSummary[]> {
   const rows = await tx.execute(sql`
     SELECT
-      d.id, d.type, d.title, s.name AS scope_name, o.name AS owner_name,
+      d.id, d.type, d.title, s.name AS scope_name, d.owner_user_id, o.name AS owner_name,
       d.process_id, p.name AS process_name,
       d.review_due::text AS review_due,
       (SELECT count(*) FROM document_versions v WHERE v.document_id = d.id) AS version_count,
@@ -191,6 +229,7 @@ export async function listDocuments(tx: TenantTx): Promise<DocumentSummary[]> {
     scopeName: r.scope_name,
     processId: r.process_id,
     processName: r.process_name,
+    ownerUserId: r.owner_user_id,
     ownerName: r.owner_name,
     reviewDue: r.review_due,
     reviewOverdue: reviewOverdue(r.review_due ? new Date(r.review_due) : null, now),

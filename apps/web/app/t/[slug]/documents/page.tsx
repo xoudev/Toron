@@ -47,7 +47,7 @@ export default async function DocumentsPage({ params }: { params: Promise<{ slug
             <h1>Documents</h1>
             <p className="sub">
               Documents versionnés — une version publiée est immuable. La date de revue déclenche une
-              alerte ; les exigences couvertes apparaissent dans la Déclaration d’applicabilité.
+              alerte.
             </p>
           </div>
         </div>
@@ -60,7 +60,7 @@ export default async function DocumentsPage({ params }: { params: Promise<{ slug
           </div>
         ) : null}
 
-        <DocumentsBoard slug={slug} canManage={canManage} documents={documents} scopes={scopes} members={members} processes={processes} />
+        <DocumentsBoard slug={slug} canManage={canManage} currentUserId={ctx.userId} documents={documents} scopes={scopes} members={members} processes={processes} />
       </main>
     </>
   );

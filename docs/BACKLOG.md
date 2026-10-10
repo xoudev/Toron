@@ -192,3 +192,11 @@ description courte, phase cible pressentie.
   depuis la fiche → brouillon sur le portail → envoi incomplet refusé →
   envoi → notification → examen et validation → lien clos. Vérifié
   manuellement le 2026-10-08. Phase cible : V2.
+- **2026-10-10 · Rattacher un document aux exigences qu'il couvre (5.6)** —
+  La table `document_requirements` et les requêtes `linkRequirement` /
+  `listDocumentsCoveringRequirement` existent, mais aucun écran ne permet
+  le rattachement et la SoA ne les lit pas. Ajouter le choix des exigences
+  depuis la fiche du document, puis citer les documents couvrants dans le
+  panneau d'évaluation et la Déclaration d'applicabilité (RM §5.6). Le
+  sous-titre de l'écran Documents ne le promet plus d'ici là. Phase
+  cible : V1.

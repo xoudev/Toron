@@ -35,7 +35,12 @@ describe('statut et cotation du scénario', () => {
 
   it('la vraisemblance alimente la valeur du risque généré', () => {
     expect(likelihoodValue('v3')).toBe(3);
-    expect(scenarioRiskRating('v3')).toEqual({ g: 3, v: 3 });
+    expect(scenarioRiskRating('v3', 3)).toEqual({ g: 3, v: 3 });
     expect(scenarioRiskRating('v1', 4)).toEqual({ g: 4, v: 1 });
+  });
+
+  it('la gravité est celle choisie par l’utilisateur, sans valeur imposée', () => {
+    expect(scenarioRiskRating('v2', 1)).toEqual({ g: 1, v: 2 });
+    expect(scenarioRiskRating('v2', 2).g).toBe(2);
   });
 });

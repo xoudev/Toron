@@ -1,7 +1,9 @@
-import { canManageControls } from '@toron/core';
+import { canManageControls, defaultRiskScale } from '@toron/core';
+import { getActiveScale, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
+import { appDb } from '@/lib/db';
 import { getTenantContext } from '@/lib/tenant-context-cache';
 
 import { ImportWizard } from './import-wizard';
@@ -13,6 +15,10 @@ export default async function ImportPage({ params }: { params: Promise<{ slug: s
   const ctx = await getTenantContext(slug);
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
   if (!canManageControls(ctx.role)) redirect(`/t/${slug}`);
+  // Les cotations de risque importées sont validées contre l'échelle active
+  // (celle par défaut tant qu'aucune n'est posée : l'import la pose à l'identique).
+  const riskScaleSize =
+    (await withTenant(appDb().db, ctx.tenantId, (tx) => getActiveScale(tx)))?.scale.size ?? defaultRiskScale().size;
 
   return (
     <>
@@ -27,7 +33,7 @@ export default async function ImportPage({ params }: { params: Promise<{ slug: s
             </p>
           </div>
         </div>
-        <ImportWizard slug={slug} />
+        <ImportWizard slug={slug} riskScaleSize={riskScaleSize} />
       </main>
     </>
   );

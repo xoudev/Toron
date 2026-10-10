@@ -4,7 +4,7 @@ import { EBIOS_WORKSHOPS, KILL_CHAIN_PHASES, LIKELIHOOD_LABEL, SCENARIO_STATUS_L
 import type { EbiosScenarioRow, ExportSummary, ScopeSummary, StudyDetail, StudySummary } from '@toron/db';
 import { Dialog } from '@toron/ui';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useId, useState, useTransition } from 'react';
 
 import { refCode } from '@/lib/format';
 import { keepValues } from '@/lib/forms';
@@ -13,6 +13,15 @@ import { addActionAction, addScenarioAction, createStudyAction, generateRiskActi
 
 const STATUS_CLASS: Record<string, string> = { a_faire: 'ouverte', en_cours: 'cloturee_a_verifier', cote: 'efficace' };
 const LV_TONE: Record<EbiosLikelihood, string> = { v1: 'var(--text-2)', v2: 'var(--warn)', v3: 'var(--danger)', v4: 'var(--danger)' };
+
+/** Ce qui se fait dans Toron pour chaque atelier : 4 et 5 ici, 1 à 3 hors de l'outil. */
+const WORKSHOP_HINT: Record<number, string> = {
+  1: 'Atelier 1 — à mener hors de Toron : cadrage de l’étude (missions, valeurs métier, biens supports) et état du socle de sécurité.',
+  2: 'Atelier 2 — à mener hors de Toron : identifiez les sources de risque et leurs objectifs visés. Chaque couple retenu se saisit ici avec « + Scénario ».',
+  3: 'Atelier 3 — à mener hors de Toron : scénarios stratégiques (chemins d’attaque par l’écosystème). Les plus critiques deviennent les scénarios opérationnels ci-dessous.',
+  4: 'Atelier 4 — dans Toron : pour chaque scénario, décrivez les étapes de l’attaquant dans la kill chain ; la vraisemblance se calcule d’elle-même.',
+  5: 'Atelier 5 — dans Toron : choisissez la gravité de chaque scénario coté et générez le risque dans le registre unique, où se décide son traitement.',
+};
 
 function ExportRow({ slug, exp, onRefresh }: { slug: string; exp: ExportSummary; onRefresh: () => void }) {
   const sealed = exp.status === 'scelle';
@@ -35,7 +44,7 @@ function ExportRow({ slug, exp, onRefresh }: { slug: string; exp: ExportSummary;
   );
 }
 
-export function EbiosBoard({ slug, canManage, studies, scopes }: { slug: string; canManage: boolean; studies: StudySummary[]; scopes: ScopeSummary[] }) {
+export function EbiosBoard({ slug, canManage, studies, scopes, gravityLabels }: { slug: string; canManage: boolean; studies: StudySummary[]; scopes: ScopeSummary[]; gravityLabels: string[] }) {
   const router = useRouter();
   const [studyId, setStudyId] = useState<string | null>(studies[0]?.id ?? null);
   const [creating, setCreating] = useState(false);
@@ -110,6 +119,7 @@ export function EbiosBoard({ slug, canManage, studies, scopes }: { slug: string;
               </button>
             ))}
           </div>
+          <p className="risk-mut-hint" style={{ margin: '-8px 0 14px' }}>{WORKSHOP_HINT[detail.workshop]}</p>
 
           <div className="ds-two-col" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 320px) 1fr', gap: 16, alignItems: 'start' }}>
             <div className="ds-table-card" style={{ padding: 8 }}>
@@ -132,11 +142,11 @@ export function EbiosBoard({ slug, canManage, studies, scopes }: { slug: string;
                   </button>
                 );
               })}
-              {detail.scenarios.length === 0 ? <p className="risk-mut-hint" style={{ padding: 6 }}>Aucun scénario. Héritez d’un couple source/objectif de l’atelier 2.</p> : null}
+              {detail.scenarios.length === 0 ? <p className="risk-mut-hint" style={{ padding: 6 }}>{canManage ? 'Aucun scénario. Ajoutez-en un avec « + Scénario » : qui attaque (source de risque) et dans quel but (objectif visé).' : 'Aucun scénario pour cette étude.'}</p> : null}
             </div>
 
             <div className="ds-table-card" style={{ padding: 14 }}>
-              {scenario ? <KillChain slug={slug} scenario={scenario} scopeId={detail.scopeId} canManage={canManage} onRun={run} pending={pending} /> : <p className="risk-mut-hint">Sélectionnez un scénario pour construire son mode opératoire.</p>}
+              {scenario ? <KillChain key={scenario.id} slug={slug} scenario={scenario} scopeId={detail.scopeId} gravityLabels={gravityLabels} canManage={canManage} onRun={run} pending={pending} /> : <p className="risk-mut-hint">Sélectionnez un scénario pour construire son mode opératoire.</p>}
             </div>
           </div>
         </>
@@ -148,7 +158,17 @@ export function EbiosBoard({ slug, canManage, studies, scopes }: { slug: string;
   );
 }
 
-function KillChain({ slug, scenario, scopeId, canManage, onRun, pending }: { slug: string; scenario: EbiosScenarioRow; scopeId: string | null; canManage: boolean; onRun: (fn: () => Promise<{ ok: boolean; error?: { message: string } }>) => void; pending: boolean }) {
+function KillChain({ slug, scenario, scopeId, gravityLabels, canManage, onRun, pending }: { slug: string; scenario: EbiosScenarioRow; scopeId: string | null; gravityLabels: string[]; canManage: boolean; onRun: (fn: () => Promise<{ ok: boolean; error?: { message: string } }>) => void; pending: boolean }) {
+  // Gravité choisie explicitement avant la génération : aucune valeur imposée.
+  const [gravity, setGravity] = useState<number | null>(null);
+  const hintId = useId();
+  const blocker = !scopeId
+    ? 'L’étude doit être rattachée à un périmètre pour générer le risque.'
+    : !scenario.likelihood
+      ? 'Renseignez au moins une étape de la kill chain pour coter le scénario.'
+      : gravity === null
+        ? 'Choisissez la gravité : l’impact pour l’organisation si le scénario se réalise.'
+        : null;
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
@@ -156,7 +176,7 @@ function KillChain({ slug, scenario, scopeId, canManage, onRun, pending }: { slu
         {scenario.likelihood ? <span className="eb-vrais" style={{ color: LV_TONE[scenario.likelihood] }}><span className="lv">{scenario.likelihood.toUpperCase()}</span>{LIKELIHOOD_LABEL[scenario.likelihood]}</span> : <span className="ds-muted">à construire</span>}
       </div>
       <h2 style={{ margin: '0 0 2px', fontSize: 15 }}>{scenario.riskSource}</h2>
-      <div className="ds-muted" style={{ marginBottom: 12 }}>Objectif visé : {scenario.targetObjective} · hérité de l’atelier 2</div>
+      <div className="ds-muted" style={{ marginBottom: 12 }}>Objectif visé : {scenario.targetObjective}</div>
 
       <p className="drawer-section-label">Mode opératoire — kill chain</p>
       <div className="eb-killchain">
@@ -179,15 +199,26 @@ function KillChain({ slug, scenario, scopeId, canManage, onRun, pending }: { slu
       </div>
 
       {canManage ? (
-        <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ marginTop: 14, display: 'flex', alignItems: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
           {scenario.generatedRiskId ? (
-            <span className="ds-id" style={{ color: 'var(--ok)' }}>Risque généré dans le registre unique ↗</span>
+            <>
+              <a className="ds-id" style={{ color: 'var(--ok)' }} href={`/t/${slug}/risques?ouvrir=${scenario.generatedRiskId}`}>Ouvrir le risque dans le registre ↗</a>
+              <span className="risk-mut-hint" style={{ margin: 0 }}>Atelier 5 — le risque a rejoint le registre unique (source EBIOS).</span>
+            </>
           ) : (
-            <button className="btn btn-primary btn-sm" disabled={pending || !scenario.likelihood || !scopeId} title={!scopeId ? 'L’étude doit être rattachée à un périmètre.' : !scenario.likelihood ? 'Construisez la kill chain pour coter le scénario.' : undefined} onClick={() => scopeId ? onRun(() => generateRiskAction(slug, { scenarioId: scenario.id, scopeId })) : undefined}>
-              Générer le risque dans le registre
-            </button>
+            <>
+              <label className="field" style={{ margin: 0, minWidth: 170 }}>Gravité
+                <select value={gravity ?? ''} onChange={(e) => setGravity(e.target.value === '' ? null : Number(e.target.value))}>
+                  <option value="">— Choisir —</option>
+                  {gravityLabels.map((l, i) => <option key={i} value={i + 1}>{i + 1} · {l}</option>)}
+                </select>
+              </label>
+              <button className="btn btn-primary btn-sm" disabled={pending || blocker !== null} title={blocker ?? undefined} aria-describedby={hintId} onClick={() => scopeId && gravity !== null ? onRun(() => generateRiskAction(slug, { scenarioId: scenario.id, scopeId, gravity })) : undefined}>
+                Générer le risque dans le registre
+              </button>
+              <span id={hintId} className="risk-mut-hint" style={{ margin: 0 }}>{blocker ?? 'Atelier 5 — le risque rejoint le registre unique (source EBIOS).'}</span>
+            </>
           )}
-          <span className="risk-mut-hint" style={{ margin: 0 }}>Atelier 5 — le risque rejoint le registre unique (source EBIOS).</span>
         </div>
       ) : null}
     </>
@@ -199,17 +230,19 @@ function ActionAdd({ slug, scenarioId, phase, onRun, pending }: { slug: string; 
   const [label, setLabel] = useState('');
   const [tid, setTid] = useState('');
   const [tname, setTname] = useState('');
-  if (!open) return <button className="link-btn" style={{ fontSize: 11 }} onClick={() => setOpen(true)}>+ Action</button>;
+  // « Étape de l'attaquant » et non « action » : à ne pas confondre avec une
+  // mesure du plan d'action (ajouter une étape fait monter la vraisemblance).
+  if (!open) return <button className="link-btn" style={{ fontSize: 11 }} onClick={() => setOpen(true)}>+ Étape de l’attaquant</button>;
   return (
     <div style={{ marginTop: 4 }}>
-      <input placeholder="Action élémentaire" value={label} onChange={(e) => setLabel(e.target.value)} style={{ width: '100%', fontSize: 11, marginBottom: 3 }} />
+      <input aria-label="Ce que fait l’attaquant" placeholder="Ce que fait l’attaquant" value={label} onChange={(e) => setLabel(e.target.value)} style={{ width: '100%', fontSize: 11, marginBottom: 3 }} />
       <div style={{ display: 'flex', gap: 3, marginBottom: 3 }}>
-        <input placeholder="Txxxx" value={tid} onChange={(e) => setTid(e.target.value)} style={{ width: 60, fontSize: 11 }} />
-        <input placeholder="Technique" value={tname} onChange={(e) => setTname(e.target.value)} style={{ flex: 1, fontSize: 11, minWidth: 0 }} />
+        <input aria-label="Identifiant de technique MITRE ATT&CK (optionnel, ex. T1566)" placeholder="T1566" value={tid} onChange={(e) => setTid(e.target.value)} style={{ width: 60, fontSize: 11 }} />
+        <input aria-label="Nom de la technique (optionnel)" placeholder="Technique (optionnel)" value={tname} onChange={(e) => setTname(e.target.value)} style={{ flex: 1, fontSize: 11, minWidth: 0 }} />
       </div>
       <div style={{ display: 'flex', gap: 4 }}>
         <button className="btn btn-primary btn-sm" style={{ fontSize: 11, padding: '2px 8px' }} disabled={pending || label.trim().length < 2} onClick={() => onRun(async () => { const r = await addActionAction(slug, { scenarioId, phase, label: label.trim(), mitreId: tid.trim() || null, mitreName: tname.trim() || null }); if (r.ok) { setLabel(''); setTid(''); setTname(''); setOpen(false); } return r; })}>Ajouter</button>
-        <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, padding: '2px 8px' }} onClick={() => setOpen(false)}>×</button>
+        <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, padding: '2px 8px' }} aria-label="Annuler" onClick={() => setOpen(false)}>×</button>
       </div>
     </div>
   );
@@ -233,7 +266,7 @@ function ScenarioAdd({ slug, studyId, onDone }: { slug: string; studyId: string;
       {open ? (
         <Dialog title="Ajouter un scénario opérationnel" onClose={() => setOpen(false)}>
           <form onSubmit={keepValues(submit)}>
-            <p className="risk-mut-hint">Le couple source de risque / objectif visé est hérité de l’atelier 2.</p>
+            <p className="risk-mut-hint">Qui attaque (source de risque) et dans quel but (objectif visé). Vous décrirez ensuite les étapes de l’attaquant dans la kill chain.</p>
             <label className="field">Source de risque<input name="riskSource" minLength={2} required placeholder="Cybercriminel organisé" /></label>
             <label className="field">Objectif visé<input name="targetObjective" minLength={2} required placeholder="Rançonner l’entreprise" /></label>
             {error ? <p className="form-error" role="alert">{error}</p> : null}

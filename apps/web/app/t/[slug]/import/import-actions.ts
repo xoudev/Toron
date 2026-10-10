@@ -5,6 +5,7 @@ import {
   bulkCreateAssets,
   createAction,
   createRisk,
+  ensureDefaultScale,
   listScopes,
   withTenant,
   writeAuditEntry,
@@ -56,10 +57,13 @@ export async function applyImportAction(
   }
   const target = parsed.data.target as ImportTarget;
   const mapping = parsed.data.mapping as ColumnMapping[];
-  const { rows, rejected } = validateRows(parsed.data.rows, target, mapping);
 
   try {
-    const imported = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+    const { imported, rejected } = await withTenant(appDb().db, auth.tenantId, async (tx) => {
+      // Cotations validées contre l'échelle active : une ligne hors échelle est
+      // rejetée avec sa cause au lieu de faire échouer tout l'import.
+      const riskScaleSize = target === 'risk' ? (await ensureDefaultScale(tx, auth.tenantId)).scale.size : undefined;
+      const { rows, rejected } = validateRows(parsed.data.rows, target, mapping, { riskScaleSize });
       let n = 0;
       if (target === 'risk') {
         const scopes = await listScopes(tx);
@@ -111,7 +115,7 @@ export async function applyImportAction(
         ip: auth.ip,
         userAgent: auth.userAgent,
       });
-      return n;
+      return { imported: n, rejected };
     });
     revalidatePath(`/t/${slug}/import`);
     return { ok: true, data: { imported, rejected: rejected.map((r) => ({ line: r.line, cause: r.cause, suggestion: r.suggestion })) } };

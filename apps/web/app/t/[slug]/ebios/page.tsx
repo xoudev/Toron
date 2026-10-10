@@ -1,5 +1,5 @@
-import { canManageControls } from '@toron/core';
-import { listScopes, listStudies, withTenant } from '@toron/db';
+import { canManageControls, defaultRiskScale } from '@toron/core';
+import { getActiveScale, listScopes, listStudies, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
@@ -19,9 +19,12 @@ export default async function EbiosPage({ params }: { params: Promise<{ slug: st
   if (!(await getOrganisationOverview(ctx.tenantId)).enabled('ebios')) return <ModuleDisabled slug={slug} module="ebios" role={ctx.role} />;
   const canManage = canManageControls(ctx.role);
 
-  const { studies, scopes } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
+  const { studies, scopes, scale } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
     studies: await listStudies(tx),
     scopes: await listScopes(tx),
+    // Libellés de gravité proposés à l'atelier 5 (échelle par défaut tant
+    // qu'aucune n'est posée : la génération du risque la pose à l'identique).
+    scale: (await getActiveScale(tx))?.scale ?? defaultRiskScale(),
   }));
 
   return (
@@ -43,7 +46,7 @@ export default async function EbiosPage({ params }: { params: Promise<{ slug: st
             </p>
           </div>
         </div>
-        <EbiosBoard slug={slug} canManage={canManage} studies={studies} scopes={scopes} />
+        <EbiosBoard slug={slug} canManage={canManage} studies={studies} scopes={scopes} gravityLabels={Array.from({ length: scale.size }, (_, i) => scale.gLabels[i] ?? `Niveau ${i + 1}`)} />
       </main>
     </>
   );

@@ -73,10 +73,10 @@ export const SCENARIO_STATUS_LABEL: Record<ScenarioStatus, string> = {
 
 /**
  * Cotation du risque généré à l'atelier 5 depuis un scénario opérationnel.
- * La vraisemblance alimente la valeur (V) ; la gravité (G) est reprise du
- * niveau d'impact estimé (défaut fort pour un scénario opérationnel abouti).
+ * La vraisemblance alimente la valeur (V) ; la gravité (G) est choisie par
+ * l'utilisateur au moment de la génération — aucune valeur imposée par défaut.
  * On rend une cotation brute = nette (le traitement viendra ensuite).
  */
-export function scenarioRiskRating(likelihood: EbiosLikelihood, gravity = 3): { g: number; v: number } {
+export function scenarioRiskRating(likelihood: EbiosLikelihood, gravity: number): { g: number; v: number } {
   return { g: gravity, v: likelihoodValue(likelihood) };
 }

@@ -16,7 +16,32 @@ import { useMemo, useRef, useState, useTransition } from 'react';
 import { applyImportAction } from './import-actions';
 
 const TARGET_LABEL: Record<ImportTarget, string> = { risk: 'Risques', action: 'Actions', asset: 'Actifs' };
+/** Résultat accordé en genre et en nombre : [singulier, pluriel]. */
+const IMPORTED_LABEL: Record<ImportTarget, [string, string]> = {
+  risk: ['risque importé', 'risques importés'],
+  action: ['action importée', 'actions importées'],
+  asset: ['actif importé', 'actifs importés'],
+};
 const STEPS = ['Dépôt', 'Correspondances', 'Résolution', 'Confirmation'] as const;
+/** Classeurs binaires : illisibles en texte, ils doivent être exportés en CSV. */
+const SPREADSHEET_FILE = /\.(xlsx|xlsm|xls|ods)$/i;
+/** Liste blanche alignée sur `accept` : le glisser-déposer ne la respecte pas. */
+const DELIMITED_FILE = /\.(csv|tsv|txt)$/i;
+
+/** Lignes rejetées, chacune avec sa cause et sa correction proposée (RM §5.13). */
+function RejectedList({ rows }: { rows: readonly Pick<RejectedRow, 'line' | 'cause' | 'suggestion'>[] }) {
+  return (
+    <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+      {rows.map((r) => (
+        <div className="resolve-row" key={r.line}>
+          <span className="line">Ligne {r.line}</span>
+          <div className="cause">{r.cause}</div>
+          <div className="fix">Correction proposée : {r.suggestion}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Devine la cible dont la détection couvre le mieux les champs requis. */
 function guessTarget(headers: string[]): ImportTarget {
@@ -32,8 +57,9 @@ function guessTarget(headers: string[]): ImportTarget {
   return best;
 }
 
-export function ImportWizard({ slug }: { slug: string }) {
+export function ImportWizard({ slug, riskScaleSize }: { slug: string; riskScaleSize: number }) {
   const [step, setStep] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const [table, setTable] = useState<ParsedTable | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -46,10 +72,22 @@ export function ImportWizard({ slug }: { slug: string }) {
 
   function onFile(file: File) {
     setParseError(null);
+    if (SPREADSHEET_FILE.test(file.name)) {
+      setParseError('Les classeurs (.xlsx, .xls, .ods) ne sont pas lus directement : dans Excel, choisissez Fichier → Enregistrer sous → « CSV UTF-8 », puis déposez le fichier .csv obtenu.');
+      return;
+    }
+    if (!DELIMITED_FILE.test(file.name)) {
+      setParseError('Format non pris en charge : déposez un fichier .csv, .tsv ou .txt (depuis Excel : Enregistrer sous → « CSV UTF-8 »).');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const text = String(reader.result ?? '');
       const parsed = parseDelimited(text);
+      if (parsed.unclosedQuoteAt !== undefined) {
+        setParseError(`Guillemet non refermé à la ligne ${parsed.unclosedQuoteAt} : vérifiez cette cellule dans le fichier source, puis déposez-le à nouveau.`);
+        return;
+      }
       if (parsed.headers.length === 0 || parsed.rows.length === 0) {
         setParseError('Fichier illisible ou vide. Attendu : un CSV/TSV (export Excel « Enregistrer sous → CSV ») avec une ligne d’en-tête.');
         return;
@@ -82,7 +120,10 @@ export function ImportWizard({ slug }: { slug: string }) {
     setMapping((m) => m.map((x) => (x.field === field ? { ...x, columnIndex, confidence: columnIndex === null ? 0 : 1 } : x)));
   }
 
-  const validation = useMemo(() => (table ? validateRows(table.rows, target, mapping) : null), [table, target, mapping]);
+  const validation = useMemo(
+    () => (table ? validateRows(table.rows, target, mapping, { riskScaleSize }) : null),
+    [table, target, mapping, riskScaleSize],
+  );
   const preview = table ? table.rows.slice(0, 5) : [];
 
   function apply() {
@@ -107,9 +148,17 @@ export function ImportWizard({ slug }: { slug: string }) {
 
       {step === 0 ? (
         <div className="card" style={{ padding: 18 }}>
-          <div className="drop-zone">
+          <div
+            className="drop-zone"
+            style={dragging ? { borderColor: 'var(--accent)' } : undefined}
+            // Sans ces gestionnaires, le navigateur ouvrirait le fichier déposé
+            // et quitterait l'assistant.
+            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragging(true); }}
+            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false); }}
+            onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) onFile(f); }}
+          >
             <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="var(--text-3)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4M8 8l4-4 4 4M4 17v3h16v-3" /></svg>
-            <h3>Déposez votre classeur</h3>
+            <h3>Déposez votre fichier CSV</h3>
             <p>CSV / TSV (depuis Excel : « Enregistrer sous → CSV UTF-8 »). Risques, actions ou actifs.</p>
             <button className="btn btn-primary btn-sm" onClick={() => fileRef.current?.click()}>Parcourir…</button>
             <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
@@ -178,16 +227,10 @@ export function ImportWizard({ slug }: { slug: string }) {
           {validation.rejected.length > 0 ? (
             <>
               <p className="drawer-section-label">Résolvons les lignes en écart</p>
-              <div style={{ maxHeight: 360, overflowY: 'auto' }}>
-                {validation.rejected.map((r: RejectedRow) => (
-                  <div className="resolve-row" key={r.line}>
-                    <span className="line">Ligne {r.line}</span>
-                    <div className="cause">{r.cause}</div>
-                    <div className="fix">Correction proposée : {r.suggestion}</div>
-                  </div>
-                ))}
-              </div>
-              <p className="reassure">Ces lignes seront ignorées à l’import. Corrigez-les dans le fichier source puis réimportez — rien n’est perdu en silence.</p>
+              <RejectedList rows={validation.rejected} />
+              <p className="reassure">
+                {validation.rejected.length > 1 ? 'Ces lignes seront ignorées' : 'Cette ligne sera ignorée'} à l’import. Corrigez-{validation.rejected.length > 1 ? 'les' : 'la'} dans le fichier source, puis réimportez uniquement {validation.rejected.length > 1 ? 'ces lignes' : 'cette ligne'} pour ne pas créer de doublons — ou corrigez le fichier dès maintenant et déposez-le à nouveau pour tout importer en une fois. Rien n’est perdu en silence.
+              </p>
             </>
           ) : (
             <p className="ds-muted">Toutes les lignes sont valides. 🎉</p>
@@ -204,8 +247,15 @@ export function ImportWizard({ slug }: { slug: string }) {
         <div className="card">
           <div className="wiz-done">
             <div className="big">{result.imported}</div>
-            <h3 style={{ margin: '4px 0' }}>{TARGET_LABEL[target].toLowerCase()} importé{result.imported > 1 ? 's' : ''} — bienvenue sur votre socle</h3>
-            {result.rejected.length > 0 ? <p className="ds-muted">{result.rejected.length} ligne{result.rejected.length > 1 ? 's' : ''} ignorée{result.rejected.length > 1 ? 's' : ''} (voir les causes ci-dessus).</p> : null}
+            <h3 style={{ margin: '4px 0' }}>{IMPORTED_LABEL[target][result.imported > 1 ? 1 : 0]} — bienvenue sur votre socle</h3>
+            {result.rejected.length > 0 ? (
+              <div style={{ textAlign: 'left', marginTop: 14 }}>
+                <p className="ds-muted">
+                  {result.rejected.length} ligne{result.rejected.length > 1 ? 's' : ''} ignorée{result.rejected.length > 1 ? 's' : ''}. Corrigez-{result.rejected.length > 1 ? 'les' : 'la'} dans le fichier source, puis réimportez uniquement {result.rejected.length > 1 ? 'ces lignes' : 'cette ligne'} pour ne pas créer de doublons :
+                </p>
+                <RejectedList rows={result.rejected} />
+              </div>
+            ) : null}
             <div className="dialog-actions" style={{ justifyContent: 'center', marginTop: 16 }}>
               <a className="btn btn-primary btn-sm" href={target === 'risk' ? `/t/${slug}/risques` : target === 'action' ? `/t/${slug}/plan-action` : `/t/${slug}/actifs`}>Ouvrir le registre rempli</a>
               <button className="btn btn-ghost btn-sm" onClick={() => { setStep(0); setTable(null); setResult(null); }}>Importer un autre fichier</button>

@@ -161,6 +161,7 @@ export {
   type TargetSpec,
   type ColumnMapping,
   type RejectedRow,
+  type ValidateOptions,
   type ValidationResult,
   type ParsedTable,
 } from './import.ts';

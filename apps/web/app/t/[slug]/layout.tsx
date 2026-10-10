@@ -1,6 +1,6 @@
 import { MEMBERSHIP_ROLE_LABEL, urgentWorkCount, workKindEnabled } from '@toron/core';
 import { countUnreadNotifications, listMyWork, withTenant } from '@toron/db';
-import { AppShell, NotificationsProvider } from '@toron/ui';
+import { AppShell, BrandMark, NotificationsProvider } from '@toron/ui';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
@@ -27,8 +27,32 @@ export default async function TenantLayout({
   const ctx = await getTenantContext(slug);
 
   if (ctx.verdict === 'non_connecte') redirect('/connexion');
-  // Refus et TOTP requis : la page rend le message, sans chrome de shell.
-  if (ctx.verdict !== 'autorise') return <>{children}</>;
+  // Refus : la page rend le message, sans chrome de shell.
+  if (ctx.verdict === 'refuse') return <>{children}</>;
+  // TOTP requis : même carte sur toutes les pages de l'organisation, avec la
+  // raison et les issues possibles (activer, changer d'organisation, sortir).
+  if (ctx.verdict === 'totp_requis') {
+    return (
+      <main className="auth-page">
+        <div className="auth-card">
+          <span className="org-brand"><BrandMark size={22} /><b>toron</b></span>
+          <h1>{ctx.tenantName}</h1>
+          <p>
+            Votre rôle exige la double authentification. Le propriétaire, la direction et le RSSI
+            détiennent des droits étendus : un mot de passe seul ne suffit pas. L’activation prend
+            deux minutes avec une application d’authentification.
+          </p>
+          <a className="btn btn-primary" href={`/securite/2fa?suite=${encodeURIComponent(`/t/${slug}`)}`}>
+            Activer la double authentification
+          </a>
+          <div className="auth-actions">
+            <a className="btn btn-ghost btn-sm" href="/organisations?choisir=1">Changer d’organisation</a>
+            <SignOutButton className="btn btn-ghost btn-sm" />
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   const overview = await getOrganisationOverview(ctx.tenantId);
   const { myWork, unread } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
@@ -51,7 +75,7 @@ export default async function TenantLayout({
             disabledModules={overview.disabledModules}
             footerActions={
               <>
-                <a className="sidebar-link" href="/organisations">Changer d’organisation</a>
+                <a className="sidebar-link" href="/organisations?choisir=1">Changer d’organisation</a>
                 <SignOutButton />
               </>
             }

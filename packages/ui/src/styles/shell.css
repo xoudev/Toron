@@ -478,6 +478,13 @@ a.nav-item:hover {
   color: var(--text-2);
 }
 
+/* Issues secondaires d'une carte (changer d'organisation, se déconnecter). */
+.auth-card .auth-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .auth-card select {
   font: inherit;
   color: var(--text);
@@ -831,10 +838,14 @@ kbd {
   color: var(--text);
   overflow-wrap: anywhere;
 }
-.totp-manual small,
-.totp-backup small {
+.totp-manual small {
   font-size: 11.5px;
   color: var(--text-3);
+}
+/* Seule mention de l'usage unique des codes : contraste AA exigé. */
+.totp-backup small {
+  font-size: 11.5px;
+  color: var(--text-2);
 }
 .totp-backup {
   display: grid;

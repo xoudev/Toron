@@ -25,15 +25,27 @@ function ConnexionForm() {
     e.preventDefault();
     setErreur(null);
     setEnCours(true);
-    const { data, error } = await authClient.signIn.email({
-      email,
-      password,
-      callbackURL: suite,
-    });
+    const { data, error } = await authClient.signIn
+      .email({
+        email,
+        password,
+        callbackURL: suite,
+      })
+      // Réseau indisponible : message générique, sans laisser le bouton bloqué.
+      .catch(() => ({ data: null, error: { status: 0, code: undefined } }));
     if (error) {
       setEnCours(false);
+      // Une limite de débit ou une panne n'est pas une erreur de saisie :
+      // réessayer aussitôt prolongerait le blocage. FAILED_TO_CREATE_SESSION
+      // arrive pourtant en 401.
       setErreur(
-        'Identifiants incorrects — vérifiez l’adresse e-mail et le mot de passe, puis réessayez.',
+        error.status === 429
+          ? 'Trop de tentatives — patientez une minute puis réessayez.'
+          : error.code?.startsWith('FAILED_TO_')
+            ? 'Connexion impossible pour le moment — réessayez dans quelques instants.'
+            : error.status === 400 || error.status === 401
+              ? 'Identifiants incorrects — vérifiez l’adresse e-mail et le mot de passe, puis réessayez.'
+              : 'Connexion impossible pour le moment — réessayez dans quelques instants.',
       );
       return;
     }

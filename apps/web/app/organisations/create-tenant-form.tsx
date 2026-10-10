@@ -39,12 +39,18 @@ export function CreateTenantForm({ open: initiallyOpen }: { open: boolean }) {
       </label>
       <label>
         Nature du périmètre
-        <select name="scopeKind" defaultValue="mixte" required>
+        <select name="scopeKind" defaultValue="" required aria-describedby="org-create-kind-help">
+          <option value="" disabled>Choisissez…</option>
           {SCOPE_KINDS.map((k) => (
             <option key={k} value={k}>{SCOPE_KIND_LABEL[k]}</option>
           ))}
         </select>
       </label>
+      <p className="org-help" id="org-create-kind-help">
+        Détermine les modules proposés — SMSI : incidents, actifs, EBIOS RM ; QMS : processus,
+        non-conformités, satisfaction client ; SMSI + QMS : tous. Modifiable ensuite dans
+        Paramètres › Modules.
+      </p>
       {state.erreur ? <p role="alert">{state.erreur}</p> : null}
       <div className="org-form-actions">
         {!initiallyOpen ? (

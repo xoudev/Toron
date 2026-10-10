@@ -1,7 +1,7 @@
 'use client';
 
 import { BrandMark } from '@toron/ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { QrCode } from '@/components/qr-code';
 import { authClient } from '@/lib/auth-client';
@@ -28,18 +28,38 @@ export function Activation2fa({ suite, retour }: { suite: string; retour: string
   const [enCours, setEnCours] = useState(false);
   const [copie, setCopie] = useState(false);
 
+  // Quitter l'étape « Scanner » obligerait à régénérer la clé : l'entrée déjà
+  // scannée et les codes de secours enregistrés deviendraient inutilisables.
+  useEffect(() => {
+    if (etape !== 'verification') return;
+    const retenir = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', retenir);
+    return () => window.removeEventListener('beforeunload', retenir);
+  }, [etape]);
+
   async function demarrer(e: React.FormEvent) {
     e.preventDefault();
     setErreur(null);
     setEnCours(true);
-    const { data, error } = await authClient.twoFactor.enable({ password });
+    const { data, error } = await authClient.twoFactor
+      .enable({ password })
+      // Réseau indisponible : message générique, sans laisser le bouton bloqué.
+      .catch(() => ({ data: null, error: { status: 0, code: undefined } }));
     setEnCours(false);
     if (error?.status === 401) {
       window.location.assign(`/connexion?suite=${encodeURIComponent(suite)}`);
       return;
     }
     if (error || !data) {
-      setErreur('Activation impossible — vérifiez votre mot de passe puis réessayez.');
+      setErreur(
+        error?.code === 'TOTP_ALREADY_ENABLED'
+          ? 'La double authentification est déjà active sur votre compte — rechargez la page pour continuer.'
+          : error?.code === 'INVALID_PASSWORD'
+            ? 'Mot de passe incorrect — saisissez celui de votre compte Toron puis réessayez.'
+            : error?.status === 429
+              ? 'Trop de tentatives — patientez jusqu’à une minute puis réessayez.'
+              : 'Activation impossible pour le moment — réessayez dans quelques instants.',
+      );
       return;
     }
     // better-auth renvoie, selon la méthode configurée, un OTP ou un TOTP : seul
@@ -58,10 +78,18 @@ export function Activation2fa({ suite, retour }: { suite: string; retour: string
     e.preventDefault();
     setErreur(null);
     setEnCours(true);
-    const { error } = await authClient.twoFactor.verifyTotp({ code: code.replace(/\s/g, '') });
+    const { error } = await authClient.twoFactor
+      .verifyTotp({ code: code.replace(/\s/g, '') })
+      .catch(() => ({ error: { status: 0 } }));
     setEnCours(false);
     if (error) {
-      setErreur('Code refusé — vérifiez que l’heure de votre téléphone est automatique, puis saisissez le code affiché à l’instant.');
+      setErreur(
+        error.status === 429
+          ? 'Trop de tentatives — patientez jusqu’à une minute puis réessayez.'
+          : error.status === 400 || error.status === 401
+            ? 'Code refusé — vérifiez que l’heure de votre téléphone est automatique, puis saisissez le code affiché à l’instant. Si vous avez scanné un QR code précédent, supprimez cette entrée et scannez celui-ci.'
+            : 'Vérification impossible pour le moment — réessayez dans quelques instants.',
+      );
       return;
     }
     setTotpUri('');
@@ -123,6 +151,10 @@ export function Activation2fa({ suite, retour }: { suite: string; retour: string
             <div className="totp-qr">
               <QrCode value={totpUri} label="QR code de configuration de la double authentification" />
             </div>
+            <p>
+              Si vous quittez cette page, une nouvelle clé sera générée : supprimez alors l’entrée Toron
+              précédente de votre application et jetez les codes déjà enregistrés.
+            </p>
             <details className="totp-manual">
               <summary>Impossible de scanner ? Saisir la clé à la main</summary>
               <code className="totp-secret">{groupedSecret(totpUri)}</code>

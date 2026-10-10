@@ -69,6 +69,14 @@ describe('catalogue (listFrameworks)', () => {
     expect(byCode['recyf']?.isBuiltin).toBe(true);
     expect(byCode['recyf']?.requirementCount).toBe(172); // 20 objectifs + 152 moyens
     expect(byCode['iso27001']?.requirementCount).toBe(129); // 32 clauses + 97 Annexe A
+    // Exigences feuilles, celles qui portent des contrôles : 152 moyens ReCyF ;
+    // 25 sous-clauses et 93 mesures ISO 27001 (sans les 7 clauses ni les 4 thèmes).
+    expect(byCode['recyf']?.leafRequirementCount).toBe(152);
+    expect(byCode['iso27001']?.leafRequirementCount).toBe(118);
+    // Démo : ReCyF rattaché par objectifs (OBJ-01, OBJ-08, OBJ-13 → 3 + 5 + 7
+    // moyens), ISO 27001 par mesures (3).
+    expect(byCode['recyf']?.mappedLeafCount).toBe(15);
+    expect(byCode['iso27001']?.mappedLeafCount).toBe(3);
     // Les 3 contrôles démo sont mappés sur chaque référentiel.
     expect(byCode['recyf']?.mappedControlCount).toBe(3);
     expect(byCode['iso27001']?.mappedControlCount).toBe(3);

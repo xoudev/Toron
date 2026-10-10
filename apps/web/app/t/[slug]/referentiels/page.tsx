@@ -23,8 +23,10 @@ const FRAMEWORK_SUBTITLE: Record<string, string> = {
   secnumcloud: 'Cloud · ANSSI',
 };
 
+// Taux d'outillage sur les exigences feuilles : les titres de chapitre et les
+// objectifs ne portent pas de contrôle, ils ne comptent pas.
 function toolingRate(f: FrameworkSummary): number {
-  return f.requirementCount === 0 ? 0 : Math.round((f.mappedRequirementCount / f.requirementCount) * 100);
+  return f.leafRequirementCount === 0 ? 0 : Math.round((f.mappedLeafCount / f.leafRequirementCount) * 100);
 }
 
 // Les versions sont saisies tantôt « v2.5 » (ReCyF) tantôt « 2022 » (ISO) :
@@ -118,7 +120,7 @@ export default async function ReferentielsPage({
                   </div>
                   <div className="stat-row">
                     <div className="stat">
-                      <div className="stat-value mono">{f.requirementCount}</div>
+                      <div className="stat-value mono">{f.leafRequirementCount}</div>
                       <div className="stat-label">Exigences</div>
                     </div>
                     <div className="stat">
@@ -126,11 +128,11 @@ export default async function ReferentielsPage({
                       <div className="stat-label">Contrôles rattachés</div>
                     </div>
                     <div className="stat">
-                      <div className="stat-value mono">{f.mappedRequirementCount}</div>
+                      <div className="stat-value mono">{f.mappedLeafCount}<small>/{f.leafRequirementCount}</small></div>
                       <div className="stat-label">Exigences outillées</div>
                     </div>
                   </div>
-                  <div className="tooling" title="Part d’exigences dotées d’au moins un contrôle interne">
+                  <div className="tooling" title="Part des exigences couvertes par au moins un contrôle interne, directement ou par leur chapitre">
                     <div className="tooling-track">
                       <div className="tooling-fill" style={{ width: `${toolingRate(f)}%` }} />
                     </div>
@@ -160,7 +162,7 @@ export default async function ReferentielsPage({
                       <div className="fw-card-title">{f.name}</div>
                       <div className="fw-card-meta">
                         {(FRAMEWORK_SUBTITLE[f.code] ?? f.code.toUpperCase())} · {formatVersion(f.version)} ·{' '}
-                        {f.requirementCount} exigences
+                        {f.leafRequirementCount} exigences
                       </div>
                     </div>
                     <span className={`badge ${f.isBuiltin ? 'badge--builtin' : 'badge--custom'}`}>

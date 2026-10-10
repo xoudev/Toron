@@ -193,7 +193,7 @@ export function ReferentielDetail({
         <div>
           <h1>{framework.name}</h1>
           <div className="sub">
-            {framework.requirementCount} exigences · {framework.mappedControlCount} contrôles rattachés
+            {framework.leafRequirementCount} exigences · {framework.mappedControlCount} contrôles rattachés
             {framework.isBuiltin ? ' · référentiel intégré' : ' · référentiel interne'}
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { canManageControls, canRecordControlReview } from '@toron/core';
-import { listControlLibrary, listTenantMembers, withTenant } from '@toron/db';
+import { activeFrameworkCoverage, listAdoptedTemplateKeys, listControlLibrary, listTenantMembers, withTenant } from '@toron/db';
+import { CONTROL_TEMPLATE_DOMAINS, controlTemplates } from '@toron/frameworks';
 import { ThemeToggle, Topbar } from '@toron/ui';
 import { redirect } from 'next/navigation';
 
@@ -19,10 +20,14 @@ export default async function ControlesPage({ params }: { params: Promise<{ slug
   if (ctx.verdict !== 'autorise') redirect(`/t/${slug}`);
 
   const today = todayParis();
-  const { controls, members } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
+  const { controls, members, coverage, adoptedKeys } = await withTenant(appDb().db, ctx.tenantId, async (tx) => ({
     controls: await listControlLibrary(tx, today),
     members: await listTenantMembers(tx),
+    coverage: await activeFrameworkCoverage(tx),
+    adoptedKeys: await listAdoptedTemplateKeys(tx),
   }));
+  // Contrôles types : seuls l'intitulé, le domaine et les rattachements partent au navigateur.
+  const templates = controlTemplates().map((t) => ({ key: t.key, domain: t.domain, title: t.title, mappings: t.mappings }));
   const overview = await getOrganisationOverview(ctx.tenantId);
   const active = controls.filter((c) => c.status === 'actif');
   const late = active.filter((c) => c.reviewState === 'en_retard').length;
@@ -61,6 +66,7 @@ export default async function ControlesPage({ params }: { params: Promise<{ slug
           exceptionsEnabled={overview.enabled('derogations')}
           controls={controls}
           members={members}
+          templates={{ templates, domains: CONTROL_TEMPLATE_DOMAINS.map((d) => ({ key: d.key, label: d.label })), adoptedKeys, coverage }}
         />
       </main>
     </>

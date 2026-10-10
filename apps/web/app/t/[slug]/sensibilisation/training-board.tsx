@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  LEADER_ROLES,
   LEADER_TRAINING_STATE_LABEL,
   MEMBERSHIP_ROLE_LABEL,
   TRAINING_KINDS,
@@ -9,7 +8,9 @@ import {
   TRAINING_SESSION_STATE_LABEL,
   foldForSearch,
   searchTerms,
+  trackedLeaderRoles,
   trainingSessionError,
+  type MembershipRole,
   type TrainingKind,
 } from '@toron/core';
 import type { LeaderTrainingRow, TenantMember, TrainingSessionRow } from '@toron/db';
@@ -31,7 +32,8 @@ import {
 
 type Lite = { id: string; label: string };
 
-const isLeader = (role: string) => (LEADER_ROLES as readonly string[]).includes(role);
+// Membres suivis comme dirigeants : la direction, à défaut le propriétaire.
+const leaderRolesOf = (members: TenantMember[]): readonly string[] => trackedLeaderRoles(members.map((m) => m.role as MembershipRole));
 
 function duration(minutes: number): string {
   if (minutes < 60) return `${minutes} min`;
@@ -414,6 +416,7 @@ function SessionForm({ slug, today, userId, members, evidences, initial, session
   const recordedAttendance = initial.attendedCount != null || (initial.attendeeIds?.length ?? 0) > 0 || initial.evidenceId != null;
   // Présents enregistrés qui ont quitté l'organisation depuis : conservés tant qu'on ne les décoche pas.
   const former = recorded.filter((a) => !members.some((m) => m.userId === a.userId));
+  const leaderRoles = leaderRolesOf(members);
   const sheetOptions = initial.evidenceId && !evidences.some((e) => e.id === initial.evidenceId)
     ? [{ id: initial.evidenceId, label: initial.evidenceTitle ?? 'Preuve rattachée' }, ...evidences]
     : evidences;
@@ -507,7 +510,7 @@ function SessionForm({ slug, today, userId, members, evidences, initial, session
           {members.map((m) => (
             <label key={m.userId}>
               <input type="checkbox" checked={checked.has(m.userId)} onChange={() => toggle(m.userId)} />
-              <span>{m.name}{m.userId === userId ? ' (vous)' : ''}{isLeader(m.role) ? <small> · dirigeant</small> : null}</span>
+              <span>{m.name}{m.userId === userId ? ' (vous)' : ''}{leaderRoles.includes(m.role) ? <small> · dirigeant</small> : null}</span>
             </label>
           ))}
           {former.map((a) => (

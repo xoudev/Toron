@@ -1,6 +1,7 @@
-import { awarenessSummary, canManageTraining } from '@toron/core';
+import { awarenessSummary, canManageTraining, ownersStandInForLeaders } from '@toron/core';
 import { listEvidences, listLeaderTraining, listTenantMembers, listTrainingSessions, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -13,6 +14,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { TrainingBoard } from './training-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Sensibilisation et formation — Toron' };
 
 export default async function SensibilisationPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -30,6 +33,7 @@ export default async function SensibilisationPage({ params }: { params: Promise<
   }));
   const summary = awarenessSummary(sessions, today);
   const untrained = leaders.filter((l) => l.state === 'a_renouveler' || l.state === 'jamais');
+  const ownersOnly = ownersStandInForLeaders(leaders.map((l) => l.role));
   const employees = overview.profile.employeeCount;
   const sheetsOnFile = summary.held - summary.withoutSheet;
 
@@ -51,7 +55,16 @@ export default async function SensibilisationPage({ params }: { params: Promise<
             </p>
           </div>
         </div>
-        {untrained.length > 0 ? (
+        {untrained.length > 0 && ownersOnly ? (
+          <div className="mut-band trn-band--warn" style={{ marginBottom: 16 }}>
+            <p>
+              <b>Aucun membre n’a le rôle Direction</b> : pour la formation des dirigeants (NIS 2, art. 20), Toron suit à défaut{' '}
+              {untrained.length > 1 ? `${untrained.length} propriétaires de l’organisation` : `le propriétaire de l’organisation, ${untrained[0]!.name},`} sans
+              formation à jour. Invitez votre direction avec le rôle Direction dans{' '}
+              <a href={`/t/${slug}/parametres?section=membres`}>Paramètres › Utilisateurs &amp; rôles</a> : c’est elle qui sera alors suivie.
+            </p>
+          </div>
+        ) : untrained.length > 0 ? (
           <div className="mut-band trn-band--danger" style={{ marginBottom: 16 }}>
             <p>
               <b>{untrained.length > 1 ? `${untrained.length} dirigeants n’ont pas de formation à jour` : `${untrained[0]!.name} n’a pas de formation à jour`}</b> :

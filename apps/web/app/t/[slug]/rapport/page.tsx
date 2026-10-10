@@ -5,6 +5,7 @@ import {
   OBLIGATION_REGIME_LABEL,
 } from '@toron/core';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { listExportsForObject, loadBoardReport, withTenant } from '@toron/db';
@@ -17,6 +18,8 @@ import { PrintButton } from './print-button';
 import { SealedVersions, type SealedVersion } from './sealed-versions';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Rapport de direction — Toron' };
 
 const BAND_LABEL: Record<string, string> = { critique: 'Critique', eleve: 'Élevé', moyen: 'Moyen', faible: 'Faible' };
 const TREATMENT_LABEL: Record<string, string> = { reduire: 'Réduire', transferer: 'Transférer', accepter: 'Accepter', eviter: 'Éviter' };
@@ -67,7 +70,7 @@ export default async function RapportDirectionPage({ params }: { params: Promise
         <section className="board-section" aria-labelledby="b-kpi">
           <h2 id="b-kpi">Indicateurs</h2>
           <dl className="board-kpis">
-            <div><dt>Couverture des exigences évaluées</dt><dd>{i.coveragePct === null ? '—' : `${i.coveragePct} %`}</dd></div>
+            <div><dt>Couverture des exigences applicables</dt><dd>{i.coveragePct === null ? '—' : `${i.coveragePct} %`}</dd></div>
             {i.risks ? <div><dt>Risques critiques / élevés (nets)</dt><dd>{i.risks.critical} / {i.risks.high}</dd></div> : null}
             <div><dt>Actions en retard / ouvertes</dt><dd>{i.actions.overdue} / {i.actions.open}</dd></div>
             <div><dt>Obligations respectées</dt><dd>{i.obligations.met} / {i.obligations.applicable}</dd></div>
@@ -81,12 +84,19 @@ export default async function RapportDirectionPage({ params }: { params: Promise
         <div className="board-grid">
           <section className="board-section" aria-labelledby="b-nis2">
             <h2 id="b-nis2">NIS 2 et obligations</h2>
-            <ul className="board-list">
-              {r.entities.map((e) => (
-                <li key={e.name}><b>{e.name}</b> — {NIS2_STATUS_LABEL[e.status]} · enregistrement ANSSI : {NIS2_REGISTRATION_LABEL[e.registration].toLowerCase()}<small>{e.reason}</small></li>
-              ))}
-              {r.obligationsByRegime.map((o) => <li key={o.regime}>{OBLIGATION_REGIME_LABEL[o.regime]} : {o.met} obligation{o.met > 1 ? 's' : ''} respectée{o.met > 1 ? 's' : ''} sur {o.applicable} ({pct(o.met, o.applicable)})</li>)}
-            </ul>
+            {r.entities.length === 0 && r.obligationsByRegime.length === 0 ? (
+              <p className="ds-muted">
+                Aucune entité qualifiée — ajoutez votre société dans <a href={`/t/${slug}/parametres?section=organisation`}>Paramètres › Organisation</a>,
+                puis qualifiez-la dans <a href={`/t/${slug}/obligations`}>Obligations</a>.
+              </p>
+            ) : (
+              <ul className="board-list">
+                {r.entities.map((e) => (
+                  <li key={e.name}><b>{e.name}</b> — {NIS2_STATUS_LABEL[e.status]} · enregistrement ANSSI : {NIS2_REGISTRATION_LABEL[e.registration].toLowerCase()}<small>{e.reason}</small></li>
+                ))}
+                {r.obligationsByRegime.map((o) => <li key={o.regime}>{OBLIGATION_REGIME_LABEL[o.regime]} : {o.met} obligation{o.met > 1 ? 's' : ''} respectée{o.met > 1 ? 's' : ''} sur {o.applicable} ({pct(o.met, o.applicable)})</li>)}
+              </ul>
+            )}
           </section>
 
           <section className="board-section" aria-labelledby="b-ref">
@@ -100,7 +110,9 @@ export default async function RapportDirectionPage({ params }: { params: Promise
         {r.topRisks ? (
           <section className="board-section" aria-labelledby="b-risks">
             <h2 id="b-risks">Risques principaux</h2>
-            {r.topRisks.length === 0 ? <p className="ds-muted">Aucun risque élevé ou critique après traitement.</p> : (
+            {r.topRisks.length === 0 ? (
+              <p className="ds-muted">{i.risks && i.risks.total === 0 ? 'Aucun risque enregistré — registre à constituer.' : 'Aucun risque élevé ou critique après traitement.'}</p>
+            ) : (
               <table className="board-table">
                 <thead><tr><th>Risque</th><th>Niveau net</th><th>Traitement</th><th>Responsable</th></tr></thead>
                 <tbody>{r.topRisks.map((x) => <tr key={x.id}><td><a href={`/t/${slug}/risques?ouvrir=${x.id}`}>{refCode('RSK', x.id)}</a> {x.title}</td><td>{x.netBand ? BAND_LABEL[x.netBand] : '—'}</td><td>{TREATMENT_LABEL[x.treatment] ?? x.treatment}</td><td>{x.ownerName ?? '—'}</td></tr>)}</tbody>

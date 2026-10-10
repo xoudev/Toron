@@ -34,7 +34,7 @@ export const MEMBERSHIP_ROLE_LABEL: Record<MembershipRole, string> = {
  * libellé qui sous-estime un rôle fait accorder plus qu'on ne le croit.
  */
 export const MEMBERSHIP_ROLE_PURPOSE: Record<MembershipRole, string> = {
-  owner: 'Tous les droits, y compris nommer un autre propriétaire ; suivi comme dirigeant (formation NIS 2).',
+  owner: 'Tous les droits, y compris nommer un autre propriétaire ; suivi comme dirigeant (formation NIS 2) tant qu’aucun membre n’a le rôle Direction.',
   direction: 'Tous les droits sauf nommer, modifier ou retirer un propriétaire : membres, configuration et tous les modules ; suivi comme dirigeant (formation NIS 2).',
   rssi: 'Tous les droits sauf la gestion des membres : modules SMSI comme QMS, organisation, périmètres, revue de direction, décision sur les dérogations.',
   resp_qualite: 'Mêmes droits que RSSI, sans double authentification obligatoire ; libellé destiné au responsable du QMS.',

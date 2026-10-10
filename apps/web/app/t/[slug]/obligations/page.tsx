@@ -1,6 +1,7 @@
 import { canConfigureOrganisation, canManageControls, nis2Qualification, obligationAttention, suggestedObligations } from '@toron/core';
 import { listEntitiesNis2, listObligations, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -11,6 +12,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { ObligationBoard, type EntityView } from './obligation-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Obligations réglementaires — Toron' };
 
 export default async function ObligationsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -37,7 +40,7 @@ export default async function ObligationsPage({ params }: { params: Promise<{ sl
       <Topbar
         crumbRoot="Pilotage"
         crumbCurrent="Obligations"
-        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{open.length} APPLICABLES</span><ExportCsvLink slug={slug} registre="obligations" /><ThemeToggle /></>}
+        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{open.length} APPLICABLE{open.length > 1 ? 'S' : ''}</span><ExportCsvLink slug={slug} registre="obligations" /><ThemeToggle /></>}
       />
       <main className="app-page">
         <div className="page-head">

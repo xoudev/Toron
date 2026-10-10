@@ -86,6 +86,7 @@ export async function loadBoardReport(tx: TenantTx, today: string): Promise<Boar
   const input: BoardInput = {
     coveragePct: d.metrics.coveragePct,
     risks: d.risks && {
+      total: d.risks.length,
       critical: d.risks.filter((r) => r.netBand === 'critique').length,
       high: d.risks.filter((r) => r.netBand === 'eleve').length,
       acceptancePending: d.risks.filter((r) => acceptanceNeedsAttention(r.acceptanceState)).length,

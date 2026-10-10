@@ -99,6 +99,8 @@ export interface ControlReviewSummary {
 interface Props {
   slug: string;
   canManage: boolean;
+  /** Exigence ouverte à l'arrivée (`?exigence=`), affichée dans son chapitre. */
+  initialReqId: string | null;
   framework: FrameworkSummary;
   tree: RequirementNode[];
   controls: ControlSummary[];
@@ -116,6 +118,7 @@ interface Props {
 export function ReferentielDetail({
   slug,
   canManage,
+  initialReqId,
   framework,
   tree,
   controls,
@@ -167,8 +170,10 @@ export function ReferentielDetail({
     return [...codes].sort();
   }
 
-  const [activeNodeId, setActiveNodeId] = useState<string>(roots[0]?.id ?? '');
-  const [selectedReqId, setSelectedReqId] = useState<string | null>(null);
+  // Exigence demandée : son nœud parent s'affiche, elle y est sélectionnée.
+  const initialReq = initialReqId ? tree.find((n) => n.id === initialReqId) ?? null : null;
+  const [activeNodeId, setActiveNodeId] = useState<string>(initialReq?.parentId ?? initialReq?.id ?? roots[0]?.id ?? '');
+  const [selectedReqId, setSelectedReqId] = useState<string | null>(initialReq?.id ?? null);
   const [mutualizedOnly, setMutualizedOnly] = useState(false);
 
   const sections = useMemo(() => {

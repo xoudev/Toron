@@ -1,5 +1,6 @@
 import { DOCUMENT_TYPE_LABEL, canManageControls, documentTemplate, nextSemver } from '@toron/core';
 import { getVersionBody, latestSemver, listDocuments, listVersions, withTenant } from '@toron/db';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
@@ -8,6 +9,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { DocumentEditor } from './document-editor';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Éditeur de document — Toron' };
 
 export default async function DocumentEditorPage({ params }: { params: Promise<{ slug: string; documentId: string }> }) {
   const { slug, documentId } = await params;

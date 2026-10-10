@@ -1,6 +1,7 @@
 import { canManageControls, recommendedFrameworks, SCOPE_KIND_SHORT } from '@toron/core';
 import { listControls, listFrameworks, listScopes, withTenant, type FrameworkSummary } from '@toron/db';
 import { BrandMark, ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Fragment } from 'react';
 
@@ -11,6 +12,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { ActivateFrameworkButton, CreateFrameworkButton, FrameworkVisibilityButton } from './catalog-client';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Référentiels — Toron' };
 
 const FRAMEWORK_SUBTITLE: Record<string, string> = {
   iso27001: 'SMSI · Annexe A',
@@ -78,7 +81,7 @@ export default async function ReferentielsPage({
   return (
     <>
       <Topbar
-        crumbRoot="Conformité"
+        crumbRoot="Pilotage"
         crumbCurrent="Référentiels"
         actions={
           <>

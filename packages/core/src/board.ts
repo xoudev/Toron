@@ -17,6 +17,8 @@ export interface BoardInput {
   coveragePct: number | null;
   /** null quand le registre des risques est masqué. */
   risks: {
+    /** Risques au registre : à zéro, aucune analyse n’a encore été conduite. */
+    total: number;
     critical: number;
     high: number;
     acceptancePending: number;
@@ -40,8 +42,9 @@ export interface BoardInput {
   controls: { active: number; late: number; ineffective: number };
   /**
    * null quand le module sensibilisation est masqué. Sessions tenues sur
-   * douze mois, dont sans feuille d'émargement ; dirigeants (propriétaire,
-   * direction) sans formation à jour ou à renouveler d'ici deux mois.
+   * douze mois, dont sans feuille d'émargement ; dirigeants suivis (la
+   * direction, à défaut le propriétaire) sans formation à jour ou à
+   * renouveler d'ici deux mois.
    */
   training: { held: number; withoutSheet: number; leaders: number; leadersUntrained: number; leadersDueSoon: number } | null;
   /**
@@ -87,6 +90,7 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
     if ((e.nis2 === 'ee' || e.nis2 === 'ei') && e.registration === 'a_faire') out.push({ tone: 'alerte', text: `${e.name} : enregistrement auprès de l’ANSSI non engagé.` });
   }
   if (i.obligations.late > 0) out.push({ tone: 'vigilance', text: `${s(i.obligations.late, 'obligation réglementaire', 'obligations réglementaires')} dont l’échéance est dépassée.` });
+  if (i.risks && i.risks.total === 0) out.push({ tone: 'vigilance', text: 'Registre des risques vide : aucune analyse de risques n’a encore été conduite.' });
   if (i.risks && i.risks.unplanned > 0) out.push({ tone: 'vigilance', text: `${s(i.risks.unplanned, 'risque', 'risques')} dont le traitement décidé n’a encore aucune action.` });
   const otherOverdue = i.actions.overdue - i.actions.overdueP1;
   if (otherOverdue > 0) out.push({ tone: 'vigilance', text: `${s(otherOverdue, 'autre action', 'autres actions')} en retard.` });
@@ -118,9 +122,9 @@ export function boardMessages(i: BoardInput): BoardMessage[] {
     if (i.training.held === 0) out.push({ tone: 'vigilance', text: 'Aucune session de sensibilisation tenue sur douze mois.' });
     if (i.training.withoutSheet > 0) out.push({ tone: 'vigilance', text: `${s(i.training.withoutSheet, 'session de sensibilisation sans feuille d’émargement', 'sessions de sensibilisation sans feuille d’émargement')} au coffre de preuves.` });
   }
-  if (i.coveragePct !== null && i.coveragePct >= 80) out.push({ tone: 'positif', text: `Couverture de ${i.coveragePct} % des exigences évaluées.` });
+  if (i.coveragePct !== null && i.coveragePct >= 80) out.push({ tone: 'positif', text: `Couverture de ${i.coveragePct} % des exigences applicables.` });
   if (i.obligations.applicable > 0 && i.obligations.met / i.obligations.applicable >= 0.8) out.push({ tone: 'positif', text: `${i.obligations.met} obligations respectées sur ${i.obligations.applicable}.` });
-  if (i.risks && i.risks.critical === 0 && i.risks.high === 0) out.push({ tone: 'positif', text: 'Aucun risque élevé ou critique après traitement.' });
+  if (i.risks && i.risks.total > 0 && i.risks.critical === 0 && i.risks.high === 0) out.push({ tone: 'positif', text: 'Aucun risque élevé ou critique après traitement.' });
   if (i.controls.active > 0 && i.controls.late === 0 && i.controls.ineffective === 0) out.push({ tone: 'positif', text: 'Tous les contrôles sont revus dans les temps et jugés efficaces.' });
   if (i.satisfaction && i.satisfaction.surveys > 0 && i.satisfaction.belowTarget === 0) {
     out.push({ tone: 'positif', text: 'Objectifs de satisfaction client atteints sur l’année.' });

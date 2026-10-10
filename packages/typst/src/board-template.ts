@@ -54,7 +54,7 @@ export function renderBoardTypst(m: BoardModel): string {
   const nis2 = m.nis2.length === 0 ? muted('Aucune entité qualifiée.') : m.nis2.map((n) => `#block(above: 5pt)[#text(size: 10pt, weight: "bold")[${mk(n.title)}]\\ #text(size: 9pt, fill: rgb("#5b5d56"))[${mk(n.detail)}]]`).join('\n');
   const frameworks = m.frameworks.length === 0 ? muted('Aucune évaluation lancée.') : m.frameworks.map((f) => `#text(size: 10pt)[• ${mk(f)}]`).join('\\\n');
   const risks = m.risks === null ? null : m.risks.length === 0
-    ? muted('Aucun risque élevé ou critique après traitement.')
+    ? muted(m.riskRegisterEmpty ? 'Aucun risque enregistré — registre à constituer.' : 'Aucun risque élevé ou critique après traitement.')
     : table(['Réf.', 'Risque', 'Niveau net', 'Traitement', 'Responsable'], m.risks.map((r) => [r.ref, r.title, r.level, r.treatment, r.owner]), '(auto, 1fr, auto, auto, auto)');
   const actions = m.overdueActions.length === 0
     ? muted('Aucune action en retard.')

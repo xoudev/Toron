@@ -4,7 +4,7 @@ import { boardDecisions, boardMessages, type BoardInput } from './board.ts';
 
 const calm: BoardInput = {
   coveragePct: 86,
-  risks: { critical: 0, high: 0, acceptancePending: 0, unplanned: 0, unplannedSevere: 0 },
+  risks: { total: 12, critical: 0, high: 0, acceptancePending: 0, unplanned: 0, unplannedSevere: 0 },
   actions: { open: 12, overdue: 0, overdueP1: 0 },
   incidents: { open: 0, nis2ImportantOpen: 0 },
   obligations: { applicable: 10, met: 9, late: 0, unowned: 0, nis2Governance: 'conforme' },
@@ -27,7 +27,7 @@ describe('messages clés du rapport de direction', () => {
   it('classe les alertes avant la vigilance et accorde singulier et pluriel', () => {
     const messages = boardMessages({
       ...calm,
-      risks: { critical: 1, high: 2, acceptancePending: 0, unplanned: 0, unplannedSevere: 0 },
+      risks: { total: 12, critical: 1, high: 2, acceptancePending: 0, unplanned: 0, unplannedSevere: 0 },
       actions: { open: 12, overdue: 3, overdueP1: 2 },
       obligations: { ...calm.obligations, late: 1 },
     });
@@ -70,6 +70,23 @@ describe('messages clés du rapport de direction', () => {
   });
 });
 
+describe('registre des risques vide', () => {
+  it('ne félicite pas une organisation sans risque enregistré et signale l’analyse à conduire', () => {
+    const messages = boardMessages({ ...calm, risks: { ...calm.risks!, total: 0 } });
+    expect(messages.some((m) => m.text.startsWith('Aucun risque élevé'))).toBe(false);
+    expect(messages).toContainEqual({ tone: 'vigilance', text: 'Registre des risques vide : aucune analyse de risques n’a encore été conduite.' });
+    expect(boardMessages(calm)).toContainEqual({ tone: 'positif', text: 'Aucun risque élevé ou critique après traitement.' });
+  });
+
+  it('se tait quand le registre est masqué', () => {
+    expect(boardMessages({ ...calm, risks: null }).some((m) => /risque/.test(m.text))).toBe(false);
+  });
+
+  it('rapporte la couverture aux exigences applicables, « à évaluer » comprises', () => {
+    expect(boardMessages(calm)).toContainEqual({ tone: 'positif', text: 'Couverture de 86 % des exigences applicables.' });
+  });
+});
+
 describe('risques sans plan de traitement', () => {
   it('signale les décisions de traitement restées sans action', () => {
     const messages = boardMessages({ ...calm, risks: { ...calm.risks!, unplanned: 2, unplannedSevere: 0 } });
@@ -78,7 +95,7 @@ describe('risques sans plan de traitement', () => {
   });
 
   it('demande à la direction de valider un plan pour un risque élevé non traité', () => {
-    expect(boardDecisions({ ...calm, risks: { critical: 0, high: 1, acceptancePending: 0, unplanned: 1, unplannedSevere: 1 } })).toEqual([
+    expect(boardDecisions({ ...calm, risks: { total: 12, critical: 0, high: 1, acceptancePending: 0, unplanned: 1, unplannedSevere: 1 } })).toEqual([
       'Valider un plan de traitement pour 1 risque élevé ou critique sans action engagée.',
     ]);
   });
@@ -191,7 +208,7 @@ describe('décisions attendues de la direction', () => {
   it('formule les arbitrages qui relèvent de la direction', () => {
     expect(boardDecisions({
       ...calm,
-      risks: { critical: 0, high: 1, acceptancePending: 2, unplanned: 0, unplannedSevere: 0 },
+      risks: { total: 12, critical: 0, high: 1, acceptancePending: 2, unplanned: 0, unplannedSevere: 0 },
       actions: { open: 5, overdue: 1, overdueP1: 1 },
       obligations: { ...calm.obligations, unowned: 3, nis2Governance: 'en_cours' },
       suppliers: { watch: 1 },

@@ -1,6 +1,7 @@
 import { canManageControls, defaultRiskScale } from '@toron/core';
 import { getActiveScale, listScopes, listStudies, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
@@ -11,6 +12,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { EbiosBoard } from './ebios-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Ateliers EBIOS RM — Toron' };
 
 export default async function EbiosPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -31,13 +34,13 @@ export default async function EbiosPage({ params }: { params: Promise<{ slug: st
     <>
       <Topbar
         crumbRoot="Risques"
-        crumbCurrent="Atelier EBIOS RM"
+        crumbCurrent="Ateliers EBIOS RM"
         actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>MÉTHODE ANSSI</span><ThemeToggle /></>}
       />
       <main className="app-page">
         <div className="page-head">
           <div>
-            <h1>Atelier EBIOS RM</h1>
+            <h1>Ateliers EBIOS RM</h1>
             <p className="sub">
               Cinq ateliers guidés (méthode ANSSI). L’atelier 4 construit chaque scénario
               opérationnel en kill chain « Connaître → Rentrer → Trouver → Exploiter » — la

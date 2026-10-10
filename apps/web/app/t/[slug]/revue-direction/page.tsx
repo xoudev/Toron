@@ -4,6 +4,7 @@ import {
   listTenantMembers, withTenant,
 } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
@@ -15,6 +16,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { ReviewBoard } from './review-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Revue de direction — Toron' };
 
 export default async function RevueDirectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

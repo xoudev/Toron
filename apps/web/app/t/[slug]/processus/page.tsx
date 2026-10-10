@@ -1,6 +1,7 @@
 import { canManageControls } from '@toron/core';
 import { listProcesses, listRisks, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
@@ -11,6 +12,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { ProcessBoard } from './process-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Processus — Toron' };
 
 export default async function ProcessusPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

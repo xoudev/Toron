@@ -14,6 +14,7 @@ import { searchTenant } from './search.ts';
 import {
   createTrainingSession,
   deleteTrainingSession,
+  getTrainingOverview,
   getTrainingSessionRef,
   listLeaderTraining,
   listTrainingSessions,
@@ -195,16 +196,25 @@ describe('formation des dirigeants (NIS 2, art. 20)', () => {
     expect(antoine).toMatchObject({ lastTrainedOn: '2026-10-01', dueOn: '2027-10-01', state: 'a_jour' });
   });
 
-  it('un propriétaire jamais formé apparaît comme tel', async () => {
+  it('le propriétaire n’est suivi qu’à défaut de membre Direction, et apparaît alors jamais formé', async () => {
     const [u] = await admin`
       INSERT INTO users (email, name, email_verified)
       VALUES ('direction.generale@meridiane-logistics.example', 'Hélène Garnier', true) RETURNING id`;
     const userId = (u as { id: string }).id;
     await admin`INSERT INTO memberships (tenant_id, user_id, role) VALUES (${T}, ${userId}, 'owner')`;
-    const rows = await withTenant(app.db, T, (tx) => listLeaderTraining(tx, TODAY));
-    expect(rows.find((r) => r.userId === userId)).toEqual({
+    // Meridiane a une direction (Antoine) : c'est elle qui est suivie.
+    expect((await withTenant(app.db, T, (tx) => listLeaderTraining(tx, TODAY))).map((r) => r.userId)).toEqual([DEMO.userAntoine]);
+    expect((await withTenant(app.db, T, (tx) => listMyWork(tx, userId))).some((i) => i.kind === 'formation')).toBe(false);
+
+    // Organisation qui vient d'être créée : seul son propriétaire, suivi à défaut de direction.
+    const [fresh] = await admin`INSERT INTO tenants (name, slug) VALUES ('Organisation neuve', 'organisation-neuve') RETURNING id`;
+    const freshId = (fresh as { id: string }).id;
+    await admin`INSERT INTO memberships (tenant_id, user_id, role) VALUES (${freshId}, ${userId}, 'owner')`;
+    expect(await withTenant(app.db, freshId, (tx) => listLeaderTraining(tx, TODAY))).toEqual([{
       userId, name: 'Hélène Garnier', role: 'owner', lastTrainedOn: null, dueOn: null, state: 'jamais',
-    });
+    }]);
+    expect(await withTenant(app.db, freshId, (tx) => getTrainingOverview(tx, TODAY))).toMatchObject({ leaders: 1, untrained: 1, ownersAsLeaders: true });
+    expect(await withTenant(app.db, T, (tx) => getTrainingOverview(tx, TODAY))).toMatchObject({ leaders: 1, ownersAsLeaders: false });
   });
 });
 

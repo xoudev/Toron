@@ -87,6 +87,10 @@ describe('rapport de direction (module 5.11)', () => {
     expect(r.entities).toEqual([]);
     expect(r.input.obligations.applicable).toBe(0);
     expect(r.overdueActions).toEqual([]);
+    // Registre vide : aucun satisfecit sur des risques jamais analysés.
+    expect(r.input.risks).toMatchObject({ total: 0, critical: 0, high: 0 });
+    expect(r.messages).toContainEqual({ tone: 'vigilance', text: 'Registre des risques vide : aucune analyse de risques n’a encore été conduite.' });
+    expect(r.messages.some((m) => m.text.startsWith('Aucun risque élevé'))).toBe(false);
   });
 
   it('un rapport scellé se vérifie publiquement par son poinçon', async () => {

@@ -1,6 +1,7 @@
 import { canManageControls, defaultRiskScale } from '@toron/core';
 import { getActiveScale, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
@@ -9,6 +10,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { ImportWizard } from './import-wizard';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Importer depuis Excel — Toron' };
 
 export default async function ImportPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

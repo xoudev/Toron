@@ -1,6 +1,7 @@
 import { canEditModule, canRecordAuditFindings } from '@toron/core';
 import { listAudits, listFrameworks, listScopes, listTenantMembers, withTenant } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { appDb } from '@/lib/db';
@@ -11,6 +12,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { AuditBoard } from './audit-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Audits internes — Toron' };
 
 export default async function AuditsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

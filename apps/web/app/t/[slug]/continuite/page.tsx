@@ -3,6 +3,7 @@ import {
   listAssets, listContinuityActivities, listContinuityExercises, listDocuments, listEvidences, listProcesses, listSuppliers, listTenantMembers, withTenant,
 } from '@toron/db';
 import { ThemeToggle, Topbar } from '@toron/ui';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { ExportCsvLink } from '@/components/export-csv-link';
@@ -15,6 +16,8 @@ import { getTenantContext } from '@/lib/tenant-context-cache';
 import { ContinuityBoard } from './continuity-board';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Continuité d’activité — Toron' };
 
 export default async function ContinuitePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -44,7 +47,7 @@ export default async function ContinuitePage({ params }: { params: Promise<{ slu
       <Topbar
         crumbRoot="Risques"
         crumbCurrent="Continuité d’activité"
-        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{summary.activities} ACTIVITÉS</span><ExportCsvLink slug={slug} registre="continuite" /><ThemeToggle /></>}
+        actions={<><span className="topbar-crumb" style={{ marginRight: 4 }}>{summary.activities} ACTIVITÉ{summary.activities > 1 ? 'S' : ''}</span><ExportCsvLink slug={slug} registre="continuite" /><ThemeToggle /></>}
       />
       <main className="app-page">
         <div className="page-head">

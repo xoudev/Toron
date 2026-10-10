@@ -216,10 +216,6 @@ description courte, phase cible pressentie.
   générer de nouveaux ni de reconfigurer le TOTP après un changement de
   téléphone. Ajouter ces deux actions sur `/securite/2fa`, avec
   confirmation du mot de passe. Phase cible : MVP.
-- **2026-10-10 · Ctrl+K vers l'exigence elle-même** — Une exigence trouvée
-  par la recherche ouvre son référentiel, mais pas l'exigence : passer
-  `?exigence=<id>` et sélectionner le nœud et l'exigence à l'ouverture du
-  détail. Phase cible : MVP.
 - **2026-10-10 · Prévenir le nouveau propriétaire d'un document** — Le
   changement de propriétaire d'un document ne notifie personne, faute de
   sujet « document » dans les notifications. Phase cible : V1.

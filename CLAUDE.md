@@ -77,6 +77,8 @@ Cloudflare Pages), `packages/{db,core,ui,frameworks,typst}`, `workers/`,
 ## Sécurité — rappels bloquants
 
 - Aucun rôle Postgres BYPASSRLS au runtime ; rôle migrations séparé.
+- Fonctions SECURITY DEFINER : `SET search_path = pg_catalog, public,
+  pg_temp` (pg_temp en dernier) ; aucun rôle runtime n'a le droit TEMPORARY.
 - RBAC contrôlé côté serveur ; l'UI ne fait que refléter.
 - Fichiers uploadés : allowlist de types, taille max, hash SHA-256 à
   l'ingestion, URLs signées courtes, stockage hors racine web.

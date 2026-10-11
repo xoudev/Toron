@@ -8,15 +8,20 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "start": "node src/index.ts"
+    "test": "vitest run",
+    "start": "node src/index.ts",
+    "mail": "node src/mail.ts"
   },
   "dependencies": {
     "@toron/core": "workspace:*",
     "@toron/db": "workspace:*",
-    "@toron/typst": "workspace:*"
+    "@toron/mail": "workspace:*",
+    "@toron/typst": "workspace:*",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
   }
 }

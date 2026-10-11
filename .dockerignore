@@ -20,6 +20,8 @@
 # Secrets / environnement — jamais dans une image (S3)
 **/.env
 **/.env.*
+# E-mails déposés en local par le service mail (liens à jeton)
+.courriels
 
 # Tests, couverture, docs (inutiles à l'image applicative)
 **/coverage

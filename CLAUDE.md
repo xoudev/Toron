@@ -43,7 +43,7 @@ Better Auth (auth dans notre Postgres, TOTP) · Scaleway Object Storage
 (URLs signées) · Scaleway TEM (e-mails) · pg-boss (jobs) · Typst
 (livrables PDF scellés) · **souveraineté : aucun sous-traitant US** ·
 monorepo pnpm : `apps/web` (application), `apps/site` (vitrine statique,
-Cloudflare Pages), `packages/{db,core,ui,frameworks,typst}`, `workers/`,
+Cloudflare Pages), `packages/{db,core,ui,frameworks,typst,mail}`, `workers/`,
 `infra/`.
 
 ## Conventions (exécutoires — PLAN.md §13)
@@ -103,3 +103,7 @@ Cloudflare Pages), `packages/{db,core,ui,frameworks,typst}`, `workers/`,
   les migrations SQL (rôle DDL, jamais le rôle applicatif).
 - `DATABASE_URL_MIGRATIONS=… pnpm --filter @toron/db seed` — seed ReCyF
   v2.5 complet + tenant démo « Meridiane Logistics » (idempotent).
+- `pnpm --filter @toron/workers mail` — service mail hors Docker, en
+  transport fichier (variables : `docs/exploitation-courriel.md`). Avec
+  Docker, le service `mail` du compose dépose les e-mails dans
+  `.courriels/<id>.html` ; aucun envoi réel depuis un poste.

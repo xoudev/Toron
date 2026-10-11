@@ -140,11 +140,21 @@ le navigateur). Chaînage de hash (type journal) : option V2, pas MVP.
 Pas de Redis au départ — moins de pièces mobiles. Usages : compilation
 Typst, envois d'e-mails, relances/escalades, calculs de fraîcheur,
 imports Excel volumineux.
+Mise à jour 2026-10-10 : e-mails par file transactionnelle `email_outbox`
+(migration 0041, RLS forcée, fonctions réservées à des rôles dédiés) et
+service mail isolé, sans pg-boss : pas de DDL au runtime ni de tables sans
+RLS contenant adresses et liens. pg-boss sera réévalué avec les relances,
+pour la seule planification : il ne ferait qu'insérer dans la file.
 
 **ADR-8 · E-mails transactionnels : Scaleway TEM** (même fournisseur que
 l'hébergement — un sous-traitant de moins au DPA), Brevo en alternative
 française. Interface d'abstraction `Mailer` conservée pour rester
 réversible. Cohérence souveraine : pas d'acteur US, y compris ici.
+Mise à jour 2026-10-10 : `Mailer` = transport (`workers/src/mail/`), TEM
+par son API HTTPS sans SDK, aucun suivi d'ouverture ni de clic. Gabarits,
+types d'e-mails et scellement des liens (AES-256-GCM) dans `packages/mail`.
+Seul le service mail détient la clé TEM ; exploitation dans
+`docs/exploitation-courriel.md`.
 
 **ADR-9 · Environnements.**
 - Vitrine (`apps/site`, export statique Next.js) : Cloudflare Pages (gratuit).
@@ -171,8 +181,9 @@ toron/
 │   ├── core/        # logique métier pure (scoring, mutualisation, règles)
 │   ├── ui/          # design system (tokens, composants Plex/orange)
 │   ├── frameworks/  # référentiels en données (JSON) : ReCyF, 27001*, 9001*
-│   └── typst/       # templates de livrables + service de compilation
-├── workers/         # pg-boss : exports, mails, relances, imports
+│   ├── typst/       # templates de livrables + service de compilation
+│   └── mail/        # types d'e-mails, gabarits FR, scellement des liens
+├── workers/         # exports, service mail (file email_outbox), relances, imports
 └── infra/           # Dockerfiles, compose, Caddy, scripts déploiement
 ```
 (*) reformulations maison uniquement — voir section 12.
@@ -299,6 +310,12 @@ et leurs champs structurants ; le DDL exact est produit par migration.
   `saved_filters` (user, screen, query jsonb) ·
   `imports` (kind, file_ref, mapping jsonb, report jsonb — lignes
   rejetées avec cause exacte).
+- `email_outbox` (kind, recipient, params jsonb, secret_box scellé effacé
+  au statut final, status, attempts, expires_at, lease_token) — file des
+  e-mails ; `tenant_id` NULL pour les e-mails de compte. Hors schéma
+  Drizzle (donc hors export tenant) ; lue et écrite uniquement par des
+  fonctions SECURITY DEFINER (`toron_auth` dépose, `toron_mail` envoie).
+  Métadonnées purgées à 30 jours (ADR-7/8).
 
 ---
 

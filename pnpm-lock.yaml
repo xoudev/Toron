@@ -182,6 +182,25 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.3)(vite@7.3.6(@types/node@26.6.3)(yaml@2.9.0))
 
+  packages/mail:
+    dependencies:
+      '@toron/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.3
+        version: 26.6.3
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@types/node@26.6.3)(vite@7.3.6(@types/node@26.6.3)(yaml@2.9.0))
+
   packages/typst:
     devDependencies:
       '@types/node':
@@ -214,9 +233,15 @@ importers:
       '@toron/db':
         specifier: workspace:*
         version: link:../packages/db
+      '@toron/mail':
+        specifier: workspace:*
+        version: link:../packages/mail
       '@toron/typst':
         specifier: workspace:*
         version: link:../packages/typst
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@types/node':
         specifier: ^26.6.3
@@ -224,6 +249,9 @@ importers:
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@types/node@26.6.3)(vite@7.3.6(@types/node@26.6.3)(yaml@2.9.0))
 
 packages:
 

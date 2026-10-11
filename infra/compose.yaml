@@ -62,6 +62,37 @@ services:
       db:
         condition: service_healthy
 
+  # Service mail isolé (ADR-8), même image que le worker. Transport fichier :
+  # aucun envoi réel, chaque e-mail est déposé dans .courriels/ à la racine du
+  # dépôt (gitignoré) ; ouvrir .courriels/<id>.html dans le navigateur.
+  mail:
+    build:
+      context: ..
+      dockerfile: infra/worker.Dockerfile
+    command: ["node", "workers/src/mail.ts"]
+    environment:
+      TORON_ENV: local
+      DATABASE_URL_MAIL: postgres://toron_mail_login:toron_mail_dev_only@db:5432/toron
+      # Clé de scellement de dev local uniquement, partagée avec le web.
+      MAIL_OUTBOX_KEY: dev_local_cle_courriel_32_caracteres_min
+      MAIL_TRANSPORT: fichier
+      MAIL_FICHIER_DIR: /var/toron/courriels
+      MAIL_FROM: ne-pas-repondre@toron.localhost
+      PUBLIC_BASE_URL: http://localhost:3000
+    volumes:
+      - ../.courriels:/var/toron/courriels
+    healthcheck:
+      test: ["CMD", "node", "workers/src/mail-health.ts"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    # Le service termine l'envoi en cours, puis force l'arrêt à 12 s.
+    stop_grace_period: 15s
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   pgdata:
   clamav-db:

@@ -25,3 +25,6 @@ Thumbs.db
 
 # Magasin local pnpm
 .pnpm-store/
+
+# E-mails déposés par le transport fichier du service mail (liens à jeton)
+.courriels/

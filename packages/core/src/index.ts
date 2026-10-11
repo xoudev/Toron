@@ -24,6 +24,8 @@ export * from './audit-chain.ts';
 export * from './audit-labels.ts';
 export * from './supplier-portal.ts';
 export * from './control-templates.ts';
+export * from './email.ts';
+export * from './password-reset.ts';
 export {
   frameworksCovered,
   isMutualized,

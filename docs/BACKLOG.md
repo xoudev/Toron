@@ -6,6 +6,17 @@ description courte, phase cible pressentie.
 
 ## Entrées
 
+- **2026-10-11 · Propriétaire dédié des fonctions SECURITY DEFINER** —
+  Les fonctions definer appartiennent au rôle des migrations,
+  superutilisateur en local et en staging : tout défaut futur de l'une
+  d'elles donnerait ces droits. Sur Postgres managé, un propriétaire sans
+  BYPASSRLS ne verrait plus rien des tables à RLS forcée. Créer un rôle
+  NOLOGIN dédié (sans superutilisateur, droits limités aux tables utiles,
+  BYPASSRLS ou politiques dédiées), lui transférer les fonctions, et tester
+  qu'aucune fonction definer n'appartient à un superutilisateur. À traiter
+  avec le seed sans superutilisateur (2026-07-17). Phase cible : MVP
+  (déploiement managé).
+
 - **2026-10-06 · Responsables limités aux membres de l'organisation** —
   Les colonnes `owner_user_id` (risques, actions, fournisseurs, obligations,
   traitements…) référencent `users(id)` par une clé étrangère simple, qui

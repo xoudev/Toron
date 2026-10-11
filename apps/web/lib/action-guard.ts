@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { appError, canManageControls, type AppError, type MembershipRole } from '@toron/core';
+import { appError, canManageControls, normalizeIp, type AppError, type MembershipRole } from '@toron/core';
 import { headers } from 'next/headers';
 
 import { getTenantContext } from './tenant-context-cache.ts';
@@ -8,6 +8,10 @@ import { getTenantContext } from './tenant-context-cache.ts';
 // Garde commune des server actions du produit (S4/S5) : contexte tenant
 // re-résolu côté serveur (le layout ne protège pas les actions), RBAC,
 // normalisation de l'IP source, journalisation corrélée des échecs.
+
+// normalizeIp vit dans @toron/core (l'authentification s'en sert aussi) ;
+// réexportée pour les appelants existants.
+export { normalizeIp };
 
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
@@ -62,20 +66,6 @@ export function authorizeManager(slug: string): Promise<Authorized | AppError> {
     canManageControls,
     'Votre rôle est en lecture seule — demandez à un RSSI ou responsable qualité d’effectuer cette action.',
   );
-}
-
-/**
- * Ne conserve le premier hop de X-Forwarded-For que s'il ressemble à une IP,
- * sinon undefined : évite d'insérer une valeur arbitraire/invalide dans
- * audit_log.ip (type inet), qui annulerait la transaction métier.
- */
-export function normalizeIp(raw: string | null): string | undefined {
-  const first = raw?.split(',')[0]?.trim();
-  if (!first) return undefined;
-  const isIpv4 =
-    /^(\d{1,3}\.){3}\d{1,3}$/.test(first) && first.split('.').every((o) => Number(o) <= 255);
-  const isIpv6 = first.includes(':') && /^[0-9a-fA-F:.]+$/.test(first);
-  return isIpv4 || isIpv6 ? first : undefined;
 }
 
 /**

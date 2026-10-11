@@ -237,6 +237,12 @@ jobs:
             exit 1
           fi
           docker compose -f infra/compose.yaml exec -T mail node workers/src/mail-etat.ts
+      # Mot de passe oublié de bout en bout avec le compte de démo Camille :
+      # demande, e-mail déposé, lien à fragment, sessions révoquées, journaux
+      # sans adresse ni jeton. Le web et le service mail partagent TORON_ENV
+      # et MAIL_OUTBOX_KEY (infra/compose.yaml).
+      - name: Parcours mot de passe oublié (curl)
+        run: bash .github/scripts/parcours-mot-de-passe.sh
       - run: bash .github/scripts/installer-outil.sh grype
       - id: syft
         run: bash .github/scripts/installer-outil.sh syft

@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
   // Image autonome pour le déploiement conteneurisé (ADR-9)
   output: 'standalone',
   // Les paquets internes sont consommés en source TypeScript
-  transpilePackages: ['@toron/core', '@toron/db', '@toron/ui', '@toron/frameworks'],
+  transpilePackages: ['@toron/core', '@toron/db', '@toron/ui', '@toron/frameworks', '@toron/mail'],
   poweredByHeader: false,
   // Les dépôts de fichiers (preuves, versions de documents) passent par des
   // actions serveur : sans ces deux réglages, Next coupe à 1 Mo (actions) et
@@ -29,10 +29,10 @@ const nextConfig: NextConfig = {
   },
   // Pas de trace des appels d'actions serveur, dont les arguments peuvent
   // porter un jeton ou des données personnelles, ni des chemins qui portent
-  // un jeton (portail fournisseur, invitations).
+  // un jeton (portail fournisseur, invitations, lien de réinitialisation).
   logging: {
     serverFunctions: false,
-    incomingRequests: { ignore: [/^\/fournisseur\//, /^\/invitations\//] },
+    incomingRequests: { ignore: [/^\/fournisseur\//, /^\/invitations\//, /^\/api\/auth\/reset-password\//] },
   },
   async headers() {
     return [{ source: '/:path*', headers: HARDENED_HEADERS }];

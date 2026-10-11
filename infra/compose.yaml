@@ -33,6 +33,10 @@ services:
       # environnement réel via le gestionnaire de secrets (S3).
       BETTER_AUTH_SECRET: dev_local_secret_32_caracteres_min_x
       BETTER_AUTH_URL: http://localhost:3000
+      TORON_ENV: local
+      # Scelle les liens de réinitialisation déposés dans la file : même clé
+      # de dev local que le service mail, qui seul sait les ouvrir.
+      MAIL_OUTBOX_KEY: dev_local_cle_courriel_32_caracteres_min
       # Analyse antivirus des fichiers déposés : sans réponse de clamd, les
       # dépôts sont refusés. Pas de dépendance de démarrage : l'application
       # tourne pendant que clamd charge ses signatures.

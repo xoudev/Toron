@@ -487,6 +487,14 @@ exigences client. Pas d'outil d'enquête avancé : le minimum utile 9001.
 ### 8.1 Sécurité de la plateforme — exigences détaillées
 - AuthN : argon2id, TOTP (obligatoire Admin/RSSI), verrouillage progressif,
   réinitialisation par lien à usage unique et courte durée.
+  Mise à jour 2026-10-11 : lien e-mail valable 30 minutes, jeton dans le
+  fragment de l'URL seulement (jamais dans un chemin, une requête ni un
+  journal), stocké en empreinte SHA-256 ; seul le dernier lien demandé
+  fonctionne. Réponse et durée identiques que le compte existe ou non ;
+  10 demandes par 15 minutes et par IP, 3 par heure et 5 par jour par
+  compte. Après le changement : sessions et défis 2FA purgés, TOTP
+  maintenu, e-mail « mot de passe modifié », entrée `account.password_reset`
+  au journal de chaque organisation du compte.
 - Sessions : cookies httpOnly Secure SameSite=Lax, invalidation à la
   déconnexion et au changement de mot de passe.
 - AuthZ : RBAC par module + règles métier (séparation des tâches) dans

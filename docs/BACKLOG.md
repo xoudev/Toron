@@ -6,6 +6,15 @@ description courte, phase cible pressentie.
 
 ## Entrées
 
+- **2026-10-11 · Appareil de confiance (second facteur)** — Better Auth
+  1.7.7 accepte `trustDevice: true` sur `/two-factor/verify-*` quel que
+  soit le réglage du plugin : un appel direct obtient un cookie de 30 jours
+  qui dispense du TOTP, alors que l'écran `connexion/2fa` ne le propose
+  pas. La réinitialisation du mot de passe purge ces appareils (testé).
+  Décider : l'exposer comme la maquette (« Se souvenir de cet appareil »),
+  ou le refuser dans `hooks.before` avec un test. Phase cible : V1
+  (durcissement de l'authentification).
+
 - **2026-10-11 · Propriétaire dédié des fonctions SECURITY DEFINER** —
   Les fonctions definer appartiennent au rôle des migrations,
   superutilisateur en local et en staging : tout défaut futur de l'une
@@ -217,11 +226,6 @@ description courte, phase cible pressentie.
   panneau d'évaluation et la Déclaration d'applicabilité (RM §5.6). Le
   sous-titre de l'écran Documents ne le promet plus d'ici là. Phase
   cible : V1.
-- **2026-10-10 · Mot de passe oublié** — Aucune récupération n'existe :
-  configurer l'envoi d'e-mails (Scaleway TEM), puis `sendResetPassword` de
-  Better Auth avec un jeton court, un lien « Mot de passe oublié ? » sous
-  le champ de connexion et une page de nouveau mot de passe. Bloquant pour
-  un client sans second propriétaire. Phase cible : MVP (déploiement).
 - **2026-10-10 · Codes de secours et TOTP depuis le compte** — Les codes de
   secours sont désormais acceptés à la connexion, mais rien ne permet d'en
   générer de nouveaux ni de reconfigurer le TOTP après un changement de
@@ -235,3 +239,30 @@ description courte, phase cible pressentie.
   10 minutes, liens expirés, quota global) ne se lisent que dans le journal
   du conteneur (`docs/exploitation-courriel.md`). Les remonter dans Scaleway
   Cockpit avec des alertes. Phase cible : MVP (mise en production).
+- **2026-10-11 · e2e Playwright du mot de passe oublié** — Lien depuis
+  `/connexion` au clavier → demande (message identique pour une adresse
+  inconnue, focus déplacé) → ouverture du lien à fragment (adresse nettoyée,
+  aucune soumission automatique) → erreurs de saisie puis succès → session
+  d'un autre navigateur fermée → reconnexion qui exige toujours le TOTP,
+  avec un contrôle axe des deux pages. Couvert aujourd'hui par les tests
+  d'intégration Better Auth ; suit l'infra Playwright transverse. Phase
+  cible : MVP.
+- **2026-10-11 · Vérification préalable du lien de réinitialisation** —
+  Annoncer dès l'ouverture qu'un lien a expiré, déjà servi ou été remplacé,
+  au lieu de l'apprendre après la saisie : vérification par POST (jeton dans
+  le corps, jamais consommé ni recopié dans une URL), soumise aux mêmes
+  limites de débit. Ajouter un champ `username` masqué pour les
+  gestionnaires de mots de passe. Phase cible : V1.
+- **2026-10-11 · Récupération d'un compte sans mot de passe, TOTP ni codes
+  de secours** — La réinitialisation maintient le TOTP : un membre qui a
+  perdu à la fois son mot de passe, son téléphone et ses codes reste
+  bloqué. Définir une procédure de support avec vérification d'identité
+  hors e-mail (la boîte peut être compromise), tracée au journal, sans
+  réinitialisation déclenchée par un administrateur d'organisation
+  (escalade de privilèges). Phase cible : MVP (déploiement).
+- **2026-10-11 · Changement de mot de passe depuis le compte** — Aucun
+  écran ne permet de changer un mot de passe connu. Ajouter l'action sur
+  `/securite`, avec le mot de passe actuel, la fermeture des autres
+  sessions, la purge des jetons `reset-password:*` en attente, l'e-mail
+  « mot de passe modifié » et l'audit dans chaque organisation. Phase
+  cible : MVP.

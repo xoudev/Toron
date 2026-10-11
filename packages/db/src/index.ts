@@ -21,6 +21,10 @@ export {
   type ClaimEmailOptions, type ClaimedEmail, type EmailOutboxHealthRow,
 } from './queries/email-outbox.ts';
 export {
+  queuePasswordResetEmail, discardPasswordResetToken, cleanupAfterPasswordReset, listUserTenantIds, recordPasswordReset,
+  type QueuePasswordResetInput, type QueuePasswordResetResult, type PasswordResetCleanup,
+} from './queries/account-security.ts';
+export {
   setAcknowledgementRequired, acknowledgeDocument, getAcknowledgementStatus, hasAcknowledged,
   type AcknowledgeResult, type AcknowledgementStatus, type AcknowledgementMember,
 } from './queries/acknowledgements.ts';

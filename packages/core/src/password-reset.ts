@@ -7,6 +7,11 @@
 export const PASSWORD_RESET_TTL_SECONDS = 1800;
 export const PASSWORD_MIN_LENGTH = 12;
 export const PASSWORD_MAX_LENGTH = 128;
+/**
+ * Validité de l'avis « mot de passe modifié » dans la file : passé ce délai,
+ * il n'alerte plus utilement. La file refuse toute échéance au-delà d'un jour.
+ */
+export const PASSWORD_CHANGED_NOTICE_TTL_SECONDS = 12 * 3600;
 
 /** Jeton Better Auth : generateId(24), alphabet [A-Za-z0-9] (environ 143 bits). */
 export const RESET_TOKEN_PATTERN = /^[A-Za-z0-9]{24}$/;
@@ -75,12 +80,14 @@ export const PASSWORD_RESET_REQUEST_JITTER_MS = 150;
 
 /**
  * Attente à ajouter avant de répondre à une demande de lien, pour que la
- * durée totale ne dise rien de l'existence du compte. `rnd01` est un tirage
- * dans [0, 1[ ; une valeur hors bornes est ramenée dans l'intervalle.
+ * durée totale ne dise rien de l'existence du compte. `jitterMs` est un
+ * entier tiré uniformément par l'appelant entre 0 et
+ * PASSWORD_RESET_REQUEST_JITTER_MS ; une valeur hors bornes y est ramenée.
  */
-export function resetRequestPadding(elapsedMs: number, rnd01: number): number {
-  const r = Number.isFinite(rnd01) ? Math.min(Math.max(rnd01, 0), 1) : 0;
-  const target = PASSWORD_RESET_REQUEST_FLOOR_MS + r * PASSWORD_RESET_REQUEST_JITTER_MS;
+export function resetRequestPadding(elapsedMs: number, jitterMs: number): number {
+  const jitter = Number.isFinite(jitterMs)
+    ? Math.min(Math.max(Math.trunc(jitterMs), 0), PASSWORD_RESET_REQUEST_JITTER_MS)
+    : 0;
   const elapsed = Number.isFinite(elapsedMs) ? Math.max(elapsedMs, 0) : 0;
-  return Math.max(0, Math.round(target - elapsed));
+  return Math.max(0, Math.round(PASSWORD_RESET_REQUEST_FLOOR_MS + jitter - elapsed));
 }

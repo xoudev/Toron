@@ -26,6 +26,7 @@ export * from './supplier-portal.ts';
 export * from './control-templates.ts';
 export * from './email.ts';
 export * from './password-reset.ts';
+export * from './net.ts';
 export {
   frameworksCovered,
   isMutualized,

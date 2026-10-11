@@ -83,6 +83,10 @@ function ConnexionForm() {
             required
           />
         </label>
+        {/* Sans l'adresse saisie : elle finirait dans l'historique et les journaux. */}
+        <p className="auth-alt">
+          <a href="/mot-de-passe/oublie">Mot de passe oublié ?</a>
+        </p>
         {erreur ? <p role="alert">{erreur}</p> : null}
         <button className="btn btn-primary" type="submit" disabled={enCours}>
           {enCours ? 'Connexion…' : 'Se connecter'}

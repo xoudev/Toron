@@ -40,6 +40,7 @@ export function SectionSecurite({ viewer, members, profile }: { viewer: Viewer; 
         <dl className="settings-kv">
           <dt>Longueur minimale</dt><dd>12 caractères</dd>
           <dt>Stockage</dt><dd>Hachage Argon2id, jamais en clair ni réversible</dd>
+          <dt>Réinitialisation</dt><dd>Lien par e-mail à usage unique, valable 30 minutes ; sessions fermées ; double authentification maintenue</dd>
           <dt>Cookies de session</dt><dd>HttpOnly, Secure, SameSite — invalidés à la déconnexion</dd>
           <dt>Limitation de débit</dt><dd>Tentatives de connexion plafonnées par adresse IP</dd>
           <dt>En-têtes web</dt><dd>CSP stricte à nonce, HSTS, protection contre le cadrage et le reniflage de type</dd>

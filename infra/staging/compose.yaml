@@ -7,7 +7,8 @@
 # Réseau : seul Caddy publie des ports (80/443). L'application n'est jamais
 # joignable directement, ce qui garantit que X-Forwarded-For est posé par
 # Caddy et non par le client (rate limiting, journal d'audit). La base et le
-# worker sont sur un réseau interne sans accès Internet.
+# worker sont sur un réseau interne sans accès Internet ; le service mail
+# n'en sort que par le réseau courriel.
 
 name: toron
 
@@ -83,6 +84,50 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
 
+  # Service mail isolé (ADR-8), même image que le worker : seul détenteur de
+  # la clé Scaleway TEM. Le réseau courriel lui ouvre l'API TEM en HTTPS ; la
+  # base reste sur le réseau interne. Variables : docs/exploitation-courriel.md.
+  mail:
+    image: ${TORON_WORKER_IMAGE:?TORON_WORKER_IMAGE manquant (images.env)}
+    restart: unless-stopped
+    command: ["node", "workers/src/mail.ts"]
+    environment:
+      TORON_ENV: staging
+      DATABASE_URL_MAIL: postgres://toron_mail_login:${TORON_MAIL_DB_PASSWORD:?}@db:5432/toron
+      MAIL_OUTBOX_KEY: ${MAIL_OUTBOX_KEY:?}
+      # Renseignée pendant une rotation de MAIL_OUTBOX_KEY seulement.
+      MAIL_OUTBOX_KEY_PRECEDENTE: ${MAIL_OUTBOX_KEY_PRECEDENTE:-}
+      # fichier tant que le domaine d'envoi n'est pas vérifié dans TEM, puis scaleway.
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:?MAIL_TRANSPORT manquant dans .env (fichier ou scaleway)}
+      MAIL_FICHIER_DIR: /var/toron/courriels
+      MAIL_FROM: ${MAIL_FROM:-ne-pas-repondre@staging.notifications.toron.eu}
+      PUBLIC_BASE_URL: https://${STAGING_DOMAIN:?}
+      SCW_TEM_SECRET_KEY: ${SCW_TEM_SECRET_KEY:-}
+      SCW_TEM_PROJECT_ID: ${SCW_TEM_PROJECT_ID:-}
+      SCW_TEM_REGION: ${SCW_TEM_REGION:-fr-par}
+      # Obligatoire avec scaleway : seules les adresses de l'équipe reçoivent.
+      MAIL_DESTINATAIRES_AUTORISES: ${MAIL_DESTINATAIRES_AUTORISES:-}
+      MAIL_ENVOI_SUSPENDU: ${MAIL_ENVOI_SUSPENDU:-}
+    networks: [backend, courriel]
+    volumes:
+      - courriels:/var/toron/courriels
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "workers/src/mail-health.ts"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    # Le service termine l'envoi en cours, puis force l'arrêt à 12 s.
+    stop_grace_period: 15s
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
   # Antivirus à l'ingestion (clamd), joint par l'application sur le réseau
   # interne. Un réseau dédié lui laisse télécharger ses signatures (freshclam).
   # Environ 1 Go de mémoire : prévoir 4 Go de RAM sur le serveur. Capacités
@@ -126,6 +171,7 @@ services:
       # Lus uniquement par initdb/01-roles.sh, au premier démarrage.
       TORON_APP_DB_PASSWORD: ${TORON_APP_DB_PASSWORD:?}
       TORON_AUTH_DB_PASSWORD: ${TORON_AUTH_DB_PASSWORD:?}
+      TORON_MAIL_DB_PASSWORD: ${TORON_MAIL_DB_PASSWORD:?}
     volumes:
       # PostgreSQL 18+ : données dans /var/lib/postgresql/18/docker, volume
       # monté sur /var/lib/postgresql (l'image refuse l'ancien chemin .../data).
@@ -145,9 +191,13 @@ networks:
     internal: true
   # Sortie vers les serveurs de signatures ClamAV, et rien d'autre ne s'y attache.
   antivirus: {}
+  # Sortie du service mail vers l'API Scaleway TEM, et rien d'autre ne s'y attache.
+  courriel: {}
 
 volumes:
   pgdata: {}
   clamav-db: {}
+  # Dépôt du transport fichier, initialisé depuis l'image (toron, mode 700).
+  courriels: {}
   caddy-data: {}
   caddy-config: {}

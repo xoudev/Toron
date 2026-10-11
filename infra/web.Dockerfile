@@ -15,6 +15,7 @@ COPY packages/db/package.json packages/db/
 COPY packages/ui/package.json packages/ui/
 COPY packages/frameworks/package.json packages/frameworks/
 COPY packages/typst/package.json packages/typst/
+COPY packages/mail/package.json packages/mail/
 COPY workers/package.json workers/
 # Corepack n'est plus livré avec Node 26 : pnpm est installé par npm, à la
 # version exacte du champ packageManager de package.json (source unique, la

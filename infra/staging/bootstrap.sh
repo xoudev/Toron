@@ -114,6 +114,18 @@ if [ ! -f "${RACINE}/.env" ]; then
   chmod 600 "${RACINE}/.env"
   echo "Secrets générés dans ${RACINE}/.env (lisibles par root et deploy uniquement)."
 fi
+# Clés apparues après l'installation initiale : ajoutées à un .env existant,
+# sans jamais modifier une valeur déjà présente.
+ajouter_cle() {
+  if ! grep -q "^${1}=" "${RACINE}/.env"; then
+    printf '%s=%s\n' "$1" "$2" >> "${RACINE}/.env"
+    echo "Clé ${1} ajoutée à ${RACINE}/.env."
+  fi
+}
+ajouter_cle TORON_MAIL_DB_PASSWORD "$(openssl rand -hex 32)"
+ajouter_cle MAIL_OUTBOX_KEY "$(openssl rand -hex 32)"
+# Aucun envoi réel tant que TEM n'est pas configuré (docs/exploitation-courriel.md).
+ajouter_cle MAIL_TRANSPORT fichier
 if [ ! -f "${RACINE}/acces.caddy" ]; then
   mdp=$(openssl rand -base64 24 | tr -d '/+=')
   empreinte=$(printf '%s\n' "$mdp" | docker run --rm -i "$CADDY_IMAGE" caddy hash-password)

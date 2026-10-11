@@ -15,6 +15,12 @@ export {
 export { exportTenantData, exportedTableNames, type TenantExport } from './queries/tenant-export.ts';
 export { listMyWork } from './queries/work.ts';
 export {
+  ACCOUNT_EMAIL_KINDS, ENQUEUE_EMAIL_RESULTS, EMAIL_OUTBOX_STATUSES,
+  enqueueAccountEmail, claimNextEmail, markEmailSent, markEmailFailed, releaseEmail, purgeEmailOutbox, emailOutboxHealth,
+  type AccountEmailKind, type EnqueueEmailResult, type EmailOutboxStatus, type EnqueueAccountEmailInput,
+  type ClaimEmailOptions, type ClaimedEmail, type EmailOutboxHealthRow,
+} from './queries/email-outbox.ts';
+export {
   setAcknowledgementRequired, acknowledgeDocument, getAcknowledgementStatus, hasAcknowledged,
   type AcknowledgeResult, type AcknowledgementStatus, type AcknowledgementMember,
 } from './queries/acknowledgements.ts';

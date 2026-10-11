@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Le service mail exécute ce paquet par type stripping de Node.
+    "erasableSyntaxOnly": true
+  },
+  "include": ["src/**/*.ts"]
+}

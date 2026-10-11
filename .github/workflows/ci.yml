@@ -204,8 +204,9 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm --filter @toron/db migrate
           pnpm --filter @toron/db seed
-      - name: Images de production (web + worker)
-        run: docker compose -f infra/compose.yaml build web worker
+      # Le service mail reprend l'image du worker : construction en cache.
+      - name: Images de production (web, worker, mail)
+        run: docker compose -f infra/compose.yaml build web worker mail
       - name: Application
         run: docker compose -f infra/compose.yaml up -d web
       - name: Smoke test HTTP
@@ -219,6 +220,23 @@ jobs:
           code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/t/meridiane-logistics)
           echo "GET /t/meridiane-logistics -> $code (redirection connexion attendue)"
           case "$code" in 302|303|307|308) ;; *) echo "code inattendu"; exit 1;; esac
+      # Service mail en transport fichier : démarrage sain (battement de cœur
+      # lu par le healthcheck), puis état de la file lu sous le rôle
+      # toron_mail. Le répertoire monté doit être inscriptible par
+      # l'utilisateur toron du conteneur, distinct de celui du runner.
+      - name: Service mail (transport fichier)
+        run: |
+          mkdir -m 777 .courriels
+          if ! docker compose -f infra/compose.yaml up -d --wait --wait-timeout 120 mail; then
+            docker compose -f infra/compose.yaml logs mail
+            exit 1
+          fi
+          # grep sans -q lit tout le flux : pas de SIGPIPE sous pipefail.
+          if ! docker compose -f infra/compose.yaml logs mail | grep 'transport fichier — aucun envoi réel' >/dev/null; then
+            echo "::error::Le service mail n'annonce pas le transport fichier."
+            exit 1
+          fi
+          docker compose -f infra/compose.yaml exec -T mail node workers/src/mail-etat.ts
       - run: bash .github/scripts/installer-outil.sh grype
       - id: syft
         run: bash .github/scripts/installer-outil.sh syft

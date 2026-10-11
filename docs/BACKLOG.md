@@ -230,3 +230,8 @@ description courte, phase cible pressentie.
 - **2026-10-10 · Prévenir le nouveau propriétaire d'un document** — Le
   changement de propriétaire d'un document ne notifie personne, faute de
   sujet « document » dans les notifications. Phase cible : V1.
+- **2026-10-10 · Supervision du service mail** — Les signaux d'alerte du
+  service mail (file en retard, `CONFIGURATION`, disjoncteur ouvert plus de
+  10 minutes, liens expirés, quota global) ne se lisent que dans le journal
+  du conteneur (`docs/exploitation-courriel.md`). Les remonter dans Scaleway
+  Cockpit avec des alertes. Phase cible : MVP (mise en production).

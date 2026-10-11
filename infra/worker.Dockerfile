@@ -1,4 +1,5 @@
-# Toron — image du worker de livrables scellés (ADR-5/7).
+# Toron — image du worker de livrables scellés (ADR-5/7), reprise par le
+# service mail isolé (node workers/src/mail.ts, ADR-8).
 # Node + binaire Typst (musl). Le worker exécute le TypeScript directement
 # (type stripping natif de Node) ; pas d'étape de build.
 # Contexte de build : la racine du monorepo.
@@ -19,6 +20,7 @@ COPY packages/db/package.json packages/db/
 COPY packages/ui/package.json packages/ui/
 COPY packages/frameworks/package.json packages/frameworks/
 COPY packages/typst/package.json packages/typst/
+COPY packages/mail/package.json packages/mail/
 COPY workers/package.json workers/
 # Corepack n'est plus livré avec Node 26 : pnpm est installé par npm, à la
 # version exacte du champ packageManager de package.json (source unique, la
@@ -60,6 +62,9 @@ RUN apk add --no-cache xz \
 # les lit sans pouvoir les modifier.
 COPY --from=deps /repo /repo
 WORKDIR /repo
-RUN addgroup -S toron && adduser -S toron -G toron
+# Dépôt du transport fichier du service mail (hors production) : les e-mails
+# portent des liens à jeton, lisibles par toron seul.
+RUN addgroup -S toron && adduser -S toron -G toron \
+ && install -d -o toron -g toron -m 700 /var/toron/courriels
 USER toron
 CMD ["node", "workers/src/index.ts"]

@@ -1,4 +1,8 @@
 {
   "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    // Le worker et le service mail s'exécutent par type stripping de Node.
+    "erasableSyntaxOnly": true
+  },
   "include": ["src/**/*.ts"]
 }

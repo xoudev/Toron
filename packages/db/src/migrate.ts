@@ -35,6 +35,16 @@ export async function applyMigrations(connectionString: string): Promise<string[
       });
       applied.push(file);
     }
+    // Vérifié à chaque passage, même sans nouvelle migration (voir 0040).
+    const leaks = await sql<{ role_name: string; privilege: string }[]>`
+      SELECT role_name, privilege FROM runtime_privilege_leaks()`;
+    if (leaks.length > 0) {
+      const list = leaks.map((l) => `${l.role_name} (${l.privilege})`).join(', ');
+      throw new Error(
+        `Droits de création accordés à des rôles runtime : ${list}. ` +
+          'Retirez-les avec le propriétaire de la base (REVOKE … ON DATABASE / ON SCHEMA public), puis relancez.',
+      );
+    }
     return applied;
   } finally {
     await sql.end();

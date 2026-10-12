@@ -36,14 +36,15 @@ interface Bucket {
 }
 const buckets = new Map<string, Bucket>();
 
-function rateLimited(key: string, limit: number, windowMs: number, now: number): boolean {
+/** Secondes avant la fin de la fenêtre si la limite est dépassée, sinon null. */
+function rateLimited(key: string, limit: number, windowMs: number, now: number): number | null {
   const b = buckets.get(key);
   if (!b || now >= b.resetAt) {
     buckets.set(key, { count: 1, resetAt: now + windowMs });
-    return false;
+    return null;
   }
   b.count += 1;
-  return b.count > limit;
+  return b.count > limit ? Math.max(1, Math.ceil((b.resetAt - now) / 1000)) : null;
 }
 
 function clientIp(req: NextRequest): string {
@@ -51,22 +52,56 @@ function clientIp(req: NextRequest): string {
   return xff?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
 }
 
+// Mot de passe oublié : le jeton ne transite que dans le corps du POST.
+// GET /api/auth/reset-password/<jeton> le validerait sans le consommer puis
+// le recopierait dans une URL de redirection ; ?token= le mettrait dans les
+// journaux d'accès. Better Auth refuse aussi les deux (lib/auth-options.ts).
+const RESET_TOKEN_PATH = '/api/auth/reset-password/';
+const RESET_PATH = '/api/auth/reset-password';
+const RESET_REQUEST_PATH = '/api/auth/request-password-reset';
+// 10 par 15 minutes et par IP : tolère le NAT d'une entreprise, borne la
+// force brute du jeton et le bombardement d'une boîte. Toujours actives,
+// quel que soit NODE_ENV (le limiteur de Better Auth ne l'est qu'en production).
+const RESET_WINDOW_MS = 15 * 60_000;
+const RESET_LIMIT = 10;
+
 export function proxy(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
   const now = Date.now();
 
+  if (pathname.startsWith(RESET_TOKEN_PATH)) {
+    return new NextResponse('Page introuvable.', {
+      status: 404,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+  if (pathname === RESET_PATH && req.nextUrl.searchParams.has('token')) {
+    return new NextResponse('Requête refusée — le jeton se transmet dans le corps de la requête, jamais dans l’adresse.', {
+      status: 400,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+
   // Rate limiting ciblé : authentification et endpoints publics (§8.1).
   const ip = clientIp(req);
   const rule =
+    pathname === RESET_REQUEST_PATH ? { bucket: 'reinit-demande', limit: RESET_LIMIT, windowMs: RESET_WINDOW_MS } :
+    pathname === RESET_PATH ? { bucket: 'reinit', limit: RESET_LIMIT, windowMs: RESET_WINDOW_MS } :
     pathname.startsWith('/api/auth') ? { bucket: 'auth', limit: 20, windowMs: 60_000 } :
     pathname.startsWith('/verifier') ? { bucket: 'verify', limit: 60, windowMs: 60_000 } :
     pathname.startsWith('/fournisseur/') ? { bucket: 'portal', limit: 60, windowMs: 60_000 } :
     null;
-  if (rule && rateLimited(`${rule.bucket}:${ip}`, rule.limit, rule.windowMs, now)) {
-    return new NextResponse('Trop de requêtes — réessayez dans une minute.', {
-      status: 429,
-      headers: { 'Retry-After': '60', 'Content-Type': 'text/plain; charset=utf-8' },
-    });
+  const retryAfter = rule ? rateLimited(`${rule.bucket}:${ip}`, rule.limit, rule.windowMs, now) : null;
+  if (retryAfter !== null) {
+    return new NextResponse(
+      retryAfter > 60
+        ? 'Trop de requêtes depuis votre connexion — patientez quelques minutes puis réessayez.'
+        : 'Trop de requêtes — réessayez dans une minute.',
+      {
+        status: 429,
+        headers: { 'Retry-After': String(retryAfter), 'Content-Type': 'text/plain; charset=utf-8' },
+      },
+    );
   }
 
   // Nonce par requête (16 octets aléatoires en base64).

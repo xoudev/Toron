@@ -48,6 +48,11 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?}
       BETTER_AUTH_URL: https://${STAGING_DOMAIN:?}
       NEXT_TELEMETRY_DISABLED: "1"
+      # Sans TORON_ENV, le web se croirait en local : ni MAIL_OUTBOX_KEY ni
+      # le https de BETTER_AUTH_URL ne seraient exigés au démarrage. Même
+      # clé que le service mail (scellement des liens).
+      TORON_ENV: staging
+      MAIL_OUTBOX_KEY: ${MAIL_OUTBOX_KEY:?}
       # Obligatoire en production : sans réponse de clamd, les dépôts sont refusés.
       CLAMAV_URL: tcp://clamav:3310
     networks: [edge, backend]

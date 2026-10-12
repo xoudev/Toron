@@ -478,6 +478,13 @@ a.nav-item:hover {
   color: var(--text-2);
 }
 
+/* Aide d'un champ, reliée par aria-describedby. */
+.auth-card .auth-hint {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: -6px;
+}
+
 /* Issues secondaires d'une carte (changer d'organisation, se déconnecter). */
 .auth-card .auth-actions {
   display: flex;

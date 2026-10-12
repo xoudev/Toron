@@ -104,17 +104,18 @@ describe('plancher de durée de la demande', () => {
   it('complète jusqu’à 400 ms plus la gigue', () => {
     expect(resetRequestPadding(0, 0)).toBe(400);
     expect(resetRequestPadding(100, 0)).toBe(300);
-    expect(resetRequestPadding(100, 0.5)).toBe(375);
-    expect(resetRequestPadding(0, 0.999)).toBe(550);
+    expect(resetRequestPadding(100, 75)).toBe(375);
+    expect(resetRequestPadding(0, 150)).toBe(550);
   });
 
   it('n’ajoute rien quand la réponse a déjà pris plus longtemps', () => {
-    expect(resetRequestPadding(600, 0.2)).toBe(0);
-    expect(resetRequestPadding(550, 1)).toBe(0);
+    expect(resetRequestPadding(600, 30)).toBe(0);
+    expect(resetRequestPadding(550, 150)).toBe(0);
   });
 
   it('borne les valeurs aberrantes', () => {
-    expect(resetRequestPadding(0, 7)).toBe(550);
+    expect(resetRequestPadding(0, 7000)).toBe(550);
+    expect(resetRequestPadding(0, 12.9)).toBe(412);
     expect(resetRequestPadding(0, -1)).toBe(400);
     expect(resetRequestPadding(0, Number.NaN)).toBe(400);
     expect(resetRequestPadding(-50, 0)).toBe(400);

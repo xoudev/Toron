@@ -13,6 +13,12 @@ describe('libellés du journal d’audit', () => {
     expect(auditObjectLabel('membership')).toBe('Membre');
   });
 
+  it('libelle la réinitialisation du mot de passe sous « Comptes et sécurité »', () => {
+    expect(auditActionLabel('account.password_reset')).toBe('Mot de passe réinitialisé par lien e-mail');
+    expect(auditObjectLabel('account')).toBe('Compte utilisateur');
+    expect(AUDIT_ACTION_FILTERS).toContainEqual({ label: 'Comptes et sécurité', prefix: 'account.' });
+  });
+
   it('affiche tel quel un code inconnu plutôt que de le masquer', () => {
     expect(auditActionLabel('module.inconnu')).toBe('module.inconnu');
     expect(auditObjectLabel('objet_inconnu')).toBe('objet_inconnu');

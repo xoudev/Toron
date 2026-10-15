@@ -24,7 +24,12 @@ const nextConfig: NextConfig = {
   // 10 Mo (proxy), en-têtes multipart compris. La limite métier de 10 Mo par
   // fichier est vérifiée ensuite, avec un message clair.
   experimental: {
-    serverActions: { bodySizeLimit: '11mb' },
+    serverActions: {
+      bodySizeLimit: '11mb',
+      // Codespaces conserve parfois localhost dans Origin alors que le proxy
+      // transmet le domaine app.github.dev dans x-forwarded-host.
+      allowedOrigins: ['localhost:3000', '*.app.github.dev'],
+    },
     proxyClientMaxBodySize: '11mb',
   },
   // Pas de trace des appels d'actions serveur, dont les arguments peuvent

@@ -1,5 +1,8 @@
 'use client';
 
+import { Search01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+
 /** Événement écouté par la palette de recherche de l'application. */
 export const SEARCH_OPEN_EVENT = 'toron:recherche';
 
@@ -12,10 +15,7 @@ export function SearchTrigger() {
       onClick={() => window.dispatchEvent(new CustomEvent(SEARCH_OPEN_EVENT))}
       aria-label="Rechercher dans l’organisation (Ctrl+K)"
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="6.5" />
-        <path d="m16 16 4 4" />
-      </svg>
+      <HugeiconsIcon icon={Search01Icon} size={20} strokeWidth={1.8} aria-hidden="true" />
       <span className="search-trigger-label">Rechercher…</span>
       <kbd>Ctrl K</kbd>
     </button>

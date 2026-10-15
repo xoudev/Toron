@@ -1,5 +1,7 @@
 'use client';
 
+import { Notification03Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
 /** Événement écouté par le centre de notifications de l'application. */
@@ -41,10 +43,7 @@ export function NotificationsTrigger() {
       aria-label={label}
       title={label}
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15z" />
-        <path d="M10 20.5a2 2 0 0 0 4 0" />
-      </svg>
+      <HugeiconsIcon icon={Notification03Icon} size={20} strokeWidth={1.8} aria-hidden="true" />
       {state.unread > 0 ? <span className="notif-badge" aria-hidden="true">{state.unread > 99 ? '99+' : state.unread}</span> : null}
     </button>
   );

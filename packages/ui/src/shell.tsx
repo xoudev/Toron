@@ -1,3 +1,31 @@
+import {
+  Alert02Icon,
+  Analytics01Icon,
+  Audit01Icon,
+  Building03Icon,
+  ClipboardIcon,
+  CubeIcon,
+  DangerIcon,
+  BookOpen01Icon,
+  CheckmarkSquare02Icon,
+  DashboardSquare01Icon,
+  File02Icon,
+  FileCheckIcon,
+  FileSecurityIcon,
+  Flowchart01Icon,
+  Presentation01Icon,
+  RefreshIcon,
+  Settings01Icon,
+  Shield02Icon,
+  SmileIcon,
+  Task01Icon,
+  TaskEdit01Icon,
+  Upload04Icon,
+  UserAccountIcon,
+  UserGroupIcon,
+  WorkflowCircle06Icon,
+} from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import type { ReactNode } from 'react';
 
 import { BrandMark } from './brand.tsx';
@@ -13,7 +41,7 @@ import { SearchTrigger } from './search-trigger.tsx';
 export interface NavItem {
   label: string;
   href: string;
-  /** Chemin SVG (trait 1.5–2px) — icônes monochromes minimalistes. */
+  /** Identifiant historique conservé pour compatibilité avec les menus. */
   iconPath: string;
   active?: boolean;
   /** Item annoncé mais pas encore livré (phase ultérieure) : non cliquable. */
@@ -98,20 +126,7 @@ export function Sidebar({
 }
 
 function SidebarItem({ item }: { item: NavItem }) {
-  const icon = (
-    <svg
-      className="nav-item-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={item.iconPath} />
-    </svg>
-  );
+  const icon = <NavigationIcon label={item.label} />;
   const badge = item.badge ? <span className="nav-badge">{item.badge}</span> : null;
 
   if (item.disabled) {
@@ -130,6 +145,37 @@ function SidebarItem({ item }: { item: NavItem }) {
       {badge}
     </a>
   );
+}
+
+function NavigationIcon({ label }: { label: string }) {
+  const icon =
+    label === 'Tableau de bord' ? DashboardSquare01Icon :
+    label === 'Mon travail' ? Task01Icon :
+    label === 'Référentiels' ? BookOpen01Icon :
+    label === 'Contrôles internes' ? CheckmarkSquare02Icon :
+    label === 'Obligations' ? ClipboardIcon :
+    label === 'Traitements RGPD' ? UserAccountIcon :
+    label === 'Rapport de direction' ? Analytics01Icon :
+    label === 'Plan d’action' ? TaskEdit01Icon :
+    label === 'Registre des risques' ? DangerIcon :
+    label === 'Ateliers EBIOS RM' ? WorkflowCircle06Icon :
+    label === 'Incidents' ? Alert02Icon :
+    label === 'Continuité d’activité' ? RefreshIcon :
+    label === 'Cartographie des actifs' ? CubeIcon :
+    label === 'Documents' ? File02Icon :
+    label === 'Preuves' ? FileSecurityIcon :
+    label === 'Dérogations' ? Shield02Icon :
+    label === 'Audits internes' ? Audit01Icon :
+    label === 'Fournisseurs' ? Building03Icon :
+    label === 'Sensibilisation' ? UserGroupIcon :
+    label === 'Revue de direction' ? Presentation01Icon :
+    label === 'Processus' ? Flowchart01Icon :
+    label === 'Non-conformités' ? FileCheckIcon :
+    label === 'Satisfaction client' ? SmileIcon :
+    label === 'Importer depuis Excel' ? Upload04Icon :
+    label === 'Paramètres' ? Settings01Icon :
+    DashboardSquare01Icon;
+  return <HugeiconsIcon icon={icon} className="nav-item-icon" size={18} strokeWidth={1.7} aria-hidden="true" />;
 }
 
 export function Topbar({

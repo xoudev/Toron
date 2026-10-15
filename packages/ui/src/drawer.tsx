@@ -1,5 +1,7 @@
 'use client';
 
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 
 // Tiroir latéral droit accessible (maquettes docs/design : le détail s'ouvre
@@ -76,9 +78,7 @@ export function Drawer({
         <div className="drawer-head">
           {header}
           <button className="drawer-close" onClick={onClose} aria-label="Fermer le panneau">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
-              <path d="M6 6 18 18M18 6 6 18" />
-            </svg>
+              <HugeiconsIcon icon={Cancel01Icon} size={14} strokeWidth={1.9} aria-hidden="true" />
           </button>
         </div>
         <div className="drawer-body">{children}</div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { Cancel01Icon, Menu01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
 
 const ATTR = 'data-nav-open';
@@ -33,9 +35,7 @@ export function NavToggle() {
         aria-controls="navigation-principale"
         onClick={() => setOpen((v) => !v)}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-          {open ? <path d="M6 6 18 18M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-        </svg>
+        <HugeiconsIcon icon={open ? Cancel01Icon : Menu01Icon} size={20} strokeWidth={2} aria-hidden="true" />
       </button>
       {open ? <button type="button" className="nav-scrim" aria-label="Fermer la navigation" onClick={() => setOpen(false)} /> : null}
     </>

@@ -153,7 +153,7 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0, disable
           label: 'Processus',
           href: `${base}/processus`,
           active: isActive(`${base}/processus`),
-          iconPath: 'M6 4.5h4v4H6z M14 15.5h4v4h-4z M8 8.5v3a3 3 0 0 0 3 3h3',
+          iconPath: 'M5 5h5v5H5z M14 14h5v5h-5z M10 7.5h2a3 3 0 0 1 3 3V14',
         },
         {
           label: 'Non-conformités',
@@ -182,7 +182,7 @@ export function buildNav(slug: string, pathname: string, urgentWork = 0, disable
           label: 'Paramètres',
           href: `${base}/parametres`,
           active: isActive(`${base}/parametres`),
-          iconPath: 'M4 8h9 M17 8h3 M4 16h3 M11 16h9 M14 6.5v3 M9 14.5v3',
+          iconPath: 'M9.5 4.5h5l.7 2.1 1.8 1.1 2.1-.5 2.5 4.3-1.5 1.6v2.1l1.5 1.6-2.5 4.3-2.1-.5-1.8 1.1-.7 2.1h-5l-.7-2.1-1.8-1.1-2.1.5-2.5-4.3 1.5-1.6v-2.1L2.4 11.5l2.5-4.3 2.1.5 1.8-1.1.7-2.1z M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
         },
       ],
     },

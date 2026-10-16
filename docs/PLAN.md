@@ -4,23 +4,6 @@ Document de référence pour le développement. Destiné à être lu par des hum
 et par Claude Code. Toute décision non couverte ici se tranche par les
 principes de la section 2.
 
----
-
-## 0 · Comment utiliser ce document avec Claude Code
-
-1. Placer ce fichier à la racine du repo : `docs/PLAN.md`.
-2. Créer un `CLAUDE.md` à la racine contenant : un résumé de 10 lignes du
-   produit, un renvoi vers `docs/PLAN.md`, et la section 13 (conventions)
-   copiée intégralement.
-3. Travailler **phase par phase** (section 10), **module par module**.
-   Ne jamais demander « implémente le plan » — demander « implémente le
-   module 5.2 en phase MVP, migrations + RLS + tests d'abord ».
-4. Chaque module commence par : migration SQL + politiques RLS + tests
-   d'isolation, puis la logique métier, puis l'UI.
-5. Les 16 écrans sont spécifiés dans `docs/toron-prompts-claude-design.md`
-   (déjà rédigé) ; la correspondance module ↔ écran est en section 9.
-
----
 
 ## 1 · Vision & positionnement
 

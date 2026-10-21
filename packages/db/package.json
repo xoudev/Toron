@@ -14,16 +14,16 @@
     "seed": "node src/seed-cli.ts"
   },
   "dependencies": {
-    "@node-rs/argon2": "^2.2.1",
+    "@node-rs/argon2": "^2.2.2",
     "@toron/core": "workspace:*",
     "@toron/frameworks": "workspace:*",
-    "drizzle-orm": "^0.45.3",
+    "drizzle-orm": "^0.45.4",
     "postgres": "^3.4.0"
   },
   "devDependencies": {
     "@testcontainers/postgresql": "^12.2.0",
-    "@types/node": "^26.6.4",
+    "@types/node": "^26.6.5",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.4"
   }
 }

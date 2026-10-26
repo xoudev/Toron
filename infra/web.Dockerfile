@@ -2,7 +2,7 @@
 # Multi-stage, versions épinglées, utilisateur non-root.
 # Contexte de build : la racine du monorepo (docker build -f infra/web.Dockerfile .)
 
-FROM node:26.11.1-alpine3.23@sha256:f1394b3ffc021bc3f4aaf363e70a8d9667f7a9a63538bc824d7cc583129fffad AS base
+FROM node:26.12.0-alpine3.23@sha256:2ae3a23c9c5d2129398f4844c7c43400c061faf6973852f0fa837323bff9a5a8 AS base
 
 # ── Dépendances + build ──────────────────────────────────────────────
 FROM base AS build
@@ -30,7 +30,7 @@ COPY workers workers
 RUN pnpm --filter @toron/web build
 
 # ── Image d'exécution minimale ───────────────────────────────────────
-FROM node:26.11.1-alpine3.23@sha256:f1394b3ffc021bc3f4aaf363e70a8d9667f7a9a63538bc824d7cc583129fffad AS run
+FROM node:26.12.0-alpine3.23@sha256:2ae3a23c9c5d2129398f4844c7c43400c061faf6973852f0fa837323bff9a5a8 AS run
 ENV NODE_ENV=production
 WORKDIR /app
 # Gestionnaires de paquets inutiles à l'exécution (CMD lance node seul) : npm

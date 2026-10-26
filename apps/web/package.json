@@ -18,20 +18,20 @@
     "@toron/frameworks": "workspace:*",
     "@toron/mail": "workspace:*",
     "@toron/ui": "workspace:*",
-    "better-auth": "^1.7.7",
+    "better-auth": "^1.7.11",
     "drizzle-orm": "^0.45.4",
-    "next": "^16.4.0",
+    "next": "^16.4.2",
     "qrcode-generator": "2.0.4",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "server-only": "^0.0.1",
-    "zod": "^4.6.6"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.5"
   }
 }

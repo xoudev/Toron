@@ -73,7 +73,7 @@ jobs:
       # Les PR venant de forks n'ont pas le droit d'écrire dans l'onglet Security.
       - name: Publication dans l'onglet Security
         if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: semgrep.sarif
           category: semgrep
@@ -274,13 +274,13 @@ jobs:
           retention-days: 90
       - name: Publication du scan web dans l'onglet Security
         if: ${{ !cancelled() && hashFiles('rapports/grype-web.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: rapports/grype-web.sarif
           category: grype-web
       - name: Publication du scan worker dans l'onglet Security
         if: ${{ !cancelled() && hashFiles('rapports/grype-worker.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: rapports/grype-worker.sarif
           category: grype-worker

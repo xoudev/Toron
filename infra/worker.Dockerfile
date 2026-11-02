@@ -7,7 +7,7 @@
 # Multi-stage : pnpm et son cache restent dans l'étage « deps » ; l'image
 # livrée ne contient ni pnpm ni npm.
 
-FROM node:26.11.1-alpine3.23@sha256:f1394b3ffc021bc3f4aaf363e70a8d9667f7a9a63538bc824d7cc583129fffad AS base
+FROM node:26.12.1-alpine3.23@sha256:bc2b334006f15c7167bbeb2f08f28c2df883f7594a0470e04454ebe7560cfe68 AS base
 
 # ── Dépendances et sources ───────────────────────────────────────────────
 FROM base AS deps

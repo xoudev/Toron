@@ -138,7 +138,7 @@ services:
   # Environ 1 Go de mémoire : prévoir 4 Go de RAM sur le serveur. Capacités
   # réduites au strict nécessaire au changement d'utilisateur de l'image.
   clamav:
-    image: clamav/clamav:1.5.4@sha256:ebec5bc138401b36ae987caa1a3fa3c3b2a21ed3d51f0bfa5852825e663e67b0
+    image: clamav/clamav:1.5.4@sha256:7054e3f34308c384ea43cd786ea17abf899bd44af40af9f1b099853d7a5c214e
     restart: unless-stopped
     networks: [backend, antivirus]
     volumes:
